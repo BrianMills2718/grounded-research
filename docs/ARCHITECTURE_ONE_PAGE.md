@@ -41,6 +41,11 @@ The product is the claim ledger. The report is a rendering of the ledger.
 - manual evidence bundles
 - other research engine outputs when useful
 
+Approved external upstream candidates:
+
+- STORM / `knowledge-storm`
+- GPT Researcher
+
 ### Downstream Outputs
 
 - human-review report
@@ -56,6 +61,8 @@ The product is the claim ledger. The report is a rendering of the ledger.
 - every real call passes `task=`, `trace_id=`, and `max_budget=`
 - use `pyproject.toml` and a per-project `.venv`
 - maintain a canonical Jupyter review notebook for end-to-end inspection
+- treat external research engines as upstream inputs or baselines, not as the
+  core adjudication runtime
 
 ## Runtime Layers
 
@@ -81,6 +88,12 @@ Boundary:
 
 - code for adapter logic, normalization, IDs, dates, provenance
 - LLMs only if semantic normalization is clearly needed
+
+Adapter targets may include:
+
+- `research_v3`
+- STORM / `knowledge-storm`
+- GPT Researcher
 
 ### 2. Analyze
 
@@ -281,6 +294,27 @@ the smallest falsifiable slice:
 - persistent Stage `1v` caveats and warnings in pipeline state
 - arbitration rules that constrain claim changes to new evidence, corrected assumptions, or resolved contradictions
 - an explicit assumptions section in the final report
+
+## External Reuse Strategy
+
+Directly leverage these as optional upstream providers or benchmark baselines:
+
+- STORM / `knowledge-storm`
+- GPT Researcher
+
+Conditionally leverage:
+
+- LangGraph, but only if resumable or interruptible workflow becomes a real
+  implementation need
+
+Do not use these as core runtime dependencies for v1:
+
+- AutoGen
+- DebateLLM
+- MedAgents
+- MetaGPT
+- Free-MAD
+- Exchange-of-Thought implementations
 
 ## v1 Scope
 

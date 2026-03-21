@@ -249,8 +249,9 @@ Build in this order:
 
 1. `CLAUDE.md`
 2. `docs/adr/0001-adjudication-first-scope.md`
-3. `docs/PLAN.md`
-4. `docs/ARCHITECTURE_ONE_PAGE.md`
-5. `docs/V1_IMPLEMENTATION_BRIEF.md`
-6. `docs/SCOPE_MATRIX_V2.md`
-7. `docs/notebooks/01_adjudication_review_journey.ipynb`
+3. `docs/adr/0002-approved-external-reuse-strategy.md`
+4. `docs/PLAN.md`
+5. `docs/ARCHITECTURE_ONE_PAGE.md`
+6. `docs/V1_IMPLEMENTATION_BRIEF.md`
+7. `docs/SCOPE_MATRIX_V2.md`
+8. `docs/notebooks/01_adjudication_review_journey.ipynb`

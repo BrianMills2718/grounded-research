@@ -20,6 +20,7 @@ grounded report plus trace.
 - repo initialized
 - project instructions in place
 - ADR recorded
+- external reuse strategy recorded
 - one-page architecture written
 - v1 brief written
 - scope matrix written
@@ -51,12 +52,16 @@ Build:
 - 3 independent analyst calls via `llm_client`
 - a minimal claim extraction pass
 - a reviewable trace artifact
+- at least one baseline comparison path when practical:
+  - manual or `research_v3` evidence
+  - STORM or GPT Researcher output
 
 Pass if:
 
 - disagreements are not mostly framing noise
 - at least some disputes are decision-relevant
 - fresh evidence plausibly sharpens or changes at least some answers
+- the imported external baseline is comparable enough to judge signal quality
 
 Fail if:
 
@@ -101,6 +106,7 @@ Build:
 - source normalization
 - recency metadata handling
 - evidence-bundle schema validation
+- adapter contract for external upstream engines such as STORM or GPT Researcher
 
 Pass if:
 
@@ -210,6 +216,27 @@ These are part of the plan, but they follow stabilization of the core slice:
 - runtime evidence-laundering detection beyond structural checks
 - Grok or X integration
 - broad runtime anti-bias instrumentation
+
+## Approved External Reuse
+
+Approved for direct leverage as upstream providers, baselines, or adapter
+targets:
+
+- STORM / `knowledge-storm`
+- GPT Researcher
+
+Approved conditionally:
+
+- LangGraph, but only if resumable stateful orchestration becomes necessary
+
+Not approved as core runtime dependencies for v1:
+
+- AutoGen
+- DebateLLM
+- MedAgents
+- MetaGPT
+- Free-MAD
+- Exchange-of-Thought implementations
 
 ## Immediate Next Step
 
