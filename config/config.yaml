@@ -4,7 +4,7 @@ models:
   deduplication: "gemini/gemini-2.5-flash-lite"
   dispute_classification: "gemini/gemini-2.5-flash-lite"
   arbitration: "gemini/gemini-2.5-flash-lite"
-  synthesis: "gemini/gemini-2.5-flash"
+  synthesis: "openrouter/google/gemini-2.5-flash"
 
 # Cross-family models for multi-analyst runs
 phase_minus1_models:
