@@ -1,8 +1,7 @@
 # Grounded Research Adjudication
 
-This file is the canonical operating guide for this project. `AGENTS.md` is a
-generated projection maintained by the governance framework
-(`--refresh-agents`). Edit this file first; regenerate AGENTS.md from it.
+This file is the canonical operating guide for this project. `AGENTS.md` must
+mirror it exactly. Edit this file first, then resync `AGENTS.md`.
 
 ## Purpose
 
@@ -235,6 +234,27 @@ At minimum, the plan must define:
 If scope, sequencing, or acceptance criteria change, update `docs/PLAN.md` first.
 
 If the change is architectural, update the relevant ADR before continuing.
+
+### 13. Documentation Governance Is In Scope
+
+This repo intentionally keeps a documentation-governance layer alongside the
+core project docs.
+
+Authority chain:
+
+- `CLAUDE.md` is the canonical project operating guide
+- `AGENTS.md` mirrors `CLAUDE.md`
+- `docs/PLAN.md` is the canonical execution plan
+- `docs/plans/` is the numbered per-task plan surface for concrete work items
+- `.claude/` hooks and `scripts/relationships.yaml` enforce required reading and
+  doc coupling
+
+This governance layer is not a way around project policy and should not compete
+with the canonical docs. Its job is to validate and reinforce those docs.
+
+If the governance layer becomes stale or burdensome, fix it explicitly or
+remove it explicitly. Do not silently ignore it while still treating it as
+authoritative.
 
 ## Architecture Priorities
 

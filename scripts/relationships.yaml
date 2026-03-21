@@ -38,6 +38,14 @@ couplings:
     description: Plan changes must respect architecture boundaries and scope decisions.
     required_reading: true
 
+  # Numbered plans are subordinate to the canonical plan.
+  - sources:
+      - docs/plans/*.md
+    docs:
+      - docs/PLAN.md
+    description: Task-level plans must stay aligned with the canonical execution plan.
+    required_reading: true
+
   # Scope changes require understanding the ADR that set the boundary.
   - sources:
       - docs/SCOPE_MATRIX_V2.md

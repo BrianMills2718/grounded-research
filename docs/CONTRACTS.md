@@ -27,6 +27,7 @@ orchestration implementation.
 The same contract may be satisfied by:
 
 - direct structured calls
+- agent loops with tools through `llm_client`
 - agent SDK execution through `llm_client`
 - a narrow workflow wrapper when explicit pause/resume or approval state is needed
 
@@ -153,10 +154,16 @@ This is a validation experiment rather than a pipeline phase.
 | Field | Value |
 |---|---|
 | Input | `question: str` + imported evidence payload |
-| Output | 3 analyst text outputs + manual disagreement review |
+| Output | 3 `AnalystRun`-shaped outputs (or equivalent analyst artifacts) + minimal claim extraction artifact + manual disagreement review |
 | Success | Disagreements are not mostly framing noise; at least some are decision-relevant |
 | Failure | Analysts mostly restate each other; disagreement signal is weak |
-| Trace expectation | enough metadata to compare analysts and record manual review outcome |
+| Trace expectation | enough metadata to compare analysts, inspect minimal extracted claims, and record manual review outcome |
+
+Default execution mode:
+
+- start with 3 structured calls
+- add one agent SDK comparison run when practical
+- do not require a workflow wrapper for this phase
 
 ## Phase 0: Contracts, Trace, and Review Surface
 

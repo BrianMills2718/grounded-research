@@ -1,37 +1,34 @@
 # Grounded Research Adjudication
 
-<!-- GENERATED FILE: DO NOT EDIT DIRECTLY -->
-<!-- generated_by: scripts/meta/render_agents_md.py -->
-<!-- canonical_claude: CLAUDE.md -->
-<!-- canonical_relationships: scripts/relationships.yaml -->
-<!-- canonical_relationships_sha256: 2535f6f9faf6 -->
-<!-- sync_check: python scripts/meta/check_agents_sync.py --check -->
-
-This file is a generated Codex-oriented projection of repo governance.
-Edit the canonical sources instead of editing this file directly.
-
-Canonical governance sources:
-- `CLAUDE.md` — human-readable project rules, workflow, and references
-- `scripts/relationships.yaml` — machine-readable ADR, coupling, and required-reading graph
+This file is the canonical operating guide for this project. `AGENTS.md` must
+mirror it exactly. Edit this file first, then resync `AGENTS.md`.
 
 ## Purpose
 
-This file is the canonical operating guide for this project. `AGENTS.md` is a
-generated projection maintained by the governance framework
-(`--refresh-agents`). Edit this file first; regenerate AGENTS.md from it.
+Build an adjudication-first layer for grounded research.
 
-## Commands
+This project does not start as a new end-to-end research pipeline.
 
-- `python -m pytest tests/`: run tests
-- `pip install -e .`: install package into local `.venv`
+Its v1 job is narrower and more valuable:
 
-## Operating Rules
+- consume evidence from existing upstream systems or manual bundles
+- run independent analyst passes over shared evidence
+- canonicalize outputs into a claim ledger
+- detect and classify disputes
+- verify a narrow subset of disputes with fresh evidence
+- export a report and trace that can be reviewed by humans and fed downstream
 
-This projection keeps the highest-signal rules in always-on Codex context.
-For full project structure, detailed terminology, and any rule omitted here,
-read `CLAUDE.md` directly.
+Primary upstream sources:
 
-### Principles
+- `research_v3`
+- manual evidence bundles
+- other research engines when useful
+
+Primary downstream consumer:
+
+- `onto-canon`
+
+## Principles
 
 ### 1. Adjudication First
 
@@ -238,16 +235,80 @@ If scope, sequencing, or acceptance criteria change, update `docs/PLAN.md` first
 
 If the change is architectural, update the relevant ADR before continuing.
 
-### Workflow
+### 13. Documentation Governance Is In Scope
+
+This repo intentionally keeps a documentation-governance layer alongside the
+core project docs.
+
+Authority chain:
+
+- `CLAUDE.md` is the canonical project operating guide
+- `AGENTS.md` mirrors `CLAUDE.md`
+- `docs/PLAN.md` is the canonical execution plan
+- `docs/plans/` is the numbered per-task plan surface for concrete work items
+- `.claude/` hooks and `scripts/relationships.yaml` enforce required reading and
+  doc coupling
+
+This governance layer is not a way around project policy and should not compete
+with the canonical docs. Its job is to validate and reinforce those docs.
+
+If the governance layer becomes stale or burdensome, fix it explicitly or
+remove it explicitly. Do not silently ignore it while still treating it as
+authoritative.
+
+## Architecture Priorities
+
+Keep the runtime architecture clean and layered:
+
+1. Ingest
+2. Analyze
+3. Canonicalize
+4. Adjudicate
+5. Export
+
+Do not turn internal substeps into a sprawling public stage taxonomy.
+
+These layers are logical contracts, not a required process topology. The
+product boundary is the typed artifacts and their validation, not one
+mandatory orchestration style.
+
+## Non-Negotiable v1 Rules
+
+1. Models analyzing evidence must not see each other's outputs.
+2. Every material recommendation must cite claim IDs.
+3. Every cited claim must map to evidence IDs and source records.
+4. Routing decisions must be deterministic in code, even when dispute classification is LLM-assisted.
+5. A failed run with a rich partial trace is better than a polished but ungrounded report.
+6. V1 consumes upstream evidence; it does not rebuild a competing retrieval stack.
+
+## Implementation Order
+
+Build in this order:
+
+1. domain model, contracts, typed schemas, and trace (done — `DOMAIN_MODEL.md`, `models.py`, `CONTRACTS.md`)
+2. `pyproject.toml`, per-project `.venv`, `config/config.yaml`, `prompts/`, and a canonical review notebook
+3. evidence-ingest adapters for upstream bundles
+4. one grounded analyst over imported evidence (Phase 2a)
+5. three independent analysts (Phase 2b)
+6. claim extraction (Phase 3a)
+7. semantic deduplication (Phase 3b)
+8. ledger assembly and dispute detection (Phase 3c)
+9. verification query generation (Phase 4a)
+10. arbitration and ledger update (Phase 4b)
+11. grounded export and downstream handoff (Phase 5)
+12. only then consider user steering, smarter stopping, and richer runtime checks
+
+## Workflow
 
 1. Update `docs/PLAN.md` before any architectural change.
 2. Keep typed schemas and contracts at the center of implementation.
 3. All LLM calls through `llm_client` with `task=`, `trace_id=`, `max_budget=`.
 4. Commit at independently verified milestones.
 
-## Machine-Readable Governance
+## Commands
 
-`scripts/relationships.yaml` is the source of truth for machine-readable governance in this repo: ADR coupling, required-reading edges, and doc-code linkage. This generated file does not inline that graph; it records the canonical path and sync marker, then points operators and validators back to the source graph. Prefer deterministic validators over prompt-only memory when those scripts are available.
+- `python -m pytest tests/`: run tests
+- `pip install -e .`: install package into local `.venv`
 
 ## References
 

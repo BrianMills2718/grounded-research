@@ -1,5 +1,8 @@
 # Plan #N: [Name]
 
+`docs/PLAN.md` remains the canonical repo-level plan. This file is for one
+scoped work item.
+
 **Status:** Planned
 **Type:** implementation  <!-- implementation | design -->
 **Priority:** High | Medium | Low

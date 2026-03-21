@@ -1,5 +1,11 @@
 # Architecture One Page
 
+Use this document for boundary and responsibility clarity.
+
+- `docs/PLAN.md` owns sequencing and acceptance criteria
+- `docs/CONTRACTS.md` owns inter-phase I/O and failure semantics
+- `CLAUDE.md` owns operating rules and governance policy
+
 ## Thesis
 
 The system should improve grounded research output by adding an adjudication layer above existing evidence collection systems.
@@ -258,52 +264,18 @@ Use programmatic logic only when it is clearly better than an LLM on correctness
 
 ## Execution Modes
 
-Not every phase uses the same LLM interaction pattern. The choice depends on
-whether the phase needs iterative tool use or just a single structured
-extraction.
+Use the simplest execution mode that satisfies the phase contract:
 
-### Structured Call
+- structured calls for Phase -1 by default and for v1 analyst/dedup/classify/export work
+- agent loops with tools for verification work that genuinely needs iterative search
+- optional agent SDK comparison runs when evaluating whether agentic execution adds value
 
-A single `call_llm_structured` invocation. The LLM receives full context and
-returns a validated Pydantic model. No iteration, no tools.
+What does not change:
 
-Best for phases where the input fits in context and the task is a single
-judgment or extraction pass:
-
-- Phase 2a/2b: analyst reasoning (v1 — evidence bundle fits in context)
-- Phase 3b: semantic deduplication
-- Phase 3c: dispute classification
-- Phase 5: report synthesis from structured state
-
-### Agentic With Tools
-
-An `acall_llm` invocation with `python_tools`. The LLM iterates: call tools,
-read results, reason, call more tools, then produce a final output. Managed
-by `llm_client`'s agent loop.
-
-Best for phases where the task intrinsically requires tool use — searching,
-retrieving, iterating on strategy:
-
-- Phase 4: verification and arbitration (must search for new evidence)
-
-### Planned Agentic Upgrade Path
-
-Phase 2 (analyst) starts as structured calls in v1 because the golden-set
-evidence bundle fits in context. When evidence bundles grow beyond what fits
-comfortably in a single call, analysts should be promoted to agentic with
-tools for selective evidence reading. The `AnalystRun` output contract stays
-the same either way — the upgrade is in how the LLM produces it, not in what
-it produces.
-
-### What Does Not Change
-
-Regardless of execution mode:
-
-- all LLM calls go through `llm_client`
-- all calls carry `task=`, `trace_id=`, `max_budget=`
-- output contracts are the same Pydantic models
-- trace captures the same per-phase metadata
-- code-owned mechanical enforcement (IDs, routing, validation) stays in code
+- all LLM calls still go through `llm_client`
+- all calls still carry `task=`, `trace_id=`, `max_budget=`
+- output contracts stay the same Pydantic models
+- code-owned enforcement (IDs, routing, validation, trace) stays in code
 
 ## Recent-First Evidence Policy
 

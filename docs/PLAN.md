@@ -34,7 +34,25 @@ workflow engine.
 - inter-phase contracts defined (`docs/CONTRACTS.md`)
 - golden-set evidence fixture created (`tests/fixtures/session_storage_bundle.json`)
 - canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
-- no pipeline implementation code yet
+- documentation-governance layer present (`.claude/`, `docs/plans/`,
+  `scripts/relationships.yaml`, validation scripts)
+- no accepted or committed pipeline implementation milestone yet
+
+## Governance Surfaces
+
+The repo keeps a small governance layer for documentation and planning
+discipline.
+
+- `CLAUDE.md` is the canonical project operating guide
+- `AGENTS.md` mirrors `CLAUDE.md`
+- `docs/PLAN.md` is the canonical execution plan
+- `docs/plans/` holds numbered per-task plans once concrete implementation work
+  items begin
+- `.claude/` hooks and `scripts/relationships.yaml` validate required reading
+  and document coupling
+
+This layer is in scope. It should reinforce the canonical docs, not replace
+them or create a second planning authority.
 
 ## Success Criteria
 
@@ -82,7 +100,9 @@ Build:
 
 - a small script that accepts a question plus an evidence bundle
 - 3 independent analyst calls via `llm_client`
+- 3 `AnalystRun`-shaped artifacts or equivalent analyst outputs
 - a minimal claim extraction pass
+- a compact manual-review artifact using the rubric below
 - a reviewable trace artifact
 - at least one baseline comparison path when practical:
   - manual or `research_v3` evidence
@@ -121,6 +141,12 @@ decision-relevant disagreement grounded in different evidence readings.
 
 Promotion: `planned` → `live` (standalone script, no framework dependency)
 
+Execution note:
+
+- default to structured calls for the first live run
+- compare against one agent SDK path when practical
+- do not block the thesis test on workflow infrastructure
+
 ### Phase 0: Domain Model, Contracts, Trace, And Review Surface
 
 Goal:
@@ -149,8 +175,8 @@ Pass if:
 - dry-run CLI writes a trace skeleton
 - notebook still runs top-to-bottom with explicit artifacts (done)
 
-Promotion: `partial` → `live` once `pyproject.toml`, `config/config.yaml`,
-`prompts/`, and dry-run CLI exist.
+Promotion: `partial` → `live` once an adopted `pyproject.toml`,
+`config/config.yaml`, `prompts/`, and a dry-run CLI exist.
 
 Execution note:
 
