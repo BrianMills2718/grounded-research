@@ -13,7 +13,7 @@ plan. Broad project sequencing, scope, and acceptance criteria stay in
 
 | Gap | Title | Priority | Status | Blocks |
 |---|---|---|---|---|
-| — | No active implementation plans | — | — | — |
+| 1 | Draft Implementation Adoption Gate | High | 📋 Planned | None |
 
 ## Creating A New Plan
 

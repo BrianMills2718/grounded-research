@@ -36,6 +36,8 @@ workflow engine.
 - canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
 - documentation-governance layer present (`.claude/`, `docs/plans/`,
   `scripts/relationships.yaml`, validation scripts)
+- local draft implementation surfaces exist in the worktree but are not yet
+  accepted project state
 - no accepted or committed pipeline implementation milestone yet
 
 ## Governance Surfaces
@@ -53,6 +55,30 @@ discipline.
 
 This layer is in scope. It should reinforce the canonical docs, not replace
 them or create a second planning authority.
+
+## Draft Implementation Gate
+
+The worktree may contain local draft implementation surfaces before they are
+accepted into the project baseline.
+
+Those drafts do not advance milestone status automatically.
+
+Before any draft implementation is adopted, review it against:
+
+- `CLAUDE.md`
+- this plan
+- `docs/CONTRACTS.md`
+- `src/grounded_research/models.py`
+- explicit verification expectations
+
+Adopt a draft only if it:
+
+- matches the current milestone order
+- respects the typed contracts
+- does not smuggle in a broader architecture than the plan allows
+- has a clear verification story
+
+Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 ## Success Criteria
 
@@ -485,7 +511,10 @@ disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
-Build `Phase -1`.
+Review and triage the local draft implementation surfaces.
 
-Do not start with the full package skeleton unless the disagreement signal looks
-real enough to justify the adjudication layer.
+Specifically:
+
+1. classify each draft as `accept`, `hold`, or `discard`
+2. do not let a full-engine draft skip ahead of `Phase -1`
+3. only after that adoption review, run or extend the smallest `Phase -1` slice

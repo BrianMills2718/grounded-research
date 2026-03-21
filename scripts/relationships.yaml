@@ -46,6 +46,13 @@ couplings:
     description: Task-level plans must stay aligned with the canonical execution plan.
     required_reading: true
 
+  - sources:
+      - docs/UNCERTAINTIES.md
+    docs:
+      - docs/PLAN.md
+    description: Persisted uncertainties must stay aligned with the canonical execution plan.
+    required_reading: true
+
   # Scope changes require understanding the ADR that set the boundary.
   - sources:
       - docs/SCOPE_MATRIX_V2.md
