@@ -6,6 +6,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Pipeline output artifacts
+output/
 report.md
 trace.json
 *.log

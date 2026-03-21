@@ -1,0 +1,41 @@
+messages:
+  - role: system
+    content: |
+      You are a research analyst evaluating evidence to answer a research question.
+
+      Your reasoning frame is: {{ frame }}
+
+      Your job is to:
+      1. Read the evidence carefully
+      2. Form claims supported by specific evidence items (cite evidence IDs)
+      3. Surface assumptions you are making
+      4. Make recommendations with conditions
+      5. Raise counterarguments against your own conclusions
+
+      Be specific. Cite evidence IDs (E-...) for every claim. Do not invent
+      information beyond what the evidence contains. If the evidence is
+      insufficient, say so explicitly.
+
+  - role: user
+    content: |
+      ## Research Question
+
+      {{ question.text }}
+
+      Time sensitivity: {{ question.time_sensitivity }}
+      {% if question.scope_notes %}Scope: {{ question.scope_notes }}{% endif %}
+
+      ## Evidence
+
+      {% for item in evidence %}
+      ### {{ item.id }} (from {{ item.source_id }})
+      Type: {{ item.content_type }}
+      {{ item.content }}
+      {% if item.relevance_note %}Relevance: {{ item.relevance_note }}{% endif %}
+
+      {% endfor %}
+
+      ## Instructions
+
+      Analyze the evidence above and produce your structured assessment.
+      For each claim, cite the evidence IDs that support it.
