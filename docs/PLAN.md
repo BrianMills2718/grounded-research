@@ -36,8 +36,11 @@ workflow engine.
 - canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
 - documentation-governance layer present (`.claude/`, `docs/plans/`,
   `scripts/relationships.yaml`, validation scripts)
-- a committed end-to-end implementation exists (`c57cd2c`), but it has not yet
-  been reviewed and accepted against the canonical plan
+- full pipeline implemented: ingest → analyze → canonicalize → adjudicate → export
+- automatic evidence collection from raw questions via Brave Search + page extraction
+  (uses research_v3 tools, not hand-rolled)
+- Phase -1 thesis validated: cross-family disagreement signal is real and decision-relevant
+- end-to-end verified on two questions (Redis vs PostgreSQL, Obsidian second brain)
 
 ## Governance Surfaces
 
