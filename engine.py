@@ -212,26 +212,69 @@ async def run_pipeline(
     return state
 
 
+async def run_pipeline_from_question(
+    question: str,
+    output_dir: Path,
+) -> PipelineState:
+    """Run the full pipeline starting from a question (collects evidence automatically)."""
+    from grounded_research.collect import collect_evidence
+
+    run_id = uuid.uuid4().hex[:12]
+    trace_id = f"pipeline/{run_id}"
+
+    print(f"=== Evidence Collection ===")
+    print(f"Question: {question}")
+    print()
+
+    bundle = await collect_evidence(question, trace_id)
+
+    # Save the collected bundle for reuse
+    bundle_path = output_dir / "collected_bundle.json"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    bundle_path.write_text(bundle.model_dump_json(indent=2))
+    print(f"  Saved bundle: {bundle_path}")
+    print()
+
+    return await run_pipeline(bundle_path, output_dir)
+
+
 def main() -> None:
     """Entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Grounded Research Adjudication Engine")
     parser.add_argument(
+        "question",
+        nargs="?",
+        default=None,
+        help="Research question (if provided, evidence is collected automatically)",
+    )
+    parser.add_argument(
         "--fixture",
         type=Path,
-        default=PROJECT_ROOT / "tests" / "fixtures" / "session_storage_bundle.json",
-        help="Path to evidence bundle JSON",
+        default=None,
+        help="Path to pre-built evidence bundle JSON (skips collection)",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=PROJECT_ROOT / "output" / "pipeline",
+        default=None,
         help="Output directory for report, trace, and handoff",
     )
     args = parser.parse_args()
 
-    asyncio.run(run_pipeline(args.fixture, args.output_dir))
+    if args.question:
+        slug = args.question[:40].lower().replace(" ", "_").replace("?", "")
+        out_dir = args.output_dir or (PROJECT_ROOT / "output" / slug)
+        asyncio.run(run_pipeline_from_question(args.question, out_dir))
+    elif args.fixture:
+        out_dir = args.output_dir or (PROJECT_ROOT / "output" / "pipeline")
+        asyncio.run(run_pipeline(args.fixture, out_dir))
+    else:
+        # Default: use golden fixture
+        fixture = PROJECT_ROOT / "tests" / "fixtures" / "session_storage_bundle.json"
+        out_dir = args.output_dir or (PROJECT_ROOT / "output" / "pipeline")
+        asyncio.run(run_pipeline(fixture, out_dir))
 
 
 if __name__ == "__main__":

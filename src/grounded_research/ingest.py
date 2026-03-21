@@ -21,20 +21,34 @@ from grounded_research.models import (
 )
 
 
-def load_manual_bundle(path: Path) -> EvidenceBundle:
-    """Load a manually curated JSON evidence bundle.
+def load_bundle(path: Path) -> EvidenceBundle:
+    """Load an evidence bundle from JSON.
 
-    Expected format matches tests/fixtures/session_storage_bundle.json:
-    {
-      "question": {...},
-      "sources": [...],
-      "evidence": [...],
-      "gaps": [...],
-      "imported_from": "manual"
-    }
+    Handles two formats:
+    1. Manual fixture format (question/sources/evidence as flat dicts)
+    2. Full EvidenceBundle serialized JSON (from collect_evidence or model_dump_json)
     """
     raw = json.loads(path.read_text())
+
+    # If the JSON has Pydantic model structure (nested objects with all fields),
+    # try to parse it directly as an EvidenceBundle
+    if "imported_at" in raw and "question" in raw and isinstance(raw.get("sources"), list):
+        try:
+            bundle = EvidenceBundle.model_validate(raw)
+            # Still validate referential integrity
+            source_ids = {s.id for s in bundle.sources}
+            orphans = [e.id for e in bundle.evidence if e.source_id not in source_ids]
+            if orphans:
+                raise ValueError(f"Evidence items reference unknown sources: {orphans}")
+            return bundle
+        except Exception:
+            pass  # Fall through to manual format parsing
+
     return _build_bundle(raw, imported_from=raw.get("imported_from", "manual"))
+
+
+# Keep the old name as an alias for backwards compatibility
+load_manual_bundle = load_bundle
 
 
 def load_research_v3_bundle(graph_path: Path, query: str) -> EvidenceBundle:

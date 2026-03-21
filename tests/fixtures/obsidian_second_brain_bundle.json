@@ -1,0 +1,196 @@
+{
+  "question": {
+    "text": "Is Obsidian the best approach to create a second brain in which you can build a scalable, flexible knowledge base that you can build on for the rest of your life, optimized for AI readability and integration?",
+    "time_sensitivity": "time_sensitive",
+    "scope_notes": "Evaluating Obsidian against alternatives for a lifelong knowledge base. Key criteria: scalability to tens of thousands of notes, flexibility of structure, AI integration (RAG, LLM chat, agent access), longevity/portability, and optimization for machine readability alongside human use.",
+    "key_entities": ["Obsidian", "Logseq", "Notion", "Anytype", "Markdown"]
+  },
+  "sources": [
+    {
+      "id": "S-obs00001",
+      "url": "https://www.nxcode.io/resources/news/obsidian-ai-second-brain-complete-guide-2026",
+      "title": "Obsidian AI Second Brain: Complete Guide (2026)",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2026-01-15T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.85
+    },
+    {
+      "id": "S-obs00002",
+      "url": "https://www.eesel.ai/blog/obsidian-ai",
+      "title": "Obsidian AI Explained: How It Enhances Knowledge Management",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2025-10-01T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.75
+    },
+    {
+      "id": "S-obs00003",
+      "url": "https://www.lindy.ai/blog/obsidian-alternatives",
+      "title": "Top 10 Obsidian Alternatives to Take Better Notes in 2026",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2026-01-01T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.80
+    },
+    {
+      "id": "S-obs00004",
+      "url": "https://mattgiaro.com/second-brain-obsidian/",
+      "title": "How to Build a Second Brain in Obsidian: Complete Setup Guide",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2025-08-01T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.70
+    },
+    {
+      "id": "S-obs00005",
+      "url": "https://pub.towardsai.net/from-notes-to-knowledge-the-claude-and-obsidian-second-brain-setup-37af4f47486f",
+      "title": "From Notes to Knowledge: The Claude and Obsidian Second-Brain Setup",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2026-02-01T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.85
+    },
+    {
+      "id": "S-obs00006",
+      "url": "https://forum.obsidian.md/t/lifeos-building-my-second-brain-with-obsidian-para-method-periodic-notes-fullcalendar/62934",
+      "title": "LifeOS - Building My Second Brain with Obsidian (Forum)",
+      "source_type": "web_search",
+      "quality_tier": "secondary",
+      "published_at": "2025-06-01T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.60
+    },
+    {
+      "id": "S-obs00007",
+      "url": "https://alternativeto.net/software/obsidian/",
+      "title": "Best Obsidian Alternatives: Top Note-taking Tools in 2026",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2026-02-15T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.80
+    },
+    {
+      "id": "S-obs00008",
+      "url": "https://skywork.ai/skypage/en/unlocking-second-brain-ai-engineer-obisidian/1977909400263643136",
+      "title": "An AI Engineer's Deep Dive into Obsidian MCP Server",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2026-03-01T00:00:00Z",
+      "retrieved_at": "2026-03-21T22:00:00Z",
+      "recency_score": 0.90
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-obs00001",
+      "source_id": "S-obs00001",
+      "content": "Obsidian has crossed 1.5 million users with 22% year-over-year growth as of February 2026. Its local-first architecture means you're not locked into any single AI provider — you can use Claude, GPT, Gemini, or fully local models. The combination of local-first architecture, powerful linking, and AI integration creates a productivity system that grows more valuable over time.",
+      "content_type": "data_point",
+      "relevance_note": "Core scalability and AI flexibility claim for Obsidian.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00002",
+      "source_id": "S-obs00001",
+      "content": "All notes stored as plain Markdown files on your local filesystem. No proprietary database, no vendor lock-in. You can read and edit your notes with any text editor, version-control them with git, and process them with any programming language or AI tool that reads text files.",
+      "content_type": "text",
+      "relevance_note": "Markdown-as-filesystem is the core portability and AI-readability argument.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00003",
+      "source_id": "S-obs00002",
+      "content": "Obsidian's AI ecosystem includes RAG (Retrieval Augmented Generation) plugins that let you chat with your entire vault, semantic search across notes, and automated tagging and linking suggestions. The community plugin ecosystem has over 1,800 plugins as of 2025.",
+      "content_type": "data_point",
+      "relevance_note": "AI integration maturity and community ecosystem size.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00004",
+      "source_id": "S-obs00008",
+      "content": "The most significant 2026 development is connecting Claude Code or other AI agents to Obsidian via MCP (Model Context Protocol). This allows AI agents to read, search, create, and modify notes programmatically — turning the vault into a machine-readable knowledge base that agents can reason over directly.",
+      "content_type": "text",
+      "relevance_note": "MCP integration is the key AI-readability advancement — agents get direct vault access.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00005",
+      "source_id": "S-obs00003",
+      "content": "Obsidian's main limitations: no real-time collaboration (single-user by design), no built-in AI (requires community plugins), steep learning curve for advanced features, and sync requires paid Obsidian Sync or manual git setup. Mobile performance can degrade with large vaults.",
+      "content_type": "text",
+      "relevance_note": "Known limitations that affect the 'best approach' assessment.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00006",
+      "source_id": "S-obs00003",
+      "content": "Logseq is the closest alternative: free, open-source, outliner-first (every line is a block you can link to), with built-in graph view and daily journals. Uses Markdown/org-mode files locally. However, Logseq has a smaller plugin ecosystem and less mature AI integration than Obsidian.",
+      "content_type": "text",
+      "relevance_note": "Logseq as primary competitor — same local-first philosophy but different structure.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00007",
+      "source_id": "S-obs00007",
+      "content": "Anytype uses a local-first, object-oriented data model where everything is a typed object with custom properties and relations. Data is stored locally and encrypted, with peer-to-peer sync. Sets provide filterable database views. This structured approach is more naturally machine-readable than flat Markdown files but has a much smaller community.",
+      "content_type": "text",
+      "relevance_note": "Anytype's structured object model vs Obsidian's flat Markdown — key architectural tradeoff for AI readability.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00008",
+      "source_id": "S-obs00004",
+      "content": "The PARA method (Projects, Areas, Resources, Archive) is a popular organizational framework for Obsidian, but critics argue it requires constant maintenance, limits serendipitous connections, and doesn't scale well past a few thousand notes. Alternative approaches include Maps of Content (MOCs), the Zettelkasten method, and tag-based flat structures.",
+      "content_type": "text",
+      "relevance_note": "Organizational method matters for long-term scalability — folder hierarchies vs linking.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00009",
+      "source_id": "S-obs00005",
+      "content": "For AI-optimized knowledge bases, the key insight is that plain Markdown with consistent frontmatter (YAML metadata blocks) creates the best of both worlds: human-readable notes that are also trivially parseable by AI agents. Frontmatter fields like tags, date, type, and linked concepts give AI structured handles without sacrificing the flexibility of free-form text.",
+      "content_type": "text",
+      "relevance_note": "Specific technique for making Obsidian vaults AI-readable: Markdown + YAML frontmatter.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00010",
+      "source_id": "S-obs00006",
+      "content": "Users report that Obsidian vaults with 10,000+ notes remain responsive on desktop but mobile performance degrades significantly. Git-based sync works but requires technical knowledge. The app's performance depends heavily on the number of active plugins — users with 30+ plugins report startup times of 5-10 seconds.",
+      "content_type": "data_point",
+      "relevance_note": "Real-world scaling data: 10K+ notes works on desktop, mobile is the bottleneck.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00011",
+      "source_id": "S-obs00008",
+      "content": "Notion offers powerful structured databases and real-time collaboration but stores data in a proprietary cloud format. Export to Markdown is possible but lossy — database views, relations, and formulas don't survive export cleanly. For lifelong knowledge bases, this creates lock-in risk. Notion AI is built-in but operates on Notion's proprietary format, not on portable files.",
+      "content_type": "text",
+      "relevance_note": "Notion's structured power comes at the cost of portability and vendor lock-in.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-obs00012",
+      "source_id": "S-obs00002",
+      "content": "The Obsidian community has developed specialized AI plugins: Smart Connections (semantic search + chat), Copilot (multi-model AI assistant), Text Generator (GPT-powered writing), and various RAG implementations. These are community-maintained, not official Obsidian features, which creates reliability and maintenance risk for long-term use.",
+      "content_type": "text",
+      "relevance_note": "AI plugins are community-maintained — reliability risk for lifelong dependence.",
+      "extraction_method": "manual"
+    }
+  ],
+  "gaps": [
+    "No long-term studies (5+ years) on Obsidian vault maintainability at scale",
+    "No quantitative comparison of AI retrieval accuracy: Obsidian RAG plugins vs Notion AI vs structured databases",
+    "No data on how well Obsidian Markdown + frontmatter performs as input to modern agentic AI systems compared to structured formats like JSON-LD or knowledge graphs",
+    "No evidence on Anytype's AI integration roadmap or current capabilities"
+  ],
+  "imported_from": "manual",
+  "imported_at": "2026-03-21T22:00:00Z"
+}
