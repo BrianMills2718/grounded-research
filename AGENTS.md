@@ -193,6 +193,22 @@ Before full implementations exist, each notebook phase must still emit explicit 
 
 Keep notebook contracts aligned with docs, schemas, and tests.
 
+### 12. Plan-Gated Implementation
+
+Do not start code implementation in this repo until `docs/PLAN.md` exists and is current.
+
+At minimum, the plan must define:
+
+- current direction
+- success criteria
+- long-term execution phases
+- deferred-but-retained capabilities
+- immediate next step
+
+If scope, sequencing, or acceptance criteria change, update `docs/PLAN.md` first.
+
+If the change is architectural, update the relevant ADR before continuing.
+
 ## Architecture Priorities
 
 Keep the runtime architecture clean and layered:
