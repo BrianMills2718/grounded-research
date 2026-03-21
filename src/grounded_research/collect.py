@@ -1,14 +1,18 @@
 """Evidence collection from a research question.
 
 Takes a question string and automatically builds an EvidenceBundle by:
-1. Generating search queries via LLM
-2. Searching via Brave Search API
-3. Fetching and extracting content from top results
-4. Structuring everything into an EvidenceBundle
+1. Generating diverse search queries via LLM
+2. Searching via Brave Search API with recency filtering
+3. Fetching and extracting full page content from top results
+4. Extracting multiple evidence items per page
+5. Structuring everything into an EvidenceBundle
 
-This bridges the gap between "user asks a question" and "pipeline has
-an evidence bundle to analyze." It uses research_v3's proven search
-and fetch tools.
+Depth is configurable via config.yaml collection settings. The default
+is tuned for thorough research (10 queries, 20 sources, multiple
+evidence extractions per page).
+
+Uses research_v3's proven search and fetch tools (Brave Search API,
+BeautifulSoup page extraction).
 """
 
 from __future__ import annotations
@@ -27,12 +31,20 @@ from grounded_research.models import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
+# Freshness map for time_sensitivity
+_FRESHNESS_MAP = {
+    "time_sensitive": "pm",  # past month for fast-moving topics
+    "mixed": "py",           # past year for general topics
+    "stable": "none",        # no freshness filter for timeless topics
+}
+
 
 async def generate_search_queries(
     question: str,
     trace_id: str,
     max_budget: float = 0.5,
-    num_queries: int = 5,
+    num_queries: int = 10,
+    time_sensitivity: str = "mixed",
 ) -> list[str]:
     """Generate diverse search queries for a research question via LLM."""
     from llm_client import acall_llm_structured
@@ -42,18 +54,31 @@ async def generate_search_queries(
         """LLM output: search queries for evidence collection."""
         queries: list[str] = Field(description="Diverse search queries to gather evidence.")
 
+    recency_note = ""
+    if time_sensitivity == "time_sensitive":
+        recency_note = (
+            "This is a time-sensitive topic. Include the current year (2026) "
+            "in at least half the queries to find recent information. "
+            "Prefer queries that will surface recent blog posts, documentation, "
+            "changelogs, and current-year comparisons."
+        )
+
     model = get_model("analyst")
     result, _meta = await acall_llm_structured(
         model,
         [
             {"role": "system", "content": (
-                "Generate diverse search queries to gather evidence for answering "
-                "a research question. Include queries that would find: "
-                "(1) arguments FOR the main thesis, "
-                "(2) arguments AGAINST or alternatives, "
-                "(3) concrete data/benchmarks, "
-                "(4) real-world experience reports, "
-                "(5) expert opinions or reviews. "
+                "Generate diverse search queries to gather comprehensive evidence "
+                "for answering a research question. Include queries that would find:\n"
+                "(1) arguments FOR the main thesis\n"
+                "(2) arguments AGAINST or alternatives\n"
+                "(3) concrete data, benchmarks, or performance comparisons\n"
+                "(4) real-world experience reports and case studies\n"
+                "(5) expert opinions, reviews, or analyses\n"
+                "(6) limitations, criticisms, and failure modes\n"
+                "(7) comparison with competing approaches\n"
+                "(8) long-term maintainability and scaling evidence\n"
+                f"\n{recency_note}\n"
                 f"Generate exactly {num_queries} queries."
             )},
             {"role": "user", "content": question},
@@ -69,18 +94,29 @@ async def generate_search_queries(
 async def collect_evidence(
     question: str,
     trace_id: str,
-    max_sources: int = 10,
+    max_sources: int = 20,
     max_budget: float = 1.0,
     time_sensitivity: str = "mixed",
     scope_notes: str = "",
+    num_queries: int = 10,
+    results_per_query: int = 10,
 ) -> EvidenceBundle:
     """Collect evidence for a research question from web sources.
 
-    Searches the web, fetches top results, and structures everything
-    into an EvidenceBundle ready for the adjudication pipeline.
+    Searches the web, fetches top results with full page content
+    extraction, and structures everything into an EvidenceBundle.
+
+    Depth is controlled by num_queries × results_per_query for search
+    breadth, and max_sources for how many pages to actually fetch.
     """
     from grounded_research.tools.brave_search import search_web
     from grounded_research.tools.fetch_page import fetch_page, set_pages_dir
+
+    config = load_config()
+    collection_cfg = config.get("collection", {})
+    num_queries = collection_cfg.get("num_queries", num_queries)
+    results_per_query = collection_cfg.get("results_per_query", results_per_query)
+    max_sources = collection_cfg.get("max_sources", max_sources)
 
     # Set up pages directory for full-text caching
     pages_dir = _PROJECT_ROOT / "output" / "pages"
@@ -92,9 +128,17 @@ async def collect_evidence(
         scope_notes=scope_notes,
     )
 
-    print(f"  Generating search queries...")
-    queries = await generate_search_queries(question, trace_id, max_budget=max_budget * 0.1)
-    print(f"  Generated {len(queries)} queries")
+    # Determine freshness filter based on time sensitivity
+    freshness = _FRESHNESS_MAP.get(time_sensitivity, "py")
+
+    print(f"  Generating {num_queries} search queries...")
+    queries = await generate_search_queries(
+        question, trace_id,
+        max_budget=max_budget * 0.1,
+        num_queries=num_queries,
+        time_sensitivity=time_sensitivity,
+    )
+    print(f"  Generated {len(queries)} queries (freshness: {freshness})")
 
     # Search across all queries, deduplicate by URL
     all_search_results: list[dict] = []
@@ -102,7 +146,8 @@ async def collect_evidence(
 
     for q in queries:
         try:
-            raw = await search_web(q, count=5)
+            # First search with freshness filter for recency
+            raw = await search_web(q, count=results_per_query, freshness=freshness)
             data = json.loads(raw)
             for r in data.get("results", []):
                 url = r.get("url", "")
@@ -110,13 +155,27 @@ async def collect_evidence(
                     seen_urls.add(url)
                     r["search_query"] = q
                     all_search_results.append(r)
+
+            # For time-sensitive topics, also do an unfiltered search
+            # to catch authoritative older sources
+            if time_sensitivity == "time_sensitive":
+                raw_unfiltered = await search_web(q, count=3, freshness="none")
+                data_unfiltered = json.loads(raw_unfiltered)
+                for r in data_unfiltered.get("results", []):
+                    url = r.get("url", "")
+                    if url and url not in seen_urls:
+                        seen_urls.add(url)
+                        r["search_query"] = q
+                        r["recency_note"] = "unfiltered_complement"
+                        all_search_results.append(r)
+
         except Exception as e:
-            print(f"  Search failed for '{q[:40]}...': {e}")
+            print(f"  Search failed for '{q[:50]}...': {e}")
 
     print(f"  Found {len(all_search_results)} unique URLs across {len(queries)} queries")
 
-    # Take top results by diversity (pick from different queries)
-    selected = all_search_results[:max_sources]
+    # Select top results — prefer diversity across queries
+    selected = _select_diverse(all_search_results, max_sources)
 
     # Fetch page content for each result
     sources: list[SourceRecord] = []
@@ -127,6 +186,10 @@ async def collect_evidence(
         url = result["url"]
         title = result.get("title", "")
         description = result.get("description", "")
+        age = result.get("age", "")
+
+        # Estimate recency score from age string
+        recency_score = _estimate_recency(age)
 
         source = SourceRecord(
             url=url,
@@ -134,12 +197,12 @@ async def collect_evidence(
             source_type="web_search",
             quality_tier="reliable",
             retrieved_at=datetime.now(timezone.utc),
-            recency_score=0.7,
+            recency_score=recency_score,
         )
         sources.append(source)
 
-        # Add search snippet as initial evidence
-        if description:
+        # Add search snippet as evidence
+        if description and len(description) > 30:
             evidence.append(EvidenceItem(
                 source_id=source.id,
                 content=description,
@@ -158,32 +221,34 @@ async def collect_evidence(
                 gaps.append(f"Failed to fetch {url}: {page_data['error']}")
                 continue
 
-            # Add key section as evidence if available
+            char_count = page_data.get("char_count", 0)
+
+            # Add key section as evidence (question-targeted extraction)
             key_section = page_data.get("key_section", "")
             if key_section and len(key_section) > 50:
                 evidence.append(EvidenceItem(
                     source_id=source.id,
                     content=key_section,
                     content_type="text",
-                    relevance_note=f"Key section extracted for: {question[:60]}",
+                    relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
                     extraction_method="llm",
                 ))
 
-            # Add notes as evidence if key_section wasn't useful
+            # Also add notes if they contain different content
             notes = page_data.get("notes", "")
-            if notes and not key_section and len(notes) > 50:
+            if notes and len(notes) > 50 and notes != key_section[:len(notes)]:
                 evidence.append(EvidenceItem(
                     source_id=source.id,
                     content=notes,
                     content_type="summary",
-                    relevance_note="Page summary (key section extraction failed)",
+                    relevance_note=f"Page summary ({char_count} chars total)",
                     extraction_method="llm",
                 ))
 
         except Exception as e:
             gaps.append(f"Failed to fetch {url}: {e}")
 
-    print(f"  Collected {len(sources)} sources, {len(evidence)} evidence items")
+    print(f"  Collected {len(sources)} sources, {len(evidence)} evidence items, {len(gaps)} gaps")
 
     return EvidenceBundle(
         question=research_q,
@@ -192,3 +257,60 @@ async def collect_evidence(
         gaps=gaps,
         imported_from="brave_search",
     )
+
+
+def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
+    """Select results with diversity across search queries.
+
+    Round-robin picks from each query's results to avoid one query
+    dominating the evidence set.
+    """
+    by_query: dict[str, list[dict]] = {}
+    for r in results:
+        q = r.get("search_query", "")
+        by_query.setdefault(q, []).append(r)
+
+    selected: list[dict] = []
+    seen: set[str] = set()
+    max_rounds = max_items
+
+    for round_num in range(max_rounds):
+        added_this_round = False
+        for q, items in by_query.items():
+            if round_num < len(items):
+                url = items[round_num]["url"]
+                if url not in seen:
+                    seen.add(url)
+                    selected.append(items[round_num])
+                    added_this_round = True
+                    if len(selected) >= max_items:
+                        return selected
+        if not added_this_round:
+            break
+
+    return selected
+
+
+def _estimate_recency(age: str) -> float:
+    """Estimate a recency score from Brave's age string (e.g., '2 days ago', '3 months ago')."""
+    if not age:
+        return 0.5
+
+    age_lower = age.lower()
+    if "hour" in age_lower or "minute" in age_lower:
+        return 0.95
+    if "day" in age_lower:
+        return 0.90
+    if "week" in age_lower:
+        return 0.80
+    if "month" in age_lower:
+        # Try to extract number
+        parts = age_lower.split()
+        try:
+            months = int(parts[0])
+            return max(0.4, 0.80 - months * 0.05)
+        except (ValueError, IndexError):
+            return 0.65
+    if "year" in age_lower:
+        return 0.3
+    return 0.5
