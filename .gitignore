@@ -5,6 +5,13 @@ __pycache__/
 .ruff_cache/
 .ipynb_checkpoints/
 
+# Pipeline output artifacts
 report.md
 trace.json
 *.log
+
+# Pre-pivot archive (reference only, contains binaries)
+docs/original_plans_may_be_deprecated/
+
+# Hook session state
+.claude/hook_log.jsonl
