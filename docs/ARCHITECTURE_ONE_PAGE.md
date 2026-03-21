@@ -64,35 +64,10 @@ Approved external upstream candidates:
 - treat external research engines as upstream inputs or baselines, not as the
   core adjudication runtime
 
-## Execution Boundary
-
-The layers below are logical boundaries over typed artifacts.
-
-They are not a requirement to implement one monolithic phase runner.
-
-Approved execution modes:
-
-- `structured`: direct `llm_client` structured calls for predictable schema-producing transforms
-- `agent_sdk`: agent SDK models such as `claude-code` or `codex` via `llm_client` when open-ended tool use or broader agentic exploration is clearly better
-- `workflow`: `llm_client.workflow_langgraph` only when explicit checkpoint/resume, approval pauses, or durable workflow state are needed
-
-Default rule:
-
-- prefer the simplest execution mode that preserves the contract cleanly
-- keep the product contract stable even if the execution mode changes
-- use isolated subagents only for bounded verbose tasks that would otherwise bloat the coordinator context
-- do not build a custom workflow engine in this repo by default
-
 ## Runtime Layers
 
 These are artifact and responsibility boundaries, not a mandatory process
-topology.
-
-If subagents are used, the coordinator should remain thin and deterministic:
-
-- subagents do verbose or tool-heavy work in isolated contexts
-- subagents return compact typed artifacts
-- the coordinator owns routing, ledger mutation, grounding, and trace semantics
+topology. The product boundary is the typed artifacts and their validation.
 
 ### 1. Ingest
 
@@ -148,7 +123,6 @@ Preferred frame set after the core slice is stable:
 Non-negotiable:
 
 - analysts never see each other's outputs
-- analyst outputs should return as compact `AnalystRun` artifacts, not full intermediate histories
 
 ### 3. Canonicalize
 
@@ -169,12 +143,12 @@ Purpose:
 - preserve analyst provenance and evidence links
 - classify disputes
 
-Planned dispute types after the core slice is stable:
+Dispute types defined in the schema:
 
-- `factual_conflict`
-- `interpretive_conflict`
-- `preference_conflict`
-- `ambiguity`
+- `factual_conflict` — v1 core, routes to `verify`
+- `interpretive_conflict` — v1 core, routes to `arbitrate`
+- `preference_conflict` — v1 core, routes to `surface` (shown in report, no auto-resolution)
+- `ambiguity` — v1 core, routes to `surface` (user-clarification routing is deferred, see `SCOPE_MATRIX_V2.md`)
 
 Rule:
 
@@ -203,8 +177,9 @@ Purpose:
 Rule:
 
 - verification must reference newly retrieved evidence
-- claim revisions require new evidence, a corrected assumption, or a resolved contradiction
 - unresolved disputes remain explicit rather than being flattened away
+- hard claim-revision rule (revisions require new evidence, a corrected
+  assumption, or a resolved contradiction) is deferred — see `SCOPE_MATRIX_V2.md`
 
 ### 5. Export
 
@@ -224,7 +199,8 @@ Output:
 
 Purpose:
 
-- render recommendation, alternatives, disagreement map, assumptions, evidence gaps, and flip conditions
+- render recommendation, alternatives, disagreement map, evidence gaps, and flip conditions
+- explicit assumptions section is deferred — see `SCOPE_MATRIX_V2.md`
 - validate grounding before export
 
 Rule:
@@ -310,9 +286,6 @@ retrieving, iterating on strategy:
 
 - Phase 4: verification and arbitration (must search for new evidence)
 
-Use dispute-scoped isolated contexts here so verification work does not bloat
-the coordinator prompt.
-
 ### Planned Agentic Upgrade Path
 
 Phase 2 (analyst) starts as structured calls in v1 because the golden-set
@@ -321,9 +294,6 @@ comfortably in a single call, analysts should be promoted to agentic with
 tools for selective evidence reading. The `AnalystRun` output contract stays
 the same either way — the upgrade is in how the LLM produces it, not in what
 it produces.
-
-When that upgrade happens, each analyst should run in its own isolated context
-and return only the final `AnalystRun`.
 
 ### What Does Not Change
 
@@ -372,58 +342,9 @@ Its purpose is to let the user review the project as an end-to-end journey:
 
 Before full implementations exist, the notebook should still emit provisional artifacts for each phase.
 
-## Planned After Core Stabilization
+## Scope and Deferrals
 
-These capabilities remain part of the project plan even if they do not land in
-the smallest falsifiable slice:
+See `docs/SCOPE_MATRIX_V2.md` for the canonical core/deferred/cut lists.
 
-- explicit `ambiguity` disputes with user-clarification routing
-- a canonical `AssumptionLedger` or equivalent first-class assumption state
-- fixed named reasoning frames rather than ad hoc analyst personas
-- persistent Stage `1v` caveats and warnings in pipeline state
-- arbitration rules that constrain claim changes to new evidence, corrected assumptions, or resolved contradictions
-- an explicit assumptions section in the final report
-
-## External Reuse Strategy
-
-Directly leverage these as optional upstream providers or benchmark baselines:
-
-- STORM / `knowledge-storm`
-- GPT Researcher
-
-Conditionally leverage:
-
-- LangGraph, but only if resumable or interruptible workflow becomes a real
-  implementation need
-
-Do not use these as core runtime dependencies for v1:
-
-- AutoGen
-- DebateLLM
-- MedAgents
-- MetaGPT
-- Free-MAD
-- Exchange-of-Thought implementations
-
-## v1 Scope
-
-Keep v1 to the smallest falsifiable system:
-
-1. typed schemas and full trace
-2. upstream evidence-ingest adapters
-3. one structured analyst
-4. 3 independent analysts over imported evidence
-5. claim extraction, deduplication, and dispute detection
-6. narrow verification for factual and interpretive disputes
-7. grounded report synthesis and downstream handoff
-8. canonical review notebook
-
-Defer:
-
-- new retrieval orchestration
-- new planning stack
-- novelty stopping
-- runtime bias instrumentation
-- Grok/X integration
-- elaborate planner retry loops
-- advanced runtime anti-manipulation features
+See `docs/adr/0002-approved-external-reuse-strategy.md` for external reuse
+decisions.

@@ -1,6 +1,8 @@
 # Grounded Research Adjudication
 
-This file is the canonical operating guide for this project. `AGENTS.md` must mirror it exactly.
+This file is the canonical operating guide for this project. `AGENTS.md` is a
+generated projection maintained by the governance framework
+(`--refresh-agents`). Edit this file first; regenerate AGENTS.md from it.
 
 ## Purpose
 
@@ -27,7 +29,7 @@ Primary downstream consumer:
 
 - `onto-canon`
 
-## Core Operating Principles
+## Principles
 
 ### 1. Adjudication First
 
@@ -152,34 +154,19 @@ It does not require one concrete executor architecture.
 Treat pipeline phases as artifact boundaries, not as a mandate to build a
 custom phase runner.
 
-Preferred execution modes:
+Execution modes available via `llm_client`:
 
-- `call_llm_structured` / `acall_llm_structured` for predictable schema-first
-  transforms where the full input fits in context (analysis, classification,
-  deduplication, synthesis)
-- `acall_llm(..., python_tools=[...])` for phases that intrinsically require
-  tool use — searching, retrieving, iterating on strategy. The agent loop is
-  managed by `llm_client`. Phase 4 (verification/arbitration) should use this
-  from the start. Phase 2 (analysts) should upgrade to this when evidence
-  bundles outgrow single-call context.
-- `llm_client.workflow_langgraph` only when explicit checkpoint/resume,
-  approval pauses, or durable workflow state are real requirements
+- **Structured call** (`call_llm_structured`): default for phases where input
+  fits in context and output is a single Pydantic model.
+- **Agent loop with tools** (`acall_llm(..., python_tools=[...])`): for phases
+  that intrinsically require tool use (searching, iterating). Expected for
+  Phase 4 (verification/arbitration).
+- **Agent SDK** (`claude-code`, `codex`): available for experimentation and
+  comparison. Phase -1 should compare structured calls against at least one
+  agent SDK path when practical.
 
-Subagents are a selective context-hygiene tool, not a default runtime style.
-
-Use isolated subagents only when the task is:
-
-- tool-heavy
-- likely to generate large intermediate state
-- bounded enough to return a compact typed artifact
-
-Do not use subagents for deterministic bookkeeping steps such as routing-table
-lookup, ID assignment, ledger mutation, grounding validation, or trace
-serialization.
-
-Do not default to structured calls when the task naturally involves tool use.
-Do not default to agentic loops when a single structured call suffices.
-Match the execution mode to the task.
+Match the execution mode to the task. The output contracts (Pydantic models)
+stay the same regardless of which execution mode produces them.
 
 Do not build a bespoke workflow engine, agent loop, or tool-calling framework
 in this repo. Use `llm_client`'s existing infrastructure.
@@ -261,18 +248,8 @@ Keep the runtime architecture clean and layered:
 
 Do not turn internal substeps into a sprawling public stage taxonomy.
 
-These layers are logical contracts, not a required process topology.
-
-They may be executed by:
-
-- direct structured calls
-- agent SDK calls
-- a narrow workflow wrapper when pause/resume or approvals are actually needed
-
-If agent SDK execution is used, keep the coordinator thin and make subagents
-return compact typed artifacts rather than full intermediate histories.
-
-The product boundary is the typed artifacts and their validation, not one
+These layers are logical contracts, not a required process topology. The
+product boundary is the typed artifacts and their validation, not one
 mandatory orchestration style.
 
 ## Non-Negotiable v1 Rules
@@ -301,14 +278,23 @@ Build in this order:
 11. grounded export and downstream handoff (Phase 5)
 12. only then consider user steering, smarter stopping, and richer runtime checks
 
-## Documentation To Read First
+## Workflow
 
-1. `CLAUDE.md`
-2. `docs/adr/0001-adjudication-first-scope.md`
-3. `docs/PLAN.md`
-4. `docs/DOMAIN_MODEL.md`
-5. `docs/CONTRACTS.md`
-6. `docs/ARCHITECTURE_ONE_PAGE.md`
-7. `docs/V1_IMPLEMENTATION_BRIEF.md`
-8. `docs/SCOPE_MATRIX_V2.md`
-9. `docs/notebooks/01_adjudication_review_journey.ipynb`
+1. Update `docs/PLAN.md` before any architectural change.
+2. Keep typed schemas and contracts at the center of implementation.
+3. All LLM calls through `llm_client` with `task=`, `trace_id=`, `max_budget=`.
+4. Commit at independently verified milestones.
+
+## Commands
+
+- `python -m pytest tests/`: run tests
+- `pip install -e .`: install package into local `.venv`
+
+## References
+
+- `docs/PLAN.md` — execution plan and acceptance criteria
+- `docs/CONTRACTS.md` — inter-phase data flow contracts
+- `docs/ARCHITECTURE_ONE_PAGE.md` — system boundary and runtime layers
+- `docs/SCOPE_MATRIX_V2.md` — canonical deferred/cut lists
+- `docs/adr/` — architectural decision records
+- `docs/notebooks/01_adjudication_review_journey.ipynb` — canonical review notebook

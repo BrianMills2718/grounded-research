@@ -1,33 +1,37 @@
 # Grounded Research Adjudication
 
-This file is the canonical operating guide for this project. `AGENTS.md` must mirror it exactly.
+<!-- GENERATED FILE: DO NOT EDIT DIRECTLY -->
+<!-- generated_by: scripts/meta/render_agents_md.py -->
+<!-- canonical_claude: CLAUDE.md -->
+<!-- canonical_relationships: scripts/relationships.yaml -->
+<!-- canonical_relationships_sha256: 2535f6f9faf6 -->
+<!-- sync_check: python scripts/meta/check_agents_sync.py --check -->
+
+This file is a generated Codex-oriented projection of repo governance.
+Edit the canonical sources instead of editing this file directly.
+
+Canonical governance sources:
+- `CLAUDE.md` — human-readable project rules, workflow, and references
+- `scripts/relationships.yaml` — machine-readable ADR, coupling, and required-reading graph
 
 ## Purpose
 
-Build an adjudication-first layer for grounded research.
+This file is the canonical operating guide for this project. `AGENTS.md` is a
+generated projection maintained by the governance framework
+(`--refresh-agents`). Edit this file first; regenerate AGENTS.md from it.
 
-This project does not start as a new end-to-end research pipeline.
+## Commands
 
-Its v1 job is narrower and more valuable:
+- `python -m pytest tests/`: run tests
+- `pip install -e .`: install package into local `.venv`
 
-- consume evidence from existing upstream systems or manual bundles
-- run independent analyst passes over shared evidence
-- canonicalize outputs into a claim ledger
-- detect and classify disputes
-- verify a narrow subset of disputes with fresh evidence
-- export a report and trace that can be reviewed by humans and fed downstream
+## Operating Rules
 
-Primary upstream sources:
+This projection keeps the highest-signal rules in always-on Codex context.
+For full project structure, detailed terminology, and any rule omitted here,
+read `CLAUDE.md` directly.
 
-- `research_v3`
-- manual evidence bundles
-- other research engines when useful
-
-Primary downstream consumer:
-
-- `onto-canon`
-
-## Core Operating Principles
+### Principles
 
 ### 1. Adjudication First
 
@@ -152,34 +156,19 @@ It does not require one concrete executor architecture.
 Treat pipeline phases as artifact boundaries, not as a mandate to build a
 custom phase runner.
 
-Preferred execution modes:
+Execution modes available via `llm_client`:
 
-- `call_llm_structured` / `acall_llm_structured` for predictable schema-first
-  transforms where the full input fits in context (analysis, classification,
-  deduplication, synthesis)
-- `acall_llm(..., python_tools=[...])` for phases that intrinsically require
-  tool use — searching, retrieving, iterating on strategy. The agent loop is
-  managed by `llm_client`. Phase 4 (verification/arbitration) should use this
-  from the start. Phase 2 (analysts) should upgrade to this when evidence
-  bundles outgrow single-call context.
-- `llm_client.workflow_langgraph` only when explicit checkpoint/resume,
-  approval pauses, or durable workflow state are real requirements
+- **Structured call** (`call_llm_structured`): default for phases where input
+  fits in context and output is a single Pydantic model.
+- **Agent loop with tools** (`acall_llm(..., python_tools=[...])`): for phases
+  that intrinsically require tool use (searching, iterating). Expected for
+  Phase 4 (verification/arbitration).
+- **Agent SDK** (`claude-code`, `codex`): available for experimentation and
+  comparison. Phase -1 should compare structured calls against at least one
+  agent SDK path when practical.
 
-Subagents are a selective context-hygiene tool, not a default runtime style.
-
-Use isolated subagents only when the task is:
-
-- tool-heavy
-- likely to generate large intermediate state
-- bounded enough to return a compact typed artifact
-
-Do not use subagents for deterministic bookkeeping steps such as routing-table
-lookup, ID assignment, ledger mutation, grounding validation, or trace
-serialization.
-
-Do not default to structured calls when the task naturally involves tool use.
-Do not default to agentic loops when a single structured call suffices.
-Match the execution mode to the task.
+Match the execution mode to the task. The output contracts (Pydantic models)
+stay the same regardless of which execution mode produces them.
 
 Do not build a bespoke workflow engine, agent loop, or tool-calling framework
 in this repo. Use `llm_client`'s existing infrastructure.
@@ -249,66 +238,22 @@ If scope, sequencing, or acceptance criteria change, update `docs/PLAN.md` first
 
 If the change is architectural, update the relevant ADR before continuing.
 
-## Architecture Priorities
+### Workflow
 
-Keep the runtime architecture clean and layered:
+1. Update `docs/PLAN.md` before any architectural change.
+2. Keep typed schemas and contracts at the center of implementation.
+3. All LLM calls through `llm_client` with `task=`, `trace_id=`, `max_budget=`.
+4. Commit at independently verified milestones.
 
-1. Ingest
-2. Analyze
-3. Canonicalize
-4. Adjudicate
-5. Export
+## Machine-Readable Governance
 
-Do not turn internal substeps into a sprawling public stage taxonomy.
+`scripts/relationships.yaml` is the source of truth for machine-readable governance in this repo: ADR coupling, required-reading edges, and doc-code linkage. This generated file does not inline that graph; it records the canonical path and sync marker, then points operators and validators back to the source graph. Prefer deterministic validators over prompt-only memory when those scripts are available.
 
-These layers are logical contracts, not a required process topology.
+## References
 
-They may be executed by:
-
-- direct structured calls
-- agent SDK calls
-- a narrow workflow wrapper when pause/resume or approvals are actually needed
-
-If agent SDK execution is used, keep the coordinator thin and make subagents
-return compact typed artifacts rather than full intermediate histories.
-
-The product boundary is the typed artifacts and their validation, not one
-mandatory orchestration style.
-
-## Non-Negotiable v1 Rules
-
-1. Models analyzing evidence must not see each other's outputs.
-2. Every material recommendation must cite claim IDs.
-3. Every cited claim must map to evidence IDs and source records.
-4. Routing decisions must be deterministic in code, even when dispute classification is LLM-assisted.
-5. A failed run with a rich partial trace is better than a polished but ungrounded report.
-6. V1 consumes upstream evidence; it does not rebuild a competing retrieval stack.
-
-## Implementation Order
-
-Build in this order:
-
-1. domain model, contracts, typed schemas, and trace (done — `DOMAIN_MODEL.md`, `models.py`, `CONTRACTS.md`)
-2. `pyproject.toml`, per-project `.venv`, `config/config.yaml`, `prompts/`, and a canonical review notebook
-3. evidence-ingest adapters for upstream bundles
-4. one grounded analyst over imported evidence (Phase 2a)
-5. three independent analysts (Phase 2b)
-6. claim extraction (Phase 3a)
-7. semantic deduplication (Phase 3b)
-8. ledger assembly and dispute detection (Phase 3c)
-9. verification query generation (Phase 4a)
-10. arbitration and ledger update (Phase 4b)
-11. grounded export and downstream handoff (Phase 5)
-12. only then consider user steering, smarter stopping, and richer runtime checks
-
-## Documentation To Read First
-
-1. `CLAUDE.md`
-2. `docs/adr/0001-adjudication-first-scope.md`
-3. `docs/PLAN.md`
-4. `docs/DOMAIN_MODEL.md`
-5. `docs/CONTRACTS.md`
-6. `docs/ARCHITECTURE_ONE_PAGE.md`
-7. `docs/V1_IMPLEMENTATION_BRIEF.md`
-8. `docs/SCOPE_MATRIX_V2.md`
-9. `docs/notebooks/01_adjudication_review_journey.ipynb`
+- `docs/PLAN.md` — execution plan and acceptance criteria
+- `docs/CONTRACTS.md` — inter-phase data flow contracts
+- `docs/ARCHITECTURE_ONE_PAGE.md` — system boundary and runtime layers
+- `docs/SCOPE_MATRIX_V2.md` — canonical deferred/cut lists
+- `docs/adr/` — architectural decision records
+- `docs/notebooks/01_adjudication_review_journey.ipynb` — canonical review notebook

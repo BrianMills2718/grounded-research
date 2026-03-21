@@ -26,7 +26,9 @@ These support the thesis-proving slice and should stay on the critical path:
 These are valuable and should remain visible in planning, but they do not need
 to block the smallest useful version:
 
-- explicit `ambiguity` dispute type and routing to user clarification
+- `ambiguity` dispute user-clarification routing (the type exists in the
+  schema and routes to `surface`; what's deferred is interactive user
+  clarification before arbitration)
 - a canonical `AssumptionLedger` or equivalent first-class assumption state
 - stronger fixed reasoning frames:
   - `verification_first`

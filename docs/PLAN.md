@@ -27,7 +27,7 @@ workflow engine.
 - ADR recorded
 - external reuse strategy recorded
 - one-page architecture written
-- v1 brief written
+- v1 brief absorbed into this plan (deleted as redundant)
 - domain model draft written (`docs/DOMAIN_MODEL.md`)
 - scope matrix written
 - Pydantic models defined (`src/grounded_research/models.py`)
@@ -58,24 +58,14 @@ The repo owns:
 
 The repo does not require one executor implementation.
 
-Approved execution modes for v1:
+Execution modes available via `llm_client` (see `CLAUDE.md` for details):
 
-- `structured`: `call_llm_structured` / `acall_llm_structured` for schema-first transforms
-- `agent_sdk`: agent SDK models such as `claude-code` or `codex` via `llm_client` when open-ended tool use or broader agentic exploration is clearly better
-- `workflow`: `llm_client.workflow_langgraph` only when explicit checkpoint/resume, approval pauses, or durable state become necessary
+- **Structured call**: default for phases where input fits in context
+- **Agent loop with tools**: for phases requiring tool use (Phase 4)
+- **Agent SDK** (claude-code, codex): available for experimentation
 
-Default posture:
-
-- prefer `structured` mode for deterministic artifact-producing steps
-- use `agent_sdk` selectively where search, tool use, or open-ended verification work benefits from agentic behavior
-- use isolated subagents only for bounded verbose tasks that would otherwise pollute coordinator context
-- do not build a custom workflow engine in this repo by default
-
-Context-hygiene rule:
-
-- subagents must return compact typed artifacts, not full intermediate histories
-- do not use subagents for deterministic bookkeeping steps
-- if using Codex-backed agent execution, keep tool surfaces especially small because tool-definition bloat is less forgiving there
+Phase -1 should compare structured calls against at least one agent SDK
+path when practical. Output contracts stay the same regardless of mode.
 
 ## Execution Order
 
@@ -94,8 +84,6 @@ Build:
 - 3 independent analyst calls via `llm_client`
 - a minimal claim extraction pass
 - a reviewable trace artifact
-- at least one execution mode, ideally `structured`
-- when practical, one comparison between `structured` and `agent_sdk` execution on the same evidence bundle
 - at least one baseline comparison path when practical:
   - manual or `research_v3` evidence
   - STORM or GPT Researcher output
@@ -114,12 +102,24 @@ Fail if:
 - disagreements are mostly stylistic
 - re-checking evidence rarely changes the outcome
 
+Manual review rubric for Phase -1 output:
+
+For each analyst pair (Alpha-Beta, Alpha-Gamma, Beta-Gamma), score:
+
+1. **Substantive disagreement**: Do the analysts reach different conclusions
+   or recommend different actions? (yes/no)
+2. **Decision-relevant**: Would the disagreement change what a team actually
+   does? (yes/no/marginal)
+3. **Evidence-grounded**: Do the analysts cite different evidence for their
+   positions, or just frame the same evidence differently? (different evidence /
+   different framing / both)
+4. **Resolvable**: Could targeted new evidence plausibly resolve the
+   disagreement? (yes/no/unclear)
+
+Pass threshold: at least 2 of 3 analyst pairs show substantive,
+decision-relevant disagreement grounded in different evidence readings.
+
 Promotion: `planned` → `live` (standalone script, no framework dependency)
-
-Subagent note:
-
-- analyst isolation is desirable because the 3 analysts are naturally bounded parallel subtasks
-- do not add tool-using verification subagents yet unless the first live runs show context bloat is a real bottleneck
 
 ### Phase 0: Domain Model, Contracts, Trace, And Review Surface
 
@@ -227,11 +227,6 @@ frames/models.
 Execution mode: structured calls in parallel (v1). See agentic upgrade path
 below.
 
-Context note:
-
-- whether implemented as subagents or plain structured calls, only the compact
-  `AnalystRun` artifact should flow back to the coordinator
-
 ### Phase 2 Agentic Upgrade Path (post-v1)
 
 v1 analysts use structured calls because the golden-set evidence bundle fits
@@ -247,11 +242,6 @@ promote analysts to agentic execution with `python_tools`:
 The output contract (`AnalystRun`) does not change. The upgrade is in how the
 LLM produces it, not in what it produces. This uses `llm_client`'s
 `python_tools` agent loop.
-
-Subagent note:
-
-- if analysts are upgraded to agentic execution, each analyst should keep an
-  isolated context and only return the final `AnalystRun`
 
 ### Phase 3a: Claim Extraction
 
@@ -354,13 +344,6 @@ Implementation path:
 3. The output contract (`ArbitrationResult` + new `EvidenceItem` records) is
    the same in both implementations.
 
-Context note:
-
-- when this phase becomes agentic, use dispute-scoped isolated subagents so
-  tool-heavy verification does not pollute the main coordinator context
-- the verification subagent should return compact evidence deltas and
-  arbitration-ready state, not raw search transcripts
-
 ### Phase 4 Stepping Stone: Structured Sub-Slices
 
 These are the initial implementation before the full agentic loop is wired.
@@ -401,50 +384,78 @@ Pass if:
 Promotion: `stub` → `live` once synthesis prompt + grounding validation + file
 export are wired.
 
-## Deferred But Retained
+## Scope
 
-These are part of the plan, but they follow stabilization of the core slice:
+See `docs/SCOPE_MATRIX_V2.md` for the canonical deferred/cut lists.
 
-- explicit `ambiguity` dispute type with user clarification routing
-- a canonical `AssumptionLedger`
-- fixed named reasoning frames:
-  - `verification_first`
-  - `structured_decomposition`
-  - `step_back_abstraction`
-- persistent Stage `1v` caveats and warnings in pipeline state
-- arbitration rule: claims change only with new evidence, corrected assumptions, or resolved contradictions
-- explicit assumptions section in the final report
-- validator preventing settled disputes from reappearing as unresolved
+See `docs/adr/0002-approved-external-reuse-strategy.md` for the approved
+external reuse strategy.
 
-## Not In Scope For Now
+## Config Schema (Draft)
 
-- a new planner-first pipeline in this repo
-- a new retrieval stack in this repo
-- novelty or diminishing-returns stopping logic
-- runtime evidence-laundering detection beyond structural checks
-- Grok or X integration
-- broad runtime anti-bias instrumentation
+These keys will live in `config/config.yaml` once Phase 0 infrastructure
+exists. This draft defines the contract so prompts and code can reference
+them before the file is created.
 
-## Approved External Reuse
+```yaml
+models:
+  analyst: "gemini/gemini-2.5-flash"          # Phase 2 analyst calls
+  claim_extraction: "gemini/gemini-2.5-flash"  # Phase 3a (if LLM needed)
+  deduplication: "gemini/gemini-2.5-flash"     # Phase 3b equivalence grouping
+  dispute_classification: "gemini/gemini-2.5-flash"  # Phase 3c
+  arbitration: "gemini/gemini-2.5-flash"       # Phase 4 agent loop
+  synthesis: "gemini/gemini-2.5-flash"         # Phase 5 report rendering
 
-Approved for direct leverage as upstream providers, baselines, or adapter
-targets:
+budgets:
+  analyst_max_calls: 3                         # number of analyst runs
+  analyst_min_successful: 2                    # abort threshold
+  verification_max_turns: 10                   # max agent loop turns per dispute
+  verification_max_disputes: 5                 # max disputes to verify
+  pipeline_max_budget_usd: 5.0                 # total pipeline budget
 
-- STORM / `knowledge-storm`
-- GPT Researcher
+analyst_frames:
+  - "general"
+  - "general"
+  - "general"
+  # post-v1: verification_first, structured_decomposition, step_back_abstraction
 
-Approved conditionally:
+evidence_policy:
+  default_time_sensitivity: "mixed"
+  recency_weight: 0.5                          # weight for recency vs authority
+```
 
-- LangGraph, but only if resumable stateful orchestration becomes necessary
+## Prompt Inventory
 
-Not approved as core runtime dependencies for v1:
+Each prompt is a YAML/Jinja2 template in `prompts/`, loaded via
+`llm_client.render_prompt()`.
 
-- AutoGen
-- DebateLLM
-- MedAgents
-- MetaGPT
-- Free-MAD
-- Exchange-of-Thought implementations
+| Prompt file | Phase | Input variables | Output schema |
+|---|---|---|---|
+| `analyst.yaml` | 2 | `question: ResearchQuestion`, `evidence: list[EvidenceItem]`, `frame: AnalystFrame` | `AnalystRun` (structured output) |
+| `dedup.yaml` | 3b | `raw_claims: list[RawClaim]` | equivalence class grouping → `list[Claim]` |
+| `dispute_classify.yaml` | 3c | `claims: list[Claim]` | dispute list with `DisputeType` per conflict |
+| `arbitration.yaml` | 4 | `dispute: Dispute`, `claims: list[Claim]`, `evidence: list[EvidenceItem]`, `new_evidence: list[EvidenceItem]` | `ArbitrationResult` |
+| `synthesis.yaml` | 5 | `question: ResearchQuestion`, `ledger: ClaimLedger`, `evidence_gaps: list[str]` | `FinalReport` (structured output) |
+
+Phase 3a (claim extraction) likely does not need a prompt — it gathers
+`AnalystRun.claims` directly. A normalization prompt may be added if
+phrasing variation is too high for dedup.
+
+Phase -1 (thesis falsification) uses `analyst.yaml` directly with 3 different
+models. No additional prompts needed.
+
+## Phase -1 Model Selection
+
+For the thesis test, use three models from different families to maximize
+genuine disagreement signal:
+
+- `gemini/gemini-2.5-flash` (Google)
+- `claude-sonnet-4-6` (Anthropic)
+- `openrouter/openai/gpt-5-mini` (OpenAI)
+
+Same-family models (e.g., 3 Gemini calls) would test prompt-variation
+disagreement, not model-disagreement. The thesis claims multi-model
+disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
