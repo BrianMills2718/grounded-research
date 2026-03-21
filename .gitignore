@@ -14,5 +14,8 @@ trace.json
 # Pre-pivot archive (reference only, contains binaries)
 docs/original_plans_may_be_deprecated/
 
+# Build artifacts
+*.egg-info/
+
 # Hook session state
 .claude/hook_log.jsonl
