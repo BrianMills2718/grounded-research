@@ -25,6 +25,24 @@ The v1 thesis is proven only if the system can:
 - failures preserve partial trace state
 - the canonical review notebook runs top-to-bottom and shows provisional or real artifacts for each phase
 
+## Execution Strategy
+
+The v1 product is the adjudication contract, not one concrete executor.
+
+The phases below are artifact boundaries.
+
+They may be executed through:
+
+- `structured` mode: `call_llm_structured` / `acall_llm_structured`
+- `agent_sdk` mode: agent SDK models such as `claude-code` or `codex` through `llm_client`
+- `workflow` mode: `llm_client.workflow_langgraph`, but only if explicit checkpoint/resume or approval pauses are actually needed
+
+Default rule:
+
+- prefer `structured` mode for deterministic schema-producing steps
+- use `agent_sdk` selectively where search, tool use, or open-ended verification benefits from agentic behavior
+- do not build a custom workflow engine first
+
 ## Phase -1: Thesis Falsification
 
 This phase happens before substantial architecture work.
@@ -35,12 +53,15 @@ Build:
 - 3 analyst calls via `llm_client`
 - a simple claim extraction pass
 - a manual disagreement inspection workflow
+- ideally one `structured` execution path first
+- and, when practical, one `agent_sdk` comparison path on the same evidence bundle
 
 Pass if:
 
 - disagreements are not mostly framing noise
 - at least some disputes appear decision-relevant
 - fresh evidence plausibly changes or sharpens at least some answers
+- the execution mode stays operationally simpler than the value it adds
 
 If this fails, do not proceed with a larger adjudication build.
 

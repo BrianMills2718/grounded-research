@@ -64,7 +64,28 @@ Approved external upstream candidates:
 - treat external research engines as upstream inputs or baselines, not as the
   core adjudication runtime
 
+## Execution Boundary
+
+The layers below are logical boundaries over typed artifacts.
+
+They are not a requirement to implement one monolithic phase runner.
+
+Approved execution modes:
+
+- `structured`: direct `llm_client` structured calls for predictable schema-producing transforms
+- `agent_sdk`: agent SDK models such as `claude-code` or `codex` via `llm_client` when open-ended tool use or broader agentic exploration is clearly better
+- `workflow`: `llm_client.workflow_langgraph` only when explicit checkpoint/resume, approval pauses, or durable workflow state are needed
+
+Default rule:
+
+- prefer the simplest execution mode that preserves the contract cleanly
+- keep the product contract stable even if the execution mode changes
+- do not build a custom workflow engine in this repo by default
+
 ## Runtime Layers
+
+These are artifact and responsibility boundaries, not a mandatory process
+topology.
 
 ### 1. Ingest
 

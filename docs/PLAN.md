@@ -15,6 +15,11 @@ V1 consumes upstream evidence, runs independent analysts, builds a claim
 ledger, detects disputes, verifies a narrow subset of them, and exports a
 grounded report plus trace.
 
+The phases in this plan are artifact boundaries.
+
+They are not a requirement to build one monolithic phase-runner or bespoke
+workflow engine.
+
 ## Current Status
 
 - repo initialized
@@ -42,7 +47,33 @@ The smallest useful version passes if it can:
 5. resolve at least some factual or interpretive disputes with fresh evidence
 6. write a grounded `report.md` and `trace.json`
 
+## Execution Strategy Boundary
+
+The repo owns:
+
+- the typed artifacts
+- the inter-phase contracts
+- validation and grounding rules
+- trace semantics
+
+The repo does not require one executor implementation.
+
+Approved execution modes for v1:
+
+- `structured`: `call_llm_structured` / `acall_llm_structured` for schema-first transforms
+- `agent_sdk`: agent SDK models such as `claude-code` or `codex` via `llm_client` when open-ended tool use or broader agentic exploration is clearly better
+- `workflow`: `llm_client.workflow_langgraph` only when explicit checkpoint/resume, approval pauses, or durable state become necessary
+
+Default posture:
+
+- prefer `structured` mode for deterministic artifact-producing steps
+- use `agent_sdk` selectively where search, tool use, or open-ended verification work benefits from agentic behavior
+- do not build a custom workflow engine in this repo by default
+
 ## Execution Order
+
+These phases are sequencing and acceptance boundaries, not a required concrete
+runtime topology.
 
 ### Phase -1: Thesis Falsification
 
@@ -56,6 +87,8 @@ Build:
 - 3 independent analyst calls via `llm_client`
 - a minimal claim extraction pass
 - a reviewable trace artifact
+- at least one execution mode, ideally `structured`
+- when practical, one comparison between `structured` and `agent_sdk` execution on the same evidence bundle
 - at least one baseline comparison path when practical:
   - manual or `research_v3` evidence
   - STORM or GPT Researcher output
@@ -66,6 +99,7 @@ Pass if:
 - at least some disputes are decision-relevant
 - fresh evidence plausibly sharpens or changes at least some answers
 - the imported external baseline is comparable enough to judge signal quality
+- the chosen execution mode does not add more operational mess than analytical value
 
 Fail if:
 
@@ -105,6 +139,11 @@ Pass if:
 
 Promotion: `partial` → `live` once `pyproject.toml`, `config/config.yaml`,
 `prompts/`, and dry-run CLI exist.
+
+Execution note:
+
+- `Phase 0` should keep the runtime boundary open
+- do not overfit schemas and prompts to one executor style if the artifacts are executor-agnostic
 
 ### Phase 1: Upstream Evidence Ingest
 

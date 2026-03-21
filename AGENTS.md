@@ -139,10 +139,27 @@ Use `llm_client` for:
 
 - completions
 - structured output
+- agent SDK routing
 - shared observability
 - prompt rendering
 
 Do not hand-roll direct LiteLLM calls or subprocess wrappers.
+
+This repo owns contracts, schemas, validation, and grounded artifacts.
+
+It does not require one concrete executor architecture.
+
+Treat pipeline phases as artifact boundaries, not as a mandate to build a
+custom phase runner.
+
+Preferred execution modes:
+
+- `call_llm_structured` or `acall_llm_structured` for predictable schema-first transforms
+- agent SDK models such as `claude-code` or `codex` via `llm_client` when open-ended tool use or broader agentic reasoning is clearly better
+- `llm_client.workflow_langgraph` only when explicit checkpoint/resume, approval pauses, or durable workflow state are real requirements
+
+Do not build a bespoke workflow engine in this repo unless the simpler
+`llm_client` surfaces are clearly insufficient.
 
 ### 8. Prompts As Data
 
@@ -220,6 +237,17 @@ Keep the runtime architecture clean and layered:
 5. Export
 
 Do not turn internal substeps into a sprawling public stage taxonomy.
+
+These layers are logical contracts, not a required process topology.
+
+They may be executed by:
+
+- direct structured calls
+- agent SDK calls
+- a narrow workflow wrapper when pause/resume or approvals are actually needed
+
+The product boundary is the typed artifacts and their validation, not one
+mandatory orchestration style.
 
 ## Non-Negotiable v1 Rules
 

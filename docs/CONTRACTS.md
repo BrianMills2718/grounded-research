@@ -19,6 +19,17 @@ Each contract answers four questions:
 3. What counts as success?
 4. What fails loudly versus warning-and-continue?
 
+These contracts are executor-agnostic.
+
+They define the artifacts that must exist between phases, not one mandatory
+orchestration implementation.
+
+The same contract may be satisfied by:
+
+- direct structured calls
+- agent SDK execution through `llm_client`
+- a narrow workflow wrapper when explicit pause/resume or approval state is needed
+
 ## Data Flow Overview
 
 ```text
