@@ -41,6 +41,7 @@ Default rule:
 
 - prefer `structured` mode for deterministic schema-producing steps
 - use `agent_sdk` selectively where search, tool use, or open-ended verification benefits from agentic behavior
+- use isolated subagents only for bounded verbose tasks that would otherwise bloat the main context
 - do not build a custom workflow engine first
 
 ## Phase -1: Thesis Falsification
@@ -64,6 +65,12 @@ Pass if:
 - the execution mode stays operationally simpler than the value it adds
 
 If this fails, do not proceed with a larger adjudication build.
+
+Subagent note:
+
+- the 3 analysts are naturally parallel bounded subtasks
+- return compact `AnalystRun` artifacts only
+- do not introduce broader tool-using subagents in `Phase -1` unless context bloat actually shows up
 
 ## What To Build First
 
@@ -138,6 +145,11 @@ Pass if:
 - analysts remain structurally independent
 - at least some benchmark prompts produce useful divergence
 - fewer than 2 successful analysts aborts loudly
+
+Execution note:
+
+- isolated subagent contexts are acceptable here
+- the coordinator should only retain `AnalystRun` outputs, not full agent transcripts
 
 Note:
 
@@ -226,6 +238,10 @@ Do not include yet:
 - preference steering
 - ambiguity steering
 - broad anti-bias runtime machinery
+
+Execution note:
+
+- if this phase becomes tool-heavy, it is the first place where dispute-scoped subagents are likely justified for context hygiene
 
 ### Phase 5: Grounded Export And Downstream Handoff
 

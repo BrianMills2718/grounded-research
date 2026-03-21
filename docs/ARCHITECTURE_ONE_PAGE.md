@@ -80,12 +80,19 @@ Default rule:
 
 - prefer the simplest execution mode that preserves the contract cleanly
 - keep the product contract stable even if the execution mode changes
+- use isolated subagents only for bounded verbose tasks that would otherwise bloat the coordinator context
 - do not build a custom workflow engine in this repo by default
 
 ## Runtime Layers
 
 These are artifact and responsibility boundaries, not a mandatory process
 topology.
+
+If subagents are used, the coordinator should remain thin and deterministic:
+
+- subagents do verbose or tool-heavy work in isolated contexts
+- subagents return compact typed artifacts
+- the coordinator owns routing, ledger mutation, grounding, and trace semantics
 
 ### 1. Ingest
 
@@ -141,6 +148,7 @@ Preferred frame set after the core slice is stable:
 Non-negotiable:
 
 - analysts never see each other's outputs
+- analyst outputs should return as compact `AnalystRun` artifacts, not full intermediate histories
 
 ### 3. Canonicalize
 
@@ -271,6 +279,61 @@ Use deterministic code for:
 - ledger state transitions
 
 Use programmatic logic only when it is clearly better than an LLM on correctness, auditability, safety, or simplicity.
+
+## Execution Modes
+
+Not every phase uses the same LLM interaction pattern. The choice depends on
+whether the phase needs iterative tool use or just a single structured
+extraction.
+
+### Structured Call
+
+A single `call_llm_structured` invocation. The LLM receives full context and
+returns a validated Pydantic model. No iteration, no tools.
+
+Best for phases where the input fits in context and the task is a single
+judgment or extraction pass:
+
+- Phase 2a/2b: analyst reasoning (v1 — evidence bundle fits in context)
+- Phase 3b: semantic deduplication
+- Phase 3c: dispute classification
+- Phase 5: report synthesis from structured state
+
+### Agentic With Tools
+
+An `acall_llm` invocation with `python_tools`. The LLM iterates: call tools,
+read results, reason, call more tools, then produce a final output. Managed
+by `llm_client`'s agent loop.
+
+Best for phases where the task intrinsically requires tool use — searching,
+retrieving, iterating on strategy:
+
+- Phase 4: verification and arbitration (must search for new evidence)
+
+Use dispute-scoped isolated contexts here so verification work does not bloat
+the coordinator prompt.
+
+### Planned Agentic Upgrade Path
+
+Phase 2 (analyst) starts as structured calls in v1 because the golden-set
+evidence bundle fits in context. When evidence bundles grow beyond what fits
+comfortably in a single call, analysts should be promoted to agentic with
+tools for selective evidence reading. The `AnalystRun` output contract stays
+the same either way — the upgrade is in how the LLM produces it, not in what
+it produces.
+
+When that upgrade happens, each analyst should run in its own isolated context
+and return only the final `AnalystRun`.
+
+### What Does Not Change
+
+Regardless of execution mode:
+
+- all LLM calls go through `llm_client`
+- all calls carry `task=`, `trace_id=`, `max_budget=`
+- output contracts are the same Pydantic models
+- trace captures the same per-phase metadata
+- code-owned mechanical enforcement (IDs, routing, validation) stays in code
 
 ## Recent-First Evidence Policy
 

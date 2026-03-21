@@ -68,7 +68,14 @@ Default posture:
 
 - prefer `structured` mode for deterministic artifact-producing steps
 - use `agent_sdk` selectively where search, tool use, or open-ended verification work benefits from agentic behavior
+- use isolated subagents only for bounded verbose tasks that would otherwise pollute coordinator context
 - do not build a custom workflow engine in this repo by default
+
+Context-hygiene rule:
+
+- subagents must return compact typed artifacts, not full intermediate histories
+- do not use subagents for deterministic bookkeeping steps
+- if using Codex-backed agent execution, keep tool surfaces especially small because tool-definition bloat is less forgiving there
 
 ## Execution Order
 
@@ -108,6 +115,11 @@ Fail if:
 - re-checking evidence rarely changes the outcome
 
 Promotion: `planned` → `live` (standalone script, no framework dependency)
+
+Subagent note:
+
+- analyst isolation is desirable because the 3 analysts are naturally bounded parallel subtasks
+- do not add tool-using verification subagents yet unless the first live runs show context bloat is a real bottleneck
 
 ### Phase 0: Domain Model, Contracts, Trace, And Review Surface
 
@@ -189,6 +201,8 @@ Pass if:
 Promotion: `stub` → `live` once `prompts/analyst.yaml` and
 `call_llm_structured` wiring exist.
 
+Execution mode: structured call (v1). See agentic upgrade path below.
+
 ### Phase 2b: Three Independent Analysts
 
 Goal:
@@ -209,6 +223,35 @@ Pass if:
 
 Promotion: `stub` → `live` once 3 parallel calls are wired with distinct
 frames/models.
+
+Execution mode: structured calls in parallel (v1). See agentic upgrade path
+below.
+
+Context note:
+
+- whether implemented as subagents or plain structured calls, only the compact
+  `AnalystRun` artifact should flow back to the coordinator
+
+### Phase 2 Agentic Upgrade Path (post-v1)
+
+v1 analysts use structured calls because the golden-set evidence bundle fits
+in context. When evidence bundles grow beyond comfortable single-call context,
+promote analysts to agentic execution with `python_tools`:
+
+- `read_evidence(evidence_id)` — read a specific evidence item on demand
+- `search_evidence(query)` — search within the evidence bundle
+- `note_claim(statement, evidence_ids, confidence, reasoning)` — record a claim
+- `note_assumption(statement, basis)` — record an assumption
+- `submit_analysis(summary)` — finalize the structured output
+
+The output contract (`AnalystRun`) does not change. The upgrade is in how the
+LLM produces it, not in what it produces. This uses `llm_client`'s
+`python_tools` agent loop.
+
+Subagent note:
+
+- if analysts are upgraded to agentic execution, each analyst should keep an
+  isolated context and only return the final `AnalystRun`
 
 ### Phase 3a: Claim Extraction
 
@@ -271,37 +314,26 @@ Pass if:
 
 Promotion: `stub` → `live` once dispute classification prompt is wired.
 
-### Phase 4a: Verification Query Generation
+### Phase 4: Verification And Arbitration (Agentic)
 
 Goal:
 
-- generate targeted search queries for decision-critical disputes
+- resolve decision-critical disputes by searching for fresh evidence and
+  arbitrating based on what is found
+
+Execution mode: agentic — one `acall_llm(..., python_tools=[...])` invocation
+per decision-critical dispute. The agent iterates: search, read results, decide
+if more evidence is needed, then arbitrate. This is the phase most naturally
+suited to agentic execution because verification intrinsically requires tool
+use.
 
 Build:
 
-- LLM-based query generation from dispute descriptions
-- output as `list[VerificationQueryBatch]`
-
-Pass if:
-
-- queries are specific enough to retrieve relevant evidence
-- each query batch maps to a dispute
-- only decision-critical disputes with route `verify` or `arbitrate` are targeted
-
-Promotion: `stub` → `live` once query generation prompt exists.
-
-### Phase 4b: Arbitration
-
-Goal:
-
-- resolve disputes using newly retrieved evidence and update claim statuses
-
-Build:
-
-- evidence retrieval using verification queries
-- LLM-based arbitration reasoning per dispute
-- claim status updates based on `ArbitrationResult`
-- ledger update logic (code-owned, applies `claim_updates`)
+- Python tool callables: `search_web`, `read_url`, `record_evidence`,
+  `submit_arbitration`
+- agent invocation per dispute via `llm_client` `python_tools` loop
+- code-owned ledger update logic (applies `ArbitrationResult.claim_updates`)
+- `max_turns` budget per dispute (configurable in `config/config.yaml`)
 
 Pass if:
 
@@ -309,8 +341,41 @@ Pass if:
 - claim status updates are consistent with verdict
 - `Dispute.resolved` set appropriately
 - ledger updates remain internally consistent
+- agent terminates via `submit_arbitration` tool, not by `max_turns` exhaustion
+  (exhaustion produces `inconclusive` + warning)
 
-Promotion: `stub` → `live` once arbitration prompt + search adapter are wired.
+Promotion: `stub` → `live` once search tools and agent invocation are wired.
+
+Implementation path:
+
+1. First, build Phase 4 as structured sub-slices (Phase 4a: query generation +
+   Phase 4b: arbitration) to prove the contract works.
+2. Then, merge into a single agentic invocation per dispute.
+3. The output contract (`ArbitrationResult` + new `EvidenceItem` records) is
+   the same in both implementations.
+
+Context note:
+
+- when this phase becomes agentic, use dispute-scoped isolated subagents so
+  tool-heavy verification does not pollute the main coordinator context
+- the verification subagent should return compact evidence deltas and
+  arbitration-ready state, not raw search transcripts
+
+### Phase 4 Stepping Stone: Structured Sub-Slices
+
+These are the initial implementation before the full agentic loop is wired.
+
+**Phase 4a: Verification Query Generation**
+
+- Input: verify-worthy `list[Dispute]`
+- Output: `list[VerificationQueryBatch]`
+- LLM calls: 1 structured call or 1 per dispute
+
+**Phase 4b: Structured Arbitration**
+
+- Input: `ClaimLedger` + `list[VerificationQueryBatch]` + fresh evidence
+- Output: updated `ClaimLedger` + `list[ArbitrationResult]`
+- LLM calls: 1 per dispute
 
 ### Phase 5: Grounded Export And Downstream Handoff
 

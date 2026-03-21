@@ -154,12 +154,35 @@ custom phase runner.
 
 Preferred execution modes:
 
-- `call_llm_structured` or `acall_llm_structured` for predictable schema-first transforms
-- agent SDK models such as `claude-code` or `codex` via `llm_client` when open-ended tool use or broader agentic reasoning is clearly better
-- `llm_client.workflow_langgraph` only when explicit checkpoint/resume, approval pauses, or durable workflow state are real requirements
+- `call_llm_structured` / `acall_llm_structured` for predictable schema-first
+  transforms where the full input fits in context (analysis, classification,
+  deduplication, synthesis)
+- `acall_llm(..., python_tools=[...])` for phases that intrinsically require
+  tool use — searching, retrieving, iterating on strategy. The agent loop is
+  managed by `llm_client`. Phase 4 (verification/arbitration) should use this
+  from the start. Phase 2 (analysts) should upgrade to this when evidence
+  bundles outgrow single-call context.
+- `llm_client.workflow_langgraph` only when explicit checkpoint/resume,
+  approval pauses, or durable workflow state are real requirements
 
-Do not build a bespoke workflow engine in this repo unless the simpler
-`llm_client` surfaces are clearly insufficient.
+Subagents are a selective context-hygiene tool, not a default runtime style.
+
+Use isolated subagents only when the task is:
+
+- tool-heavy
+- likely to generate large intermediate state
+- bounded enough to return a compact typed artifact
+
+Do not use subagents for deterministic bookkeeping steps such as routing-table
+lookup, ID assignment, ledger mutation, grounding validation, or trace
+serialization.
+
+Do not default to structured calls when the task naturally involves tool use.
+Do not default to agentic loops when a single structured call suffices.
+Match the execution mode to the task.
+
+Do not build a bespoke workflow engine, agent loop, or tool-calling framework
+in this repo. Use `llm_client`'s existing infrastructure.
 
 ### 8. Prompts As Data
 
@@ -245,6 +268,9 @@ They may be executed by:
 - direct structured calls
 - agent SDK calls
 - a narrow workflow wrapper when pause/resume or approvals are actually needed
+
+If agent SDK execution is used, keep the coordinator thin and make subagents
+return compact typed artifacts rather than full intermediate histories.
 
 The product boundary is the typed artifacts and their validation, not one
 mandatory orchestration style.

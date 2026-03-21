@@ -272,28 +272,73 @@ Failure semantics:
 | Code-owned | ID assignment, routing, ledger assembly |
 | Trace | dispute count by type and route |
 
-## Phase 4a: Verification Query Generation
+## Phase 4: Verification and Arbitration (Agentic)
+
+Phase 4 is the phase most naturally suited to agentic execution. Verification
+intrinsically requires tool use: the agent must search for new evidence, read
+results, decide if more searching is needed, and then arbitrate based on what
+it found. A rigid query→search→arbitrate pipeline cannot adapt its search
+strategy based on what it discovers.
+
+Phase 4 uses `llm_client`'s `python_tools` agent loop (`acall_llm` with
+`python_tools=[...]`). One agent invocation runs per decision-critical dispute.
+
+| Field | Value |
+|---|---|
+| Input | one `Dispute` + its `Claim` objects + relevant `EvidenceItem` context |
+| Output | `ArbitrationResult` + `list[EvidenceItem]` (newly found) |
+| Success | arbitration references newly retrieved evidence; claim updates consistent with verdict; dispute resolution status set |
+| Failure | verdict without new evidence where new evidence was required; tool errors that prevent search; budget exhaustion before meaningful search |
+| Execution mode | agentic — `acall_llm(..., python_tools=[...], max_turns=N)` |
+| Code-owned | applying `ArbitrationResult.claim_updates` to ledger; marking disputes resolved; validating new evidence IDs |
+| Trace | tool calls made, queries searched, evidence found, arbitration verdict, cost |
+
+### Agent tools for Phase 4
+
+These are Python callables passed to `llm_client` via `python_tools`:
+
+| Tool | Signature | Purpose |
+|---|---|---|
+| `search_web` | `(query: str) -> list[dict]` | Search for evidence relevant to the dispute |
+| `read_url` | `(url: str) -> str` | Read full content of a search result |
+| `record_evidence` | `(content: str, source_url: str, content_type: str) -> str` | Persist new evidence; returns `EvidenceItem.id` |
+| `submit_arbitration` | `(verdict: str, reasoning: str, claim_updates: dict, new_evidence_ids: list) -> None` | Finalize the arbitration result |
+
+The agent loop ends when `submit_arbitration` is called or `max_turns` is
+reached. If `max_turns` is reached without submission, the dispute is marked
+inconclusive with a warning.
+
+### Fallback for Phase -1 and early slices
+
+Before the agentic Phase 4 is wired, verification may use the simpler
+sub-slice pattern (Phase 4a: structured query generation + Phase 4b: structured
+arbitration). The output contract (`ArbitrationResult` + new evidence) is the
+same either way. The agentic version is the target design; the structured
+sub-slice is a stepping stone.
+
+### Phase 4 sub-slices (stepping stone)
+
+These remain in the plan as the initial implementation path before the full
+agentic loop is wired:
+
+**Phase 4a: Verification Query Generation**
 
 | Field | Value |
 |---|---|
 | Input | verify-worthy `list[Dispute]` |
 | Output | `list[VerificationQueryBatch]` |
-| Success | each batch maps to a real dispute; queries are specific enough to gather clarifying evidence |
-| Failure | batches reference nonexistent disputes; empty query lists |
+| Success | each batch maps to a real dispute; queries specific enough to gather evidence |
 | LLM calls | 1 structured call or 1 per dispute |
-| Trace | query batches, dispute coverage, warning if budget truncates coverage |
 
-## Phase 4b: Arbitration and Ledger Update
+**Phase 4b: Arbitration and Ledger Update**
 
 | Field | Value |
 |---|---|
 | Input | `ClaimLedger` + `list[VerificationQueryBatch]` + fresh `EvidenceItem` records |
 | Output | updated `ClaimLedger` + `list[ArbitrationResult]` |
-| Success | every arbitration references new evidence; claim updates are consistent with verdict; resolved disputes are marked resolved |
-| Failure | verdict without new evidence where new evidence was required; invalid claim updates; contradiction between result and ledger state |
+| Success | every arbitration references new evidence; claim updates consistent with verdict |
 | LLM calls | 1 arbitration call per dispute |
-| Code-owned | application of `claim_updates`, dispute resolution flags, warning emission |
-| Trace | arbitration verdicts, new evidence counts, updated claim statuses |
+| Code-owned | applying `claim_updates`, dispute resolution flags, warning emission |
 
 ## Phase 5: Export
 
