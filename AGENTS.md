@@ -252,9 +252,9 @@ Authority chain:
 This governance layer is not a way around project policy and should not compete
 with the canonical docs. Its job is to validate and reinforce those docs.
 
-Local draft implementation files do not become accepted project state merely by
-existing in the worktree. Adoption requires explicit review against the plan,
-contracts, and tests.
+Local or newly committed implementation files do not become accepted project
+state merely by existing in the worktree or history. Adoption requires explicit
+review against the plan, contracts, and tests.
 
 If the governance layer becomes stale or burdensome, fix it explicitly or
 remove it explicitly. Do not silently ignore it while still treating it as

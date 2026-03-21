@@ -6,16 +6,17 @@ Open issues that are real enough to persist, but not yet resolved.
 
 Question:
 
-- Which local draft implementation files should become accepted project state,
+- Which committed implementation surfaces should become accepted project state,
   and which should remain hold/discard?
 
 Current evidence:
 
-- untracked `engine.py`
-- untracked `config/config.yaml`
-- untracked prompt files under `prompts/`
-- untracked modules under `src/grounded_research/`
-- untracked `scripts/phase_minus1.py`
+- committed end-to-end implementation `c57cd2c`
+- `engine.py`
+- `config/config.yaml`
+- prompt files under `prompts/`
+- modules under `src/grounded_research/`
+- `scripts/phase_minus1.py`
 
 Current posture:
 

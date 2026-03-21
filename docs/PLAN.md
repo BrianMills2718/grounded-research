@@ -36,9 +36,8 @@ workflow engine.
 - canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
 - documentation-governance layer present (`.claude/`, `docs/plans/`,
   `scripts/relationships.yaml`, validation scripts)
-- local draft implementation surfaces exist in the worktree but are not yet
-  accepted project state
-- no accepted or committed pipeline implementation milestone yet
+- a committed end-to-end implementation exists (`c57cd2c`), but it has not yet
+  been reviewed and accepted against the canonical plan
 
 ## Governance Surfaces
 
@@ -58,12 +57,12 @@ them or create a second planning authority.
 
 ## Draft Implementation Gate
 
-The worktree may contain local draft implementation surfaces before they are
-accepted into the project baseline.
+The repo may contain implementation surfaces before they are accepted into the
+project baseline.
 
-Those drafts do not advance milestone status automatically.
+Those implementations do not advance milestone status automatically.
 
-Before any draft implementation is adopted, review it against:
+Before any implementation slice is adopted, review it against:
 
 - `CLAUDE.md`
 - this plan
@@ -71,7 +70,7 @@ Before any draft implementation is adopted, review it against:
 - `src/grounded_research/models.py`
 - explicit verification expectations
 
-Adopt a draft only if it:
+Adopt an implementation slice only if it:
 
 - matches the current milestone order
 - respects the typed contracts
@@ -511,10 +510,10 @@ disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
-Review and triage the local draft implementation surfaces.
+Review and triage the committed implementation surfaces.
 
 Specifically:
 
-1. classify each draft as `accept`, `hold`, or `discard`
+1. classify each major implementation surface as `accept`, `hold`, or `discard`
 2. do not let a full-engine draft skip ahead of `Phase -1`
 3. only after that adoption review, run or extend the smallest `Phase -1` slice
