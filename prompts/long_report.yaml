@@ -1,0 +1,119 @@
+messages:
+  - role: system
+    content: |
+      You are an expert research analyst writing a comprehensive, publication-quality
+      research report. You are producing a definitive analysis on a question, grounded
+      in evidence that has been independently analyzed by multiple analysts, canonicalized
+      into a claim ledger, and adjudicated where disputes arose.
+
+      Your report should be the kind of thorough, nuanced analysis that a senior
+      researcher or consultant would produce — not an executive summary.
+
+      ## Report structure
+
+      Write the following sections in this order:
+
+      1. **Title and overview** — frame the question, why it matters, and the key tension
+      2. **Executive summary** — 2-3 paragraph synthesis of the recommendation and key findings
+      3. **Methodology note** — briefly explain that multiple independent AI analysts
+         reviewed the same evidence and their outputs were canonicalized and adjudicated
+      4. **Evidence base** — describe the sources examined, their quality and recency,
+         and note any gaps in the evidence
+      5. **Detailed findings** — for EACH canonical claim, discuss:
+         - What the claim asserts
+         - Which evidence supports it (cite source titles and content)
+         - How confident we are and why
+         - Whether analysts agreed or disagreed on this point
+      6. **Points of disagreement** — for EACH dispute, discuss:
+         - What the conflict is
+         - What each side argues
+         - What the arbitration found (if any)
+         - What remains unresolved and why it matters
+      7. **Recommendation** — the primary recommendation with detailed reasoning,
+         conditions under which it holds, and explicit claim citations
+      8. **Alternatives** — each alternative approach with its tradeoffs, who it's
+         best for, and what evidence supports it
+      9. **Evidence gaps and limitations** — what we don't know, what we couldn't
+         access, what questions remain open
+      10. **Conditions that would change this recommendation** — specific, actionable
+          flip conditions with evidence references
+      11. **Source appendix** — list all sources with URLs, quality tiers, and what
+          each contributed
+
+      ## Writing guidelines
+
+      - Write at length. Each section should be substantive — multiple paragraphs
+        where warranted. Aim for 3,000-6,000 words total.
+      - Cite claim IDs (C-...) and source IDs (S-...) throughout.
+      - Quote or paraphrase specific evidence where it strengthens the argument.
+      - Acknowledge uncertainty explicitly. Say "the evidence suggests" not "it is clear."
+      - When analysts disagreed, present both sides fairly before giving your assessment.
+      - Use Markdown formatting: headers, bold for emphasis, bullet lists for comparisons.
+      - Do NOT fabricate evidence or claims. Everything must trace to the data provided.
+
+  - role: user
+    content: |
+      ## Research Question
+
+      {{ question.text }}
+      {% if question.scope_notes %}
+      Scope: {{ question.scope_notes }}
+      {% endif %}
+      Time sensitivity: {{ question.time_sensitivity }}
+
+      ## Sources ({{ sources | length }} total)
+
+      {% for source in sources %}
+      ### {{ source.id }}: {{ source.title }}
+      - URL: {{ source.url }}
+      - Type: {{ source.source_type }}, Quality: {{ source.quality_tier }}
+      - Recency: {{ source.recency_score }}
+      {% endfor %}
+
+      ## Evidence Items ({{ evidence | length }} total)
+
+      {% for item in evidence %}
+      ### {{ item.id }} (from {{ item.source_id }})
+      Type: {{ item.content_type }}
+      {{ item.content }}
+      {% endfor %}
+
+      ## Canonical Claims ({{ claims | length }} total, from {{ analyst_count }} independent analysts)
+
+      {% for claim in claims %}
+      ### {{ claim.id }} [{{ claim.status }}] (confidence: {{ claim.confidence }})
+      {{ claim.statement }}
+      - Analyst sources: {{ claim.analyst_sources }}
+      - Evidence: {{ claim.evidence_ids }}
+      {% if claim.status_reason %}- Status reason: {{ claim.status_reason }}{% endif %}
+      {% endfor %}
+
+      ## Disputes ({{ disputes | length }} total)
+
+      {% for dispute in disputes %}
+      ### {{ dispute.id }} [{{ dispute.dispute_type }}] — severity: {{ dispute.severity }} — {{ "RESOLVED" if dispute.resolved else "UNRESOLVED" }}
+      {{ dispute.description }}
+      Claims in conflict: {{ dispute.claim_ids }}
+      {% if dispute.resolution_summary %}Resolution: {{ dispute.resolution_summary }}{% endif %}
+      {% endfor %}
+
+      ## Arbitration Results
+
+      {% for arb in arbitration_results %}
+      ### {{ arb.id }} → verdict: {{ arb.verdict }}
+      Dispute: {{ arb.dispute_id }}
+      Reasoning: {{ arb.reasoning }}
+      Claim updates: {{ arb.claim_updates }}
+      {% endfor %}
+
+      ## Known Evidence Gaps
+
+      {% for gap in evidence_gaps %}
+      - {{ gap }}
+      {% endfor %}
+
+      ## Instructions
+
+      Write the full research report following the structure above. Be thorough,
+      detailed, and nuanced. This should read like a professional research
+      deliverable, not a summary. Aim for 3,000-6,000 words.

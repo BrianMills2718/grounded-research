@@ -37,7 +37,7 @@ async def run_pipeline(
         build_ledger,
     )
     from grounded_research.verify import verify_disputes
-    from grounded_research.export import generate_report, validate_grounding, write_outputs
+    from grounded_research.export import generate_report, render_long_report, validate_grounding, write_outputs
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
@@ -178,8 +178,22 @@ async def run_pipeline(
             output_summary=f"Report with {len(report.cited_claim_ids)} cited claims, {len(grounding_errors)} grounding warnings",
         ))
 
+        # Render long-form report
+        print("  Rendering long-form report (3,000-6,000 words)...")
+        long_report_md = await render_long_report(
+            state, trace_id, max_budget=total_budget * 0.2,
+        )
+        print(f"  Long report: {len(long_report_md)} chars, ~{len(long_report_md.split())} words")
+
+        state.phase_traces[-1].llm_calls = 2  # structured + long-form
+        state.phase_traces[-1].output_summary = (
+            f"Structured report: {len(report.cited_claim_ids)} cited claims, "
+            f"{len(grounding_errors)} grounding warnings. "
+            f"Long report: ~{len(long_report_md.split())} words."
+        )
+
         # Write outputs
-        paths = write_outputs(state, output_dir)
+        paths = write_outputs(state, output_dir, long_report_md=long_report_md)
         for name, path in paths.items():
             print(f"  Wrote: {path}")
 
@@ -189,7 +203,7 @@ async def run_pipeline(
 
         print(f"\n=== Pipeline complete ===")
         print(f"Report: {report.title}")
-        print(f"Recommendation: {report.recommendation[:120]}...")
+        print(f"Long report: ~{len(long_report_md.split())} words")
         print(f"Cited claims: {len(report.cited_claim_ids)}")
         print(f"Grounding warnings: {len(grounding_errors)}")
         print(f"Pipeline warnings: {len(state.warnings)}")

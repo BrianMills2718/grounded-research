@@ -1,7 +1,11 @@
 """Grounded export and downstream handoff.
 
-Phase 5: Renders the adjudicated state into a FinalReport, validates
-grounding, and writes report.md + trace.json + handoff.json.
+Phase 5: Two-step report generation:
+1. Structured FinalReport for grounding validation (fast, cheap)
+2. Long-form markdown report from full pipeline state (the actual deliverable)
+
+The structured report ensures every claim is grounded. The long-form
+report is what the user reads — a thorough, publication-quality analysis.
 """
 
 from __future__ import annotations
@@ -35,18 +39,15 @@ def validate_grounding(
     errors: list[str] = []
     evidence_ids = {e.id for e in bundle.evidence}
 
-    # Rule 1: Every cited claim exists in ledger
     for cid in report.cited_claim_ids:
         if ledger.claim_by_id(cid) is None:
             errors.append(f"Cited claim {cid} not found in ledger")
 
-    # Rule 2: Every cited claim has evidence backing
     for cid in report.cited_claim_ids:
         claim = ledger.claim_by_id(cid)
         if claim and not claim.evidence_ids:
             errors.append(f"Cited claim {cid} has no evidence_ids")
 
-    # Rule 3: Every evidence ID on cited claims resolves
     for cid in report.cited_claim_ids:
         claim = ledger.claim_by_id(cid)
         if claim:
@@ -54,7 +55,6 @@ def validate_grounding(
                 if eid not in evidence_ids:
                     errors.append(f"Claim {cid} cites evidence {eid} not in bundle")
 
-    # Rule 4: Unresolved disputes appear in report
     for d in ledger.unresolved_disputes():
         if d.id not in report.disagreement_summary:
             errors.append(f"Unresolved dispute {d.id} not mentioned in report")
@@ -67,7 +67,7 @@ async def generate_report(
     trace_id: str,
     max_budget: float = 1.0,
 ) -> FinalReport:
-    """Generate the final report from pipeline state via LLM synthesis."""
+    """Generate the structured FinalReport for grounding validation."""
     from llm_client import acall_llm_structured, render_prompt
 
     assert state.claim_ledger is not None
@@ -96,9 +96,54 @@ async def generate_report(
     return report
 
 
+async def render_long_report(
+    state: PipelineState,
+    trace_id: str,
+    max_budget: float = 2.0,
+) -> str:
+    """Render the full long-form research report as markdown.
+
+    This is the actual deliverable — a thorough, publication-quality
+    analysis with detailed evidence discussion, dispute analysis, and
+    nuanced recommendations. Targets 3,000-6,000 words.
+
+    Uses the full pipeline state (all evidence, claims, disputes,
+    arbitration results, sources) as context for the synthesis LLM.
+    """
+    from llm_client import acall_llm, render_prompt
+
+    assert state.claim_ledger is not None
+    assert state.evidence_bundle is not None
+    assert state.question is not None
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "long_report.yaml"),
+        question=state.question.model_dump(),
+        sources=[s.model_dump() for s in state.evidence_bundle.sources],
+        evidence=[e.model_dump() for e in state.evidence_bundle.evidence],
+        claims=[c.model_dump() for c in state.claim_ledger.claims],
+        disputes=[d.model_dump() for d in state.claim_ledger.disputes],
+        arbitration_results=[a.model_dump() for a in state.claim_ledger.arbitration_results],
+        evidence_gaps=state.evidence_bundle.gaps,
+        analyst_count=len([r for r in state.analyst_runs if r.succeeded]),
+    )
+
+    model = get_model("synthesis")
+    result = await acall_llm(
+        model,
+        messages,
+        task="long_report_synthesis",
+        trace_id=f"{trace_id}/long_report",
+        max_budget=max_budget,
+    )
+
+    return result.content
+
+
 def write_outputs(
     state: PipelineState,
     output_dir: Path,
+    long_report_md: str | None = None,
 ) -> dict[str, Path]:
     """Write all output artifacts to disk."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -109,12 +154,24 @@ def write_outputs(
     trace_path.write_text(state.model_dump_json(indent=2))
     paths["trace"] = trace_path
 
-    # report.md — human-readable report
-    if state.report:
+    # report.md — the long-form report (primary deliverable)
+    if long_report_md:
         report_path = output_dir / "report.md"
-        md = _render_report_markdown(state.report, state.claim_ledger)
+        report_path.write_text(long_report_md)
+        paths["report"] = report_path
+    elif state.report:
+        # Fallback to structured report rendering if long-form not available
+        report_path = output_dir / "report.md"
+        md = _render_structured_report(state.report, state.claim_ledger)
         report_path.write_text(md)
         paths["report"] = report_path
+
+    # summary.md — the structured report as a quick reference
+    if state.report:
+        summary_path = output_dir / "summary.md"
+        md = _render_structured_report(state.report, state.claim_ledger)
+        summary_path.write_text(md)
+        paths["summary"] = summary_path
 
     # handoff.json — downstream artifact for onto-canon
     if state.claim_ledger and state.evidence_bundle and state.question:
@@ -131,8 +188,8 @@ def write_outputs(
     return paths
 
 
-def _render_report_markdown(report: FinalReport, ledger: ClaimLedger | None) -> str:
-    """Render a FinalReport as markdown."""
+def _render_structured_report(report: FinalReport, ledger: ClaimLedger | None) -> str:
+    """Render a structured FinalReport as markdown (summary format)."""
     lines = [
         f"# {report.title}",
         "",

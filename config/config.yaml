@@ -1,20 +1,16 @@
 models:
-  analyst: "gemini/gemini-2.5-flash"
-  claim_extraction: "gemini/gemini-2.5-flash"
-  deduplication: "gemini/gemini-2.5-flash"
-  dispute_classification: "gemini/gemini-2.5-flash"
-  arbitration: "gemini/gemini-2.5-flash"
+  analyst: "gemini/gemini-2.5-flash-lite"
+  claim_extraction: "gemini/gemini-2.5-flash-lite"
+  deduplication: "gemini/gemini-2.5-flash-lite"
+  dispute_classification: "gemini/gemini-2.5-flash-lite"
+  arbitration: "gemini/gemini-2.5-flash-lite"
   synthesis: "gemini/gemini-2.5-flash"
 
-# Cross-family models for Phase -1 thesis falsification
 # Cross-family models for multi-analyst runs
-# OpenRouter structured output has intermittent serialization issues —
-# using Gemini family with different frames for reliable structured output.
-# Restore cross-family models when OpenRouter instructor path is stable.
 phase_minus1_models:
-  - "gemini/gemini-2.5-flash"
-  - "gemini/gemini-2.5-flash"
-  - "gemini/gemini-2.5-flash"
+  - "gemini/gemini-2.5-flash-lite"
+  - "gemini/gemini-2.5-flash-lite"
+  - "gemini/gemini-2.5-flash-lite"
 
 budgets:
   analyst_max_calls: 3
@@ -29,9 +25,9 @@ analyst_frames:
   - "general"
 
 collection:
-  num_queries: 10                          # search queries to generate
-  results_per_query: 10                    # Brave results per query
-  max_sources: 20                          # pages to actually fetch
+  num_queries: 10
+  results_per_query: 10
+  max_sources: 20
 
 evidence_policy:
   default_time_sensitivity: "mixed"
