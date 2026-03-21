@@ -1,0 +1,169 @@
+{
+  "question": {
+    "text": "Should a team use Redis or PostgreSQL for session storage in a web application serving 50K concurrent users?",
+    "time_sensitivity": "mixed",
+    "scope_notes": "Comparing Redis and PostgreSQL for HTTP session storage. Team has existing PostgreSQL infrastructure. Cost, operational complexity, and reliability matter.",
+    "key_entities": ["Redis", "PostgreSQL"]
+  },
+  "sources": [
+    {
+      "id": "S-fix00001",
+      "url": "https://redis.io/docs/latest/develop/use/client-side-caching/",
+      "title": "Redis Official Documentation: Client-Side Caching",
+      "source_type": "primary_document",
+      "quality_tier": "authoritative",
+      "published_at": "2025-09-01T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:00:00Z",
+      "recency_score": 0.85
+    },
+    {
+      "id": "S-fix00002",
+      "url": "https://www.postgresql.org/docs/17/sql-createunloggedtable.html",
+      "title": "PostgreSQL 17 Docs: Unlogged Tables",
+      "source_type": "primary_document",
+      "quality_tier": "authoritative",
+      "published_at": "2025-10-01T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:00:00Z",
+      "recency_score": 0.85
+    },
+    {
+      "id": "S-fix00003",
+      "url": "https://blog.example.com/redis-vs-postgres-sessions-2025",
+      "title": "Redis vs PostgreSQL for Session Storage: 2025 Benchmarks",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2025-11-15T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:05:00Z",
+      "recency_score": 0.75
+    },
+    {
+      "id": "S-fix00004",
+      "url": "https://aws.amazon.com/elasticache/pricing/",
+      "title": "AWS ElastiCache Pricing (Redis)",
+      "source_type": "primary_document",
+      "quality_tier": "authoritative",
+      "published_at": "2026-01-01T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:10:00Z",
+      "recency_score": 0.90
+    },
+    {
+      "id": "S-fix00005",
+      "url": "https://incident-report.example.com/2025/redis-split-brain",
+      "title": "Post-Incident Review: Redis Cluster Split-Brain During AWS AZ Failure",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2025-08-22T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:12:00Z",
+      "recency_score": 0.70
+    },
+    {
+      "id": "S-fix00006",
+      "url": "https://techblog.example.com/postgres-session-50k-users",
+      "title": "Running PostgreSQL Session Storage at 50K Concurrent Users",
+      "source_type": "web_search",
+      "quality_tier": "reliable",
+      "published_at": "2025-06-10T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:15:00Z",
+      "recency_score": 0.65
+    },
+    {
+      "id": "S-fix00007",
+      "url": "https://arxiv.org/abs/2025.12345",
+      "title": "Comparative Analysis of In-Memory vs Disk-Based Session Stores at Scale",
+      "source_type": "academic",
+      "quality_tier": "reliable",
+      "published_at": "2025-04-01T00:00:00Z",
+      "retrieved_at": "2026-03-20T14:20:00Z",
+      "recency_score": 0.60
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-fix00001",
+      "source_id": "S-fix00001",
+      "content": "Redis achieves sub-millisecond latency for key-value operations with an in-memory data model. Session reads typically complete in 0.1-0.5ms under normal load.",
+      "content_type": "data_point",
+      "relevance_note": "Core performance claim for Redis session reads.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00002",
+      "source_id": "S-fix00002",
+      "content": "PostgreSQL UNLOGGED tables skip write-ahead logging, providing 2-3x write throughput improvement over logged tables. Data is not crash-safe but is suitable for ephemeral session data.",
+      "content_type": "data_point",
+      "relevance_note": "PostgreSQL can approximate in-memory performance for session storage using unlogged tables.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00003",
+      "source_id": "S-fix00003",
+      "content": "At 50K concurrent sessions with 4KB average session size, Redis (single node, r6g.xlarge) achieved p99 read latency of 0.8ms. PostgreSQL 17 with unlogged tables on db.r6g.xlarge achieved p99 read latency of 3.2ms.",
+      "content_type": "data_point",
+      "relevance_note": "Direct benchmark comparison at the target scale.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00004",
+      "source_id": "S-fix00003",
+      "content": "Session write throughput: Redis sustained 120K writes/sec; PostgreSQL unlogged sustained 45K writes/sec. Both exceeded the 50K concurrent user requirement assuming 1 write per 30 seconds per session.",
+      "content_type": "data_point",
+      "relevance_note": "Both meet throughput requirements, but Redis has significant headroom.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00005",
+      "source_id": "S-fix00004",
+      "content": "AWS ElastiCache (Redis) r6g.xlarge: $0.252/hr ($181/month). RDS PostgreSQL db.r6g.xlarge: $0.48/hr ($345/month) but the team already runs this instance for their application database.",
+      "content_type": "data_point",
+      "relevance_note": "Cost comparison. Redis adds net-new infrastructure cost; PostgreSQL may use existing capacity.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00006",
+      "source_id": "S-fix00005",
+      "content": "During an AWS AZ failure, the Redis cluster experienced a split-brain condition lasting 47 minutes. Approximately 12% of active sessions were lost. The incident required manual intervention to resolve cluster state.",
+      "content_type": "text",
+      "relevance_note": "Reliability concern for Redis in production. Split-brain risk with clustered deployment.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00007",
+      "source_id": "S-fix00005",
+      "content": "Post-incident recommendation: teams using Redis for session storage should implement client-side session backup or accept session loss as a failure mode. PostgreSQL sessions survive single-node crashes via WAL replay (unless using unlogged tables).",
+      "content_type": "text",
+      "relevance_note": "Tension between Redis performance and PostgreSQL durability. Unlogged tables lose the durability advantage.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00008",
+      "source_id": "S-fix00006",
+      "content": "At 50K concurrent users, PostgreSQL session storage required careful connection pooling (PgBouncer, 200 pool size) and periodic vacuum of expired sessions. Without vacuuming, table bloat degraded read latency by 40% within 72 hours.",
+      "content_type": "text",
+      "relevance_note": "Operational complexity of PostgreSQL session storage at scale.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00009",
+      "source_id": "S-fix00006",
+      "content": "The team's PostgreSQL session implementation handled 50K concurrent users with p99 latency under 5ms after tuning, using a dedicated connection pool and hourly vacuum schedule. They reported zero session-loss incidents over 8 months.",
+      "content_type": "text",
+      "relevance_note": "Counter-narrative to Redis reliability concerns — PostgreSQL can be reliable at this scale with tuning.",
+      "extraction_method": "manual"
+    },
+    {
+      "id": "E-fix00010",
+      "source_id": "S-fix00007",
+      "content": "Academic study found that for session stores below 100K concurrent users, the operational complexity difference between Redis and a well-tuned RDBMS was the dominant cost factor, not raw latency. Teams with existing RDBMS expertise achieved lower total cost of ownership with database-backed sessions.",
+      "content_type": "summary",
+      "relevance_note": "Shifts the frame from pure performance to total cost of ownership including team expertise.",
+      "extraction_method": "manual"
+    }
+  ],
+  "gaps": [
+    "No evidence on Redis Cluster vs Redis Sentinel session behavior during network partitions",
+    "No benchmarks for PostgreSQL with connection pooling overhead included in latency measurements",
+    "No data on session storage migration cost from one system to the other"
+  ],
+  "imported_from": "manual",
+  "imported_at": "2026-03-21T00:00:00Z"
+}

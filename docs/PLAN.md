@@ -23,9 +23,13 @@ grounded report plus trace.
 - external reuse strategy recorded
 - one-page architecture written
 - v1 brief written
+- domain model draft written (`docs/DOMAIN_MODEL.md`)
 - scope matrix written
-- canonical review notebook created
-- no implementation code yet
+- Pydantic models defined (`src/grounded_research/models.py`)
+- inter-phase contracts defined (`docs/CONTRACTS.md`)
+- golden-set evidence fixture created (`tests/fixtures/session_storage_bundle.json`)
+- canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
+- no pipeline implementation code yet
 
 ## Success Criteria
 
@@ -69,11 +73,13 @@ Fail if:
 - disagreements are mostly stylistic
 - re-checking evidence rarely changes the outcome
 
-### Phase 0: Contracts, Trace, And Review Surface
+Promotion: `planned` → `live` (standalone script, no framework dependency)
+
+### Phase 0: Domain Model, Contracts, Trace, And Review Surface
 
 Goal:
 
-- establish typed boundaries before real orchestration
+- finish design-method steps 3-5 before real orchestration
 
 Build:
 
@@ -81,18 +87,24 @@ Build:
 - per-project `.venv`
 - `config/config.yaml`
 - `prompts/`
-- Pydantic schemas
-- `PipelineState`
-- trace serialization
+- `docs/DOMAIN_MODEL.md` (done)
+- Pydantic schemas (done)
+- `PipelineState` (done)
+- trace serialization (done — `PipelineState.model_dump_json()`)
 - dry-run CLI scaffold
-- canonical notebook alignment
+- canonical notebook alignment (done)
 
 Pass if:
 
-- schemas validate
-- state serializes and deserializes cleanly
+- schemas validate (done)
+- domain entities are defined at field level (done)
+- inter-phase contracts and failure semantics are explicit (done)
+- state serializes and deserializes cleanly (done)
 - dry-run CLI writes a trace skeleton
-- notebook still runs top-to-bottom with explicit artifacts
+- notebook still runs top-to-bottom with explicit artifacts (done)
+
+Promotion: `partial` → `live` once `pyproject.toml`, `config/config.yaml`,
+`prompts/`, and dry-run CLI exist.
 
 ### Phase 1: Upstream Evidence Ingest
 
@@ -114,7 +126,31 @@ Pass if:
 - provenance and timestamps survive
 - structured gaps are visible when evidence is weak
 
-### Phase 2: Independent Analysts
+Promotion: `fixture` → `live` once ingest adapter reads research_v3 `graph.yaml`
+or manual JSON bundles.
+
+### Phase 2a: Single Analyst (validation sub-slice)
+
+Goal:
+
+- prove a single analyst produces valid structured output before scaling to three
+
+Build:
+
+- one analyst call via `call_llm_structured`
+- `prompts/analyst.yaml` template
+- structured output parsing to `AnalystRun`
+
+Pass if:
+
+- structured output parses to valid `AnalystRun`
+- claims reference real evidence IDs from the bundle
+- at least 1 claim, 1 assumption, 1 recommendation produced
+
+Promotion: `stub` → `live` once `prompts/analyst.yaml` and
+`call_llm_structured` wiring exist.
+
+### Phase 2b: Three Independent Analysts
 
 Goal:
 
@@ -122,54 +158,120 @@ Goal:
 
 Build:
 
-- 3 independent analyst runs
-- distinct reasoning frames
+- 3 parallel analyst runs with different frames or models
 - structured claims, assumptions, recommendations, counterarguments
+- abort logic when <2 analysts succeed
 
 Pass if:
 
-- analysts do not see each other's outputs
+- analysts do not see each other's outputs (enforced by construction)
 - fewer than 2 successful analysts aborts loudly
 - at least some useful divergence appears on benchmark questions
 
-### Phase 3: Claim Ledger
+Promotion: `stub` → `live` once 3 parallel calls are wired with distinct
+frames/models.
+
+### Phase 3a: Claim Extraction
 
 Goal:
 
-- turn analyst prose into the canonical project artifact
+- gather all raw claims from analyst runs into a flat list
 
 Build:
 
-- claim extraction
-- semantic deduplication
-- canonical claim ledger
-- dispute detection
-- deterministic routing
+- extraction of `AnalystRun.claims` into `list[RawClaim]` with analyst provenance
 
 Pass if:
 
-- claims preserve analyst and evidence provenance
-- duplicate and phantom disputes stay manageable
+- every `RawClaim` traces to an `AnalystRun`
+- no claim text is invented beyond what the analyst stated
+
+Note: try the simple approach first (gather `AnalystRun.claims` directly). Add
+an LLM normalization pass only if claim phrasing varies too much to deduplicate.
+
+Promotion: `stub` → `live` (likely simple Python, no LLM needed).
+
+### Phase 3b: Semantic Deduplication
+
+Goal:
+
+- merge equivalent raw claims into canonical claims while preserving provenance
+
+Build:
+
+- LLM-based equivalence class grouping of `RawClaim` list
+- merging into `Claim` objects with `source_raw_claim_ids` and `analyst_sources`
+
+Pass if:
+
+- each `Claim.source_raw_claim_ids` maps to real `RawClaim` IDs
+- `Claim.analyst_sources` is populated
+- similar claims are merged; distinct claims are kept separate
+- malformed dedup output fails loudly with partial trace
+
+Promotion: `stub` → `live` once dedup prompt + `call_llm_structured` are wired.
+
+### Phase 3c: Ledger Assembly And Dispute Detection
+
+Goal:
+
+- build the canonical claim ledger and detect conflicts between claims
+
+Build:
+
+- LLM-based dispute classification (identifies conflicts, assigns `DisputeType`)
+- deterministic routing via `DISPUTE_ROUTING` table
+- `ClaimLedger` construction with ID assignment
+
+Pass if:
+
+- disputes reference real claim IDs
+- `Dispute.route` matches `DISPUTE_ROUTING[dispute.dispute_type]`
+- no phantom disputes (disputes between claims that don't actually conflict)
 - a human can inspect the ledger and understand the conflicts
 
-### Phase 4: Narrow Verification
+Promotion: `stub` → `live` once dispute classification prompt is wired.
+
+### Phase 4a: Verification Query Generation
 
 Goal:
 
-- test whether targeted re-search can resolve some important disputes
+- generate targeted search queries for decision-critical disputes
 
 Build:
 
-- verification query generation
-- targeted re-search
-- arbitration for factual and interpretive conflicts
-- claim status updates
+- LLM-based query generation from dispute descriptions
+- output as `list[VerificationQueryBatch]`
 
 Pass if:
 
-- some disputes move to supported, revised, refuted, or inconclusive
-- arbitration references newly retrieved evidence
+- queries are specific enough to retrieve relevant evidence
+- each query batch maps to a dispute
+- only decision-critical disputes with route `verify` or `arbitrate` are targeted
+
+Promotion: `stub` → `live` once query generation prompt exists.
+
+### Phase 4b: Arbitration
+
+Goal:
+
+- resolve disputes using newly retrieved evidence and update claim statuses
+
+Build:
+
+- evidence retrieval using verification queries
+- LLM-based arbitration reasoning per dispute
+- claim status updates based on `ArbitrationResult`
+- ledger update logic (code-owned, applies `claim_updates`)
+
+Pass if:
+
+- arbitration references newly retrieved evidence (not paraphrase of existing)
+- claim status updates are consistent with verdict
+- `Dispute.resolved` set appropriately
 - ledger updates remain internally consistent
+
+Promotion: `stub` → `live` once arbitration prompt + search adapter are wired.
 
 ### Phase 5: Grounded Export And Downstream Handoff
 
@@ -179,12 +281,10 @@ Goal:
 
 Build:
 
-- final report rendering
-- grounding checks
+- LLM-based report synthesis from ledger state
+- grounding validation (code-owned, see `docs/CONTRACTS.md` Phase 5 rules)
 - evidence-gap surfacing
-- `report.md`
-- `trace.json`
-- downstream handoff artifact for `onto-canon`
+- export of `report.md`, `trace.json`, and `DownstreamHandoff` artifact
 
 Pass if:
 
@@ -192,6 +292,10 @@ Pass if:
 - every cited claim maps to evidence IDs and source records
 - unresolved disputes remain visible
 - evidence gaps remain explicit
+- downstream handoff artifact preserves IDs and provenance
+
+Promotion: `stub` → `live` once synthesis prompt + grounding validation + file
+export are wired.
 
 ## Deferred But Retained
 

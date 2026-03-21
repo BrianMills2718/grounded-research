@@ -234,24 +234,27 @@ Do not turn internal substeps into a sprawling public stage taxonomy.
 
 Build in this order:
 
-1. typed schemas and trace
+1. domain model, contracts, typed schemas, and trace (done — `DOMAIN_MODEL.md`, `models.py`, `CONTRACTS.md`)
 2. `pyproject.toml`, per-project `.venv`, `config/config.yaml`, `prompts/`, and a canonical review notebook
 3. evidence-ingest adapters for upstream bundles
-4. one grounded analyst over imported evidence
-5. three independent analysts
-6. claim extraction and ledger build
-7. dispute detection and routing
-8. narrow factual and interpretive verification
-9. synthesis and export for human review and downstream handoff
-10. only then consider user steering, smarter stopping, and richer runtime checks
+4. one grounded analyst over imported evidence (Phase 2a)
+5. three independent analysts (Phase 2b)
+6. claim extraction (Phase 3a)
+7. semantic deduplication (Phase 3b)
+8. ledger assembly and dispute detection (Phase 3c)
+9. verification query generation (Phase 4a)
+10. arbitration and ledger update (Phase 4b)
+11. grounded export and downstream handoff (Phase 5)
+12. only then consider user steering, smarter stopping, and richer runtime checks
 
 ## Documentation To Read First
 
 1. `CLAUDE.md`
 2. `docs/adr/0001-adjudication-first-scope.md`
-3. `docs/adr/0002-approved-external-reuse-strategy.md`
-4. `docs/PLAN.md`
-5. `docs/ARCHITECTURE_ONE_PAGE.md`
-6. `docs/V1_IMPLEMENTATION_BRIEF.md`
-7. `docs/SCOPE_MATRIX_V2.md`
-8. `docs/notebooks/01_adjudication_review_journey.ipynb`
+3. `docs/PLAN.md`
+4. `docs/DOMAIN_MODEL.md`
+5. `docs/CONTRACTS.md`
+6. `docs/ARCHITECTURE_ONE_PAGE.md`
+7. `docs/V1_IMPLEMENTATION_BRIEF.md`
+8. `docs/SCOPE_MATRIX_V2.md`
+9. `docs/notebooks/01_adjudication_review_journey.ipynb`

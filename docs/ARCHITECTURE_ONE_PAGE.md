@@ -202,7 +202,7 @@ Rule:
 
 - synthesis renders structured state; it does not invent truth from scratch
 
-## Core Entities
+## Current Core Entities
 
 - `ResearchQuestion`
 - `SourceRecord`
@@ -212,13 +212,18 @@ Rule:
 - `RawClaim`
 - `Claim`
 - `Assumption`
-- `AssumptionLedger`
 - `Dispute`
+- `VerificationQueryBatch`
 - `ArbitrationResult`
 - `ClaimLedger`
 - `FinalReport`
+- `DownstreamHandoff`
 - `PipelineWarning`
 - `PipelineState`
+
+## Planned-Future Entities
+
+- `AssumptionLedger`
 
 ## Clean Hybrid Boundary
 
@@ -322,11 +327,12 @@ Keep v1 to the smallest falsifiable system:
 
 1. typed schemas and full trace
 2. upstream evidence-ingest adapters
-3. 3 independent analysts over imported evidence
-4. claim ledger and dispute detection
-5. narrow verification for factual and interpretive disputes
-6. grounded report synthesis and downstream handoff
-7. canonical review notebook
+3. one structured analyst
+4. 3 independent analysts over imported evidence
+5. claim extraction, deduplication, and dispute detection
+6. narrow verification for factual and interpretive disputes
+7. grounded report synthesis and downstream handoff
+8. canonical review notebook
 
 Defer:
 

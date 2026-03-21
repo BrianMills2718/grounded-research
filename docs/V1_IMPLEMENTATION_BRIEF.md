@@ -46,10 +46,12 @@ If this fails, do not proceed with a larger adjudication build.
 
 ## What To Build First
 
-### Phase 0: Contracts, Trace, And Review Surface
+### Phase 0: Domain Model, Contracts, Trace, And Review Surface
 
 Build:
 
+- `docs/DOMAIN_MODEL.md`
+- `docs/CONTRACTS.md`
 - `pyproject.toml`
 - per-project `.venv`
 - Pydantic schemas for pipeline entities
@@ -62,6 +64,8 @@ Build:
 
 Pass if:
 
+- domain entities are defined at field level
+- inter-phase contracts and failure semantics are explicit
 - schema validation passes
 - empty or fixture-backed state serializes cleanly
 - CLI emits a valid trace skeleton
@@ -87,7 +91,20 @@ Pass if:
 - missing evidence is visible as structured gaps
 - traces are readable enough to debug ingest failures
 
-### Phase 2: Independent Analysts
+### Phase 2a: Single Analyst
+
+Build:
+
+- 1 structured analyst run
+- evidence-linked claims, assumptions, recommendations, and counterarguments
+
+Pass if:
+
+- output parses to a valid `AnalystRun`
+- evidence references resolve
+- the result is reviewable in the notebook and trace
+
+### Phase 2b: Independent Analysts
 
 Build:
 
@@ -109,12 +126,32 @@ Once the core slice is stable, the default frame set should be:
 - `structured_decomposition`
 - `step_back_abstraction`
 
-### Phase 3: Claim Ledger
+### Phase 3a: Claim Extraction
 
 Build:
 
 - claim extraction
+
+Pass if:
+
+- every extracted `RawClaim` retains analyst provenance
+- evidence references remain intact
+
+### Phase 3b: Semantic Deduplication
+
+Build:
+
 - semantic deduplication
+
+Pass if:
+
+- all merged claims retain raw-claim provenance
+- phantom duplicates are reduced without collapsing distinct claims
+
+### Phase 3c: Claim Ledger
+
+Build:
+
 - canonical claim ledger
 - dispute detection
 - deterministic routing table
@@ -134,11 +171,21 @@ Later hardening should add:
 - a first-class `AssumptionLedger`
 - explicit `ambiguity` as a dispute type rather than relying only on broader mismatch buckets
 
-### Phase 4: Narrow Verification
+### Phase 4a: Verification Query Generation
 
 Build:
 
 - verification query generation
+
+Pass if:
+
+- queries map cleanly to disputes
+- queries are specific enough to plausibly retrieve new evidence
+
+### Phase 4b: Narrow Verification
+
+Build:
+
 - targeted re-search
 - arbitration for factual and interpretive conflicts only
 - claim status updates
