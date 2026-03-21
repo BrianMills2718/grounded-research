@@ -211,11 +211,18 @@ async def collect_evidence(
                 extraction_method="upstream",
             ))
 
-        # Fetch full page content
+        # Fetch full page content (with Jina Reader fallback for 403s)
         try:
             print(f"  Fetching [{i+1}/{len(selected)}] {url[:60]}...")
             raw_page = await fetch_page(url, question=question)
             page_data = json.loads(raw_page)
+
+            # If direct fetch failed with 403, try Jina Reader as fallback
+            if page_data.get("error") and "403" in str(page_data.get("error", "")):
+                from grounded_research.tools.jina_reader import fetch_page_jina
+                print(f"    → 403 blocked, retrying via Jina Reader...")
+                raw_page = await fetch_page_jina(url, question=question)
+                page_data = json.loads(raw_page)
 
             if page_data.get("error"):
                 gaps.append(f"Failed to fetch {url}: {page_data['error']}")
