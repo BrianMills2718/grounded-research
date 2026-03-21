@@ -1,0 +1,104 @@
+# Doc coupling and required-reading rules for grounded-research.
+#
+# The gate-edit hook uses these to block edits when required docs haven't
+# been read in the current session.
+
+required_reading:
+  defaults:
+    - CLAUDE.md
+
+couplings:
+  # Models are the source of truth for all entity definitions.
+  # Editing them requires understanding the inter-phase contracts.
+  - sources:
+      - src/grounded_research/models.py
+    docs:
+      - docs/CONTRACTS.md
+      - docs/DOMAIN_MODEL.md
+    description: Domain models define stage-boundary contracts. Read contracts before editing.
+    required_reading: true
+
+  # Contracts define what flows between phases.
+  # Editing them requires understanding the architecture and the models.
+  - sources:
+      - docs/CONTRACTS.md
+    docs:
+      - docs/ARCHITECTURE_ONE_PAGE.md
+      - src/grounded_research/models.py
+    description: Contracts must align with architecture layers and model definitions.
+    required_reading: true
+
+  # The plan defines what gets built and in what order.
+  # Editing it requires understanding the architecture boundary.
+  - sources:
+      - docs/PLAN.md
+    docs:
+      - docs/ARCHITECTURE_ONE_PAGE.md
+      - docs/SCOPE_MATRIX_V2.md
+    description: Plan changes must respect architecture boundaries and scope decisions.
+    required_reading: true
+
+  # Scope changes require understanding the ADR that set the boundary.
+  - sources:
+      - docs/SCOPE_MATRIX_V2.md
+    docs:
+      - docs/adr/0001-adjudication-first-scope.md
+    description: Scope matrix is governed by the adjudication-first ADR.
+    required_reading: true
+
+  # Prompt templates define the LLM interface. Editing them requires
+  # understanding what the phase contract expects as input/output.
+  - sources:
+      - prompts/*.yaml
+    docs:
+      - docs/CONTRACTS.md
+      - docs/PLAN.md
+    description: Prompts must produce outputs matching phase contracts.
+    required_reading: true
+
+  # Config defines operational policy. Editing it requires understanding
+  # what the plan and architecture expect.
+  - sources:
+      - config/config.yaml
+    docs:
+      - docs/PLAN.md
+    description: Config keys are defined in the plan's config schema section.
+    required_reading: true
+
+  # The notebook is a review surface that mirrors the phase contracts.
+  - sources:
+      - docs/notebooks/*.ipynb
+    docs:
+      - docs/CONTRACTS.md
+    description: Notebook fixtures must match phase contracts.
+    required_reading: true
+
+  # Pipeline implementation code must respect the architecture and contracts.
+  - sources:
+      - src/grounded_research/*.py
+    docs:
+      - docs/CONTRACTS.md
+    description: Implementation must satisfy phase contracts.
+    required_reading: true
+
+governance:
+  - sources:
+      - src/grounded_research/models.py
+    adrs: [1]
+    context: Models enforce the adjudication-first boundary.
+
+  - sources:
+      - docs/SCOPE_MATRIX_V2.md
+      - docs/PLAN.md
+    adrs: [1, 2]
+    context: Scope and plan are governed by both ADRs.
+
+architecture: []
+
+adrs:
+  1:
+    title: Adjudication-First Scope
+    file: docs/adr/0001-adjudication-first-scope.md
+  2:
+    title: Approved External Reuse Strategy
+    file: docs/adr/0002-approved-external-reuse-strategy.md
