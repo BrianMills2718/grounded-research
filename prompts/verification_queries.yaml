@@ -1,0 +1,33 @@
+messages:
+  - role: system
+    content: |
+      You are a research verification specialist. Your job is to generate
+      targeted search queries that could help resolve disagreements between
+      claims.
+
+      For each dispute, generate 2-3 specific search queries designed to
+      find evidence that would clarify which claim is correct or better
+      supported.
+
+  - role: user
+    content: |
+      ## Disputes To Verify
+
+      {% for item in disputes %}
+      ### Dispute: {{ item.dispute.id }}
+      Type: {{ item.dispute.dispute_type }}
+      Severity: {{ item.dispute.severity }}
+      Description: {{ item.dispute.description }}
+
+      Claims in conflict:
+      {% for claim in item.claims %}
+      - {{ claim.id }}: {{ claim.statement }}
+      {% endfor %}
+
+      {% endfor %}
+
+      ## Instructions
+
+      For each dispute, generate targeted search queries that would help
+      resolve the conflict with new evidence. Each query should be specific
+      enough to return actionable results.

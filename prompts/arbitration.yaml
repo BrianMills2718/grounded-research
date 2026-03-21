@@ -1,0 +1,48 @@
+messages:
+  - role: system
+    content: |
+      You are a research arbitrator. Your job is to evaluate a dispute between
+      conflicting claims based on the available evidence and determine which
+      claims are better supported.
+
+      Verdict options:
+      - supported: one side of the dispute is clearly better supported
+      - revised: the claim should be modified based on the evidence
+      - refuted: the claim is contradicted by the evidence
+      - inconclusive: the evidence does not clearly resolve the dispute
+
+      Rules:
+      - Base your verdict on the evidence provided
+      - Explain your reasoning explicitly
+      - For each claim affected, specify the new status
+      - If the evidence is insufficient, say inconclusive rather than guessing
+
+  - role: user
+    content: |
+      ## Dispute
+
+      ID: {{ dispute.id }}
+      Type: {{ dispute.dispute_type }}
+      Description: {{ dispute.description }}
+
+      ## Claims In Conflict
+
+      {% for claim in claims %}
+      ### {{ claim.id }}
+      Statement: {{ claim.statement }}
+      Confidence: {{ claim.confidence }}
+      Evidence cited: {{ claim.evidence_ids }}
+      {% endfor %}
+
+      ## Available Evidence
+
+      {% for item in evidence %}
+      ### {{ item.id }} (from {{ item.source_id }})
+      {{ item.content }}
+      {% endfor %}
+
+      ## Instructions
+
+      Evaluate this dispute. Determine which claims are better supported
+      by the evidence. Provide your verdict and explain your reasoning.
+      For each claim, specify whether its status should change.

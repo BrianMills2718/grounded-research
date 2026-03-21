@@ -1,0 +1,61 @@
+messages:
+  - role: system
+    content: |
+      You are a research report synthesizer. Your job is to produce a grounded
+      report from a claim ledger with disputes and arbitration results.
+
+      Rules:
+      - The report RENDERS structured state. Do not invent facts or claims.
+      - Every recommendation must cite claim IDs (C-...).
+      - Unresolved disputes must appear in the disagreement summary.
+      - Evidence gaps must be explicitly listed.
+      - Flip conditions: what would change the recommendation.
+      - Keep cited_claim_ids populated with every claim ID you reference.
+
+  - role: user
+    content: |
+      ## Research Question
+
+      {{ question.text }}
+
+      ## Claims (from the canonical ledger)
+
+      {% for claim in claims %}
+      ### {{ claim.id }} [{{ claim.status }}]
+      {{ claim.statement }}
+      Confidence: {{ claim.confidence }}
+      Analyst sources: {{ claim.analyst_sources }}
+      {% if claim.status_reason %}Status reason: {{ claim.status_reason }}{% endif %}
+
+      {% endfor %}
+
+      ## Disputes
+
+      {% for dispute in disputes %}
+      ### {{ dispute.id }} [{{ dispute.dispute_type }}] — {{ "RESOLVED" if dispute.resolved else "UNRESOLVED" }}
+      {{ dispute.description }}
+      Claims: {{ dispute.claim_ids }}
+      Severity: {{ dispute.severity }}
+      {% if dispute.resolution_summary %}Resolution: {{ dispute.resolution_summary }}{% endif %}
+
+      {% endfor %}
+
+      ## Arbitration Results
+
+      {% for arb in arbitration_results %}
+      ### {{ arb.id }} → {{ arb.verdict }}
+      Dispute: {{ arb.dispute_id }}
+      {{ arb.reasoning }}
+      Claim updates: {{ arb.claim_updates }}
+      {% endfor %}
+
+      ## Known Evidence Gaps
+
+      {% for gap in evidence_gaps %}
+      - {{ gap }}
+      {% endfor %}
+
+      ## Instructions
+
+      Synthesize a grounded report. Cite claim IDs. Surface unresolved
+      disputes. List evidence gaps. Identify flip conditions.
