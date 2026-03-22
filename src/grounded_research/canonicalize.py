@@ -27,13 +27,21 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 # Phase 3a: Claim extraction
 # ---------------------------------------------------------------------------
 
-def extract_raw_claims(analyst_runs: list[AnalystRun]) -> tuple[list[RawClaim], dict[str, str]]:
+def extract_raw_claims(
+    analyst_runs: list[AnalystRun],
+    valid_evidence_ids: set[str] | None = None,
+) -> tuple[list[RawClaim], dict[str, str]]:
     """Gather all raw claims from analyst runs with provenance tracking.
 
     Returns (flat list of all RawClaims, mapping of claim_id → analyst_label).
-    Simple extraction — no LLM needed. Add normalization pass only if dedup
-    suffers from phrasing variance.
+    Simple extraction — no LLM needed.
+
+    If valid_evidence_ids is provided, strips any hallucinated evidence IDs
+    that the analyst LLM invented (not present in the actual evidence bundle).
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     all_claims: list[RawClaim] = []
     claim_to_analyst: dict[str, str] = {}
 
@@ -41,6 +49,14 @@ def extract_raw_claims(analyst_runs: list[AnalystRun]) -> tuple[list[RawClaim], 
         if not run.succeeded:
             continue
         for claim in run.claims:
+            if valid_evidence_ids is not None:
+                invalid = [eid for eid in claim.evidence_ids if eid not in valid_evidence_ids]
+                if invalid:
+                    logger.warning(
+                        "Analyst %s claim %s: stripping hallucinated evidence IDs %s",
+                        run.analyst_label, claim.id, invalid,
+                    )
+                    claim.evidence_ids = [eid for eid in claim.evidence_ids if eid in valid_evidence_ids]
             all_claims.append(claim)
             claim_to_analyst[claim.id] = run.analyst_label
 

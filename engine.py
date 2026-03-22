@@ -100,7 +100,8 @@ async def run_pipeline(
         state.current_phase = "canonicalize"
         print("\n[Phase 3a] Extracting raw claims...")
 
-        raw_claims, claim_to_analyst = extract_raw_claims(analyst_runs)
+        valid_evidence_ids = {e.id for e in bundle.evidence}
+        raw_claims, claim_to_analyst = extract_raw_claims(analyst_runs, valid_evidence_ids)
         print(f"  Raw claims: {len(raw_claims)}")
 
         # --- Phase 3b: Deduplication ---
@@ -199,14 +200,15 @@ async def run_pipeline(
             f"Long report: ~{len(long_report_md.split())} words."
         )
 
+        # Mark complete before writing so trace.json reflects final state
+        state.current_phase = "complete"
+        state.success = True
+        state.completed_at = datetime.now(timezone.utc)
+
         # Write outputs
         paths = write_outputs(state, output_dir, long_report_md=long_report_md)
         for name, path in paths.items():
             print(f"  Wrote: {path}")
-
-        state.current_phase = "complete"
-        state.success = True
-        state.completed_at = datetime.now(timezone.utc)
 
         print(f"\n=== Pipeline complete ===")
         print(f"Report: {report.title}")
