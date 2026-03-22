@@ -100,11 +100,19 @@ Current open items:
 
 - adoption gate for committed draft surfaces, tracked by `docs/plans/01_draft-implementation-adoption.md`
 - Phase 4 convergence timing, with structured 4a/4b as the current v1 slice and agentic merge as a future milestone
-- controlled comparison: initial result (PFAS question) — pipeline long report
-  scored 30/30 vs single-shot 25/30 on blind judge. Pipeline summary loses.
-  Need 2+ more factual questions and a second judge model for confidence.
-- factual test suite: need 3+ questions with verifiable ground truth (not just
-  opinion/recommendation questions) to demonstrate adjudication value
+- controlled comparison (3 questions, Gemini 2.5 Flash judge):
+  - PFAS health risks: pipeline 30/30 vs single-shot 25/30
+  - EU/Russia sanctions: pipeline 30/30 vs single-shot 21/30
+  - Intermittent fasting: pipeline 30/30 vs single-shot ~25/30
+  Pipeline wins all 3 decisively. Judge consistently cites: structural framing
+  via key distinctions, deeper conflict analysis, richer provenance.
+  Remaining: need second judge model to rule out Gemini self-preference.
+- pipeline summary (structured FinalReport) was weaker than long report —
+  synthesis prompt improved (evidence context added, richer field descriptions).
+  Needs re-test on next run.
+- note: only PFAS question triggered arbitration (1 decision-critical dispute).
+  Sanctions and fasting had 0 decision-critical disputes. Pipeline value on
+  those came from multi-analyst structural framing, not arbitration.
 
 ## Success Criteria
 
