@@ -8,10 +8,14 @@ and preserves provenance.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import ValidationError
+
+logger = logging.getLogger(__name__)
 
 from grounded_research.models import (
     EvidenceBundle,
@@ -41,8 +45,11 @@ def load_bundle(path: Path) -> EvidenceBundle:
             if orphans:
                 raise ValueError(f"Evidence items reference unknown sources: {orphans}")
             return bundle
-        except Exception:
-            pass  # Fall through to manual format parsing
+        except ValidationError as e:
+            logger.info(
+                "Full EvidenceBundle parse failed, falling through to manual format: %s",
+                e.error_count(),
+            )
 
     return _build_bundle(raw, imported_from=raw.get("imported_from", "manual"))
 
