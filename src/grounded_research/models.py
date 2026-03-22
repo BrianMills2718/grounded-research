@@ -497,23 +497,39 @@ class FinalReport(BaseModel):
     title: str
     question: str = Field(description="The original research question text.")
     recommendation: str = Field(
-        description="Primary recommendation, must reference claim IDs.",
+        description=(
+            "Primary recommendation grounded in the claim ledger. Must cite claim IDs "
+            "(C-...) for every factual assertion. Structure around 2-4 key distinctions "
+            "that organize the analysis. Explain the reasoning chain from evidence "
+            "through claims to conclusion. Should be 400-800 words — substantive, not "
+            "a summary."
+        ),
     )
     alternatives: list[str] = Field(
         default_factory=list,
-        description="Alternative recommendations considered.",
+        description=(
+            "Genuinely different courses of action or interpretations. Each alternative "
+            "should explain when it would be the better choice and cite supporting claims."
+        ),
     )
     disagreement_summary: str = Field(
         default="",
-        description="Summary of where analysts disagreed and how disputes were resolved.",
+        description=(
+            "Explain WHY analysts disagreed, not just which disputes exist. What "
+            "underlying interpretive or factual differences drove the conflicts? How "
+            "were they resolved (or not)? Reference dispute IDs (D-...) and claim IDs."
+        ),
     )
     evidence_gaps: list[str] = Field(
         default_factory=list,
-        description="Known gaps in the evidence base.",
+        description="Specific gaps in the evidence base that limit confidence in the recommendation.",
     )
     flip_conditions: list[str] = Field(
         default_factory=list,
-        description="Conditions that would change the recommendation.",
+        description=(
+            "Concrete, testable conditions that would change the recommendation. "
+            "Each should name what would change and how it would alter the conclusion."
+        ),
     )
     cited_claim_ids: list[str] = Field(
         default_factory=list,

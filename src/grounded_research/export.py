@@ -77,6 +77,7 @@ async def generate_report(
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "synthesis.yaml"),
         question=state.question.model_dump(),
+        evidence=[e.model_dump() for e in state.evidence_bundle.evidence],
         claims=[c.model_dump() for c in state.claim_ledger.claims],
         disputes=[d.model_dump() for d in state.claim_ledger.disputes],
         arbitration_results=[a.model_dump() for a in state.claim_ledger.arbitration_results],
