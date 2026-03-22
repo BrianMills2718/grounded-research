@@ -106,14 +106,15 @@ Current open items:
 - controlled comparison (3 questions × 2 judge models):
   | Question | Gemini judge | GPT-5-nano judge |
   |----------|-------------|-----------------|
-  | PFAS | 30 vs 25 (pipeline wins) | 30 vs 25 (pipeline wins) |
-  | EU sanctions | 30 vs 21 (pipeline wins) | 28 vs 29 (single-shot wins, marginal) |
-  | IF fasting | 30 vs 25 (pipeline wins) | 30 vs 27 (pipeline wins) |
-  Pipeline wins 5/6 judge evaluations. Single-shot won once (sanctions, GPT-5-nano,
-  28 vs 29 — judge cited crisper factual precision on non-oil sanctions).
-  No Gemini self-preference bias detected; GPT-5-nano slightly more generous to single-shot.
-  Pipeline advantages: structural framing, conflict analysis, actionability.
-  Single-shot advantages: conciseness, factual precision on narrow topics.
+  | PFAS | 30 vs 25 (pipeline) | 30 vs 25 (pipeline) |
+  | EU sanctions | 30 vs 21 (pipeline) | 28 vs 29 (single-shot) |
+  | IF fasting | 30 vs 25 (pipeline) | 30 vs 27 (pipeline) |
+  | Microplastics | — | 27 vs 30 (single-shot) |
+  Gemini judge: pipeline wins 3/3. GPT-5-nano (harder): pipeline wins 2/4.
+  Pipeline wins when: question has genuine conflicts, multi-perspective framing adds value.
+  Single-shot wins when: topic is well-settled, conciseness and specific actions matter more.
+  Pipeline advantages: structural framing, arbitration, richer provenance.
+  Single-shot advantages: conciseness, explicit conflict sections, actionable recommendations.
 - pipeline summary (structured FinalReport) was weaker than long report —
   synthesis prompt improved (evidence context added, richer field descriptions).
   Needs re-test on next run.
