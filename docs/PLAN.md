@@ -104,17 +104,18 @@ Current open items:
 - adoption gate for committed draft surfaces, tracked by `docs/plans/01_draft-implementation-adoption.md`
 - Phase 4 convergence timing, with structured 4a/4b as the current v1 slice and agentic merge as a future milestone
 - controlled comparison (3 questions × 2 judge models):
-  | Question | Gemini judge | GPT-5-nano judge |
-  |----------|-------------|-----------------|
-  | PFAS | 30 vs 25 (pipeline) | 30 vs 25 (pipeline) |
-  | EU sanctions | 30 vs 21 (pipeline) | 28 vs 29 (single-shot) |
-  | IF fasting | 30 vs 25 (pipeline) | 30 vs 27 (pipeline) |
-  | Microplastics | — | 27 vs 30 (single-shot) |
-  Gemini judge: pipeline wins 3/3. GPT-5-nano (harder): pipeline wins 2/4.
-  Pipeline wins when: question has genuine conflicts, multi-perspective framing adds value.
-  Single-shot wins when: topic is well-settled, conciseness and specific actions matter more.
-  Pipeline advantages: structural framing, arbitration, richer provenance.
-  Single-shot advantages: conciseness, explicit conflict sections, actionable recommendations.
+  | Question | GPT-5-nano judge (pre-fix) | GPT-5-nano judge (post-severity-fix) |
+  |----------|--------------------------|-------------------------------------|
+  | PFAS | 30 vs 25 (pipeline) | — |
+  | EU sanctions | 28 vs 29 (single-shot) | 29 vs 28 (pipeline) — flipped |
+  | IF fasting | 30 vs 27 (pipeline) | — |
+  | Microplastics | 27 vs 30 (single-shot) | — |
+  After severity calibration fix, pipeline wins 3/4 with GPT-5-nano.
+  Key insight: severity calibration was the primary bottleneck — arbitration
+  only fires on decision-critical disputes, so under-classification meant
+  the pipeline's most novel feature almost never ran.
+  Root cause: schema field description too terse, model too weak.
+  Fix: richer Field(description=...) + bump to gemini-2.5-flash.
 - pipeline summary (structured FinalReport) was weaker than long report —
   synthesis prompt improved (evidence context added, richer field descriptions).
   Needs re-test on next run.
