@@ -48,8 +48,11 @@ workflow engine.
   and distinct reasoning frames (verification_first, structured_decomposition, step_back_abstraction)
 - cross-family run on PFAS factual question produced 5 disputes (1 decision-critical factual
   conflict about EPA regulatory timeline), resolved via fresh evidence arbitration
-- end-to-end verified on three questions (Redis vs PostgreSQL, Obsidian second brain, PFAS health risks)
-- controlled comparison vs single-shot synthesis still needed (prompt_eval)
+- end-to-end verified on five questions (Redis vs PostgreSQL, Obsidian second brain, PFAS health
+  risks, EU/Russia sanctions, intermittent fasting)
+- controlled comparison complete: pipeline wins all 3 factual questions (30/30 vs 21-25/30)
+- known issue: synthesis LLM occasionally hallucinated evidence IDs (E-813da51 in fasting run);
+  grounding validation catches these but they should be prevented via prompt or post-processing
 
 ## Governance Surfaces
 
