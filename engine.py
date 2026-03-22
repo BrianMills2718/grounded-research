@@ -136,20 +136,27 @@ async def run_pipeline(
         print("\n[Phase 4] Verifying decision-critical disputes...")
 
         max_disputes = int(get_budget("verification_max_disputes"))
-        ledger, arb_results = await verify_disputes(
+        ledger, arb_results, adjudication_warnings, phase4_llm_calls = await verify_disputes(
             ledger, bundle, trace_id,
             max_disputes=max_disputes,
             max_budget=total_budget * 0.3,
         )
         state.claim_ledger = ledger
+        for warning in adjudication_warnings:
+            state.add_warning(
+                "adjudicate",
+                warning.code,
+                warning.message,
+                **warning.context,
+            )
 
         state.phase_traces.append(PhaseTrace(
             phase="adjudicate",
             started_at=phase_start,
             completed_at=datetime.now(timezone.utc),
             succeeded=True,
-            llm_calls=len(arb_results),
-            output_summary=f"{len(arb_results)} disputes arbitrated",
+            llm_calls=phase4_llm_calls,
+            output_summary=f"{len(arb_results)} disputes arbitrated, {len(adjudication_warnings)} adjudication warnings",
         ))
         for ar in arb_results:
             print(f"  {ar.dispute_id} → {ar.verdict}")

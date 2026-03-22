@@ -41,7 +41,18 @@ messages:
       {{ item.content }}
       {% endfor %}
 
+      ## Fresh Evidence Candidate Set
+
+      {% for item in fresh_evidence %}
+      ### {{ item.id }} (from {{ item.source_id }})
+      {{ item.content }}
+      {% endfor %}
+
       ## Instructions
+
+      Evaluate this dispute using all evidence, but only count `supported`,
+      `revised`, or `refuted` as valid only when the decision references
+      evidence from the Fresh Evidence Candidate Set.
 
       Evaluate this dispute. Determine which claims are better supported
       by the evidence. Provide your verdict and explain your reasoning.

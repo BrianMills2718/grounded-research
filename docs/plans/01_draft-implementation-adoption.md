@@ -72,6 +72,7 @@ decided.
 | `python scripts/check_markdown_links.py CLAUDE.md docs docs/plans` | doc links remain valid |
 | `python scripts/sync_plan_status.py --check` | plan index stays consistent |
 | `python scripts/check_required_reading.py docs/plans/CLAUDE.md --reads-file /tmp/nonexistent_reads_for_check` | governance gate covers numbered plans |
+| `python scripts/ci_checks.py` | repo governance target runs doc coupling, plan sync, and ADR-0004 invariant checks |
 
 ---
 

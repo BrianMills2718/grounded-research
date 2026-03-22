@@ -53,6 +53,38 @@ couplings:
     description: Persisted uncertainties must stay aligned with the canonical execution plan.
     required_reading: true
 
+  - sources:
+      - docs/CLAUDE_CODE_HANDOFF.md
+    docs:
+      - docs/PLAN.md
+      - docs/UNCERTAINTIES.md
+    description: Claude Code handoff must stay aligned with the canonical plan and open uncertainties.
+    required_reading: true
+
+  - sources:
+      - scripts/ci_checks.py
+    docs:
+      - docs/PLAN.md
+      - docs/adr/0004-agentic-verification-and-fail-loud-phase4.md
+    description: Repo-level governance target must stay aligned with the canonical plan and Phase 4 ADR.
+    required_reading: true
+
+  - sources:
+      - scripts/check_adr_invariants.py
+    docs:
+      - docs/PLAN.md
+      - docs/adr/0004-agentic-verification-and-fail-loud-phase4.md
+    description: ADR invariant checker must stay aligned with the canonical plan and Phase 4 ADR.
+    required_reading: true
+
+  - sources:
+      - .github/workflows/*.yml
+    docs:
+      - docs/PLAN.md
+      - docs/adr/0004-agentic-verification-and-fail-loud-phase4.md
+    description: Governance workflow files must stay aligned with the canonical plan and Phase 4 ADR.
+    required_reading: true
+
   # Scope changes require understanding the ADR that set the boundary.
   - sources:
       - docs/SCOPE_MATRIX_V2.md
@@ -108,6 +140,24 @@ governance:
     adrs: [1, 2]
     context: Scope and plan are governed by both ADRs.
 
+  - sources:
+      - docs/PLAN.md
+      - docs/adr/0004-agentic-verification-and-fail-loud-phase4.md
+    adrs: [4]
+    context: Phase 4 verification and fail-loud behavior are governed by ADR 0004.
+
+  - sources:
+      - engine.py
+      - src/grounded_research/verify.py
+    adrs: [4]
+    context: Verification orchestration and phase-4 accounting are governed by ADR 0004.
+
+  - sources:
+      - scripts/ci_checks.py
+      - scripts/check_adr_invariants.py
+    adrs: [4]
+    context: Repo governance target and ADR invariant checker are governed by ADR 0004.
+
 architecture: []
 
 adrs:
@@ -117,3 +167,6 @@ adrs:
   2:
     title: Approved External Reuse Strategy
     file: docs/adr/0002-approved-external-reuse-strategy.md
+  4:
+    title: Phase 4 Agentic Verification and Fail-Loud Boundaries
+    file: docs/adr/0004-agentic-verification-and-fail-loud-phase4.md

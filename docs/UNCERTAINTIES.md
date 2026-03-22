@@ -23,6 +23,11 @@ Current posture:
 - hold until each draft is reviewed against `docs/PLAN.md`,
   `docs/CONTRACTS.md`, and `src/grounded_research/models.py`
 
+Plan linkage:
+
+- `docs/plans/01_draft-implementation-adoption.md`
+- `docs/PLAN.md` "Open Planning Items"
+
 ## U2: Phase 4 Execution Target
 
 Question:
@@ -38,7 +43,13 @@ Current evidence:
 
 Current posture:
 
-- unresolved; keep both visible, but do not let the draft silently decide
+- current v1 plan uses structured `Phase 4a/4b`; agentic merge remains a
+  future milestone to be scheduled, not a hidden toggle
+
+Plan linkage:
+
+- `docs/PLAN.md` Phase 4 section
+- `docs/adr/0004-agentic-verification-and-fail-loud-phase4.md`
 
 ## U3: Real Baseline Evidence And Review Rubric
 
@@ -56,3 +67,8 @@ Current posture:
 
 - unresolved; add a real-source bundle and explicit rubric before accepting
   `Phase -1` as proven
+
+Plan linkage:
+
+- `docs/PLAN.md` Phase -1 section
+- `docs/notebooks/01_adjudication_review_journey.ipynb`

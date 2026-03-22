@@ -28,6 +28,12 @@ messages:
 
       ## Instructions
 
-      For each dispute, generate targeted search queries that would help
-      resolve the conflict with new evidence. Each query should be specific
-      enough to return actionable results.
+      For each dispute, generate 2-3 targeted search queries that would help
+      resolve the conflict with fresh evidence. Prefer:
+      - source-specific or domain-specific publications where possible,
+      - mixed recency and historical authority checks,
+      - one query variant that explicitly seeks evidence challenging each side.
+
+      Return queries that are specific enough to produce actionable results for one
+      disputing pair and include explicit freshness expectations (e.g., "past year",
+      "official report", "primary study", etc.).
