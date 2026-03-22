@@ -3,9 +3,7 @@
 Extracts key metrics and calls an LLM to do blind evaluation.
 
 Usage:
-    python scripts/compare_outputs.py \
-        output/pfas_health_risks/summary.md \
-        output/pfas_baseline/single_shot_report.md
+    python scripts/compare_outputs.py report_a.md report_b.md [--judge MODEL] [--output PATH]
 """
 
 from __future__ import annotations
@@ -46,14 +44,32 @@ Score each report on these dimensions (1-5 scale):
    Is the citation trail clear and complete?
 
 For each dimension, score both reports and explain which is better and why.
-Then give an overall verdict: which report is more useful for a decision-maker
-who needs to understand PFAS health risks and regulatory limits?
+Then give an overall verdict: which report is more useful for a decision-maker?
 
 Be specific. Quote from the reports to support your judgments.
 """
 
 
-async def compare(report_a_path: Path, report_b_path: Path) -> None:
+def _extract_question(report_text: str) -> str:
+    """Try to extract the research question from the report text."""
+    for line in report_text.split("\n"):
+        if line.startswith("**Question:**"):
+            return line.replace("**Question:**", "").strip()
+    # Fallback: first non-empty, non-header line
+    for line in report_text.split("\n"):
+        line = line.strip()
+        if line and not line.startswith("#") and not line.startswith("**"):
+            return line[:200]
+    return "(question not found in report)"
+
+
+async def compare(
+    report_a_path: Path,
+    report_b_path: Path,
+    judge_model: str = "gemini/gemini-2.5-flash",
+    output_path: Path | None = None,
+) -> None:
+    """Run blind comparison of two reports using an LLM judge."""
     from llm_client import acall_llm
 
     report_a = report_a_path.read_text()
@@ -71,10 +87,11 @@ async def compare(report_a_path: Path, report_b_path: Path) -> None:
     print(f"Only in B: {len(b_citations - a_citations)}")
     print()
 
+    question = _extract_question(report_a) or _extract_question(report_b)
+
     user_msg = f"""## Research Question
 
-What are the documented health risks of PFAS (forever chemicals) in drinking
-water, and at what concentration levels do regulatory agencies set limits?
+{question}
 
 ## Report A
 
@@ -94,37 +111,51 @@ Score both reports on all 6 dimensions (1-5 each). Then give your overall verdic
         {"role": "user", "content": user_msg},
     ]
 
-    print("=== LLM Judge Evaluation ===")
-    print("(Using gemini-2.5-flash as judge)")
+    print(f"=== LLM Judge Evaluation ===")
+    print(f"(Using {judge_model} as judge)")
     print()
 
     llm_result = await acall_llm(
-        "gemini/gemini-2.5-flash",
+        judge_model,
         messages,
         task="baseline_comparison_judge",
-        trace_id="baseline/judge",
+        trace_id=f"baseline/judge/{judge_model.split('/')[-1]}",
         max_budget=1.0,
     )
 
     print(llm_result.content)
 
     # Save
-    out_path = PROJECT_ROOT / "output" / "pfas_comparison.md"
-    out_path.write_text(
+    if output_path is None:
+        stem = report_a_path.parent.name
+        output_path = PROJECT_ROOT / "output" / f"{stem}_comparison_{judge_model.split('/')[-1]}.md"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
         f"# Pipeline vs Single-Shot Comparison\n\n"
+        f"**Judge model:** {judge_model}\n\n"
         f"## Structural Metrics\n\n"
         f"- Report A (pipeline): {len(report_a.split())} words, {len(a_citations)} unique citations\n"
         f"- Report B (single-shot): {len(report_b.split())} words, {len(b_citations)} unique citations\n"
         f"- Shared: {len(a_citations & b_citations)}, Only A: {len(a_citations - b_citations)}, Only B: {len(b_citations - a_citations)}\n\n"
         f"## Judge Evaluation\n\n{llm_result.content}\n"
     )
-    print(f"\nSaved to: {out_path}")
+    print(f"\nSaved to: {output_path}")
 
 
 def main() -> None:
-    report_a = Path(sys.argv[1]) if len(sys.argv) > 1 else PROJECT_ROOT / "output" / "pfas_health_risks" / "summary.md"
-    report_b = Path(sys.argv[2]) if len(sys.argv) > 2 else PROJECT_ROOT / "output" / "pfas_baseline" / "single_shot_report.md"
-    asyncio.run(compare(report_a, report_b))
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Compare two research reports via LLM judge")
+    parser.add_argument("report_a", type=Path, nargs="?", default=None)
+    parser.add_argument("report_b", type=Path, nargs="?", default=None)
+    parser.add_argument("--judge", default="gemini/gemini-2.5-flash", help="Judge model ID")
+    parser.add_argument("--output", type=Path, default=None, help="Output path for comparison")
+    args = parser.parse_args()
+
+    a = args.report_a or (PROJECT_ROOT / "output" / "pfas_health_risks" / "report.md")
+    b = args.report_b or (PROJECT_ROOT / "output" / "pfas_baseline" / "single_shot_report.md")
+    asyncio.run(compare(a, b, judge_model=args.judge, output_path=args.output))
 
 
 if __name__ == "__main__":

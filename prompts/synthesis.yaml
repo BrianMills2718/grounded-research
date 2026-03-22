@@ -7,6 +7,8 @@ messages:
       Rules:
       - The report RENDERS structured state. Do not invent facts or claims.
       - Every recommendation must cite claim IDs (C-...).
+      - ONLY use claim IDs and evidence IDs that appear in the data below.
+        Do NOT invent or fabricate any IDs. If you are unsure of an ID, omit it.
       - Unresolved disputes must appear in the disagreement summary.
       - Evidence gaps must be explicitly listed.
       - Flip conditions: what would change the recommendation.

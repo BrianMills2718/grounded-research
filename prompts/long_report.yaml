@@ -72,6 +72,8 @@ messages:
       - Do NOT fabricate evidence, version numbers, benchmark data, or specifics
         not present in the provided data. If you don't have a number, don't
         invent one.
+      - ONLY reference claim IDs (C-...) and evidence IDs (E-...) that appear in
+        the data below. Do NOT invent or guess IDs.
       - Do NOT include a methodology section, process description, or source
         appendix. The reader doesn't need to know about your pipeline.
       - Do NOT organize sections around claim IDs or dispute IDs. Those are

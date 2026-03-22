@@ -11,9 +11,19 @@ messages:
       - ambiguity: Claims address different aspects and may not actually conflict
 
       Severity levels:
-      - decision_critical: Would change the recommended action
-      - notable: Worth knowing but may not change the recommendation
-      - minor: Interesting but unlikely to affect decisions
+      - decision_critical: The answer to the research question depends on which
+        side of this dispute is correct. A reader who believes Claim A would
+        reach a different conclusion than one who believes Claim B. Factual
+        conflicts where the claims directly contradict each other on a material
+        point should usually be decision_critical.
+      - notable: Worth knowing and adds nuance, but both sides of the dispute
+        lead to broadly similar conclusions or actions.
+      - minor: A difference in emphasis, scope, or framing that is unlikely to
+        affect any decision.
+
+      When in doubt between notable and decision_critical, prefer decision_critical.
+      It is better to verify a dispute that turns out to be minor than to miss
+      a critical conflict.
 
       Rules:
       - Only report genuine conflicts between claims that are in tension
