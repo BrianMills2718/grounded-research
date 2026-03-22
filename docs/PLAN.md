@@ -103,13 +103,17 @@ Current open items:
 
 - adoption gate for committed draft surfaces, tracked by `docs/plans/01_draft-implementation-adoption.md`
 - Phase 4 convergence timing, with structured 4a/4b as the current v1 slice and agentic merge as a future milestone
-- controlled comparison (3 questions, Gemini 2.5 Flash judge):
-  - PFAS health risks: pipeline 30/30 vs single-shot 25/30
-  - EU/Russia sanctions: pipeline 30/30 vs single-shot 21/30
-  - Intermittent fasting: pipeline 30/30 vs single-shot ~25/30
-  Pipeline wins all 3 decisively. Judge consistently cites: structural framing
-  via key distinctions, deeper conflict analysis, richer provenance.
-  Remaining: need second judge model to rule out Gemini self-preference.
+- controlled comparison (3 questions × 2 judge models):
+  | Question | Gemini judge | GPT-5-nano judge |
+  |----------|-------------|-----------------|
+  | PFAS | 30 vs 25 (pipeline wins) | 30 vs 25 (pipeline wins) |
+  | EU sanctions | 30 vs 21 (pipeline wins) | 28 vs 29 (single-shot wins, marginal) |
+  | IF fasting | 30 vs 25 (pipeline wins) | 30 vs 27 (pipeline wins) |
+  Pipeline wins 5/6 judge evaluations. Single-shot won once (sanctions, GPT-5-nano,
+  28 vs 29 — judge cited crisper factual precision on non-oil sanctions).
+  No Gemini self-preference bias detected; GPT-5-nano slightly more generous to single-shot.
+  Pipeline advantages: structural framing, conflict analysis, actionability.
+  Single-shot advantages: conciseness, factual precision on narrow topics.
 - pipeline summary (structured FinalReport) was weaker than long report —
   synthesis prompt improved (evidence context added, richer field descriptions).
   Needs re-test on next run.
