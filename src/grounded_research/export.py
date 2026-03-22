@@ -94,6 +94,16 @@ async def generate_report(
         max_budget=max_budget,
     )
 
+    # Strip hallucinated claim IDs that the LLM invented
+    valid_claim_ids = {c.id for c in state.claim_ledger.claims}
+    hallucinated = [cid for cid in report.cited_claim_ids if cid not in valid_claim_ids]
+    if hallucinated:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Synthesis hallucinated %d claim IDs, stripping: %s", len(hallucinated), hallucinated
+        )
+        report.cited_claim_ids = [cid for cid in report.cited_claim_ids if cid in valid_claim_ids]
+
     return report
 
 

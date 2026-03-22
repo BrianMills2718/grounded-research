@@ -2,7 +2,7 @@ models:
   analyst: "gemini/gemini-2.5-flash-lite"
   claim_extraction: "gemini/gemini-2.5-flash-lite"
   deduplication: "gemini/gemini-2.5-flash-lite"
-  dispute_classification: "gemini/gemini-2.5-flash-lite"
+  dispute_classification: "gemini/gemini-2.5-flash"
   arbitration: "gemini/gemini-2.5-flash-lite"
   synthesis: "openrouter/google/gemini-2.5-flash"
 

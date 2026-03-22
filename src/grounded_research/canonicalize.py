@@ -152,10 +152,20 @@ async def detect_disputes(
 
     class RawDispute(BaseModel):
         """One conflict identified by the LLM."""
-        claim_ids: list[str] = Field(description="IDs of claims in conflict.")
-        dispute_type: str = Field(description="factual_conflict, interpretive_conflict, preference_conflict, or ambiguity")
-        description: str = Field(description="Human-readable description of the conflict.")
-        severity: str = Field(description="decision_critical, notable, or minor")
+        claim_ids: list[str] = Field(description="IDs of claims in conflict (minimum 2).")
+        dispute_type: str = Field(description="One of: factual_conflict, interpretive_conflict, preference_conflict, ambiguity")
+        description: str = Field(description="Human-readable description of the conflict and why it matters.")
+        severity: str = Field(
+            description=(
+                "One of: decision_critical, notable, minor. "
+                "Use decision_critical when the claims directly contradict each other "
+                "on a material point — a reader who believes Claim A would reach a "
+                "different conclusion than one who believes Claim B. Most factual_conflict "
+                "disputes should be decision_critical. Use notable only when both sides "
+                "lead to broadly similar conclusions. Use minor for differences in "
+                "emphasis or framing. When in doubt, prefer decision_critical."
+            ),
+        )
 
     class DisputeDetectionResult(BaseModel):
         """LLM output: detected conflicts between claims."""
