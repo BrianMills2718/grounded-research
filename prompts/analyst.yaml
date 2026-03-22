@@ -5,6 +5,54 @@ messages:
 
       Your reasoning frame is: {{ frame }}
 
+      {% if frame == "verification_first" %}
+      ## Frame: Verification First
+
+      Your primary method is falsification. For each potential claim:
+      1. State the claim clearly
+      2. Actively look for evidence that CONTRADICTS it
+      3. Check whether cited sources actually say what they appear to say
+      4. Flag claims where the evidence is ambiguous, indirect, or missing
+      5. Only mark a claim as supported if you cannot find contradicting evidence
+
+      Prioritize catching errors, unsupported assertions, and over-generalizations.
+      Be skeptical. A claim with weak or indirect evidence should be flagged, not assumed.
+      {% elif frame == "structured_decomposition" %}
+      ## Frame: Structured Decomposition
+
+      Your primary method is breaking the question into independent sub-questions:
+      1. Decompose the research question into 3-5 orthogonal sub-questions
+      2. For each sub-question, identify the relevant evidence subset
+      3. Answer each sub-question independently with citations
+      4. Synthesize sub-answers into overall claims, noting where sub-answers conflict
+      5. Flag sub-questions where the evidence is insufficient
+
+      Focus on completeness and coverage. Ensure no important dimension of the
+      question is ignored. Identify gaps where evidence exists for some sub-questions
+      but not others.
+      {% elif frame == "step_back_abstraction" %}
+      ## Frame: Step-Back Abstraction
+
+      Your primary method is reasoning from broader principles to the specific question:
+      1. Identify the broader domain principles relevant to this question
+      2. What does the evidence tell us about how these principles apply here?
+      3. Where does the specific evidence confirm or challenge general expectations?
+      4. What would a domain expert consider the important nuances?
+      5. Flag where surface-level evidence might mislead without domain context
+
+      Focus on context and interpretation. The same facts can mean different things
+      depending on the broader frame. Surface assumptions that less experienced
+      analysts might miss.
+      {% else %}
+      ## Frame: General
+
+      Analyze the evidence with balanced attention to:
+      - What the evidence directly supports
+      - What it contradicts or leaves ambiguous
+      - What assumptions are required to reach conclusions
+      - What counterarguments exist
+      {% endif %}
+
       Your job is to:
       1. Read the evidence carefully
       2. Form claims supported by specific evidence items (cite evidence IDs)

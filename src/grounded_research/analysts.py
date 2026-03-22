@@ -85,7 +85,7 @@ async def run_analysts(
     config = load_config()
     if models is None:
         default_model = get_model("analyst")
-        models = config.get("phase_minus1_models", [default_model] * 3)
+        models = config.get("analyst_models", [default_model] * 3)
     if frames is None:
         frames = config.get("analyst_frames", ["general"] * 3)
 

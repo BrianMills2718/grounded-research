@@ -6,11 +6,13 @@ models:
   arbitration: "gemini/gemini-2.5-flash-lite"
   synthesis: "openrouter/google/gemini-2.5-flash"
 
-# Cross-family models for multi-analyst runs
-phase_minus1_models:
-  - "gemini/gemini-2.5-flash-lite"
-  - "gemini/gemini-2.5-flash-lite"
-  - "gemini/gemini-2.5-flash-lite"
+# Cross-family models for multi-analyst runs.
+# Different model families produce genuine analytical disagreement,
+# not just temperature noise from the same model.
+analyst_models:
+  - "gemini/gemini-2.5-flash"       # Google — strong reasoning, structured output
+  - "openrouter/openai/gpt-5-nano"  # OpenAI — different training biases
+  - "openrouter/deepseek/deepseek-chat"  # DeepSeek — independent model family
 
 budgets:
   analyst_max_calls: 3
@@ -19,10 +21,12 @@ budgets:
   verification_max_disputes: 5
   pipeline_max_budget_usd: 5.0
 
+# Each frame gives the analyst a distinct analytical lens on the same evidence.
+# This is the core differentiator — not just different models, different methods.
 analyst_frames:
-  - "general"
-  - "general"
-  - "general"
+  - "verification_first"          # Prioritize checking factual claims against sources
+  - "structured_decomposition"    # Break the question into sub-questions, analyze each
+  - "step_back_abstraction"       # Step back to broader principles, then reason forward
 
 collection:
   num_queries: 10

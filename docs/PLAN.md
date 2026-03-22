@@ -26,6 +26,7 @@ workflow engine.
 - project instructions in place
 - ADR recorded
 - external reuse strategy recorded
+- ADR-0004 recorded: Phase 4 evidence-aware verification and fail-loud boundaries
 - one-page architecture written
 - v1 brief absorbed into this plan (deleted as redundant)
 - domain model draft written (`docs/DOMAIN_MODEL.md`)
@@ -35,12 +36,20 @@ workflow engine.
 - golden-set evidence fixture created (`tests/fixtures/session_storage_bundle.json`)
 - canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
 - documentation-governance layer present (`.claude/`, `docs/plans/`,
-  `scripts/relationships.yaml`, validation scripts)
+  `scripts/relationships.yaml`, validation scripts, `scripts/ci_checks.py`,
+  `.github/workflows/governance.yml`)
+- Claude Code handoff artifact written (`docs/CLAUDE_CODE_HANDOFF.md`)
 - full pipeline implemented: ingest → analyze → canonicalize → adjudicate → export
 - automatic evidence collection from raw questions via Brave Search + page extraction
   (uses research_v3 tools, not hand-rolled)
-- Phase -1 thesis validated: cross-family disagreement signal is real and decision-relevant
-- end-to-end verified on two questions (Redis vs PostgreSQL, Obsidian second brain)
+- Phase -1 initial validation used same model × 3 (gemini-2.5-flash-lite, general frame) —
+  measured stochastic noise, not genuine disagreement (see ADR-0005)
+- Phase -1 re-validated with cross-family models (Gemini 2.5 Flash, GPT-5-nano, DeepSeek Chat)
+  and distinct reasoning frames (verification_first, structured_decomposition, step_back_abstraction)
+- cross-family run on PFAS factual question produced 5 disputes (1 decision-critical factual
+  conflict about EPA regulatory timeline), resolved via fresh evidence arbitration
+- end-to-end verified on three questions (Redis vs PostgreSQL, Obsidian second brain, PFAS health risks)
+- controlled comparison vs single-shot synthesis still needed (prompt_eval)
 
 ## Governance Surfaces
 
@@ -82,6 +91,20 @@ Adopt an implementation slice only if it:
 
 Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
+## Open Planning Items
+
+Unresolved decisions stay visible here and in `docs/UNCERTAINTIES.md` until
+they are closed.
+
+Current open items:
+
+- adoption gate for committed draft surfaces, tracked by `docs/plans/01_draft-implementation-adoption.md`
+- Phase 4 convergence timing, with structured 4a/4b as the current v1 slice and agentic merge as a future milestone
+- controlled comparison: full pipeline vs single-shot synthesis on same evidence,
+  evaluated via `prompt_eval` (required before declaring thesis proven)
+- factual test suite: need 3+ questions with verifiable ground truth (not just
+  opinion/recommendation questions) to demonstrate adjudication value
+
 ## Success Criteria
 
 The smallest useful version passes if it can:
@@ -92,6 +115,13 @@ The smallest useful version passes if it can:
 4. surface real decision-relevant disputes
 5. resolve at least some factual or interpretive disputes with fresh evidence
 6. write a grounded `report.md` and `trace.json`
+
+Cross-phase gate (applies to all phases):
+
+1. each phase promotion requires an end-to-end phase-boundary test (fixture,
+   notebook, or CLI path), not just unit-level checks;
+2. phase status may not be marked `live` when assertions are uncertain;
+3. unresolved assumptions must be recorded before moving to the next phase.
 
 ## Execution Strategy Boundary
 
@@ -365,30 +395,46 @@ Goal:
 - resolve decision-critical disputes by searching for fresh evidence and
   arbitrating based on what is found
 
-Execution mode: agentic — one `acall_llm(..., python_tools=[...])` invocation
-per decision-critical dispute. The agent iterates: search, read results, decide
-if more evidence is needed, then arbitrate. This is the phase most naturally
-suited to agentic execution because verification intrinsically requires tool
-use.
+Execution mode (current): structured 4a/4b sub-slices.
+Phase 4 currently runs as:
+
+- Phase 4a (`verification_queries.yaml`): one structured query-generation call for
+  the selected disputes.
+- Phase 4b (`arbitration.yaml`): one structured arbitration call per dispute with
+  fresh evidence available.
+
+Planned direction: converge these slices into one `llm_client`-managed agentic loop
+after this baseline is stable.
 
 Build:
 
-- Python tool callables: `search_web`, `read_url`, `record_evidence`,
-  `submit_arbitration`
-- agent invocation per dispute via `llm_client` `python_tools` loop
+- `verification_queries.yaml` prompt and structured LLM binding for query batches
+- arbitration prompt/contract for evidence-driven verdicts with fresh evidence IDs
 - code-owned ledger update logic (applies `ArbitrationResult.claim_updates`)
-- `max_turns` budget per dispute (configurable in `config/config.yaml`)
+- `max_turns` is recorded and validated as a phase-gate control (configurable in
+  `config/config.yaml`)
+- dispute-failure policy and warning model for partial recovery and hard failures
 
 Pass if:
 
 - arbitration references newly retrieved evidence (not paraphrase of existing)
+- all non-`inconclusive` verdicts include `new_evidence_ids` proving fresh
+  evidence was consulted
 - claim status updates are consistent with verdict
-- `Dispute.resolved` set appropriately
+- `Dispute.resolved` set only when evidence-driven rationale is attached
 - ledger updates remain internally consistent
-- agent terminates via `submit_arbitration` tool, not by `max_turns` exhaustion
-  (exhaustion produces `inconclusive` + warning)
+- structured arbitration returns a typed `ArbitrationResult` for every routed
+  dispute path; `inconclusive` outcomes must include a typed warning reason
 
-Promotion: `stub` → `live` once search tools and agent invocation are wired.
+Fail if:
+
+- any non-`inconclusive` verdict has no fresh evidence IDs
+- partial failures lose trace coverage (no `adjudicate` warnings persisted)
+- contract-breaking or schema-breaking data is generated
+- any `inconclusive` result is emitted without a warning-compatible rationale
+- phase-local warnings are dropped from trace
+
+Promotion: `stub` → `live` once structured 4a/4b execution and warning persistence are stable.
 
 Implementation path:
 
@@ -406,13 +452,17 @@ These are the initial implementation before the full agentic loop is wired.
 
 - Input: verify-worthy `list[Dispute]`
 - Output: `list[VerificationQueryBatch]`
-- LLM calls: 1 structured call or 1 per dispute
+- LLM calls: 1 structured call for the entire batch
+- Acceptance: each batch must bind query batches to a dispute and include
+  freshness or recency expectations
 
 **Phase 4b: Structured Arbitration**
 
 - Input: `ClaimLedger` + `list[VerificationQueryBatch]` + fresh evidence
 - Output: updated `ClaimLedger` + `list[ArbitrationResult]`
-- LLM calls: 1 per dispute
+- LLM calls: 1 per dispute where fresh evidence is actually retrieved
+- Acceptance: all non-`inconclusive` results include evidence updates;
+  `inconclusive` responses must include warning reason and persisted trace entry
 
 ### Phase 5: Grounded Export And Downstream Handoff
 
@@ -444,6 +494,8 @@ See `docs/SCOPE_MATRIX_V2.md` for the canonical deferred/cut lists.
 
 See `docs/adr/0002-approved-external-reuse-strategy.md` for the approved
 external reuse strategy.
+See `docs/adr/0004-agentic-verification-and-fail-loud-phase4.md` for phase 4
+evidence and fail-loud requirements.
 
 ## Config Schema (Draft)
 
