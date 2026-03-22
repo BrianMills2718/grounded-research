@@ -100,8 +100,9 @@ Current open items:
 
 - adoption gate for committed draft surfaces, tracked by `docs/plans/01_draft-implementation-adoption.md`
 - Phase 4 convergence timing, with structured 4a/4b as the current v1 slice and agentic merge as a future milestone
-- controlled comparison: full pipeline vs single-shot synthesis on same evidence,
-  evaluated via `prompt_eval` (required before declaring thesis proven)
+- controlled comparison: initial result (PFAS question) — pipeline long report
+  scored 30/30 vs single-shot 25/30 on blind judge. Pipeline summary loses.
+  Need 2+ more factual questions and a second judge model for confidence.
 - factual test suite: need 3+ questions with verifiable ground truth (not just
   opinion/recommendation questions) to demonstrate adjudication value
 
