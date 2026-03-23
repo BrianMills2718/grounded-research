@@ -17,11 +17,11 @@
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 1 | Restate query as precise core question | KEEP | **PARTIAL** | `ResearchQuestion` captures text but no LLM reformulation step. Question passes through as-is. |
-| 2 | Break into 2-6 typed sub-questions | KEEP | **NOT STARTED** | No decomposition. Analysts get the full question. Search queries serve as implicit decomposition but aren't typed sub-questions. |
+| 1 | Restate query as precise core question | KEEP | **DONE** | `QuestionDecomposition.core_question` reformulates via LLM. |
+| 2 | Break into 2-6 typed sub-questions | KEEP | **DONE** | `SubQuestion` with type (factual/causal/comparative/evaluative/scope) + falsification target. ADR-0006. |
 | 3 | Identify ambiguous terms & assign definitions | CUT | CUT | — |
-| 4 | Map optimization axes & tradeoffs | KEEP | **NOT STARTED** | Not captured in schema or prompt. |
-| 5 | Build research plan with falsification targets | SIMPLIFY | **PARTIAL** | Search queries include falsification-oriented prompts ("arguments AGAINST", "limitations, criticisms"). No explicit research plan object. |
+| 4 | Map optimization axes & tradeoffs | KEEP | **DONE** | `QuestionDecomposition.optimization_axes` (2-4 key tradeoffs). Passed to synthesis as organizing framework. |
+| 5 | Build research plan with falsification targets | SIMPLIFY | **DONE** | `QuestionDecomposition.research_plan` + per-sub-question `falsification_target`. Drives counterfactual search queries. |
 | 6 | Assess complexity level | CUT | CUT | — |
 | 7 | Emit stage summary for final report | KEEP | **DONE** | `PhaseTrace` with `output_summary` per phase. |
 
@@ -95,7 +95,7 @@
 |---|---------|---------|--------|-------|
 | 42 | Context compaction | SIMPLIFY | **PARTIAL** | Evidence capped at 30 items in synthesis prompt. No token-counting or priority truncation. |
 | 43 | Self-preference bias guard | DEFER | DEFERRED | Tested with two judge models (Gemini + GPT-5-nano) — no self-preference detected. |
-| 44 | Adapt synthesis by dispute resolution type | KEEP | **PARTIAL** | Prompt instructs how to handle resolved/unresolved disputes differently. No code-level routing by resolution type. |
+| 44 | Adapt synthesis by dispute resolution type | KEEP | **DONE** | `synthesis_mode` config: "analytical" (inferences beyond sources, marked) vs "grounded" (ledger-only). Disputes handled differently by mode. |
 | 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | `FinalReport.recommendation` + `alternatives`. Long report has verdict + alternatives sections. |
 | 46 | Tier B: Disagreement map, alternatives, confidence | KEEP | **DONE** | `FinalReport.disagreement_summary`, `alternatives`, confidence as enum. |
 | 47 | Tier C: Claim ledger, evidence trail, gaps | KEEP | **DONE** | `summary.md` includes full cited claims. `trace.json` has complete ledger. |
@@ -116,20 +116,22 @@
 
 | Status | Count | Items |
 |--------|-------|-------|
-| **DONE** | 22 | #7, 13, 16, 20-24, 26-29, 31-37, 39, 45-49, 51-52 |
-| **PARTIAL** | 7 | #1, 5, 15, 19, 25, 42, 44 |
-| **NOT STARTED** (KEEP/SIMPLIFY) | 6 | #2, 4, 18, 40, 41, 50 |
+| **DONE** | 27 | #1, 2, 4, 5, 7, 13, 16, 20-24, 26-29, 31-37, 39, 44-49, 51-52 |
+| **PARTIAL** | 3 | #15, 25, 42 |
+| **NOT STARTED** (KEEP/SIMPLIFY) | 4 | #18, 19, 40-41, 50 |
 | **DEFERRED** | 9 | #8-12, 14, 17, 30, 43 |
 | **CUT** | 3 | #3, 6, 38 |
 
-**22/34 KEEP/SIMPLIFY features implemented. 6 not started. 7 partially done.**
+**27/34 KEEP/SIMPLIFY features implemented. 4 not started. 3 partially done.**
 
-## Highest-Impact Not-Started Features
+*Updated 2026-03-23: Phase A (decomposition) completed #1, #2, #4, #5. Analytical synthesis mode completed #44.*
 
-| # | Feature | Impact | Why it matters |
-|---|---------|--------|---------------|
-| 2 | Sub-question decomposition | 5 | Drives search structure. Currently all queries target the monolithic question. Decomposition would let each sub-question get focused evidence. |
-| 4 | Optimization axes & tradeoffs | 3 | Gives synthesis structural framing. Currently the "key distinctions" come from the LLM; explicit axes would be more reliable. |
-| 40-41 | User-steering interrupt | 3 | Unresolved preference disputes currently just surface in report. User input could resolve them. |
-| 50 | Model fallback chains | 3 | Single model failure = stage failure. Fallback would improve reliability. |
-| 18 | Conflict-aware compression | 3 | With 110 evidence items from 50 sources, context is getting large. Smart compression that preserves conflicts would help. |
+## Highest-Impact Remaining Features
+
+| # | Feature | Impact | Phase | Why it matters |
+|---|---------|--------|-------|---------------|
+| 15 | Source quality scoring (LLM-based) | 3 | B | All sources default to "reliable". LLM scoring would help synthesis weight authoritative sources. |
+| 18 | Conflict-aware compression | 3 | B | 96 evidence items in context. Smart compression preserving conflicts would help. |
+| 19 | Per-sub-question evidence sufficiency | 3 | B | Flag sub-questions with < 2 sources. |
+| 40-41 | User-steering interrupt | 3 | D | Preference disputes surface in report but user can't resolve them mid-run. |
+| 50 | Model fallback chains | 3 | C | Single model failure = stage failure. |
