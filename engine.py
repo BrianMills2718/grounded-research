@@ -311,6 +311,12 @@ def main() -> None:
         default=None,
         help="Output directory for report, trace, and handoff",
     )
+    parser.add_argument(
+        "--decomposition",
+        type=Path,
+        default=None,
+        help="Path to decomposition JSON (pairs with --fixture)",
+    )
     args = parser.parse_args()
 
     if args.question:
@@ -319,7 +325,18 @@ def main() -> None:
         asyncio.run(run_pipeline_from_question(args.question, out_dir))
     elif args.fixture:
         out_dir = args.output_dir or (PROJECT_ROOT / "output" / "pipeline")
-        asyncio.run(run_pipeline(args.fixture, out_dir))
+        # Load decomposition if provided alongside fixture
+        decomp = None
+        if args.decomposition and args.decomposition.exists():
+            from grounded_research.models import QuestionDecomposition
+            decomp = QuestionDecomposition.model_validate_json(args.decomposition.read_text())
+        elif args.fixture.parent.joinpath("decomposition.json").exists():
+            # Auto-detect decomposition in same directory as fixture
+            from grounded_research.models import QuestionDecomposition
+            decomp = QuestionDecomposition.model_validate_json(
+                args.fixture.parent.joinpath("decomposition.json").read_text()
+            )
+        asyncio.run(run_pipeline(args.fixture, out_dir, decomposition=decomp))
     else:
         # Default: use golden fixture
         fixture = PROJECT_ROOT / "tests" / "fixtures" / "session_storage_bundle.json"

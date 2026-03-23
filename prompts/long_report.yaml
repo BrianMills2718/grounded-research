@@ -140,15 +140,21 @@ messages:
       - **{{ source.title }}** ({{ source.source_type }}, {{ source.quality_tier }}) — {{ source.url }}
       {% endfor %}
 
-      ## Evidence ({{ evidence | length }} items from {{ sources | length }} sources)
+      ## Key Evidence (top items referenced by claims)
 
-      {% for item in evidence %}
-      **{{ item.id }}** ({{ item.source_id }}, {{ item.content_type }}):
-      {{ item.content }}
-
+      {% for item in evidence[:30] %}
+      **{{ item.id }}** ({{ item.source_id }}): {{ item.content[:300] }}
       {% endfor %}
 
+      {% if evidence | length > 30 %}
+      *({{ evidence | length - 30 }} additional evidence items available in the bundle but omitted for brevity)*
+      {% endif %}
+
       ## Canonical Claims ({{ claims | length }}, synthesized from {{ analyst_count }} independent analysts)
+
+      These are the analytical core. Each claim has been extracted from independent
+      analyst reasoning, deduplicated, and verified through dispute arbitration
+      where applicable. Build your report from these claims.
 
       {% for claim in claims %}
       **{{ claim.id }}** [{{ claim.status }}, {{ claim.confidence }}]: {{ claim.statement }}
@@ -158,18 +164,27 @@ messages:
 
       ## Disputes Between Analysts
 
+      These are genuine analytical disagreements — they are the most interesting
+      part of the analysis. Your report should explain each substantive dispute
+      and what it reveals about the topic.
+
       {% for dispute in disputes %}
-      **{{ dispute.id }}** ({{ dispute.dispute_type }}, {{ dispute.severity }}{% if dispute.resolved %}, resolved{% endif %}):
+      **{{ dispute.id }}** ({{ dispute.dispute_type }}, {{ dispute.severity }}{% if dispute.resolved %}, RESOLVED{% else %}, UNRESOLVED{% endif %}):
       {{ dispute.description }}
       {% if dispute.resolution_summary %}Resolution: {{ dispute.resolution_summary }}{% endif %}
 
       {% endfor %}
 
       {% if arbitration_results %}
-      ## Arbitration Outcomes
+      ## Arbitration Outcomes (fresh evidence fetched to resolve disputes)
+
+      These are findings from targeted verification — new evidence was searched
+      and analyzed to resolve disputed claims. Integrate these into your argument;
+      they represent the strongest, most carefully verified conclusions.
 
       {% for arb in arbitration_results %}
-      **{{ arb.id }}** → {{ arb.verdict }}: {{ arb.reasoning }}
+      **{{ arb.dispute_id }}** → **{{ arb.verdict }}**: {{ arb.reasoning }}
+      Claims updated: {{ arb.claim_updates }}
       {% endfor %}
       {% endif %}
 
