@@ -41,8 +41,9 @@ async def run_perplexity(question: str, output_dir: Path) -> None:
 
     start = datetime.now(timezone.utc)
 
+    model = os.environ.get("PERPLEXITY_MODEL", "sonar-pro")
     response = await client.chat.completions.create(
-        model="sonar-pro",
+        model=model,
         messages=[
             {
                 "role": "system",
@@ -71,7 +72,7 @@ async def run_perplexity(question: str, output_dir: Path) -> None:
     # Save metadata
     meta = {
         "tool": "Perplexity",
-        "model": "sonar-pro",
+        "model": model,
         "question": question,
         "elapsed_seconds": elapsed,
         "report_length_chars": len(report),
