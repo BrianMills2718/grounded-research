@@ -144,27 +144,32 @@ not evidence breadth. Prompt improvements incorporated into long_report.yaml:
 4. Summary sandwich (executive + closing summary)
 5. Formatting tightness (tables, citation cap)
 
-### Result After Prompt Improvements (v5)
+### Result After All Improvements (v10: decomposition + analytical mode)
 
-| Dimension | grounded-research v5 | Perplexity deep |
-|-----------|---------------------|-----------------|
-| Factual Accuracy | 4 | 4 |
-| Completeness | 4 | 5 |
-| Conflict & Nuance | 4 | 5 |
-| Analytical Depth | 4 | 5 |
-| Decision Usefulness | 5 | 4 |
-| **Total** | **21** | **23** |
-| **Judge verdict** | **Winner** | — |
+**3-question comparison (fair, GPT-5-nano judge, no provenance bias):**
 
-Raw scores still 21 vs 23, but judge verdict flipped to pipeline. The
-structured decision framework (alternatives with conditional triggers)
-was cited as the deciding factor. The prompt improvements helped the
-pipeline win on the dimension that matters most to decision-makers.
+| Question | Pipeline | Perplexity | Winner |
+|----------|----------|------------|--------|
+| EU sanctions | **23** | 22 | **Pipeline** |
+| PFAS health risks | **24** | 20 | **Pipeline** |
+| Intermittent fasting | 20 | **25** | **Perplexity** |
 
-### Progression
+Pipeline wins 2/3. Perplexity wins on fasting (dense study-level data
+with exact trial names and sample sizes that our extraction doesn't
+fully capture).
 
-| Version | Sources | Score | vs Perplexity | Judge Winner |
-|---------|---------|-------|---------------|-------------|
-| v3 (old prompt) | 20 | 20 | 24 | Perplexity |
-| v4 (old prompt) | 50 | 21 | 23 | Perplexity |
-| v5 (new prompt) | 20 | 21 | 23 | **Pipeline** |
+### Progression (EU sanctions question)
+
+| Version | Key Change | Score | vs Perplexity | Winner |
+|---------|-----------|-------|---------------|--------|
+| v3 | baseline (20 sources) | 20 | 24 | Perplexity |
+| v4 | 50 sources | 21 | 23 | Perplexity |
+| v5 | improved prompt | 21 | 23 | Pipeline (verdict) |
+| v6 | + decomposition | 20 | 25 | Perplexity |
+| v8 | + trimmed context | 20 | 24 | Perplexity |
+| v9 | + longer output | 20 | 25 | Perplexity |
+| **v10** | **+ analytical mode** | **23** | **22** | **Pipeline** |
+
+The analytical synthesis mode was the single biggest improvement.
+Decomposition helped richness (more claims, more disputes) but the
+synthesis needed permission to infer beyond sources to match Perplexity.
