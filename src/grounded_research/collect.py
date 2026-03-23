@@ -3,20 +3,18 @@
 Takes a question string and automatically builds an EvidenceBundle by:
 1. Generating diverse search queries via LLM
 2. Searching via Brave Search API with recency filtering
-3. Fetching and extracting full page content from top results
+3. Fetching and extracting full page content from top results (parallelized)
 4. Extracting multiple evidence items per page
 5. Structuring everything into an EvidenceBundle
 
-Depth is configurable via config.yaml collection settings. The default
-is tuned for thorough research (10 queries, 20 sources, multiple
-evidence extractions per page).
+Depth is configurable via config.yaml collection settings.
 
-Uses research_v3's proven search and fetch tools (Brave Search API,
-BeautifulSoup page extraction).
+Uses open_web_retrieval for search and fetch.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -177,18 +175,17 @@ async def collect_evidence(
     # Select top results — prefer diversity across queries
     selected = _select_diverse(all_search_results, max_sources)
 
-    # Fetch page content for each result
+    # Build source records from selected results
     sources: list[SourceRecord] = []
     evidence: list[EvidenceItem] = []
     gaps: list[str] = []
 
-    for i, result in enumerate(selected):
+    source_map: dict[str, SourceRecord] = {}
+    for result in selected:
         url = result["url"]
         title = result.get("title", "")
         description = result.get("description", "")
         age = result.get("age", "")
-
-        # Estimate recency score from age string
         recency_score = _estimate_recency(age)
 
         source = SourceRecord(
@@ -200,6 +197,7 @@ async def collect_evidence(
             recency_score=recency_score,
         )
         sources.append(source)
+        source_map[url] = source
 
         # Add search snippet as evidence
         if description and len(description) > 30:
@@ -211,13 +209,14 @@ async def collect_evidence(
                 extraction_method="upstream",
             ))
 
-        # Fetch full page content (with Jina Reader fallback for 403s)
+    # Fetch page content in parallel (with Jina Reader fallback for 403s)
+    async def _fetch_one(url: str, idx: int) -> tuple[str, dict | None]:
+        """Fetch one page, return (url, page_data) or (url, None) on failure."""
         try:
-            print(f"  Fetching [{i+1}/{len(selected)}] {url[:60]}...")
+            print(f"  Fetching [{idx+1}/{len(selected)}] {url[:60]}...")
             raw_page = await fetch_page(url, question=question)
             page_data = json.loads(raw_page)
 
-            # If direct fetch failed with 403, try Jina Reader as fallback
             if page_data.get("error") and "403" in str(page_data.get("error", "")):
                 from grounded_research.tools.jina_reader import fetch_page_jina
                 print(f"    → 403 blocked, retrying via Jina Reader...")
@@ -225,35 +224,42 @@ async def collect_evidence(
                 page_data = json.loads(raw_page)
 
             if page_data.get("error"):
-                gaps.append(f"Failed to fetch {url}: {page_data['error']}")
-                continue
+                return url, None
+            return url, page_data
+        except Exception:
+            return url, None
 
-            char_count = page_data.get("char_count", 0)
+    # Run all fetches concurrently
+    fetch_tasks = [_fetch_one(r["url"], i) for i, r in enumerate(selected)]
+    fetch_results = await asyncio.gather(*fetch_tasks)
 
-            # Add key section as evidence (question-targeted extraction)
-            key_section = page_data.get("key_section", "")
-            if key_section and len(key_section) > 50:
-                evidence.append(EvidenceItem(
-                    source_id=source.id,
-                    content=key_section,
-                    content_type="text",
-                    relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
-                    extraction_method="llm",
-                ))
+    for url, page_data in fetch_results:
+        source = source_map[url]
+        if page_data is None:
+            gaps.append(f"Failed to fetch {url}")
+            continue
 
-            # Also add notes if they contain different content
-            notes = page_data.get("notes", "")
-            if notes and len(notes) > 50 and notes != key_section[:len(notes)]:
-                evidence.append(EvidenceItem(
-                    source_id=source.id,
-                    content=notes,
-                    content_type="summary",
-                    relevance_note=f"Page summary ({char_count} chars total)",
-                    extraction_method="llm",
-                ))
+        char_count = page_data.get("char_count", 0)
 
-        except Exception as e:
-            gaps.append(f"Failed to fetch {url}: {e}")
+        key_section = page_data.get("key_section", "")
+        if key_section and len(key_section) > 50:
+            evidence.append(EvidenceItem(
+                source_id=source.id,
+                content=key_section,
+                content_type="text",
+                relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
+                extraction_method="llm",
+            ))
+
+        notes = page_data.get("notes", "")
+        if notes and len(notes) > 50 and notes != key_section[:len(notes)]:
+            evidence.append(EvidenceItem(
+                source_id=source.id,
+                content=notes,
+                content_type="summary",
+                relevance_note=f"Page summary ({char_count} chars total)",
+                extraction_method="llm",
+            ))
 
     print(f"  Collected {len(sources)} sources, {len(evidence)} evidence items, {len(gaps)} gaps")
 

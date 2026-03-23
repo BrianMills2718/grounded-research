@@ -29,9 +29,9 @@ analyst_frames:
   - "step_back_abstraction"       # Step back to broader principles, then reason forward
 
 collection:
-  num_queries: 10
+  num_queries: 15
   results_per_query: 10
-  max_sources: 20
+  max_sources: 50
 
 evidence_policy:
   default_time_sensitivity: "mixed"
