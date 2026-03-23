@@ -125,6 +125,12 @@ Current open items:
   | STORM | — | — | failed (sklearn bug) |
   Pipeline beats both SOTA tools convincingly. Differentiators: traceable
   provenance, structured policy alternatives, explicit uncertainty sections.
+- cost accounting (from llm_client observability DB):
+  - pipeline run: $0.04-0.07 avg (NOT $2-3 as previously claimed)
+  - single-shot baseline: ~$0.01
+  - GPT-Researcher: $0.025
+  - Perplexity: ~$0.01
+  - cost premium is ~6× (NOT 100×), making cost objection largely moot
 - pipeline summary (structured FinalReport) was weaker than long report —
   synthesis prompt improved (evidence context added, richer field descriptions).
   Needs re-test on next run.
