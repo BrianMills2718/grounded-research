@@ -116,6 +116,15 @@ Current open items:
   the pipeline's most novel feature almost never ran.
   Root cause: schema field description too terse, model too weak.
   Fix: richer Field(description=...) + bump to gemini-2.5-flash.
+- SOTA comparison (EU sanctions, GPT-5-nano judge):
+  | Tool | Words | Citations | Score |
+  |------|-------|-----------|-------|
+  | grounded-research | 4,369 | 59 | 30/30 |
+  | GPT-Researcher | 1,560 | 0 | 23/30 |
+  | Perplexity (sonar-pro) | 440 | 4 | 19/30 |
+  | STORM | — | — | failed (sklearn bug) |
+  Pipeline beats both SOTA tools convincingly. Differentiators: traceable
+  provenance, structured policy alternatives, explicit uncertainty sections.
 - pipeline summary (structured FinalReport) was weaker than long report —
   synthesis prompt improved (evidence context added, richer field descriptions).
   Needs re-test on next run.
