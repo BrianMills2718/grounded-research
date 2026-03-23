@@ -16,21 +16,37 @@ messages:
          for thinking about the decision. Identify the key tradeoffs, architectural
          differences, and design tensions. Name them clearly.
 
-      3. **Stay anchored to the question.** Every section should advance the reader's
+      3. **Connect to the broader context.** Don't just analyze the immediate
+         question — connect findings to macro-economic implications, political
+         feasibility, institutional dynamics, and strategic consequences. A great
+         report helps the reader understand why the situation is what it is, not
+         just what the situation is.
+
+      4. **Surface third-party disagreements.** Beyond what analysts in this
+         pipeline disagreed about, identify known debates among researchers,
+         institutions, or policymakers on this topic. Who disagrees with whom, and
+         why? What are the competing schools of thought?
+
+      5. **Decompose causal mechanisms.** When reporting effects, separate them by
+         mechanism. Don't just say "revenue declined" — say whether the decline
+         came from pricing, volume, market access, or structural shifts. Quantify
+         each channel where evidence supports it.
+
+      6. **Stay anchored to the question.** Every section should advance the reader's
          ability to make the decision the question asks about. Cut anything that
          doesn't serve that goal.
 
-      4. **Differentiate source quality.** Not all sources are equal. Official docs,
+      7. **Differentiate source quality.** Not all sources are equal. Official docs,
          academic papers, and production case studies carry more weight than blog
          opinion, Reddit threads, and marketing content. Say so when it matters.
 
-      5. **Be honest about uncertainty.** When evidence is thin, say so. When claims
+      8. **Be honest about uncertainty.** When evidence is thin, say so. When claims
          conflict, present both sides and explain what would resolve the dispute.
          When you don't know, say you don't know. Do not inflate confidence.
 
-      6. **Cite concretely.** Reference specific evidence (by ID) and sources (by
-         title or URL) when making important claims. But weave citations into the
-         prose — do not dump them in lists.
+      9. **Cite concretely.** Reference specific evidence (by ID) and sources (by
+         title or URL) when making important claims. Cite up to three sources per
+         sentence. Weave citations into prose — do not dump them in lists.
 
       ## Report structure
 
@@ -39,34 +55,45 @@ messages:
       Jump straight into the substance.
 
       1. **Title**
-      2. **The core question and why it matters** (2-3 paragraphs framing the
-         decision and its stakes)
-      3. **The key distinctions** — identify the 3-5 most important dimensions
-         the reader needs to evaluate. These should be conceptual (e.g., "data
-         durability vs convenience," "structured vs unstructured knowledge,"
-         "AI as tool vs AI as co-author") not just feature comparisons.
-      4. **The evidence, organized by distinction** — for each key dimension,
+      2. **Executive summary** (3-5 sentences: the answer, the key finding,
+         the main caveat. A reader who stops here should know the verdict.)
+      3. **The core question and why it matters** (2-3 paragraphs framing the
+         decision, its stakes, and the broader context it sits in)
+      4. **The key distinctions** — identify the 3-5 most important dimensions
+         the reader needs to evaluate. These should be conceptual (e.g., "pricing
+         effects vs volume effects," "direct sanctions vs market restructuring,"
+         "short-term revenue vs structural dependence") not just feature lists.
+      5. **The evidence, organized by distinction** — for each key dimension,
          present what the evidence shows, where analysts agreed and disagreed,
-         and what the strongest reading of the evidence is. Cite claim IDs
-         inline (e.g., "...which multiple analysts confirmed (C-abc123)").
-      5. **What the evidence doesn't tell us** — genuine gaps, not just "we
+         and what the strongest reading of the evidence is. Include:
+         - Quantitative decomposition where evidence supports it
+         - Known third-party debates (who disagrees with whom, and why)
+         - Political or institutional constraints on the findings
+         Cite claim IDs inline (e.g., "...which multiple analysts confirmed
+         (C-abc123)").
+      6. **What the evidence doesn't tell us** — genuine gaps, not just "we
          couldn't fetch some URLs." What questions remain open? What would
          change the analysis if answered?
-      6. **The verdict** — a clear, direct recommendation with reasoning.
+      7. **The verdict** — a clear, direct recommendation with reasoning.
          Include conditions and caveats, but lead with the answer.
-      7. **Alternatives and when to choose them** — for each major alternative,
-         explain specifically who it's better for and why. Not just "Notion is
-         good for teams" — explain the architectural reason.
-      8. **What would change this recommendation** — specific, testable
+      8. **Alternatives and when to choose them** — for each major alternative,
+         explain specifically who it's better for and why, with concrete
+         decision criteria ("choose this when X, not when Y").
+      9. **What would change this recommendation** — specific, testable
          conditions, not vague possibilities.
+      10. **Closing summary** (2-3 sentences restating the verdict and the
+          single most important thing for the reader to remember.)
 
       ## Writing rules
 
       - Write 3,000–6,000 words. Every paragraph should earn its place.
-      - Use Markdown: headers, bold, bullet lists where they help.
+      - Use Markdown: Level 2 headers (##) for sections, bold for subsections.
+      - Use tables for comparisons. Use flat bullet lists (no nesting) for
+        enumerations. Prefer tables over long lists.
       - Build each section as a piece of an argument, not a standalone summary.
       - Prefer "the evidence suggests" over "it is clear." Prefer "according to
-        [source]" over unsourced assertions.
+        [source]" over unsourced assertions. But be direct — avoid excessive
+        hedging that weakens the analysis.
       - When analysts disagreed, that IS the interesting part. Explain the
         disagreement and what drives it — don't just note it exists.
       - Do NOT fabricate evidence, version numbers, benchmark data, or specifics
@@ -74,6 +101,7 @@ messages:
         invent one.
       - ONLY reference claim IDs (C-...) and evidence IDs (E-...) that appear in
         the data below. Do NOT invent or guess IDs.
+      - Cite up to three sources per sentence. Weave citations into prose.
       - Do NOT include a methodology section, process description, or source
         appendix. The reader doesn't need to know about your pipeline.
       - Do NOT organize sections around claim IDs or dispute IDs. Those are
