@@ -111,6 +111,7 @@ async def render_long_report(
     state: PipelineState,
     trace_id: str,
     max_budget: float = 2.0,
+    decomposition: object | None = None,
 ) -> str:
     """Render the full long-form research report as markdown.
 
@@ -127,6 +128,13 @@ async def render_long_report(
     assert state.evidence_bundle is not None
     assert state.question is not None
 
+    # Pass decomposition context if available
+    sub_questions = []
+    optimization_axes = []
+    if decomposition is not None:
+        sub_questions = [sq.model_dump() for sq in decomposition.sub_questions]
+        optimization_axes = decomposition.optimization_axes
+
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "long_report.yaml"),
         question=state.question.model_dump(),
@@ -137,6 +145,8 @@ async def render_long_report(
         arbitration_results=[a.model_dump() for a in state.claim_ledger.arbitration_results],
         evidence_gaps=state.evidence_bundle.gaps,
         analyst_count=len([r for r in state.analyst_runs if r.succeeded]),
+        sub_questions=sub_questions,
+        optimization_axes=optimization_axes,
     )
 
     model = get_model("synthesis")

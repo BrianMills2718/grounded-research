@@ -73,6 +73,23 @@ messages:
       Time sensitivity: {{ question.time_sensitivity }}
       {% if question.scope_notes %}Scope: {{ question.scope_notes }}{% endif %}
 
+      {% if sub_questions %}
+      ## Sub-Questions to Address
+
+      {% for sq in sub_questions %}
+      ### {{ sq.id }} [{{ sq.type }}]
+      {{ sq.text }}
+      Falsification target: {{ sq.falsification_target }}
+
+      {% endfor %}
+
+      Address each sub-question in your analysis. For each, cite evidence and
+      note where evidence is weak or missing. Consider the following tradeoffs:
+      {% for axis in optimization_axes %}
+      - {{ axis }}
+      {% endfor %}
+      {% endif %}
+
       ## Evidence
 
       {% for item in evidence %}

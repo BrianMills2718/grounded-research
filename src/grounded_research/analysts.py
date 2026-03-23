@@ -18,16 +18,27 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def _render_analyst_prompt(
-    bundle: EvidenceBundle, frame: str
+    bundle: EvidenceBundle,
+    frame: str,
+    decomposition: object | None = None,
 ) -> list[dict[str, str]]:
-    """Render the analyst prompt template."""
+    """Render the analyst prompt template with optional decomposition context."""
     from llm_client import render_prompt
+
+    # Pass sub-questions and axes if decomposition is available
+    sub_questions = []
+    optimization_axes = []
+    if decomposition is not None:
+        sub_questions = [sq.model_dump() for sq in decomposition.sub_questions]
+        optimization_axes = decomposition.optimization_axes
 
     return render_prompt(
         str(_PROJECT_ROOT / "prompts" / "analyst.yaml"),
         question=bundle.question.model_dump(),
         evidence=[e.model_dump() for e in bundle.evidence],
         frame=frame,
+        sub_questions=sub_questions,
+        optimization_axes=optimization_axes,
     )
 
 
@@ -38,6 +49,7 @@ async def run_analyst(
     frame: str,
     trace_id: str,
     max_budget: float,
+    decomposition: object | None = None,
 ) -> AnalystRun:
     """Run a single analyst and return the structured result.
 
@@ -46,7 +58,7 @@ async def run_analyst(
     """
     from llm_client import acall_llm_structured
 
-    messages = _render_analyst_prompt(bundle, frame)
+    messages = _render_analyst_prompt(bundle, frame, decomposition)
     try:
         result, _meta = await acall_llm_structured(
             model,
@@ -76,6 +88,7 @@ async def run_analysts(
     trace_id: str,
     models: list[str] | None = None,
     frames: list[str] | None = None,
+    decomposition: object | None = None,
 ) -> list[AnalystRun]:
     """Run 3 independent analysts in parallel.
 
@@ -94,7 +107,7 @@ async def run_analysts(
     budget_per = get_budget("pipeline_max_budget_usd") / len(models)
 
     tasks = [
-        run_analyst(model, label, bundle, frame, trace_id, budget_per)
+        run_analyst(model, label, bundle, frame, trace_id, budget_per, decomposition)
         for model, label, frame in zip(models, labels, frames)
     ]
     results = await asyncio.gather(*tasks)

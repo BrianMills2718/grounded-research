@@ -82,6 +82,54 @@ ArbitrationVerdict = Literal[
     "inconclusive",
 ]
 
+SubQuestionType = Literal["factual", "causal", "comparative", "evaluative", "scope"]
+
+
+class SubQuestion(BaseModel):
+    """One dimension of a research question, typed for focused search and analysis."""
+
+    id: str = Field(default_factory=lambda: _make_id("SQ-"))
+    text: str = Field(description="The sub-question, phrased as a searchable question.")
+    type: SubQuestionType = Field(
+        description=(
+            "What kind of question this is. Factual: what happened/exists. "
+            "Causal: why/how something happened. Comparative: X vs Y. "
+            "Evaluative: how good/effective. Scope: what's the boundary."
+        ),
+    )
+    falsification_target: str = Field(
+        description="What evidence would disprove or weaken the expected answer to this sub-question.",
+    )
+
+
+class QuestionDecomposition(BaseModel):
+    """Structured decomposition of a research question into searchable sub-questions.
+
+    Produced by the decomposition step before search and analysis.
+    Drives per-sub-question search queries, analyst context, and synthesis structure.
+    """
+
+    core_question: str = Field(
+        description="Precise reformulation of the user's raw question. Unambiguous and searchable.",
+    )
+    sub_questions: list[SubQuestion] = Field(
+        description="2-6 typed sub-questions that collectively cover the full question.",
+        min_length=2,
+        max_length=6,
+    )
+    optimization_axes: list[str] = Field(
+        description=(
+            "2-4 key tradeoffs or dimensions a reader needs to evaluate. "
+            "E.g., 'short-term revenue impact vs long-term structural change'."
+        ),
+        min_length=1,
+        max_length=4,
+    )
+    research_plan: str = Field(
+        description="Brief plan: what to search for, which source types matter most, what critical evidence to prioritize.",
+    )
+
+
 AnalystFrame = Literal[
     "verification_first",
     "structured_decomposition",

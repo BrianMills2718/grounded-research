@@ -1,4 +1,5 @@
 models:
+  decomposition: "gemini/gemini-2.5-flash"
   analyst: "gemini/gemini-2.5-flash-lite"
   claim_extraction: "gemini/gemini-2.5-flash-lite"
   deduplication: "gemini/gemini-2.5-flash-lite"

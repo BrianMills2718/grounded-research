@@ -26,6 +26,7 @@ from grounded_research.models import PipelineState, PhaseTrace
 async def run_pipeline(
     fixture_path: Path,
     output_dir: Path,
+    decomposition: object | None = None,
 ) -> PipelineState:
     """Run the full adjudication pipeline."""
     from grounded_research.ingest import load_manual_bundle, validate_bundle
@@ -79,7 +80,7 @@ async def run_pipeline(
         state.current_phase = "analyze"
         print("\n[Phase 2] Running 3 independent analysts...")
 
-        analyst_runs = await run_analysts(bundle, trace_id)
+        analyst_runs = await run_analysts(bundle, trace_id, decomposition=decomposition)
         state.analyst_runs = analyst_runs
 
         succeeded = [r for r in analyst_runs if r.succeeded]
@@ -190,6 +191,7 @@ async def run_pipeline(
         print("  Rendering long-form report (3,000-6,000 words)...")
         long_report_md = await render_long_report(
             state, trace_id, max_budget=total_budget * 0.2,
+            decomposition=decomposition,
         )
         print(f"  Long report: {len(long_report_md)} chars, ~{len(long_report_md.split())} words")
 
@@ -241,24 +243,49 @@ async def run_pipeline_from_question(
 ) -> PipelineState:
     """Run the full pipeline starting from a question (collects evidence automatically)."""
     from grounded_research.collect import collect_evidence
+    from grounded_research.decompose import decompose_question
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
 
-    print(f"=== Evidence Collection ===")
-    print(f"Question: {question}")
+    # --- Decompose question into sub-questions ---
+    print(f"=== Question Decomposition ===")
+    print(f"Raw question: {question}")
     print()
 
-    bundle = await collect_evidence(question, trace_id)
+    decomposition = await decompose_question(question, trace_id)
+    print(f"  Core question: {decomposition.core_question[:80]}...")
+    print(f"  Sub-questions: {len(decomposition.sub_questions)}")
+    for sq in decomposition.sub_questions:
+        print(f"    [{sq.type}] {sq.text[:70]}...")
+    print(f"  Optimization axes: {decomposition.optimization_axes}")
+    print()
+
+    # --- Collect evidence with sub-question-driven search ---
+    print(f"=== Evidence Collection ===")
+    print(f"Question: {decomposition.core_question}")
+    print()
+
+    sub_questions_dicts = [sq.model_dump() for sq in decomposition.sub_questions]
+    bundle = await collect_evidence(
+        decomposition.core_question, trace_id,
+        sub_questions=sub_questions_dicts,
+    )
 
     # Save the collected bundle for reuse
     bundle_path = output_dir / "collected_bundle.json"
     output_dir.mkdir(parents=True, exist_ok=True)
     bundle_path.write_text(bundle.model_dump_json(indent=2))
     print(f"  Saved bundle: {bundle_path}")
+
+    # Save decomposition for pipeline use
+    import json
+    decomp_path = output_dir / "decomposition.json"
+    decomp_path.write_text(decomposition.model_dump_json(indent=2))
+    print(f"  Saved decomposition: {decomp_path}")
     print()
 
-    return await run_pipeline(bundle_path, output_dir)
+    return await run_pipeline(bundle_path, output_dir, decomposition=decomposition)
 
 
 def main() -> None:

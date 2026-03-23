@@ -116,6 +116,24 @@ messages:
       Context: {{ question.scope_notes }}
       {% endif %}
 
+      {% if optimization_axes %}
+      ## Organizing Framework
+
+      Use these tradeoffs/dimensions as the key distinctions for your report:
+      {% for axis in optimization_axes %}
+      - {{ axis }}
+      {% endfor %}
+      {% endif %}
+
+      {% if sub_questions %}
+      ## Sub-Questions to Cover
+
+      Ensure your report addresses each of these:
+      {% for sq in sub_questions %}
+      - [{{ sq.type }}] {{ sq.text }}
+      {% endfor %}
+      {% endif %}
+
       ## Sources Examined ({{ sources | length }})
 
       {% for source in sources %}

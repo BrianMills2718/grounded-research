@@ -43,8 +43,14 @@ async def generate_search_queries(
     max_budget: float = 0.5,
     num_queries: int = 10,
     time_sensitivity: str = "mixed",
+    sub_questions: list[dict] | None = None,
 ) -> list[str]:
-    """Generate diverse search queries for a research question via LLM."""
+    """Generate diverse search queries for a research question via LLM.
+
+    If sub_questions are provided (from QuestionDecomposition), generates
+    queries per sub-question for focused evidence collection. Otherwise
+    falls back to monolithic question-level query generation.
+    """
     from llm_client import acall_llm_structured
     from pydantic import BaseModel, Field
 
@@ -56,12 +62,44 @@ async def generate_search_queries(
     if time_sensitivity == "time_sensitive":
         recency_note = (
             "This is a time-sensitive topic. Include the current year (2026) "
-            "in at least half the queries to find recent information. "
-            "Prefer queries that will surface recent blog posts, documentation, "
-            "changelogs, and current-year comparisons."
+            "in at least half the queries to find recent information."
         )
 
     model = get_model("analyst")
+
+    if sub_questions:
+        # Generate queries per sub-question for focused coverage
+        all_queries: list[str] = []
+        queries_per_sq = max(3, num_queries // len(sub_questions))
+
+        for sq in sub_questions:
+            sq_result, _meta = await acall_llm_structured(
+                model,
+                [
+                    {"role": "system", "content": (
+                        "Generate diverse search queries for a specific research sub-question. "
+                        "Include queries that would find:\n"
+                        "(1) direct evidence answering the sub-question\n"
+                        "(2) evidence that would DISPROVE the expected answer\n"
+                        "(3) concrete data, statistics, or primary sources\n"
+                        f"\n{recency_note}\n"
+                        f"Generate exactly {queries_per_sq} queries."
+                    )},
+                    {"role": "user", "content": (
+                        f"Sub-question [{sq['type']}]: {sq['text']}\n"
+                        f"Falsification target: {sq['falsification_target']}"
+                    )},
+                ],
+                response_model=SearchQueries,
+                task="query_generation",
+                trace_id=f"{trace_id}/queries/{sq.get('id', 'sq')}",
+                max_budget=max_budget / len(sub_questions),
+            )
+            all_queries.extend(sq_result.queries)
+
+        return all_queries
+
+    # Fallback: monolithic question-level generation
     result, _meta = await acall_llm_structured(
         model,
         [
@@ -98,8 +136,13 @@ async def collect_evidence(
     scope_notes: str = "",
     num_queries: int = 10,
     results_per_query: int = 10,
+    sub_questions: list[dict] | None = None,
 ) -> EvidenceBundle:
     """Collect evidence for a research question from web sources.
+
+    If sub_questions are provided (from QuestionDecomposition), generates
+    focused search queries per sub-question. Otherwise uses monolithic
+    question-level queries.
 
     Searches the web, fetches top results with full page content
     extraction, and structures everything into an EvidenceBundle.
@@ -129,12 +172,14 @@ async def collect_evidence(
     # Determine freshness filter based on time sensitivity
     freshness = _FRESHNESS_MAP.get(time_sensitivity, "py")
 
-    print(f"  Generating {num_queries} search queries...")
+    sq_label = f" across {len(sub_questions)} sub-questions" if sub_questions else ""
+    print(f"  Generating search queries{sq_label}...")
     queries = await generate_search_queries(
         question, trace_id,
         max_budget=max_budget * 0.1,
         num_queries=num_queries,
         time_sensitivity=time_sensitivity,
+        sub_questions=sub_questions,
     )
     print(f"  Generated {len(queries)} queries (freshness: {freshness})")
 
