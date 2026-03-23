@@ -20,6 +20,13 @@ messages:
       with *[analytical inference]* so the reader knows it's your synthesis,
       not a direct evidence claim. Evidence-backed claims cite (C-xxx) as usual.
 
+      CRITICAL: Integrate specific quantitative detail from the evidence and
+      claims — trial names, sample sizes (N=), effect sizes, percentages,
+      durations, and dose-response data. A great report says "a meta-analysis
+      of 12 RCTs (N=1,200) found 3-8% weight reduction over 12 weeks" not
+      "studies found weight loss." The reader needs numbers to evaluate
+      strength of evidence.
+
       The goal is depth and insight, not just summarizing what sources say.
       A great analytical report helps the reader understand things no single
       source told them.

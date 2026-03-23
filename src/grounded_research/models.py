@@ -278,7 +278,14 @@ class RawClaim(BaseModel):
     """
 
     id: str = Field(default_factory=lambda: _make_id("RC-"))
-    statement: str = Field(description="The claim text as stated by the analyst.")
+    statement: str = Field(
+        description=(
+            "The claim text. MUST include specific quantitative detail where "
+            "available: numbers, percentages, sample sizes (N=), effect sizes, "
+            "durations, study names. 'Weight loss of 3-8% over 8-12 weeks (N=150)' "
+            "not 'weight loss was observed.'"
+        ),
+    )
     evidence_ids: list[str] = Field(
         default_factory=list,
         description="Evidence items the analyst cited for this claim.",
