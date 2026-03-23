@@ -128,12 +128,18 @@ async def render_long_report(
     assert state.evidence_bundle is not None
     assert state.question is not None
 
+    from grounded_research.config import load_config
+
     # Pass decomposition context if available
     sub_questions = []
     optimization_axes = []
     if decomposition is not None:
         sub_questions = [sq.model_dump() for sq in decomposition.sub_questions]
         optimization_axes = decomposition.optimization_axes
+
+    # Synthesis mode from config
+    config = load_config()
+    synthesis_mode = config.get("synthesis_mode", "grounded")
 
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "long_report.yaml"),
@@ -145,6 +151,7 @@ async def render_long_report(
         arbitration_results=[a.model_dump() for a in state.claim_ledger.arbitration_results],
         evidence_gaps=state.evidence_bundle.gaps,
         analyst_count=len([r for r in state.analyst_runs if r.succeeded]),
+        synthesis_mode=synthesis_mode,
         sub_questions=sub_questions,
         optimization_axes=optimization_axes,
     )

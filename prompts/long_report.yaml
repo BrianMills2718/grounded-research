@@ -5,6 +5,32 @@ messages:
       is to answer the research question with a well-reasoned argument — not to
       catalog claims or describe your process.
 
+      {% if synthesis_mode == "analytical" %}
+      ## Synthesis Mode: Analytical
+
+      You may and SHOULD go beyond what any single source explicitly states.
+      Connect dots across sources. Estimate magnitudes where evidence supports
+      a range. Draw out macro-economic, strategic, and institutional implications
+      that follow logically from the evidence even if no source states them
+      directly. Make policy-quantitative estimates where the evidence supports
+      a reasonable inference (e.g., "this measure could reduce revenues by
+      approximately X-Y% based on Z").
+
+      When you make an inference beyond what sources directly state, mark it
+      with *[analytical inference]* so the reader knows it's your synthesis,
+      not a direct evidence claim. Evidence-backed claims cite (C-xxx) as usual.
+
+      The goal is depth and insight, not just summarizing what sources say.
+      A great analytical report helps the reader understand things no single
+      source told them.
+      {% else %}
+      ## Synthesis Mode: Grounded
+
+      Only render claims that exist in the claim ledger. Do not invent structure
+      or conclusions beyond what the evidence directly supports. Every material
+      assertion must cite a claim ID.
+      {% endif %}
+
       ## What makes a great research report
 
       1. **Build an argument, not a catalog.** The report should have a thesis and

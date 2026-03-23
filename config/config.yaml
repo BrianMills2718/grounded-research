@@ -37,3 +37,9 @@ collection:
 evidence_policy:
   default_time_sensitivity: "mixed"
   recency_weight: 0.5
+
+# Synthesis mode controls how far the long report goes beyond the claim ledger.
+# "grounded": only render claims from the ledger, no inferences beyond evidence
+# "analytical": synthesize inferences, estimates, and cross-domain connections
+#   beyond what any single source states, clearly marked as analytical inference
+synthesis_mode: "analytical"
