@@ -123,8 +123,14 @@ Current open items:
   | GPT-Researcher | 1,560 | 0 | 23/30 |
   | Perplexity (sonar-pro) | 440 | 4 | 19/30 |
   | STORM | — | — | failed (sklearn bug) |
-  Pipeline beats both SOTA tools convincingly. Differentiators: traceable
-  provenance, structured policy alternatives, explicit uncertainty sections.
+  Pipeline beats both SOTA tools on all 6 judge dimensions. However, the
+  comparison is biased by provenance quality (dimension 6) — grounded-research
+  is designed for traceable citation IDs while GPT-Researcher/Perplexity use
+  URLs/bracketed numbers. Excluding provenance: pipeline still wins 25/25 vs
+  20/25 (GPT-Researcher) on fair-game dimensions (precision, conflict detection,
+  coverage, nuance, actionability). Perplexity comparison is also unfair —
+  sonar-pro is a fast Q&A model (440 words), not a deep research tool.
+  TODO: re-run with Perplexity sonar-deep-research for a fairer test.
 - cost accounting (from llm_client observability DB):
   - pipeline run: $0.04-0.07 avg (NOT $2-3 as previously claimed)
   - single-shot baseline: ~$0.01
