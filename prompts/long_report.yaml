@@ -71,22 +71,31 @@ messages:
          - Political or institutional constraints on the findings
          Cite claim IDs inline (e.g., "...which multiple analysts confirmed
          (C-abc123)").
-      6. **What the evidence doesn't tell us** — genuine gaps, not just "we
+         Give each major dimension a full section (## header), not just a
+         paragraph within one mega-section. If there are 4 key distinctions,
+         that's 4 sections of evidence analysis.
+      6. **Broader implications** — connect findings to macro-economic effects,
+         strategic consequences, institutional dynamics, and second-order
+         impacts. This section goes beyond the direct question to explain
+         what the findings mean in context.
+      7. **What the evidence doesn't tell us** — genuine gaps, not just "we
          couldn't fetch some URLs." What questions remain open? What would
          change the analysis if answered?
-      7. **The verdict** — a clear, direct recommendation with reasoning.
+      8. **The verdict** — a clear, direct recommendation with reasoning.
          Include conditions and caveats, but lead with the answer.
-      8. **Alternatives and when to choose them** — for each major alternative,
+      9. **Alternatives and when to choose them** — for each major alternative,
          explain specifically who it's better for and why, with concrete
          decision criteria ("choose this when X, not when Y").
-      9. **What would change this recommendation** — specific, testable
+      10. **What would change this recommendation** — specific, testable
          conditions, not vague possibilities.
-      10. **Closing summary** (2-3 sentences restating the verdict and the
+      11. **Closing summary** (2-3 sentences restating the verdict and the
           single most important thing for the reader to remember.)
 
       ## Writing rules
 
-      - Write 3,000–6,000 words. Every paragraph should earn its place.
+      - Write 5,000–6,000 words. Aim for the upper end. More depth is better
+        than more conciseness — the reader wants thoroughness, not a summary.
+        Every paragraph should earn its place, but do not compress prematurely.
       - Use Markdown: Level 2 headers (##) for sections, bold for subsections.
       - Use tables for comparisons. Use flat bullet lists (no nesting) for
         enumerations. Prefer tables over long lists.
@@ -140,15 +149,11 @@ messages:
       - **{{ source.title }}** ({{ source.source_type }}, {{ source.quality_tier }}) — {{ source.url }}
       {% endfor %}
 
-      ## Key Evidence (top items referenced by claims)
+      ## Evidence ({{ evidence | length }} items)
 
-      {% for item in evidence[:30] %}
-      **{{ item.id }}** ({{ item.source_id }}): {{ item.content[:300] }}
+      {% for item in evidence %}
+      **{{ item.id }}** ({{ item.source_id }}): {{ item.content[:400] }}
       {% endfor %}
-
-      {% if evidence | length > 30 %}
-      *({{ evidence | length - 30 }} additional evidence items available in the bundle but omitted for brevity)*
-      {% endif %}
 
       ## Canonical Claims ({{ claims | length }}, synthesized from {{ analyst_count }} independent analysts)
 
