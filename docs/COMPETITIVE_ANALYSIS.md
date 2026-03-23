@@ -135,21 +135,36 @@ Key design choices in the synthesis prompt:
 
 ## Closing the Gap
 
-The 2-point gap (21 vs 23) with 50 sources comes from synthesis quality,
-not evidence breadth. Specific improvements:
+The 2-point gap (21 vs 23) with 50 sources came from synthesis quality,
+not evidence breadth. Prompt improvements incorporated into long_report.yaml:
 
-1. **Broader analytical frame** — prompt the long report to explicitly
-   connect findings to macro-economic context, political feasibility, and
-   strategic implications (not just direct policy effects).
+1. Broader analytical frame (macro-economic, political feasibility)
+2. Third-party disagreements (expert/institutional debates)
+3. Causal decomposition (separate by mechanism)
+4. Summary sandwich (executive + closing summary)
+5. Formatting tightness (tables, citation cap)
 
-2. **Third-party disagreements** — during analysis, ask analysts to identify
-   not just evidence conflicts but also known expert/institutional debates
-   on the topic.
+### Result After Prompt Improvements (v5)
 
-3. **Causal decomposition** — ask analysts to separate effects by mechanism
-   (pricing vs volume, direct vs indirect, short-term vs structural).
+| Dimension | grounded-research v5 | Perplexity deep |
+|-----------|---------------------|-----------------|
+| Factual Accuracy | 4 | 4 |
+| Completeness | 4 | 5 |
+| Conflict & Nuance | 4 | 5 |
+| Analytical Depth | 4 | 5 |
+| Decision Usefulness | 5 | 4 |
+| **Total** | **21** | **23** |
+| **Judge verdict** | **Winner** | — |
 
-4. **Summary sandwich** — add opening and closing summaries to long report.
+Raw scores still 21 vs 23, but judge verdict flipped to pipeline. The
+structured decision framework (alternatives with conditional triggers)
+was cited as the deciding factor. The prompt improvements helped the
+pipeline win on the dimension that matters most to decision-makers.
 
-5. **Query-type detection** — route different question types to different
-   report structures.
+### Progression
+
+| Version | Sources | Score | vs Perplexity | Judge Winner |
+|---------|---------|-------|---------------|-------------|
+| v3 (old prompt) | 20 | 20 | 24 | Perplexity |
+| v4 (old prompt) | 50 | 21 | 23 | Perplexity |
+| v5 (new prompt) | 20 | 21 | 23 | **Pipeline** |
