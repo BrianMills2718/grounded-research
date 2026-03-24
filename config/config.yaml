@@ -29,7 +29,7 @@ model_fallbacks:
 # Different model families produce genuine analytical disagreement,
 # not just temperature noise from the same model.
 analyst_models:
-  - "gemini/gemini-2.5-flash"       # Google — strong reasoning, structured output
+  - "openrouter/google/gemini-2.5-flash"  # Google via OpenRouter (avoids direct API quota)
   - "openrouter/openai/gpt-5-nano"  # OpenAI — different training biases
   - "openrouter/deepseek/deepseek-chat"  # DeepSeek — independent model family
 
