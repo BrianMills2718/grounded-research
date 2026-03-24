@@ -368,7 +368,11 @@ class AnalystRun(BaseModel):
     claims: list[RawClaim] = Field(default_factory=list)
     assumptions: list[Assumption] = Field(default_factory=list)
     recommendations: list[Recommendation] = Field(default_factory=list)
-    counterarguments: list[Counterargument] = Field(default_factory=list)
+    counterarguments: list[Counterargument] = Field(
+        default_factory=list,
+        min_length=1,
+        description="At least one counterargument against the analyst's own recommendation. Required.",
+    )
     summary: str = Field(
         default="",
         description="The analyst's overall synthesis of the evidence.",

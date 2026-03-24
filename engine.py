@@ -87,6 +87,13 @@ async def run_pipeline(
                     state.add_warning("ingest", "evidence_sufficiency", gap_msg)
                     print(f"  GAP: {gap_msg}")
 
+        # --- Evidence compression (if over threshold) ---
+        from grounded_research.compress import compress_evidence
+        compression_threshold = config.get("evidence_policy", {}).get("compression_threshold", 80)
+        removed = compress_evidence(bundle, threshold=compression_threshold)
+        if removed > 0:
+            print(f"  Compressed evidence: removed {removed} items, {len(bundle.evidence)} remaining")
+
         # --- Phase 2: Analyze ---
         phase_start = datetime.now(timezone.utc)
         state.current_phase = "analyze"
@@ -143,6 +150,25 @@ async def run_pipeline(
             output_summary=f"{len(canonical_claims)} claims, {len(disputes)} disputes ({len(ledger.decision_critical_disputes())} decision-critical)",
         ))
         print(f"  Disputes: {len(disputes)} ({len(ledger.decision_critical_disputes())} decision-critical)")
+
+        # --- User steering (preference/ambiguity disputes) ---
+        preference_disputes = [
+            d for d in disputes
+            if d.dispute_type in ("preference_conflict", "ambiguity") and not d.resolved
+        ]
+        if preference_disputes and sys.stdin.isatty():
+            print(f"\n[Steering] {len(preference_disputes)} preference/ambiguity disputes found.")
+            for d in preference_disputes[:2]:  # max 2 questions
+                print(f"\n  {d.id} [{d.dispute_type}]: {d.description[:120]}...")
+                print(f"  Claims: {d.claim_ids}")
+                try:
+                    answer = input("  Your guidance (or Enter to skip): ").strip()
+                    if answer:
+                        d.resolution_summary = f"User guidance: {answer}"
+                        d.resolved = True
+                        print(f"  → Recorded.")
+                except (EOFError, KeyboardInterrupt):
+                    print(f"  → Skipped.")
 
         # --- Phase 4: Verification ---
         phase_start = datetime.now(timezone.utc)
