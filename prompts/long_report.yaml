@@ -238,4 +238,4 @@ messages:
 
       Write the definitive research report answering the question above.
       Build an argument. Make distinctions. Cite evidence. Be honest about
-      what you don't know. 3,000–6,000 words.
+      what you don't know. {{ word_target }} words.
