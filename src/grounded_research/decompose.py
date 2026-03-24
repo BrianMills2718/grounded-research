@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from grounded_research.config import get_fallback_models, get_model
-from grounded_research.models import DecompositionValidation, QuestionDecomposition
+from grounded_research.models import DecompositionValidation, QuestionDecomposition, _make_id
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -45,6 +45,12 @@ async def decompose_question(
         max_budget=max_budget,
         fallback_models=get_fallback_models("decomposition"),
     )
+
+    # Assign proper SQ- IDs — the LLM may have overridden the default_factory
+    # with arbitrary values like "1", "2", etc.
+    for sq in result.sub_questions:
+        if not sq.id.startswith("SQ-"):
+            sq.id = _make_id("SQ-")
 
     return result
 
