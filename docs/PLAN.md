@@ -20,21 +20,13 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status
+## Current Status (2026-03-24)
 
-- repo initialized
-- project instructions in place
-- ADR recorded
-- external reuse strategy recorded
-- ADR-0004 recorded: Phase 4 evidence-aware verification and fail-loud boundaries
-- one-page architecture written
-- v1 brief absorbed into this plan (deleted as redundant)
-- domain model draft written (`docs/DOMAIN_MODEL.md`)
-- scope matrix written
-- Pydantic models defined (`src/grounded_research/models.py`)
-- inter-phase contracts defined (`docs/CONTRACTS.md`)
-- golden-set evidence fixture created (`tests/fixtures/session_storage_bundle.json`)
-- canonical review notebook runs top-to-bottom with schema-shaped fixture artifacts
+**v0.1.0 shipped. 42/52 scorecard features implemented. Full pipeline operational.**
+
+See `docs/ROADMAP.md` for the forward-looking plan and priorities.
+See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
+See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
 - documentation-governance layer present (`.claude/`, `docs/plans/`,
   `scripts/relationships.yaml`, validation scripts, `scripts/ci_checks.py`,
   `.github/workflows/governance.yml`)
