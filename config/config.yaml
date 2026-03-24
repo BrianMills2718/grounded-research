@@ -1,12 +1,15 @@
+# All single-task calls route through OpenRouter to avoid Gemini direct API
+# daily quota (10K requests). Cross-family analyst models still use direct
+# API for Gemini slot since that's only 1 call per run.
 models:
-  decomposition: "gemini/gemini-2.5-flash"
-  analyst: "gemini/gemini-2.5-flash-lite"
-  claim_extraction: "gemini/gemini-2.5-flash-lite"
-  deduplication: "gemini/gemini-2.5-flash-lite"
-  dispute_classification: "gemini/gemini-2.5-flash"
-  arbitration: "gemini/gemini-2.5-flash-lite"
+  decomposition: "openrouter/google/gemini-2.5-flash"
+  analyst: "openrouter/google/gemini-2.5-flash-lite"
+  claim_extraction: "openrouter/google/gemini-2.5-flash-lite"
+  deduplication: "openrouter/google/gemini-2.5-flash-lite"
+  dispute_classification: "openrouter/google/gemini-2.5-flash"
+  arbitration: "openrouter/google/gemini-2.5-flash-lite"
   synthesis: "openrouter/google/gemini-2.5-flash"
-  source_scoring: "gemini/gemini-2.5-flash"
+  source_scoring: "openrouter/google/gemini-2.5-flash"
 
 # Fallback chains per task. When primary model exhausts retries,
 # try these in order. llm_client supports this natively via
