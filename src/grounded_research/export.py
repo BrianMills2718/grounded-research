@@ -138,9 +138,12 @@ async def render_long_report(
         sub_questions = [sq.model_dump() for sq in decomposition.sub_questions]
         optimization_axes = decomposition.optimization_axes
 
-    # Synthesis mode from config
+    # Synthesis mode and depth from config
     config = load_config()
     synthesis_mode = config.get("synthesis_mode", "grounded")
+    from grounded_research.config import get_depth_config
+    depth = get_depth_config()
+    word_target = depth.get("synthesis_word_target", "5,000-6,000")
 
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "long_report.yaml"),
@@ -153,6 +156,7 @@ async def render_long_report(
         evidence_gaps=state.evidence_bundle.gaps,
         analyst_count=len([r for r in state.analyst_runs if r.succeeded]),
         synthesis_mode=synthesis_mode,
+        word_target=word_target,
         sub_questions=sub_questions,
         optimization_axes=optimization_axes,
     )

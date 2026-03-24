@@ -41,17 +41,25 @@ config values at once:
 4. `prompts/analyst.yaml`: add claim count target instruction
 5. `prompts/long_report.yaml`: adjust word count target per depth
 
-### Phase 2: Multi-pass evidence extraction (needs work)
+### Phase 2: Goal-driven evidence extraction (needs work)
 
-Currently `fetch_page` extracts one `key_section` + one `notes` per page.
-For deep/thorough mode, extract multiple evidence items per page.
+Currently `fetch_page` extracts one `key_section` + one `notes` per page
+using a heuristic. The extraction prompt should be goal-driven per the
+prompt-design skill: tell the LLM what we need and why, not how many items.
 
-**Approach:** After initial fetch, run a second LLM pass on pages from
-authoritative sources: "Extract 3-5 distinct evidence items from this page,
-each addressing a different aspect of the research question."
+**Approach:** Replace heuristic extraction with a YAML prompt template that
+receives the research question and sub-questions as context:
+"You are extracting evidence to answer a research question. This page may
+contain data points, study findings, organizational positions, or
+quantitative claims relevant to these sub-questions: [list]. Extract every
+distinct piece of evidence that could help answer them."
 
-**Where:** New function in `collect.py`: `extract_deep_evidence(page_content, question, sub_questions)`
-**Cost:** ~1 LLM call per authoritative source (~20-40 calls for 100 sources)
+**Key principle:** More sources is better than more items per source. The
+primary lever is `max_sources`. The extraction improvement ensures we don't
+miss important evidence on pages we already fetch.
+
+**Where:** New prompt `prompts/extract_evidence.yaml` + function in `collect.py`
+**Cost:** ~1 LLM call per source (~50-150 calls depending on depth)
 
 ### Phase 3: Multi-round arbitration (needs work)
 

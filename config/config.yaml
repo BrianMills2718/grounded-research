@@ -1,3 +1,8 @@
+# Research depth: "standard" (fast, $0.06), "deep" (thorough, $0.15-0.25),
+# "thorough" (exhaustive, $0.50-1.00). Controls source count, claim targets,
+# synthesis length, and arbitration rounds. CLI: --depth deep
+depth: "standard"
+
 # gemini-2.5-flash-lite via OpenRouter returns multiple tool calls which
 # Instructor rejects — every call fails then falls back. Use gpt-5-nano
 # for cheap tasks, gemini-2.5-flash for reasoning tasks.

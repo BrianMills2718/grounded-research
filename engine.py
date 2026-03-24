@@ -19,7 +19,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from grounded_research.config import get_budget, load_config
+from grounded_research.config import get_budget, get_depth_config, load_config
 from grounded_research.models import PipelineState, PhaseTrace
 
 
@@ -45,11 +45,12 @@ async def run_pipeline(
     state = PipelineState(run_id=run_id)
 
     config = load_config()
-    total_budget = get_budget("pipeline_max_budget_usd")
+    depth = get_depth_config()
+    total_budget = depth["pipeline_max_budget_usd"]
 
     print(f"=== Grounded Research Adjudication Engine ===")
     print(f"Run ID: {run_id}")
-    print(f"Budget: ${total_budget:.2f}")
+    print(f"Depth: {config.get('depth', 'standard')}, Budget: ${total_budget:.2f}")
     print()
 
     try:
@@ -89,7 +90,7 @@ async def run_pipeline(
 
         # --- Evidence compression (if over threshold) ---
         from grounded_research.compress import compress_evidence
-        compression_threshold = config.get("evidence_policy", {}).get("compression_threshold", 80)
+        compression_threshold = depth["compression_threshold"]
         removed = compress_evidence(bundle, threshold=compression_threshold)
         if removed > 0:
             print(f"  Compressed evidence: removed {removed} items, {len(bundle.evidence)} remaining")
@@ -335,10 +336,13 @@ async def run_pipeline_from_question(
     print(f"Question: {decomposition.core_question}")
     print()
 
+    depth = get_depth_config()
     sub_questions_dicts = [sq.model_dump() for sq in decomposition.sub_questions]
     bundle = await collect_evidence(
         decomposition.core_question, trace_id,
         sub_questions=sub_questions_dicts,
+        num_queries=depth["num_queries"],
+        max_sources=depth["max_sources"],
     )
 
     # Save the collected bundle for reuse
@@ -386,7 +390,19 @@ def main() -> None:
         default=None,
         help="Path to decomposition JSON (pairs with --fixture)",
     )
+    parser.add_argument(
+        "--depth",
+        choices=["standard", "deep", "thorough"],
+        default=None,
+        help="Research depth (overrides config.yaml)",
+    )
     args = parser.parse_args()
+
+    # Override depth in config if CLI flag provided
+    if args.depth:
+        from grounded_research.config import _cached_config, load_config
+        cfg = load_config()
+        cfg["depth"] = args.depth
 
     if args.question:
         slug = args.question[:40].lower().replace(" ", "_").replace("?", "")

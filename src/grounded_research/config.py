@@ -49,6 +49,65 @@ def get_fallback_models(task: str) -> list[str] | None:
     return chain if chain else None
 
 
+_DEPTH_PROFILES = {
+    "standard": {
+        "num_queries": 15,
+        "max_sources": 50,
+        "compression_threshold": 80,
+        "analyst_claim_target": 8,
+        "synthesis_word_target": "5,000-6,000",
+        "pipeline_max_budget_usd": 5.0,
+        "arbitration_max_rounds": 1,
+    },
+    "deep": {
+        "num_queries": 30,
+        "max_sources": 100,
+        "compression_threshold": 150,
+        "analyst_claim_target": 15,
+        "synthesis_word_target": "8,000-10,000",
+        "pipeline_max_budget_usd": 10.0,
+        "arbitration_max_rounds": 2,
+    },
+    "thorough": {
+        "num_queries": 50,
+        "max_sources": 150,
+        "compression_threshold": 300,
+        "analyst_claim_target": 20,
+        "synthesis_word_target": "10,000-15,000",
+        "pipeline_max_budget_usd": 20.0,
+        "arbitration_max_rounds": 3,
+    },
+}
+
+
+def get_depth_config() -> dict[str, Any]:
+    """Get the depth-dependent configuration values.
+
+    Reads `depth` from config.yaml (default: "standard") and returns
+    the corresponding profile. Config values explicitly set in
+    config.yaml override the profile defaults.
+    """
+    cfg = load_config()
+    depth = cfg.get("depth", "standard")
+    profile = _DEPTH_PROFILES.get(depth, _DEPTH_PROFILES["standard"]).copy()
+
+    # Config overrides profile
+    collection = cfg.get("collection", {})
+    for key in ("num_queries", "max_sources"):
+        if key in collection:
+            profile[key] = collection[key]
+
+    evidence = cfg.get("evidence_policy", {})
+    if "compression_threshold" in evidence:
+        profile["compression_threshold"] = evidence["compression_threshold"]
+
+    budgets = cfg.get("budgets", {})
+    if "pipeline_max_budget_usd" in budgets:
+        profile["pipeline_max_budget_usd"] = budgets["pipeline_max_budget_usd"]
+
+    return profile
+
+
 def get_budget(key: str) -> int | float:
     """Get a budget value from config."""
     cfg = load_config()

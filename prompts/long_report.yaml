@@ -128,7 +128,7 @@ messages:
 
       ## Writing rules
 
-      - Write 5,000–6,000 words. Aim for the upper end. More depth is better
+      - Write {{ word_target }} words. Aim for the upper end. More depth is better
         than more conciseness — the reader wants thoroughness, not a summary.
         Every paragraph should earn its place, but do not compress prematurely.
       - Use Markdown: Level 2 headers (##) for sections, bold for subsections.
