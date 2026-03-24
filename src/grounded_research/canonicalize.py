@@ -108,6 +108,9 @@ async def deduplicate_claims(
     )
 
     # Build canonical claims from groups
+    import logging
+    logger = logging.getLogger(__name__)
+
     raw_claim_map = {c.id: c for c in raw_claims}
     canonical_claims: list[Claim] = []
 
@@ -130,6 +133,22 @@ async def deduplicate_claims(
             evidence_ids=evidence_ids,
             confidence=group.confidence if group.confidence in ("high", "medium", "low") else "medium",
         ))
+
+    # Fail-loud fallback: if dedup returned 0 groups from >0 raw claims,
+    # promote each raw claim 1:1 rather than losing everything
+    if len(canonical_claims) == 0 and len(raw_claims) > 0:
+        logger.warning(
+            "Dedup returned 0 groups from %d raw claims — promoting raw claims 1:1",
+            len(raw_claims),
+        )
+        for rc in raw_claims:
+            canonical_claims.append(Claim(
+                statement=rc.statement,
+                source_raw_claim_ids=[rc.id],
+                analyst_sources=[claim_to_analyst.get(rc.id, "unknown")],
+                evidence_ids=rc.evidence_ids,
+                confidence=rc.confidence,
+            ))
 
     return canonical_claims
 
