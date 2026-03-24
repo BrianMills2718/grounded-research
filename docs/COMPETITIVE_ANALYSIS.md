@@ -221,3 +221,20 @@ The entire LLM SWE gap was bugs, not architecture. With fixes:
 - Multi-query evidence tracking → all sub-questions get tagged evidence
 
 Updated win rate (with fixed LLM SWE): **5/6 (83%)**.
+
+### Final 6-Question Results (all bugs fixed, 2026-03-24)
+
+| Question | Domain | Pipeline | Perplexity | Winner |
+|----------|--------|----------|------------|--------|
+| EU sanctions | Policy | **23** | 22 | **Pipeline** |
+| PFAS | Health/Regulatory | **24** | 20 | **Pipeline** |
+| Fasting | Health/Science | **24** | 22 | **Pipeline** |
+| LLM SWE | Technology | **24** | 20 | **Pipeline** |
+| UBI | Economics | 21 | **25** | Perplexity |
+| Gut-brain | Science | **20** | 18 | **Pipeline** |
+
+**Win rate: 5/6 (83%).** Gate (≥4/6) passes decisively.
+
+Only loss: UBI — dense pilot program data where Perplexity cites specific
+study numbers (NBER N=, Alaska PFD amounts, Finnish pilot duration/results).
+Pipeline wins everywhere else including technology (after bug fixes).
