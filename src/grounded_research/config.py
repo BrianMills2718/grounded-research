@@ -91,19 +91,22 @@ def get_depth_config() -> dict[str, Any]:
     depth = cfg.get("depth", "standard")
     profile = _DEPTH_PROFILES.get(depth, _DEPTH_PROFILES["standard"]).copy()
 
-    # Config overrides profile
-    collection = cfg.get("collection", {})
-    for key in ("num_queries", "max_sources"):
-        if key in collection:
-            profile[key] = collection[key]
+    # For non-standard depth, the profile values take precedence.
+    # Config.yaml collection/budgets values only apply when depth is "standard"
+    # (they're the legacy config surface for backward compatibility).
+    if depth == "standard":
+        collection = cfg.get("collection", {})
+        for key in ("num_queries", "max_sources"):
+            if key in collection:
+                profile[key] = collection[key]
 
-    evidence = cfg.get("evidence_policy", {})
-    if "compression_threshold" in evidence:
-        profile["compression_threshold"] = evidence["compression_threshold"]
+        evidence = cfg.get("evidence_policy", {})
+        if "compression_threshold" in evidence:
+            profile["compression_threshold"] = evidence["compression_threshold"]
 
-    budgets = cfg.get("budgets", {})
-    if "pipeline_max_budget_usd" in budgets:
-        profile["pipeline_max_budget_usd"] = budgets["pipeline_max_budget_usd"]
+        budgets = cfg.get("budgets", {})
+        if "pipeline_max_budget_usd" in budgets:
+            profile["pipeline_max_budget_usd"] = budgets["pipeline_max_budget_usd"]
 
     return profile
 
