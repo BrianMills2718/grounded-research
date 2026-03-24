@@ -185,3 +185,27 @@ Report length hit 5,270 words (up from 4,141).
 The analytical synthesis mode was the single biggest improvement.
 Decomposition helped richness (more claims, more disputes) but the
 synthesis needed permission to infer beyond sources to match Perplexity.
+
+### Full 6-Question Validation (2026-03-24)
+
+| Question | Domain | Pipeline | Perplexity | Winner | Judge |
+|----------|--------|----------|------------|--------|-------|
+| EU sanctions | Policy | **23** | 22 | **Pipeline** | gpt-5-nano |
+| PFAS | Health/Regulatory | **24** | 20 | **Pipeline** | gpt-5-nano |
+| Fasting | Health/Science | **24** | 22 | **Pipeline** | gpt-5-nano |
+| LLM SWE | Technology | 19 | **25** | Perplexity | gpt-5-nano |
+| UBI | Economics | 21 | **23** | Perplexity | gemini-flash-lite |
+| Gut-brain | Science | **20** | 18 | **Pipeline** | gemini-flash-lite |
+
+**Win rate: 4/6 (67%).** Gate (≥4/6) passes.
+
+Pipeline wins on: policy questions, contested topics, questions where conflict
+detection and decision frameworks matter.
+
+Perplexity wins on: technology topics with dense benchmarks, economics with
+many pilot programs to enumerate.
+
+Pipeline's distinctive advantage: conflict/nuance (scored 5/5 on UBI and
+gut-brain). Perplexity's: volume and coverage (1.5-3x more words).
+
+Caveat: Q5-Q6 used gemini-flash-lite as judge (OpenRouter credits exhausted).
