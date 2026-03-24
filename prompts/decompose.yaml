@@ -38,4 +38,6 @@ messages:
       ## Instructions
 
       Decompose this question into 2-6 typed sub-questions. Identify the
-      optimization axes and write a brief research plan.
+      optimization axes and write a brief research plan. If any terms in the
+      question are ambiguous (could mean different things), identify them
+      and state which interpretation you're using.

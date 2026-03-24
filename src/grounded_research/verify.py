@@ -161,13 +161,19 @@ async def arbitrate_dispute(
     fetched evidence. Non-evidence-backed supportive verdicts are forced to
     inconclusive.
     """
+    import random as _random
     from llm_client import acall_llm_structured, render_prompt
 
     fresh_evidence_ids = {item.id for item in fresh_evidence}
+
+    # Shuffle claim order to prevent primacy bias (#38)
+    shuffled_claims = list(claims)
+    _random.Random(dispute.id).shuffle(shuffled_claims)
+
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "arbitration.yaml"),
         dispute=dispute.model_dump(),
-        claims=[c.model_dump() for c in claims],
+        claims=[c.model_dump() for c in shuffled_claims],
         evidence=[e.model_dump() for e in available_evidence],
         fresh_evidence=[e.model_dump() for e in fresh_evidence],
     )

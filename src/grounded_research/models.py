@@ -85,6 +85,14 @@ ArbitrationVerdict = Literal[
 SubQuestionType = Literal["factual", "causal", "comparative", "evaluative", "scope"]
 
 
+class AmbiguousTerm(BaseModel):
+    """A term in the research question that could be interpreted multiple ways."""
+
+    term: str = Field(description="The ambiguous term or phrase.")
+    chosen_interpretation: str = Field(description="How this term is interpreted in the decomposition.")
+    alternative: str = Field(description="An alternative interpretation that was NOT chosen.")
+
+
 class SubQuestion(BaseModel):
     """One dimension of a research question, typed for focused search and analysis."""
 
@@ -127,6 +135,38 @@ class QuestionDecomposition(BaseModel):
     )
     research_plan: str = Field(
         description="Brief plan: what to search for, which source types matter most, what critical evidence to prioritize.",
+    )
+    ambiguous_terms: list[AmbiguousTerm] = Field(
+        default_factory=list,
+        description="Terms in the question that could be interpreted multiple ways. State which interpretation is used.",
+    )
+
+
+DecompositionVerdict = Literal["proceed", "revise"]
+
+
+class DecompositionValidation(BaseModel):
+    """Validation of a QuestionDecomposition — checks coverage, bias, and granularity."""
+
+    coverage_ok: bool = Field(description="Do the sub-questions collectively cover the full research question?")
+    coverage_gaps: list[str] = Field(
+        default_factory=list,
+        description="Aspects of the question that no sub-question addresses.",
+    )
+    bias_flags: list[str] = Field(
+        default_factory=list,
+        description="Sub-questions with leading or directional framing that assumes an answer.",
+    )
+    granularity_issues: list[str] = Field(
+        default_factory=list,
+        description="Sub-questions that are too broad, too narrow, or redundant with each other.",
+    )
+    verdict: DecompositionVerdict = Field(
+        description="proceed = decomposition is good enough. revise = re-decompose with guidance.",
+    )
+    revision_guidance: str = Field(
+        default="",
+        description="If verdict is revise, specific guidance on what to fix.",
     )
 
 

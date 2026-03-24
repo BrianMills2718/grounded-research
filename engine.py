@@ -103,6 +103,25 @@ async def run_pipeline(
         state.analyst_runs = analyst_runs
 
         succeeded = [r for r in analyst_runs if r.succeeded]
+
+        # Evidence-label leakage check (#30)
+        import re
+        url_pattern = re.compile(r'https?://\S+')
+        for run in succeeded:
+            for claim in run.claims:
+                urls_in_claim = url_pattern.findall(claim.statement)
+                if urls_in_claim:
+                    state.add_warning(
+                        "analyze", "evidence_leakage",
+                        f"Analyst {run.analyst_label} claim {claim.id} contains URL(s): {urls_in_claim[:2]}"
+                    )
+            urls_in_summary = url_pattern.findall(run.summary)
+            if urls_in_summary:
+                state.add_warning(
+                    "analyze", "evidence_leakage",
+                    f"Analyst {run.analyst_label} summary contains URL(s): {urls_in_summary[:2]}"
+                )
+
         state.phase_traces.append(PhaseTrace(
             phase="analyze",
             started_at=phase_start,
@@ -281,22 +300,34 @@ async def run_pipeline_from_question(
 ) -> PipelineState:
     """Run the full pipeline starting from a question (collects evidence automatically)."""
     from grounded_research.collect import collect_evidence
-    from grounded_research.decompose import decompose_question
+    from grounded_research.decompose import decompose_with_validation
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
 
-    # --- Decompose question into sub-questions ---
+    # --- Decompose question into sub-questions (with validation) ---
     print(f"=== Question Decomposition ===")
     print(f"Raw question: {question}")
     print()
 
-    decomposition = await decompose_question(question, trace_id)
+    decomposition, validation = await decompose_with_validation(question, trace_id)
     print(f"  Core question: {decomposition.core_question[:80]}...")
     print(f"  Sub-questions: {len(decomposition.sub_questions)}")
     for sq in decomposition.sub_questions:
         print(f"    [{sq.type}] {sq.text[:70]}...")
     print(f"  Optimization axes: {decomposition.optimization_axes}")
+    if decomposition.ambiguous_terms:
+        print(f"  Ambiguous terms: {len(decomposition.ambiguous_terms)}")
+        for at in decomposition.ambiguous_terms:
+            print(f"    '{at.term}' → {at.chosen_interpretation} (not: {at.alternative})")
+    if validation:
+        print(f"  Validation: {validation.verdict}")
+        if validation.coverage_gaps:
+            print(f"    Coverage gaps: {validation.coverage_gaps}")
+        if validation.bias_flags:
+            print(f"    Bias flags: {validation.bias_flags}")
+        if validation.granularity_issues:
+            print(f"    Granularity: {validation.granularity_issues}")
     print()
 
     # --- Collect evidence with sub-question-driven search ---

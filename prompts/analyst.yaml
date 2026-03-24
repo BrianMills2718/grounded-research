@@ -87,6 +87,15 @@ messages:
 
       {% endfor %}
 
+      {% if ambiguous_terms %}
+      ## Term Interpretations
+
+      The following terms were identified as ambiguous. Use the stated interpretation:
+      {% for at in ambiguous_terms %}
+      - **{{ at.term }}**: interpreted as "{{ at.chosen_interpretation }}" (not "{{ at.alternative }}")
+      {% endfor %}
+      {% endif %}
+
       Address each sub-question in your analysis. For each, cite evidence and
       note where evidence is weak or missing. Consider the following tradeoffs:
       {% for axis in optimization_axes %}

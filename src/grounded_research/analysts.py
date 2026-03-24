@@ -25,12 +25,14 @@ def _render_analyst_prompt(
     """Render the analyst prompt template with optional decomposition context."""
     from llm_client import render_prompt
 
-    # Pass sub-questions and axes if decomposition is available
+    # Pass sub-questions, axes, and ambiguous terms if decomposition is available
     sub_questions = []
     optimization_axes = []
+    ambiguous_terms = []
     if decomposition is not None:
         sub_questions = [sq.model_dump() for sq in decomposition.sub_questions]
         optimization_axes = decomposition.optimization_axes
+        ambiguous_terms = [at.model_dump() for at in decomposition.ambiguous_terms]
 
     return render_prompt(
         str(_PROJECT_ROOT / "prompts" / "analyst.yaml"),
@@ -39,6 +41,7 @@ def _render_analyst_prompt(
         frame=frame,
         sub_questions=sub_questions,
         optimization_axes=optimization_axes,
+        ambiguous_terms=ambiguous_terms,
     )
 
 
