@@ -60,7 +60,7 @@ cautions. These are prompt tuning problems.
 - Compare each against Perplexity deep research
 - Track win rate and dimension-level scores
 
-**Gate:** Pipeline wins or ties on ≥ 4/6 total questions.
+**Gate:** Pipeline scores ≥ 22/25 on each new question (fair comparison, GPT-5-nano judge). Wins or ties on ≥ 4/6 total questions vs Perplexity sonar-deep-research.
 
 ### Priority 3: Search Diversification
 
@@ -71,7 +71,7 @@ cautions. These are prompt tuning problems.
 - Or add Tavily (built-in content extraction)
 - Compare evidence diversity: same question with 1 provider vs 2
 
-**Gate:** Evidence from 2 providers covers more sub-questions than 1 provider.
+**Gate:** On the same question, 2 providers produce evidence covering ≥ 1 more sub-question than 1 provider alone. Measured by sub-question coverage count.
 
 ### Priority 4: Cost Optimization
 
@@ -83,7 +83,14 @@ cautions. These are prompt tuning problems.
 - Profile token usage per phase from observability DB
 - Test with gemini-2.5-flash-lite for non-critical calls
 
-**Gate:** Cost ≤ $0.03, no score regression on any test question.
+**Gate:** Cost ≤ $0.03 per run (measured from observability DB), no score regression below 22/25 on any test question.
+
+### Deferred: Recent-First Evidence Ranking
+
+CLAUDE.md Principle 4 mandates recent-first evidence prioritization.
+Currently implemented only as Brave search freshness filter — evidence
+is NOT ranked by recency before analyst consumption. Implement when
+evidence quality issues are traced to stale sources dominating.
 
 ## Long-Term: Ecosystem Integration
 

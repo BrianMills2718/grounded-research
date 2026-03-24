@@ -27,6 +27,44 @@ workflow engine.
 See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
 See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
+
+### Current Execution Topology (2026-03-24)
+
+When invoked with a question (`python engine.py "question"`):
+
+```
+Question → decompose_with_validation() → QuestionDecomposition
+    ↓ (retry once if verdict = "revise")
+Sub-questions → generate_search_queries() per SQ → Brave Search → fetch pages (parallel)
+    ↓
+score_source_quality() → quality tiers on sources
+    ↓
+Evidence sufficiency check per sub-question → gaps added
+    ↓
+compress_evidence() if > threshold → reduced bundle
+    ↓
+run_analysts() → 3 cross-family models × 3 frames (parallel)
+    ↓ (evidence leakage check)
+extract_raw_claims() → strip hallucinated evidence IDs
+    ↓
+deduplicate_claims() → canonical claims (fallback: 1:1 if dedup fails)
+    ↓
+detect_disputes() → severity classification → DISPUTE_ROUTING
+    ↓ (user steering: preference/ambiguity disputes, TTY only)
+verify_disputes() → fresh evidence search → arbitration (decision-critical only)
+    ↓ (position shuffling, ADR-0004 invariant: fresh evidence required)
+generate_report() → FinalReport (structured, grounded)
+    ↓
+render_long_report() → markdown (analytical or grounded mode per config)
+    ↓
+write_outputs() → report.md, summary.md, trace.json, handoff.json
+```
+
+Key definitions:
+- **Decision-critical dispute**: `severity == "decision_critical"` in Dispute model. Factual conflicts where the answer depends on which side is correct.
+- **Inconclusive arbitration**: Fresh evidence search found nothing new, or found ambiguous evidence. Forces verdict to "inconclusive" and logs warning. Does not retry.
+- **Analytical mode** (`synthesis_mode: "analytical"`): Long report may infer beyond sources, marked with `[analytical inference]`. Claim ledger and trace remain grounded regardless.
+- **Dedup fallback**: If LLM returns 0 groups, raw claims promoted 1:1 (no dedup, full provenance preserved).
 - documentation-governance layer present (`.claude/`, `docs/plans/`,
   `scripts/relationships.yaml`, validation scripts, `scripts/ci_checks.py`,
   `.github/workflows/governance.yml`)
