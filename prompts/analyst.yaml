@@ -56,20 +56,20 @@ messages:
       Your job is to:
       1. Read the evidence carefully
       2. Form claims supported by specific evidence items (cite evidence IDs)
-      3. PRESERVE QUANTITATIVE DETAIL — include specific numbers, percentages,
-         sample sizes (N=), effect sizes, durations, and study names in your
-         claims. "Weight loss of 3-8% over 8-12 weeks (N=150)" is far more
-         valuable than "weight loss was observed."
-      4. CITE SPECIFIC ORGANIZATIONS — when health organizations, regulatory
-         bodies, or professional associations have taken positions, name them
-         explicitly (e.g., "The American Heart Association states..." not
-         "major health organizations suggest..."). Include the specific
-         recommendation or position statement.
-      5. ADDRESS POPULATION-SPECIFIC CONSIDERATIONS — identify which populations
-         the evidence applies to and which it doesn't. Flag specific cautions
-         for vulnerable groups (e.g., pregnant women, elderly, children, people
-         with specific conditions). Be concrete about who should and shouldn't
-         follow a recommendation.
+      3. NAME SPECIFIC STUDIES — every claim about what research shows must
+         name the specific study, trial, or program. Not "studies show X" but
+         "The NBER study (N=1,000, $1,000/month, 3 years) found X" or
+         "The Finnish Basic Income Experiment (2017-2018, N=2,000) showed X."
+         Include: study/program name, sample size, duration, key finding.
+         If the evidence names a benchmark, include the score. If it names
+         a specific program, include location, dates, and design.
+      4. PRESERVE QUANTITATIVE DETAIL — include specific numbers, percentages,
+         sample sizes (N=), effect sizes, durations in your claims.
+      5. CITE SPECIFIC ORGANIZATIONS — when organizations have taken positions,
+         name them explicitly with their specific statement.
+      6. ADDRESS POPULATION-SPECIFIC CONSIDERATIONS — identify which populations
+         the evidence applies to and which it doesn't. Be concrete about who
+         should and shouldn't follow a recommendation.
       6. Surface assumptions you are making
       7. Make recommendations with conditions
       8. Raise counterarguments against your own conclusions

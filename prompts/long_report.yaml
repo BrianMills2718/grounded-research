@@ -107,10 +107,12 @@ messages:
          Give each major dimension a full section (## header), not just a
          paragraph within one mega-section. If there are 4 key distinctions,
          that's 4 sections of evidence analysis.
-      6. **Broader implications** — connect findings to macro-economic effects,
-         strategic consequences, institutional dynamics, and second-order
-         impacts. This section goes beyond the direct question to explain
-         what the findings mean in context.
+      6. **Broader implications** — connect findings to specific macro-economic
+         effects (name which budgets, GDP figures, fiscal policies are affected),
+         institutional changes (which organizations are adapting and how),
+         and second-order consequences (what happens downstream). Be specific —
+         "Russia's federal budget deficit widened to X% of GDP" not "there
+         were economic consequences."
       7. **What the evidence doesn't tell us** — genuine gaps, not just "we
          couldn't fetch some URLs." What questions remain open? What would
          change the analysis if answered?

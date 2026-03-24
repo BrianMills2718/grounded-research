@@ -82,6 +82,8 @@ async def generate_search_queries(
                         "(1) direct evidence answering the sub-question\n"
                         "(2) evidence that would DISPROVE the expected answer\n"
                         "(3) concrete data, statistics, or primary sources\n"
+                        "(4) lists or surveys of specific programs, studies, benchmarks, or pilots\n"
+                        "(5) named studies with sample sizes and quantitative findings\n"
                         f"\n{recency_note}\n"
                         f"Generate exactly {queries_per_sq} queries."
                     )},
