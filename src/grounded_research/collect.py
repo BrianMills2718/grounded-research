@@ -71,7 +71,8 @@ async def generate_search_queries(
         query_to_sq: dict[str, str] = {}
         queries_per_sq = max(3, num_queries // len(sub_questions))
 
-        for sq in sub_questions:
+        # Generate queries for all sub-questions in parallel
+        async def _gen_sq_queries(sq):
             sq_id = sq.get("id", "sq")
             sq_result, _meta = await acall_llm_structured(
                 model,
@@ -98,9 +99,13 @@ async def generate_search_queries(
                 max_budget=max_budget / len(sub_questions),
                 fallback_models=get_fallback_models("analyst"),
             )
-            for q in sq_result.queries:
+            return sq_id, sq_result.queries
+
+        sq_results = await asyncio.gather(*[_gen_sq_queries(sq) for sq in sub_questions])
+        for sq_id, queries in sq_results:
+            for q in queries:
                 query_to_sq[q] = sq_id
-            all_queries.extend(sq_result.queries)
+            all_queries.extend(queries)
 
         return all_queries, query_to_sq
 
@@ -192,45 +197,47 @@ async def collect_evidence(
     )
     print(f"  Generated {len(queries)} queries (freshness: {freshness})")
 
-    # Search across all queries, deduplicate by URL
-    # Track all sub-question origins per URL (not just the first query)
-    all_search_results: list[dict] = []
-    seen_urls: set[str] = set()
+    # Search all queries in parallel, then deduplicate by URL
     url_sq_ids: dict[str, set[str]] = {}  # url → all sub-question IDs that found it
 
-    for q in queries:
+    async def _search_one(q: str) -> list[dict]:
+        """Search one query, return results with query tag."""
+        results = []
         try:
-            # First search with freshness filter for recency
             raw = await search_web(q, count=results_per_query, freshness=freshness)
             data = json.loads(raw)
             for r in data.get("results", []):
-                url = r.get("url", "")
-                if not url:
-                    continue
-                # Track sub-question origin even for duplicates
-                sq_id = query_to_sq.get(q)
-                if sq_id:
-                    url_sq_ids.setdefault(url, set()).add(sq_id)
-                if url not in seen_urls:
-                    seen_urls.add(url)
-                    r["search_query"] = q
-                    all_search_results.append(r)
+                r["search_query"] = q
+                results.append(r)
 
-            # For time-sensitive topics, also do an unfiltered search
-            # to catch authoritative older sources
             if time_sensitivity == "time_sensitive":
                 raw_unfiltered = await search_web(q, count=3, freshness="none")
                 data_unfiltered = json.loads(raw_unfiltered)
                 for r in data_unfiltered.get("results", []):
-                    url = r.get("url", "")
-                    if url and url not in seen_urls:
-                        seen_urls.add(url)
-                        r["search_query"] = q
-                        r["recency_note"] = "unfiltered_complement"
-                        all_search_results.append(r)
-
+                    r["search_query"] = q
+                    r["recency_note"] = "unfiltered_complement"
+                    results.append(r)
         except Exception as e:
-            print(f"  Search failed for '{q[:50]}...': {e}")
+            import logging
+            logging.getLogger(__name__).warning("Search failed for '%s': %s", q[:50], e)
+        return results
+
+    all_raw_results = await asyncio.gather(*[_search_one(q) for q in queries])
+
+    # Flatten and deduplicate
+    all_search_results: list[dict] = []
+    seen_urls: set[str] = set()
+    for results in all_raw_results:
+        for r in results:
+            url = r.get("url", "")
+            if not url:
+                continue
+            sq_id = query_to_sq.get(r.get("search_query", ""))
+            if sq_id:
+                url_sq_ids.setdefault(url, set()).add(sq_id)
+            if url not in seen_urls:
+                seen_urls.add(url)
+                all_search_results.append(r)
 
     print(f"  Found {len(all_search_results)} unique URLs across {len(queries)} queries")
 
