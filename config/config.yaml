@@ -1,13 +1,13 @@
-# All single-task calls route through OpenRouter to avoid Gemini direct API
-# daily quota (10K requests). Cross-family analyst models still use direct
-# API for Gemini slot since that's only 1 call per run.
+# gemini-2.5-flash-lite via OpenRouter returns multiple tool calls which
+# Instructor rejects — every call fails then falls back. Use gpt-5-nano
+# for cheap tasks, gemini-2.5-flash for reasoning tasks.
 models:
   decomposition: "openrouter/google/gemini-2.5-flash"
-  analyst: "openrouter/google/gemini-2.5-flash-lite"
-  claim_extraction: "openrouter/google/gemini-2.5-flash-lite"
-  deduplication: "openrouter/google/gemini-2.5-flash-lite"
+  analyst: "openrouter/openai/gpt-5-nano"
+  claim_extraction: "openrouter/openai/gpt-5-nano"
+  deduplication: "openrouter/openai/gpt-5-nano"
   dispute_classification: "openrouter/google/gemini-2.5-flash"
-  arbitration: "openrouter/google/gemini-2.5-flash-lite"
+  arbitration: "openrouter/openai/gpt-5-nano"
   synthesis: "openrouter/google/gemini-2.5-flash"
   source_scoring: "openrouter/google/gemini-2.5-flash"
 
