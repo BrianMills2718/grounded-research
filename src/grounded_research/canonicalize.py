@@ -83,13 +83,19 @@ async def deduplicate_claims(
 
     class ClaimGroup(BaseModel):
         """One equivalence class of raw claims."""
-        canonical_statement: str = Field(description="The merged canonical claim text.")
-        raw_claim_ids: list[str] = Field(description="IDs of raw claims in this group.")
+        canonical_statement: str = Field(description="The merged canonical claim text that captures the shared meaning of the grouped claims.")
+        raw_claim_ids: list[str] = Field(
+            description="IDs (RC-xxx format) of the raw claims in this group. Every raw claim must appear in exactly one group.",
+            min_length=1,
+        )
         confidence: str = Field(description="high, medium, or low")
 
     class DeduplicationResult(BaseModel):
-        """LLM output: grouped equivalence classes of claims."""
-        groups: list[ClaimGroup]
+        """LLM output: grouped equivalence classes of claims. Every raw claim must be in exactly one group."""
+        groups: list[ClaimGroup] = Field(
+            description="Equivalence classes of claims. Must contain at least one group. Every raw claim ID from the input must appear in exactly one group.",
+            min_length=1,
+        )
 
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "dedup.yaml"),

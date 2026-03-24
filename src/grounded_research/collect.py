@@ -188,8 +188,10 @@ async def collect_evidence(
     print(f"  Generated {len(queries)} queries (freshness: {freshness})")
 
     # Search across all queries, deduplicate by URL
+    # Track all sub-question origins per URL (not just the first query)
     all_search_results: list[dict] = []
     seen_urls: set[str] = set()
+    url_sq_ids: dict[str, set[str]] = {}  # url → all sub-question IDs that found it
 
     for q in queries:
         try:
@@ -198,7 +200,13 @@ async def collect_evidence(
             data = json.loads(raw)
             for r in data.get("results", []):
                 url = r.get("url", "")
-                if url and url not in seen_urls:
+                if not url:
+                    continue
+                # Track sub-question origin even for duplicates
+                sq_id = query_to_sq.get(q)
+                if sq_id:
+                    url_sq_ids.setdefault(url, set()).add(sq_id)
+                if url not in seen_urls:
                     seen_urls.add(url)
                     r["search_query"] = q
                     all_search_results.append(r)
@@ -249,8 +257,9 @@ async def collect_evidence(
         sources.append(source)
         source_map[url] = source
 
-        # Determine sub-question origin from search query
-        source_sq_map[url] = query_to_sq.get(result.get("search_query", ""))
+        # Use the richest sub-question mapping (all queries that found this URL)
+        sq_ids = url_sq_ids.get(url, set())
+        source_sq_map[url] = next(iter(sq_ids)) if sq_ids else None
         sq_id = query_to_sq.get(result.get("search_query", ""))
 
         # Add search snippet as evidence
