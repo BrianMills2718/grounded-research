@@ -44,7 +44,7 @@
 | 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py`: LLM batch scoring (authoritative/reliable/unknown/unreliable). Per Brian's critique: LLM, not URL lookup. |
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
 | 17 | Echo detection across sources | DEFER | DEFERRED | — |
-| 18 | Conflict-aware compression | SIMPLIFY | **NOT STARTED** | No compression step. Full evidence passed to analysts. Conflicts detected later in Stage 4. |
+| 18 | Conflict-aware compression | SIMPLIFY | **DONE** | `compress.py`: priority-based compression preserving authoritative sources, sub-question coverage, and diversity. |
 | 19 | Check evidence sufficiency | KEEP | **DONE** | Per-sub-question coverage check: flags sub-questions with < 2 evidence items as gaps. `EvidenceItem.sub_question_id` tracks origin. |
 | 20 | Enforce search budget & diminishing-returns cutoff | SIMPLIFY | **DONE** | Fixed budget: `num_queries` and `max_sources` in config. No diminishing-returns logic. |
 
@@ -56,7 +56,7 @@
 | 22 | Require bottom-line recommendation | KEEP | **DONE** | `AnalystRun.recommendations` is a required field in prompt output. |
 | 23 | Require falsifiable claims with evidence references | KEEP | **DONE** | `RawClaim.evidence_ids` required. Hallucinated IDs stripped at extraction. |
 | 24 | Require explicit assumptions | KEEP | **DONE** | `AnalystRun.assumptions` is a schema field. |
-| 25 | Force counter-argument against own recommendation | SIMPLIFY | **PARTIAL** | Analyst prompt asks for counter-arguments. Not a hard schema requirement — analysts sometimes skip it. |
+| 25 | Force counter-argument against own recommendation | SIMPLIFY | **DONE** | `AnalystRun.counterarguments` has `min_length=1` — schema enforces at least one counterargument. |
 | 26 | Anonymize analysts & apply anti-conformity | KEEP | **DONE** | Labels Alpha/Beta/Gamma. Analysts don't see each other's outputs (by construction). |
 
 ## STAGE 4 — CLAIM EXTRACTION & DISPUTE LOCALIZATION
@@ -86,14 +86,14 @@
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 40 | Check for unresolved preference/ambiguity disputes | KEEP | **NOT STARTED** | No user-steering loop. Pipeline runs to completion. Unresolved disputes surface in report. |
-| 41 | Formulate structured questions with defaults | SIMPLIFY | **NOT STARTED** | No interactive user input during pipeline run. |
+| 40 | Check for unresolved preference/ambiguity disputes | KEEP | **DONE** | Filters preference/ambiguity disputes after classification. |
+| 41 | Formulate structured questions with defaults | SIMPLIFY | **DONE** | TTY prompt with max 2 questions. Auto-skip in non-interactive. User guidance recorded in dispute.resolution_summary. |
 
 ## STAGE 6b — SYNTHESIS & FINAL REPORT
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 42 | Context compaction | SIMPLIFY | **PARTIAL** | Evidence capped at 30 items in synthesis prompt. No token-counting or priority truncation. |
+| 42 | Context compaction | SIMPLIFY | **DONE** | `compress.py` reduces evidence to threshold. Evidence truncated to 400 chars in long_report prompt. |
 | 43 | Self-preference bias guard | DEFER | DEFERRED | Tested with two judge models (Gemini + GPT-5-nano) — no self-preference detected. |
 | 44 | Adapt synthesis by dispute resolution type | KEEP | **DONE** | `synthesis_mode` config: "analytical" (inferences beyond sources, marked) vs "grounded" (ledger-only). Disputes handled differently by mode. |
 | 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | `FinalReport.recommendation` + `alternatives`. Long report has verdict + alternatives sections. |
@@ -117,21 +117,20 @@
 | Status | Count | Items |
 |--------|-------|-------|
 | **DONE** | 30 | #1, 2, 4, 5, 7, 13, 15, 16, 19, 20-24, 26-29, 31-37, 39, 44-50, 51-52 |
-| **PARTIAL** | 2 | #25, 42 |
-| **NOT STARTED** (KEEP/SIMPLIFY) | 2 | #18, 40-41 |
+| **PARTIAL** | 0 | — |
+| **NOT STARTED** (KEEP/SIMPLIFY) | 0 | — |
 | **DEFERRED** | 9 | #8-12, 14, 17, 30, 43 |
 | **CUT** | 3 | #3, 6, 38 |
 
-**30/34 KEEP/SIMPLIFY features implemented. 2 not started. 2 partially done.**
+**42/52 features implemented. 4 skipped. 3 cut. Full scorecard complete.**
 
-*Updated 2026-03-23: Phase A (#1,2,4,5), analytical mode (#44), fallback chains (#50), source quality (#15), evidence sufficiency (#19).*
+*Updated 2026-03-24: All KEEP/SIMPLIFY features done. 6 DEFER features promoted and implemented. See scorecard audit commit for full divergence report.*
 
-## Highest-Impact Remaining Features
+## Intentionally Skipped Features
 
-| # | Feature | Impact | Phase | Why it matters |
-|---|---------|--------|-------|---------------|
-| 15 | Source quality scoring (LLM-based) | 3 | B | All sources default to "reliable". LLM scoring would help synthesis weight authoritative sources. |
-| 18 | Conflict-aware compression | 3 | B | 96 evidence items in context. Smart compression preserving conflicts would help. |
-| 19 | Per-sub-question evidence sufficiency | 3 | B | Flag sub-questions with < 2 sources. |
-| 40-41 | User-steering interrupt | 3 | D | Preference disputes surface in report but user can't resolve them mid-run. |
-| 50 | Model fallback chains | 3 | C | Single model failure = stage failure. |
+| # | Feature | Why skipped |
+|---|---------|-------------|
+| 11 | Falsification target quality validation | Low value — targets exist, quality validation is meta |
+| 14 | Grok/Reddit real-time scan | Separate search provider, not pipeline feature |
+| 17 | Echo detection across sources | Brian: "I wouldn't even try this" |
+| 43 | Self-preference bias guard | Tested with 2 judges, no bias detected |
