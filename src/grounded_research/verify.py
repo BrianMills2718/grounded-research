@@ -30,11 +30,7 @@ from grounded_research.models import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-_FRESHNESS_MAP = {
-    "time_sensitive": "pd",  # past day
-    "mixed": "pm",          # past month
-    "stable": "none",
-}
+from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP
 
 
 @dataclass(frozen=True)
@@ -60,33 +56,7 @@ def _freshness_for_time_sensitivity(time_sensitivity: str) -> str:
     return _FRESHNESS_MAP.get(time_sensitivity, "pm")
 
 
-def _estimate_recency(age: str) -> float:
-    """Estimate recency score from Brave age strings."""
-    if not age:
-        return 0.5
-
-    age_lower = age.lower()
-    if "hour" in age_lower or "minute" in age_lower:
-        return 0.95
-    if "day" in age_lower:
-        return 0.90
-    if "week" in age_lower:
-        return 0.80
-    if "month" in age_lower:
-        parts = age_lower.split()
-        try:
-            months = int(parts[0])
-            return max(0.4, 0.80 - months * 0.05)
-        except (ValueError, IndexError):
-            return 0.65
-    if "year" in age_lower:
-        parts = age_lower.split()
-        try:
-            years = int(parts[0])
-            return max(0.2, 0.50 - years * 0.05)
-        except (ValueError, IndexError):
-            return 0.5
-    return 0.5
+from grounded_research.evidence_utils import estimate_recency as _estimate_recency
 
 
 def _build_inconclusive_result(dispute_id: str, reason: str) -> ArbitrationResult:

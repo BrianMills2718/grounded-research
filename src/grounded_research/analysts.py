@@ -20,7 +20,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 def _render_analyst_prompt(
     bundle: EvidenceBundle,
     frame: str,
-    decomposition: object | None = None,
+    decomposition: "QuestionDecomposition | None" = None,
 ) -> list[dict[str, str]]:
     """Render the analyst prompt template with optional decomposition context."""
     from llm_client import render_prompt
@@ -52,7 +52,7 @@ async def run_analyst(
     frame: str,
     trace_id: str,
     max_budget: float,
-    decomposition: object | None = None,
+    decomposition: "QuestionDecomposition | None" = None,
 ) -> AnalystRun:
     """Run a single analyst and return the structured result.
 
@@ -93,7 +93,7 @@ async def run_analysts(
     trace_id: str,
     models: list[str] | None = None,
     frames: list[str] | None = None,
-    decomposition: object | None = None,
+    decomposition: "QuestionDecomposition | None" = None,
 ) -> list[AnalystRun]:
     """Run 3 independent analysts in parallel.
 

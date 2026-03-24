@@ -26,7 +26,7 @@ from grounded_research.models import PipelineState, PhaseTrace
 async def run_pipeline(
     fixture_path: Path,
     output_dir: Path,
-    decomposition: object | None = None,
+    decomposition: "QuestionDecomposition | None" = None,
 ) -> PipelineState:
     """Run the full adjudication pipeline."""
     from grounded_research.ingest import load_manual_bundle, validate_bundle

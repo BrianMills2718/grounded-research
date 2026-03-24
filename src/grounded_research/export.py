@@ -112,7 +112,7 @@ async def render_long_report(
     state: PipelineState,
     trace_id: str,
     max_budget: float = 2.0,
-    decomposition: object | None = None,
+    decomposition: "QuestionDecomposition | None" = None,
 ) -> str:
     """Render the full long-form research report as markdown.
 

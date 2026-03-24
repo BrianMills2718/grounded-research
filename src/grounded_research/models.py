@@ -52,7 +52,7 @@ SourceType = Literal[
     "other",
 ]
 
-QualityTier = Literal["authoritative", "reliable", "secondary", "unknown"]
+QualityTier = Literal["authoritative", "reliable", "unknown", "unreliable"]
 
 ClaimStatus = Literal[
     "initial",

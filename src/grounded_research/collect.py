@@ -29,12 +29,7 @@ from grounded_research.models import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-# Freshness map for time_sensitivity
-_FRESHNESS_MAP = {
-    "time_sensitive": "pm",  # past month for fast-moving topics
-    "mixed": "py",           # past year for general topics
-    "stable": "none",        # no freshness filter for timeless topics
-}
+from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 
 
 async def generate_search_queries(
@@ -64,7 +59,7 @@ async def generate_search_queries(
     recency_note = ""
     if time_sensitivity == "time_sensitive":
         recency_note = (
-            "This is a time-sensitive topic. Include the current year (2026) "
+            f"This is a time-sensitive topic. Include the current year ({datetime.now().year}) "
             "in at least half the queries to find recent information."
         )
 
@@ -286,7 +281,9 @@ async def collect_evidence(
             if page_data.get("error"):
                 return url, None
             return url, page_data
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Fetch failed for %s: %s", url, e)
             return url, None
 
     # Run all fetches concurrently
@@ -378,26 +375,3 @@ def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
     return selected
 
 
-def _estimate_recency(age: str) -> float:
-    """Estimate a recency score from Brave's age string (e.g., '2 days ago', '3 months ago')."""
-    if not age:
-        return 0.5
-
-    age_lower = age.lower()
-    if "hour" in age_lower or "minute" in age_lower:
-        return 0.95
-    if "day" in age_lower:
-        return 0.90
-    if "week" in age_lower:
-        return 0.80
-    if "month" in age_lower:
-        # Try to extract number
-        parts = age_lower.split()
-        try:
-            months = int(parts[0])
-            return max(0.4, 0.80 - months * 0.05)
-        except (ValueError, IndexError):
-            return 0.65
-    if "year" in age_lower:
-        return 0.3
-    return 0.5
