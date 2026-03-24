@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from grounded_research.config import get_budget, get_model, load_config
+from grounded_research.config import get_budget, get_fallback_models, get_model, load_config
 from grounded_research.models import (
     ArbitrationResult,
     Claim,
@@ -141,6 +141,7 @@ async def generate_verification_queries(
         task="verification_query_generation",
         trace_id=f"{trace_id}/queries",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("arbitration"),
     )
 
     return result.batches
@@ -180,6 +181,7 @@ async def arbitrate_dispute(
             task="dispute_arbitration",
             trace_id=f"{trace_id}/arb/{dispute.id}",
             max_budget=max_budget,
+            fallback_models=get_fallback_models("arbitration"),
         )
     except Exception as exc:
         return _build_inconclusive_result(

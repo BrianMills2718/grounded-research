@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from grounded_research.config import get_model
+from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import (
     AnalystRun,
     ArbitrationResult,
@@ -104,6 +104,7 @@ async def deduplicate_claims(
         task="claim_deduplication",
         trace_id=f"{trace_id}/dedup",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("deduplication"),
     )
 
     # Build canonical claims from groups
@@ -184,6 +185,7 @@ async def detect_disputes(
         task="dispute_classification",
         trace_id=f"{trace_id}/disputes",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("dispute_classification"),
     )
 
     # Build typed disputes with code-owned routing

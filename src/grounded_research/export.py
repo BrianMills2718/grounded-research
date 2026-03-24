@@ -14,7 +14,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from grounded_research.config import get_model
+from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import (
     ClaimLedger,
     DownstreamHandoff,
@@ -92,6 +92,7 @@ async def generate_report(
         task="report_synthesis",
         trace_id=f"{trace_id}/synthesis",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("synthesis"),
     )
 
     # Strip hallucinated claim IDs that the LLM invented
@@ -163,6 +164,7 @@ async def render_long_report(
         task="long_report_synthesis",
         trace_id=f"{trace_id}/long_report",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("synthesis"),
     )
 
     return result.content

@@ -19,7 +19,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from grounded_research.config import get_model, load_config
+from grounded_research.config import get_fallback_models, get_model, load_config
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
@@ -94,6 +94,7 @@ async def generate_search_queries(
                 task="query_generation",
                 trace_id=f"{trace_id}/queries/{sq.get('id', 'sq')}",
                 max_budget=max_budget / len(sub_questions),
+                fallback_models=get_fallback_models("analyst"),
             )
             all_queries.extend(sq_result.queries)
 
@@ -123,6 +124,7 @@ async def generate_search_queries(
         task="query_generation",
         trace_id=f"{trace_id}/queries",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("analyst"),
     )
     return result.queries
 

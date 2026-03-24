@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from grounded_research.config import get_model
+from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import QuestionDecomposition
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -43,6 +43,7 @@ async def decompose_question(
         task="question_decomposition",
         trace_id=f"{trace_id}/decompose",
         max_budget=max_budget,
+        fallback_models=get_fallback_models("decomposition"),
     )
 
     return result

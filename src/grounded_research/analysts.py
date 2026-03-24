@@ -60,6 +60,7 @@ async def run_analyst(
 
     messages = _render_analyst_prompt(bundle, frame, decomposition)
     try:
+        from grounded_research.config import get_fallback_models
         result, _meta = await acall_llm_structured(
             model,
             messages,
@@ -67,6 +68,7 @@ async def run_analyst(
             task="analyst_reasoning",
             trace_id=f"{trace_id}/{label}",
             max_budget=max_budget,
+            fallback_models=get_fallback_models("analyst"),
         )
         result.analyst_label = label
         result.model = model

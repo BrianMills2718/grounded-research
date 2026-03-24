@@ -41,6 +41,14 @@ def get_model(task: str) -> str:
     return model
 
 
+def get_fallback_models(task: str) -> list[str] | None:
+    """Get the fallback model chain for a given task, or None if not configured."""
+    cfg = load_config()
+    fallbacks = cfg.get("model_fallbacks", {})
+    chain = fallbacks.get(task)
+    return chain if chain else None
+
+
 def get_budget(key: str) -> int | float:
     """Get a budget value from config."""
     cfg = load_config()
