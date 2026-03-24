@@ -158,6 +158,18 @@ Pipeline wins 2/3. Perplexity wins on fasting (dense study-level data
 with exact trial names and sample sizes that our extraction doesn't
 fully capture).
 
+### After Phase B (source quality + sufficiency + quantitative claims)
+
+| Question | Pipeline | Perplexity | Winner |
+|----------|----------|------------|--------|
+| Fasting (v5) | 21 | 24 | Perplexity |
+
+Gap narrowed from -5 to -3. Completeness hit 5/5 (was 4). Remaining gap:
+nuance (4 vs 5) and decision usefulness (4 vs 5) — Perplexity cites more
+specific organizational positions and population-specific cautions.
+Source quality scoring worked (38 authoritative, 8 reliable, 4 unknown).
+Report length hit 5,270 words (up from 4,141).
+
 ### Progression (EU sanctions question)
 
 | Version | Key Change | Score | vs Perplexity | Winner |
