@@ -41,11 +41,11 @@
 |---|---------|---------|--------|-------|
 | 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | `generate_search_queries()` creates 15 diverse queries via LLM. Not per-sub-question (no sub-questions exist yet) but per-question with diversity prompting. |
 | 14 | Optional Grok/Reddit real-time scan | DEFER | DEFERRED | — |
-| 15 | Apply source quality scoring | KEEP | **PARTIAL** | All sources default to `quality_tier="reliable"`. No LLM or domain-based quality scoring. Scorecard debate: Brian wants LLM scoring, not hardcoded URL lookup. |
+| 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py`: LLM batch scoring (authoritative/reliable/unknown/unreliable). Per Brian's critique: LLM, not URL lookup. |
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
 | 17 | Echo detection across sources | DEFER | DEFERRED | — |
 | 18 | Conflict-aware compression | SIMPLIFY | **NOT STARTED** | No compression step. Full evidence passed to analysts. Conflicts detected later in Stage 4. |
-| 19 | Check evidence sufficiency | KEEP | **PARTIAL** | `EvidenceBundle.gaps` captures fetch failures. No per-sub-question coverage check (no sub-questions). Pipeline continues with whatever evidence it has. |
+| 19 | Check evidence sufficiency | KEEP | **DONE** | Per-sub-question coverage check: flags sub-questions with < 2 evidence items as gaps. `EvidenceItem.sub_question_id` tracks origin. |
 | 20 | Enforce search budget & diminishing-returns cutoff | SIMPLIFY | **DONE** | Fixed budget: `num_queries` and `max_sources` in config. No diminishing-returns logic. |
 
 ## STAGE 3 — INDEPENDENT CANDIDATE GENERATION
@@ -106,7 +106,7 @@
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 50 | Per-stage model fallback chains | SIMPLIFY | **NOT STARTED** | No fallback chains. Single model per stage. llm_client has retry logic but no model fallback. |
+| 50 | Per-stage model fallback chains | SIMPLIFY | **DONE** | `model_fallbacks` config + `get_fallback_models()`. All 10 LLM call sites pass `fallback_models` kwarg to llm_client. |
 | 51 | Minimum-model thresholds & abort conditions | KEEP | **DONE** | `analyst_min_successful: 2` in config. Pipeline aborts if fewer than 2 analysts succeed. |
 | 52 | Partial trace output on abort | KEEP | **DONE** | Exception handler writes trace.json with partial state. |
 
@@ -116,15 +116,15 @@
 
 | Status | Count | Items |
 |--------|-------|-------|
-| **DONE** | 27 | #1, 2, 4, 5, 7, 13, 16, 20-24, 26-29, 31-37, 39, 44-49, 51-52 |
-| **PARTIAL** | 3 | #15, 25, 42 |
-| **NOT STARTED** (KEEP/SIMPLIFY) | 4 | #18, 19, 40-41, 50 |
+| **DONE** | 30 | #1, 2, 4, 5, 7, 13, 15, 16, 19, 20-24, 26-29, 31-37, 39, 44-50, 51-52 |
+| **PARTIAL** | 2 | #25, 42 |
+| **NOT STARTED** (KEEP/SIMPLIFY) | 2 | #18, 40-41 |
 | **DEFERRED** | 9 | #8-12, 14, 17, 30, 43 |
 | **CUT** | 3 | #3, 6, 38 |
 
-**27/34 KEEP/SIMPLIFY features implemented. 4 not started. 3 partially done.**
+**30/34 KEEP/SIMPLIFY features implemented. 2 not started. 2 partially done.**
 
-*Updated 2026-03-23: Phase A (decomposition) completed #1, #2, #4, #5. Analytical synthesis mode completed #44.*
+*Updated 2026-03-23: Phase A (#1,2,4,5), analytical mode (#44), fallback chains (#50), source quality (#15), evidence sufficiency (#19).*
 
 ## Highest-Impact Remaining Features
 
