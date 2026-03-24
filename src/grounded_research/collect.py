@@ -161,9 +161,12 @@ async def collect_evidence(
 
     config = load_config()
     collection_cfg = config.get("collection", {})
-    num_queries = collection_cfg.get("num_queries", num_queries)
+    # Only use collection config as defaults if caller didn't override
+    if num_queries == 10:  # default parameter value
+        num_queries = collection_cfg.get("num_queries", num_queries)
     results_per_query = collection_cfg.get("results_per_query", results_per_query)
-    max_sources = collection_cfg.get("max_sources", max_sources)
+    if max_sources == 20:  # default parameter value
+        max_sources = collection_cfg.get("max_sources", max_sources)
 
     # Set up pages directory for full-text caching
     pages_dir = _PROJECT_ROOT / "output" / "pages"
