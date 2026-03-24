@@ -44,12 +44,15 @@ async def generate_search_queries(
     num_queries: int = 10,
     time_sensitivity: str = "mixed",
     sub_questions: list[dict] | None = None,
-) -> list[str]:
+) -> tuple[list[str], dict[str, str]]:
     """Generate diverse search queries for a research question via LLM.
 
     If sub_questions are provided (from QuestionDecomposition), generates
     queries per sub-question for focused evidence collection. Otherwise
     falls back to monolithic question-level query generation.
+
+    Returns (queries, query_to_sq_id) where query_to_sq_id maps each query
+    string to the sub-question ID that generated it (empty dict if no sub-questions).
     """
     from llm_client import acall_llm_structured
     from pydantic import BaseModel, Field
@@ -70,9 +73,11 @@ async def generate_search_queries(
     if sub_questions:
         # Generate queries per sub-question for focused coverage
         all_queries: list[str] = []
+        query_to_sq: dict[str, str] = {}
         queries_per_sq = max(3, num_queries // len(sub_questions))
 
         for sq in sub_questions:
+            sq_id = sq.get("id", "sq")
             sq_result, _meta = await acall_llm_structured(
                 model,
                 [
@@ -92,13 +97,15 @@ async def generate_search_queries(
                 ],
                 response_model=SearchQueries,
                 task="query_generation",
-                trace_id=f"{trace_id}/queries/{sq.get('id', 'sq')}",
+                trace_id=f"{trace_id}/queries/{sq_id}",
                 max_budget=max_budget / len(sub_questions),
                 fallback_models=get_fallback_models("analyst"),
             )
+            for q in sq_result.queries:
+                query_to_sq[q] = sq_id
             all_queries.extend(sq_result.queries)
 
-        return all_queries
+        return all_queries, query_to_sq
 
     # Fallback: monolithic question-level generation
     result, _meta = await acall_llm_structured(
@@ -126,7 +133,7 @@ async def generate_search_queries(
         max_budget=max_budget,
         fallback_models=get_fallback_models("analyst"),
     )
-    return result.queries
+    return result.queries, {}
 
 
 async def collect_evidence(
@@ -176,7 +183,7 @@ async def collect_evidence(
 
     sq_label = f" across {len(sub_questions)} sub-questions" if sub_questions else ""
     print(f"  Generating search queries{sq_label}...")
-    queries = await generate_search_queries(
+    queries, query_to_sq = await generate_search_queries(
         question, trace_id,
         max_budget=max_budget * 0.1,
         num_queries=num_queries,
@@ -228,6 +235,7 @@ async def collect_evidence(
     gaps: list[str] = []
 
     source_map: dict[str, SourceRecord] = {}
+    source_sq_map: dict[str, str | None] = {}  # url → sub_question_id
     for result in selected:
         url = result["url"]
         title = result.get("title", "")
@@ -246,6 +254,10 @@ async def collect_evidence(
         sources.append(source)
         source_map[url] = source
 
+        # Determine sub-question origin from search query
+        source_sq_map[url] = query_to_sq.get(result.get("search_query", ""))
+        sq_id = query_to_sq.get(result.get("search_query", ""))
+
         # Add search snippet as evidence
         if description and len(description) > 30:
             evidence.append(EvidenceItem(
@@ -254,6 +266,7 @@ async def collect_evidence(
                 content_type="summary",
                 relevance_note=f"Search snippet for: {result.get('search_query', '')}",
                 extraction_method="upstream",
+                sub_question_id=sq_id,
             ))
 
     # Fetch page content in parallel (with Jina Reader fallback for 403s)
@@ -282,6 +295,7 @@ async def collect_evidence(
 
     for url, page_data in fetch_results:
         source = source_map[url]
+        sq_id = source_sq_map.get(url)
         if page_data is None:
             gaps.append(f"Failed to fetch {url}")
             continue
@@ -296,6 +310,7 @@ async def collect_evidence(
                 content_type="text",
                 relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
                 extraction_method="llm",
+                sub_question_id=sq_id,
             ))
 
         notes = page_data.get("notes", "")
@@ -306,17 +321,29 @@ async def collect_evidence(
                 content_type="summary",
                 relevance_note=f"Page summary ({char_count} chars total)",
                 extraction_method="llm",
+                sub_question_id=sq_id,
             ))
 
     print(f"  Collected {len(sources)} sources, {len(evidence)} evidence items, {len(gaps)} gaps")
 
-    return EvidenceBundle(
+    bundle = EvidenceBundle(
         question=research_q,
         sources=sources,
         evidence=evidence,
         gaps=gaps,
         imported_from="brave_search",
     )
+
+    # Score source quality (LLM-based, batch)
+    from grounded_research.source_quality import score_source_quality
+    print("  Scoring source quality...")
+    await score_source_quality(bundle, trace_id, max_budget=max_budget * 0.05)
+    tier_counts = {}
+    for s in bundle.sources:
+        tier_counts[s.quality_tier] = tier_counts.get(s.quality_tier, 0) + 1
+    print(f"  Source quality: {tier_counts}")
+
+    return bundle
 
 
 def _select_diverse(results: list[dict], max_items: int) -> list[dict]:

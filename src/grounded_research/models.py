@@ -210,6 +210,10 @@ class EvidenceItem(BaseModel):
         default="upstream",
         description="How this evidence was extracted. 'upstream' = imported from research_v3 or similar.",
     )
+    sub_question_id: str | None = Field(
+        default=None,
+        description="SQ- ID of the sub-question whose search query found this evidence. None for non-decomposed runs.",
+    )
 
 
 class EvidenceBundle(BaseModel):

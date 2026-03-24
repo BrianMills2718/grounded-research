@@ -6,6 +6,7 @@ models:
   dispute_classification: "gemini/gemini-2.5-flash"
   arbitration: "gemini/gemini-2.5-flash-lite"
   synthesis: "openrouter/google/gemini-2.5-flash"
+  source_scoring: "gemini/gemini-2.5-flash"
 
 # Fallback chains per task. When primary model exhausts retries,
 # try these in order. llm_client supports this natively via
@@ -19,6 +20,7 @@ model_fallbacks:
   dispute_classification: ["openrouter/openai/gpt-5-nano"]
   arbitration: ["openrouter/openai/gpt-5-nano"]
   synthesis: ["openrouter/openai/gpt-5-nano"]
+  source_scoring: ["openrouter/openai/gpt-5-nano"]
 
 # Cross-family models for multi-analyst runs.
 # Different model families produce genuine analytical disagreement,
@@ -50,6 +52,7 @@ collection:
 evidence_policy:
   default_time_sensitivity: "mixed"
   recency_weight: 0.5
+  compression_threshold: 80
 
 # Synthesis mode controls how far the LONG REPORT goes beyond the claim ledger.
 # The claim ledger, trace.json, and handoff.json always have full provenance

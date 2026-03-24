@@ -75,6 +75,18 @@ async def run_pipeline(
         ))
         print(f"  Sources: {len(bundle.sources)}, Evidence: {len(bundle.evidence)}, Gaps: {len(bundle.gaps)}")
 
+        # --- Evidence sufficiency check (if decomposition available) ---
+        if decomposition is not None:
+            from collections import Counter
+            sq_coverage = Counter(e.sub_question_id for e in bundle.evidence if e.sub_question_id)
+            for sq in decomposition.sub_questions:
+                count = sq_coverage.get(sq.id, 0)
+                if count < 2:
+                    gap_msg = f"Sub-question '{sq.text[:60]}...' has only {count} evidence items (minimum 2)"
+                    bundle.gaps.append(gap_msg)
+                    state.add_warning("ingest", "evidence_sufficiency", gap_msg)
+                    print(f"  GAP: {gap_msg}")
+
         # --- Phase 2: Analyze ---
         phase_start = datetime.now(timezone.utc)
         state.current_phase = "analyze"
