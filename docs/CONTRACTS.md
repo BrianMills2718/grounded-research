@@ -149,8 +149,8 @@ Current routing:
 
 - `factual_conflict -> verify`
 - `interpretive_conflict -> arbitrate`
-- `preference_conflict -> surface`
-- `ambiguity -> surface`
+- `preference_conflict -> surface` (interactive user steering in TTY mode, auto-skip otherwise)
+- `ambiguity -> surface` (interactive user steering in TTY mode, auto-skip otherwise)
 
 The LLM may classify the dispute type.
 The route itself is not an LLM judgment.

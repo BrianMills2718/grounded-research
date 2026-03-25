@@ -250,11 +250,8 @@ core project docs.
 Authority chain:
 
 - `CLAUDE.md` is the canonical project operating guide
-- `AGENTS.md` mirrors `CLAUDE.md`
 - `docs/PLAN.md` is the canonical execution plan
-- `docs/plans/` is the numbered per-task plan surface for concrete work items
-- `.claude/` hooks and `scripts/relationships.yaml` enforce required reading and
-  doc coupling
+- `docs/plans/` holds per-task plan docs
 
 This governance layer is not a way around project policy and should not compete
 with the canonical docs. Its job is to validate and reinforce those docs.
@@ -307,7 +304,8 @@ Build in this order:
 9. verification query generation (Phase 4a)
 10. arbitration and ledger update (Phase 4b)
 11. grounded export and downstream handoff (Phase 5)
-12. only then consider user steering, smarter stopping, and richer runtime checks
+12. user steering for preference/ambiguity disputes (implemented)
+13. configurable depth modes and quality optimizations
 
 ## Workflow
 
@@ -324,8 +322,10 @@ Build in this order:
 ## References
 
 - `docs/PLAN.md` — execution plan and acceptance criteria
+- `docs/ROADMAP.md` — forward-looking priorities
 - `docs/CONTRACTS.md` — inter-phase data flow contracts
 - `docs/ARCHITECTURE_ONE_PAGE.md` — system boundary and runtime layers
-- `docs/SCOPE_MATRIX_V2.md` — canonical deferred/cut lists
+- `docs/FEATURE_STATUS.md` — scorecard implementation tracking
+- `docs/COMPETITIVE_ANALYSIS.md` — SOTA comparison results
+- `docs/plans/v1_spec_alignment.md` — V1 spec gap analysis
 - `docs/adr/` — architectural decision records
-- `docs/notebooks/01_adjudication_review_journey.ipynb` — canonical review notebook

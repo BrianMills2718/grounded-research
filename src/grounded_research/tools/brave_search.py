@@ -5,32 +5,12 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
-from pathlib import Path
-import sys
 from typing import Literal
 
+from open_web_retrieval import OpenWebRetrievalClient, SearchQuery
 
 Freshness = Literal["pd", "pw", "pm", "py", "none"]
-
-
-def _load_open_web_retrieval():
-    """Import open_web_retrieval from installed dependencies or workspace source."""
-    try:
-        from open_web_retrieval import OpenWebRetrievalClient, SearchQuery
-        from open_web_retrieval.exceptions import OpenWebRetrievalError
-        return OpenWebRetrievalClient, SearchQuery, OpenWebRetrievalError
-    except ModuleNotFoundError:
-        workspace_root = Path(__file__).resolve().parents[4]
-        local_pkg = workspace_root / "open_web_retrieval" / "src"
-        if not local_pkg.exists():
-            raise
-        sys.path.insert(0, str(local_pkg))
-        from open_web_retrieval import OpenWebRetrievalClient, SearchQuery
-        from open_web_retrieval.exceptions import OpenWebRetrievalError
-        return OpenWebRetrievalClient, SearchQuery, OpenWebRetrievalError
-
-
-OpenWebRetrievalClient, SearchQuery, OpenWebRetrievalError = _load_open_web_retrieval()
+from open_web_retrieval.exceptions import OpenWebRetrievalError
 
 
 def _freshness_days(freshness: Freshness) -> int | None:

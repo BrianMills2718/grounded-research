@@ -1,38 +1,13 @@
 # Implementation Plans
 
-`docs/PLAN.md` is the canonical execution plan for this project.
+`docs/PLAN.md` is the canonical execution plan. This directory holds per-task plans.
 
-This directory is the numbered-plan surface for concrete implementation work
-items once they begin. It does not replace or compete with `docs/PLAN.md`.
+## Plan Index
 
-Use this directory only for scoped work items that need their own execution
-plan. Broad project sequencing, scope, and acceptance criteria stay in
-`docs/PLAN.md`.
-
-## Gap Summary
-
-| Gap | Title | Priority | Status | Blocks |
-|---|---|---|---|---|
-| 1 | Implementation Adoption Gate | High | 📋 Planned | None |
-
-## Creating A New Plan
-
-1. Copy `TEMPLATE.md` to `NN_name.md`
-2. Fill in gap, steps, required tests
-3. Add to this index
-4. Commit with `[Plan #N]` prefix
-
-## When To Use This Directory
-
-- use `docs/PLAN.md` for repo-level direction and milestone sequencing
-- use `docs/plans/NN_name.md` when a concrete work item needs its own file-level
-  plan, tests, and blockers
-- no numbered plans is a valid state while the project is still refining top-level
-  documentation and scope
-
-## Trivial Changes
-
-Not everything needs a plan. Use `[Trivial]` for:
-- Less than 20 lines changed
-- No changes to `src/` (production code)
-- No new files created
+| Plan | Status | Summary |
+|------|--------|---------|
+| [v1_spec_alignment.md](v1_spec_alignment.md) | **Active** | 15 gaps between Tyler's V1 spec and current implementation. Awaiting Tyler's input on 5 blocking questions. |
+| [depth_modes.md](depth_modes.md) | **Active** | Configurable research depth (standard/deep/thorough). Phase 1 done, Phases 2-4 planned. |
+| [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
+| [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
+| [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

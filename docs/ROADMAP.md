@@ -5,9 +5,9 @@
 
 ## Current State
 
-**v0.1.0 shipped.** 42/52 scorecard features implemented. Pipeline beats
-Perplexity deep research on 2/3 test questions (sanctions 23-22, PFAS 24-20),
-loses on fasting (21-24). Cost: ~$0.06/run.
+**v0.1.0 shipped.** 47/52 scorecard features implemented. Pipeline beats
+Perplexity deep research on 5/6 test questions. Cost: ~$0.06/run (standard),
+configurable depth modes (standard/deep/thorough).
 
 **Architecture complete:**
 - Question decomposition with validation and retry

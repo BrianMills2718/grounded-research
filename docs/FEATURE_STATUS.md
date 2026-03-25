@@ -3,6 +3,11 @@
 **Source:** `v1_Pruning_Scorecard.xlsx`
 **Assessed:** 2026-03-24
 
+**Scope note:** This tracks the original pruning scorecard (52 features).
+Tyler's V1 spec has additional requirements not in the scorecard — see
+`docs/plans/v1_spec_alignment.md` for the gap analysis. A feature marked
+DONE here may only partially satisfy the richer V1 contract.
+
 ## Legend
 
 - **DONE**: Implemented and verified

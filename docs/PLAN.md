@@ -69,10 +69,7 @@ Key definitions:
 - **Inconclusive arbitration**: Fresh evidence search found nothing new, or found ambiguous evidence. Forces verdict to "inconclusive" and logs warning. Does not retry.
 - **Analytical mode** (`synthesis_mode: "analytical"`): Long report may infer beyond sources, marked with `[analytical inference]`. Claim ledger and trace remain grounded regardless.
 - **Dedup fallback**: If LLM returns 0 groups, raw claims promoted 1:1 (no dedup, full provenance preserved).
-- documentation-governance layer present (`.claude/`, `docs/plans/`,
-  `scripts/relationships.yaml`, validation scripts, `scripts/ci_checks.py`,
-  `.github/workflows/governance.yml`)
-- Claude Code handoff artifact written (`docs/CLAUDE_CODE_HANDOFF.md`)
+- full pipeline implemented with configurable depth modes (standard/deep/thorough)
 - full pipeline implemented: ingest → analyze → canonicalize → adjudicate → export
 - automatic evidence collection from raw questions via Brave Search + page extraction
   (uses research_v3 tools, not hand-rolled)
@@ -130,13 +127,10 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 ## Open Planning Items
 
-Unresolved decisions stay visible here and in `docs/UNCERTAINTIES.md` until
-they are closed.
-
 Current open items:
 
-- adoption gate for committed draft surfaces, tracked by `docs/plans/01_draft-implementation-adoption.md`
-- Phase 4 convergence timing, with structured 4a/4b as the current v1 slice and agentic merge as a future milestone
+- V1 spec alignment: see `docs/plans/v1_spec_alignment.md` for 15 identified gaps
+- Depth modes Phase 2-4: multi-pass extraction, multi-round arbitration, sectioned synthesis
 - controlled comparison (3 questions × 2 judge models):
   | Question | GPT-5-nano judge (pre-fix) | GPT-5-nano judge (post-severity-fix) |
   |----------|--------------------------|-------------------------------------|
@@ -563,7 +557,7 @@ export are wired.
 
 ## Scope
 
-See `docs/SCOPE_MATRIX_V2.md` for the canonical deferred/cut lists.
+See `docs/FEATURE_STATUS.md` for the current implementation status and `v1_Pruning_Scorecard.xlsx` for the original scorecard.
 
 See `docs/adr/0002-approved-external-reuse-strategy.md` for the approved
 external reuse strategy.

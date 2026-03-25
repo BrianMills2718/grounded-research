@@ -1,6 +1,6 @@
 # Phase F: Implement Deferred/Cut Features
 
-**Status:** Planned
+**Status:** Completed (2026-03-24)
 **Scorecard items:** #3, #8, #9, #10, #12, #30, #38
 
 ## Group 1: Decomposition Validation (#8, #9, #10, #12)

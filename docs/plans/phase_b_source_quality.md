@@ -1,6 +1,6 @@
 # Phase B: Source Quality & Evidence Intelligence
 
-**Status:** Planned
+**Status:** Completed (2026-03-24)
 **Depends on:** Phase A (decomposition — need sub-questions for sufficiency checks)
 **Scorecard items:** #15, #18, #19
 
