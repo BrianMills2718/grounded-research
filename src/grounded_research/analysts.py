@@ -37,6 +37,7 @@ def _render_analyst_prompt(
     return render_prompt(
         str(_PROJECT_ROOT / "prompts" / "analyst.yaml"),
         question=bundle.question.model_dump(),
+        source_records=[s.model_dump(mode="json") for s in bundle.sources],
         evidence=[e.model_dump() for e in bundle.evidence],
         frame=frame,
         sub_questions=sub_questions,
