@@ -6,8 +6,9 @@
 
 | Plan | Status | Summary |
 |------|--------|---------|
-| [v1_spec_alignment.md](v1_spec_alignment.md) | **Active** | 15 gaps between Tyler's V1 spec and current implementation. Awaiting Tyler's input on 5 blocking questions. |
-| [depth_modes.md](depth_modes.md) | **Active** | Configurable research depth (standard/deep/thorough). Phase 1 done, Phases 2-4 planned. |
+| [v1_spec_alignment.md](v1_spec_alignment.md) | Reference analysis | Reconciliation memo: what differs between Tyler's V1 and the current repo, ordered by implementation value. |
+| [v1_reasoning_quality_execution.md](v1_reasoning_quality_execution.md) | **Active** | Executable Wave 1 plan for prompt hardening, claim extraction, dedup safeguards, anti-conformity, and anonymization. |
+| [depth_modes.md](depth_modes.md) | Planned | Configurable research depth. Defer until reasoning-quality stabilization work lands. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

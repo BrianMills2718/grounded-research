@@ -1,0 +1,146 @@
+# Plan: V1 Reasoning-Quality Alignment Wave 1
+
+`docs/PLAN.md` remains the canonical repo-level plan. This file is the
+executable implementation plan for the first Tyler-alignment wave.
+
+**Status:** Planned
+**Type:** implementation
+**Priority:** High
+**Blocked By:** None
+**Blocks:** Further benchmark reruns, deeper V1 parity work, and any claim that
+the repo is aligned with Tyler's reasoning method
+
+---
+
+## Gap
+
+**Current:** The repo has the right architectural shape, but the highest-value
+reasoning method gaps remain in the prompt layer, claim extraction, dedup,
+anti-conformity enforcement, and anonymization hardening.
+
+**Target:** Stabilize the cheap-model implementation so the core reasoning
+protocol matches Tyler's intended method closely enough to benchmark fairly
+before changing models or search providers.
+
+**Why:** These are the gaps most likely to determine whether the system is a
+real improvement over a simpler multi-model pipeline or just a polished,
+expensive aggregation flow.
+
+---
+
+## References Reviewed
+
+- `docs/plans/v1_spec_alignment.md` - current reconciliation memo
+- `2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md` - Tyler's staged build order
+- `2026_0325_tyler_feedback/2. V1_DESIGN.md` - design constraints and protocol intent
+- `2026_0325_tyler_feedback/4. V1_PROMPTS.md` - prompt method to preserve
+- `CLAUDE.md` - project operating rules
+- `README.md` - current external product framing
+- `src/grounded_research/canonicalize.py` - current extraction, dedup, and dispute logic
+- `src/grounded_research/verify.py` - current arbitration enforcement
+- `engine.py` - current steering and pipeline control flow
+- `src/grounded_research/models.py` - current structured contracts
+- `prompts/analyst.yaml` - current analyst prompt
+- `prompts/dedup.yaml` - current dedup prompt
+- `prompts/arbitration.yaml` - current arbitration prompt
+- `prompts/dispute_classify.yaml` - current dispute prompt
+
+---
+
+## Files Affected
+
+- `prompts/analyst.yaml` (modify)
+- `prompts/dedup.yaml` (modify)
+- `prompts/arbitration.yaml` (modify)
+- `prompts/dispute_classify.yaml` (modify)
+- `prompts/claimify.yaml` (create)
+- `src/grounded_research/canonicalize.py` (modify)
+- `src/grounded_research/models.py` (modify)
+- `src/grounded_research/verify.py` (modify)
+- `engine.py` (modify)
+- `tests/test_phase_boundaries.py` (modify)
+- `tests/test_canonicalize.py` (create)
+- `tests/test_verify.py` (create)
+- `docs/FEATURE_STATUS.md` (modify if any implementation status language changes)
+- `docs/TECH_DEBT.md` (modify to remove or narrow resolved items)
+
+---
+
+## Plan
+
+### Steps
+
+1. Harden the prompt layer without changing provider/model assumptions.
+   Port the essential Tyler prompt method into the current prompt surfaces:
+   frame-specific instructions and failure modes for analysts, explicit
+   non-merge criteria for dedup, stronger anti-conformity basis requirements for
+   arbitration, and clearer dispute classification instructions.
+
+2. Add a dedicated claim-extraction step.
+   Create `prompts/claimify.yaml` and replace the current copy-through
+   extraction path with an LLM extraction pass over analyst outputs. The output
+   contract must produce self-contained claims with evidence IDs and a
+   specificity marker when the source does not support full detail.
+
+3. Harden deduplication mechanically.
+   Keep the existing fail-loud fallback, but add code-level validation that:
+   every raw claim appears exactly once, zero-group output is rejected, and one
+   retry occurs before 1:1 promotion.
+
+4. Enforce anti-conformity in the schema and validator layer.
+   Extend arbitration outputs so every claim update carries an explicit basis
+   type and short justification tied to cited evidence. Reject claim updates
+   that fail validation.
+
+5. Add anonymization scrubbing before downstream reuse.
+   Scrub or reject analyst outputs that contain model-family self-identification
+   before claim extraction and arbitration inputs are built.
+
+6. Update tests and docs only after the behavior is verified.
+   Preserve the benchmark/stability framing: cheap models remain the
+   development baseline until the reasoning method is stabilized.
+
+---
+
+## Required Tests
+
+### New Tests (TDD)
+
+| Test File | Test Function | What It Verifies |
+|-----------|---------------|------------------|
+| `tests/test_canonicalize.py` | `test_claimify_extraction_produces_self_contained_claims` | Dedicated extraction path returns atomic claims with required fields |
+| `tests/test_canonicalize.py` | `test_dedup_retry_then_fallback_on_invalid_grouping` | Invalid dedup output retries once, then fails loud into 1:1 promotion |
+| `tests/test_verify.py` | `test_claim_update_requires_valid_basis_type_and_cited_evidence` | Arbitration updates are rejected unless basis contract is satisfied |
+| `tests/test_verify.py` | `test_model_self_identification_is_scrubbed_or_rejected` | Downstream stages never receive analyst text with model identity leakage |
+
+### Existing Tests (Must Pass)
+
+| Test Pattern | Why |
+|--------------|-----|
+| `tests/test_phase_boundaries.py` | End-to-end phase contracts must remain valid |
+| `python -m pytest tests/` | No regression across existing integration coverage |
+
+---
+
+## Acceptance Criteria
+
+- [ ] Prompt surfaces encode Tyler's core reasoning safeguards without changing the cheap-model development baseline
+- [ ] Claim extraction is a dedicated post-analyst stage rather than analyst copy-through
+- [ ] Dedup rejects invalid grouping outputs and only falls back to 1:1 promotion after one failed retry
+- [ ] No claim update is accepted unless it carries an allowed basis type, cited evidence IDs, and a justification tied to that basis
+- [ ] Analyst outputs passed downstream are anonymized mechanically, not only by prompt convention
+- [ ] Required tests pass
+- [ ] Full test suite passes
+- [ ] Docs reflect the new contracts
+
+---
+
+## Notes
+
+- This wave deliberately excludes model swaps, Tavily/Exa integration, and
+  dispute-taxonomy renaming.
+- The goal is to stabilize reasoning quality first, then decide whether
+  remaining V1 parity items materially improve benchmark outcomes.
+- If the claim-extraction step proves too weak on cheap models, do not silently
+  retreat to the old behavior. Record the failure explicitly and reassess the
+  stage contract.
