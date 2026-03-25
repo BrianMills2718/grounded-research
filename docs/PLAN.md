@@ -7,13 +7,17 @@ built, in what order, and what counts as passing.
 
 ## Current Direction
 
-The project is adjudication-first.
+The project is adjudication-centered.
 
-It is not starting as a new end-to-end research pipeline.
+The adjudication layer remains the thesis, but the current implementation
+supports two entry modes:
 
-V1 consumes upstream evidence, runs independent analysts, builds a claim
-ledger, detects disputes, verifies a narrow subset of them, and exports a
-grounded report plus trace.
+- raw question -> decomposition + collection -> adjudication
+- imported evidence bundle -> adjudication
+
+V1 is not judged on retrieval novelty alone. It is judged on whether the
+grounded output improves because of claim extraction, dispute handling, and
+evidence-backed adjudication.
 
 The phases in this plan are artifact boundaries.
 
@@ -22,7 +26,7 @@ workflow engine.
 
 ## Current Status (2026-03-24)
 
-**v0.1.0 shipped. 42/52 scorecard features implemented. Full pipeline operational.**
+**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational.**
 
 See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.

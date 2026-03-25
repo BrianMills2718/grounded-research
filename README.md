@@ -1,6 +1,6 @@
 # grounded-research
 
-Multi-analyst research platform that beats Perplexity Deep Research on 5/6 test questions. Decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
+Multi-analyst research platform that beats Perplexity Deep Research on 5/6 test questions. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
 
 ## Results
 

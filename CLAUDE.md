@@ -5,20 +5,25 @@ mirror it exactly. Edit this file first, then resync `AGENTS.md`.
 
 ## Purpose
 
-Build an adjudication-first layer for grounded research.
+Build an adjudication-centered grounded research system.
 
-This project does not start as a new end-to-end research pipeline.
+V1 is still judged primarily on adjudication quality, not retrieval novelty.
+The current implementation supports two valid entry paths:
 
-Its v1 job is narrower and more valuable:
+- raw question -> decomposition -> web collection -> adjudication
+- imported evidence bundle -> adjudication
 
-- consume evidence from existing upstream systems or manual bundles
+Its v1 job is:
+
+- support cold-start question-to-report runs when the user starts from a raw question
+- accept evidence from existing upstream systems or manual bundles when available
 - run independent analyst passes over shared evidence
 - canonicalize outputs into a claim ledger
 - detect and classify disputes
 - verify a narrow subset of disputes with fresh evidence
 - export a report and trace that can be reviewed by humans and fed downstream
 
-Primary upstream sources:
+Primary optional upstream inputs:
 
 - `research_v3`
 - manual evidence bundles
@@ -32,9 +37,11 @@ Primary downstream consumer:
 
 ### 1. Adjudication First
 
-The novel product is the adjudication layer, not a new retrieval stack.
+The novel product is the adjudication layer, not retrieval novelty by itself.
 
-Do not rebuild planning, retrieval, and synthesis from scratch unless the adjudication thesis is already proven and a clear gap remains.
+A first-party cold-start retrieval path is allowed and currently implemented.
+Do not treat imported evidence as the only supported mode, and do not treat
+retrieval as the main thesis unless the adjudication thesis is already proven.
 
 V1 should focus on:
 
@@ -283,7 +290,7 @@ mandatory orchestration style.
 3. Every cited claim must map to evidence IDs and source records.
 4. Routing decisions must be deterministic in code, even when dispute classification is LLM-assisted.
 5. A failed run with a rich partial trace is better than a polished but ungrounded report.
-6. V1 consumes upstream evidence; it does not rebuild a competing retrieval stack.
+6. V1 may start from upstream evidence or from a raw question. The adjudication thesis remains primary even when the repo performs its own collection.
 
 ## Implementation Order
 
@@ -291,8 +298,8 @@ Build in this order:
 
 1. domain model, contracts, typed schemas, and trace (done — `DOMAIN_MODEL.md`, `models.py`, `CONTRACTS.md`)
 2. `pyproject.toml`, per-project `.venv`, `config/config.yaml`, `prompts/`, and a canonical review notebook
-3. evidence-ingest adapters for upstream bundles
-4. one grounded analyst over imported evidence (Phase 2a)
+3. evidence-ingest adapters for upstream bundles plus the first-party question-to-evidence path
+4. one grounded analyst over normalized evidence (Phase 2a)
 5. three independent analysts (Phase 2b)
 6. claim extraction (Phase 3a)
 7. semantic deduplication (Phase 3b)

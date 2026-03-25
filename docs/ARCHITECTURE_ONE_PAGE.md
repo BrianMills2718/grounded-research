@@ -8,7 +8,7 @@ Use this document for boundary and responsibility clarity.
 
 ## Thesis
 
-The system should improve grounded research output by adding an adjudication layer above existing evidence collection systems.
+The system should improve grounded research output by adding an adjudication layer above shared evidence, whether that evidence is imported or collected in-process.
 
 The hypothesis is not "we need another research pipeline."
 
@@ -25,6 +25,7 @@ The product is the claim ledger. The report is a rendering of the ledger.
 
 ### This Project Owns
 
+- cold-start question path: decomposition plus first-party web collection
 - evidence-ingest adapters for upstream bundles
 - independent analyst runs over shared evidence
 - claim extraction
@@ -37,11 +38,11 @@ The product is the claim ledger. The report is a rendering of the ledger.
 
 ### This Project Does Not Own In v1
 
-- a new end-to-end retrieval stack
+- a retrieval-first product whose value is search novelty alone
 - a new planner-first research pipeline
 - a new production search orchestration layer
 
-### Upstream Inputs
+### Optional Upstream Inputs
 
 - `research_v3` evidence packs
 - manual evidence bundles

@@ -1,7 +1,15 @@
 # Contracts
 
-This document defines the exact inter-phase contracts for the adjudication-first
+This document defines the exact inter-phase contracts for the adjudication-centered
 pipeline.
+
+Current repo support includes two entry modes:
+
+- raw question -> decomposition/collection -> `EvidenceBundle`
+- question + imported evidence bundle -> normalize -> `EvidenceBundle`
+
+The contracts below begin once the pipeline has a normalized question and
+evidence bundle.
 
 It is the bridge between:
 
@@ -34,11 +42,11 @@ The same contract may be satisfied by:
 ## Data Flow Overview
 
 ```text
-question + upstream bundle
+raw question or imported bundle
         │
         ▼
 Phase 1  Ingest
-in:  question text + upstream bundle
+in:  question text + optional upstream bundle
 out: EvidenceBundle
         │
         ▼
