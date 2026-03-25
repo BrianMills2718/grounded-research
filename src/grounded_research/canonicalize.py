@@ -6,12 +6,14 @@ produces the canonical ClaimLedger with disputes.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
 from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import (
     AnalystRun,
+    EvidenceBundle,
     ArbitrationResult,
     Claim,
     ClaimLedger,
@@ -27,36 +29,127 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 # Phase 3a: Claim extraction
 # ---------------------------------------------------------------------------
 
-def extract_raw_claims(
+async def extract_raw_claims(
     analyst_runs: list[AnalystRun],
-    valid_evidence_ids: set[str] | None = None,
+    bundle: EvidenceBundle,
+    trace_id: str,
+    max_budget: float = 1.0,
 ) -> tuple[list[RawClaim], dict[str, str]]:
-    """Gather all raw claims from analyst runs with provenance tracking.
+    """Extract normalized raw claims from analyst outputs with provenance tracking.
+
+    This is a dedicated claim-extraction stage rather than simple copy-through.
+    Each successful analyst run is processed independently so compound or vague
+    claims can be split and normalized into self-contained ledger-ready claims.
 
     Returns (flat list of all RawClaims, mapping of claim_id → analyst_label).
-    Simple extraction — no LLM needed.
-
-    If valid_evidence_ids is provided, strips any hallucinated evidence IDs
-    that the analyst LLM invented (not present in the actual evidence bundle).
     """
+    from llm_client import acall_llm_structured, render_prompt
+    from pydantic import BaseModel, Field
+
     import logging
+
     logger = logging.getLogger(__name__)
+    valid_evidence_ids = {e.id for e in bundle.evidence}
+    evidence_by_id = {e.id: e for e in bundle.evidence}
+    source_by_id = {s.id: s for s in bundle.sources}
+
+    class ExtractedRawClaim(BaseModel):
+        """LLM-facing atomic claim without system-assigned IDs."""
+
+        statement: str = Field(
+            description=(
+                "A self-contained, falsifiable claim rewritten from the analyst's "
+                "input claims. Preserve concrete entities, dates, numbers, and "
+                "benchmarks when available."
+            ),
+        )
+        evidence_ids: list[str] = Field(
+            default_factory=list,
+            description="Evidence IDs from the provided candidate set that support this claim.",
+        )
+        confidence: str = Field(description="high, medium, or low")
+        reasoning: str = Field(
+            default="",
+            description="Why this atomic claim was extracted and how it maps back to the analyst's input.",
+        )
+
+    class ClaimExtractionResult(BaseModel):
+        """LLM output for one analyst's claim extraction pass."""
+
+        claims: list[ExtractedRawClaim] = Field(
+            default_factory=list,
+            description="Atomic normalized claims extracted from the analyst's structured output.",
+        )
 
     all_claims: list[RawClaim] = []
     claim_to_analyst: dict[str, str] = {}
 
-    for run in analyst_runs:
-        if not run.succeeded:
-            continue
-        for claim in run.claims:
-            if valid_evidence_ids is not None:
-                invalid = [eid for eid in claim.evidence_ids if eid not in valid_evidence_ids]
-                if invalid:
-                    logger.warning(
-                        "Analyst %s claim %s: stripping hallucinated evidence IDs %s",
-                        run.analyst_label, claim.id, invalid,
-                    )
-                    claim.evidence_ids = [eid for eid in claim.evidence_ids if eid in valid_evidence_ids]
+    successful_runs = [run for run in analyst_runs if run.succeeded]
+    if not successful_runs:
+        return all_claims, claim_to_analyst
+
+    async def _extract_for_run(run: AnalystRun) -> tuple[AnalystRun, ClaimExtractionResult]:
+        cited_evidence_ids = {
+            eid
+            for claim in run.claims
+            for eid in claim.evidence_ids
+            if eid in valid_evidence_ids
+        }
+        cited_evidence_ids.update(
+            eid
+            for counterargument in run.counterarguments
+            for eid in counterargument.evidence_ids
+            if eid in valid_evidence_ids
+        )
+
+        relevant_evidence = [evidence_by_id[eid].model_dump() for eid in cited_evidence_ids]
+        relevant_sources = [
+            source_by_id[e.source_id].model_dump(mode="json")
+            for e in (evidence_by_id[eid] for eid in cited_evidence_ids)
+            if e.source_id in source_by_id
+        ]
+
+        messages = render_prompt(
+            str(_PROJECT_ROOT / "prompts" / "claimify.yaml"),
+            analyst_label=run.analyst_label,
+            analyst_summary=run.summary,
+            analyst_claims=[claim.model_dump() for claim in run.claims],
+            assumptions=[assumption.model_dump() for assumption in run.assumptions],
+            recommendations=[recommendation.model_dump() for recommendation in run.recommendations],
+            counterarguments=[counterargument.model_dump() for counterargument in run.counterarguments],
+            evidence=relevant_evidence,
+            source_records=relevant_sources,
+        )
+
+        result, _meta = await acall_llm_structured(
+            get_model("claim_extraction"),
+            messages,
+            response_model=ClaimExtractionResult,
+            task="claim_extraction",
+            trace_id=f"{trace_id}/claim_extract/{run.analyst_label}",
+            max_budget=max_budget / len(successful_runs),
+            fallback_models=get_fallback_models("claim_extraction"),
+        )
+        return run, result
+
+    extraction_results = await asyncio.gather(*[_extract_for_run(run) for run in successful_runs])
+
+    for run, extraction in extraction_results:
+        for extracted in extraction.claims:
+            invalid = [eid for eid in extracted.evidence_ids if eid not in valid_evidence_ids]
+            if invalid:
+                logger.warning(
+                    "Claim extraction %s: stripping hallucinated evidence IDs %s",
+                    run.analyst_label,
+                    invalid,
+                )
+            cleaned_ids = [eid for eid in extracted.evidence_ids if eid in valid_evidence_ids]
+            claim = RawClaim(
+                statement=extracted.statement,
+                evidence_ids=cleaned_ids,
+                confidence=extracted.confidence if extracted.confidence in {"high", "medium", "low"} else "medium",
+                reasoning=extracted.reasoning,
+            )
             all_claims.append(claim)
             claim_to_analyst[claim.id] = run.analyst_label
 

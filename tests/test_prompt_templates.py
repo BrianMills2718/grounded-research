@@ -77,6 +77,46 @@ def test_dedup_prompt_renders_with_conservative_merge_rules() -> None:
     assert "Every raw claim ID must appear in exactly one group" in messages[0]["content"]
 
 
+def test_claimify_prompt_renders_with_atomic_extraction_rules() -> None:
+    """Claimify prompt should render with atomization and lineage rules."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "claimify.yaml"),
+        analyst_label="Alpha",
+        analyst_summary="The benchmark result is mixed.",
+        analyst_claims=[
+            {
+                "id": "RC-source-1",
+                "statement": "Tool X is faster than Tool Y but has higher memory usage.",
+                "confidence": "medium",
+                "evidence_ids": ["E-1"],
+            }
+        ],
+        assumptions=[],
+        recommendations=[],
+        counterarguments=[],
+        source_records=[
+            {
+                "id": "S-1",
+                "title": "Benchmark report",
+                "quality_tier": "reliable",
+                "recency_score": 0.7,
+            }
+        ],
+        evidence=[
+            {
+                "id": "E-1",
+                "source_id": "S-1",
+                "content_type": "text",
+                "content": "Tool X beat Tool Y by 20% but used 2x the memory.",
+            }
+        ],
+    )
+
+    assert "atomize compound claims into single assertions" in messages[0]["content"]
+    assert "Do not invent new evidence IDs" in messages[0]["content"]
+    assert "Analyst Claims" in messages[1]["content"]
+
+
 def test_arbitration_prompt_renders_with_anti_conformity_basis_language() -> None:
     """Arbitration prompt should require explicit basis language."""
     messages = render_prompt(

@@ -140,8 +140,12 @@ async def run_pipeline(
         state.current_phase = "canonicalize"
         print("\n[Phase 3a] Extracting raw claims...")
 
-        valid_evidence_ids = {e.id for e in bundle.evidence}
-        raw_claims, claim_to_analyst = extract_raw_claims(analyst_runs, valid_evidence_ids)
+        raw_claims, claim_to_analyst = await extract_raw_claims(
+            analyst_runs,
+            bundle,
+            trace_id,
+            max_budget=total_budget * 0.1,
+        )
         print(f"  Raw claims: {len(raw_claims)}")
 
         # --- Phase 3b: Deduplication ---
@@ -166,7 +170,7 @@ async def run_pipeline(
             started_at=phase_start,
             completed_at=datetime.now(timezone.utc),
             succeeded=True,
-            llm_calls=2,
+            llm_calls=len([r for r in analyst_runs if r.succeeded]) + 2,
             output_summary=f"{len(canonical_claims)} claims, {len(disputes)} disputes ({len(ledger.decision_critical_disputes())} decision-critical)",
         ))
         print(f"  Disputes: {len(disputes)} ({len(ledger.decision_critical_disputes())} decision-critical)")
