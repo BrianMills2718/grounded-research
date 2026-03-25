@@ -4,8 +4,12 @@ These questions address the gaps Tyler identified in his review. Each question
 has a default answer that we'll implement if no response is given. Tyler should
 override any defaults he disagrees with.
 
-Respond to each with: (a) your answer, and (b) any implementation constraints
-or preferences. We'll turn responses directly into code tasks.
+**How to respond:** For each question, give a concrete answer that we can
+turn into a code change. "I think X is important" isn't actionable.
+"Use approach (b) with these specific models" is.
+
+If you don't care about a question, say "use default" and we'll implement
+the default answer listed.
 
 ---
 
@@ -44,19 +48,24 @@ contested policy/science questions we win 5/5.
 
 ## 3. Model Selection for Production
 
-**Context:** Current config uses cheap models (GPT-5-nano, Gemini 2.5 Flash,
-DeepSeek Chat). Tyler's V1 specifies frontier models (GPT-5.4, Claude Opus
-4.6, Gemini 3.1 Pro). Current cheap models win 5/6 vs Perplexity Deep Research.
+**Context:** We're using cheap models during development and testing
+(GPT-5-nano, Gemini 2.5 Flash, DeepSeek Chat) to iterate fast without
+burning money. These cheap models already win 5/6 vs Perplexity Deep
+Research. Tyler's V1 specifies frontier models (GPT-5.4, Claude Opus
+4.6, Gemini 3.1 Pro) — the pipeline is designed so you swap models via
+config without code changes.
 
 **Questions:**
-- (a) Which specific models for the 3 analyst slots in production?
-- (b) Which model for synthesis (currently Gemini 2.5 Flash)?
-- (c) What's the acceptable cost per run? Current: $0.06. Frontier: ~$1-5.
-- (d) Should Claude be added as a 4th analyst or replace DeepSeek?
+- (a) Which specific models do you want for the 3 analyst slots when
+  you actually use this? (We'll ship a `config/config_production.yaml`
+  with your choices alongside the cheap testing config.)
+- (b) Which model for synthesis?
+- (c) What's your acceptable cost per run?
+- (d) Should Claude be a 4th analyst (more disagreement, higher cost)
+  or replace DeepSeek (keep 3 analysts)?
 
-**Default:** Add `openrouter/anthropic/claude-sonnet-4-6` as 4th analyst.
-Keep current models for testing config. Ship a `config/config_production.yaml`
-with Tyler's chosen models.
+**Default:** Ship two configs: `config.yaml` (cheap, for testing/development)
+and `config_production.yaml` (frontier models, for real use).
 
 ---
 
@@ -100,22 +109,28 @@ the evidence is relevant to the position change.
 
 ---
 
-## 6. Baseline Discipline
+## 6. Quality Validation
 
-**Context:** No in-pipeline check that the result beats a simpler approach.
-Comparison scripts exist but aren't part of the pipeline.
+**Context:** We currently validate by comparing pipeline output against
+Perplexity Deep Research using a blind LLM judge (5 dimensions, no provenance
+bias). The pipeline wins 5/6 test questions. Tyler's V1 says the pipeline
+should demonstrably outperform simpler approaches.
 
-**Question:** Which baseline matters most?
-- (a) Single best model on same evidence (1 extra LLM call, cheapest)
-- (b) Best-of-3 from same model (tests diversity vs repetition)
-- (c) Majority vote across 3 independent single-model runs (tests whether
-  pipeline beats simple aggregation — the Choi paper null hypothesis)
-- (d) No in-pipeline baseline; compare via scripts post-hoc (current approach)
+**Question:** What quality check do you want?
+- (a) Keep current approach: compare against Perplexity via scripts when
+  we want to validate (current — works well, not automated)
+- (b) Add a `--validate` flag that automatically runs the pipeline output
+  against Perplexity Deep Research and reports the score (adds ~$0.05 +
+  Perplexity API cost per run)
+- (c) Add a `--validate` flag that runs a single-model-playing-all-roles
+  baseline (one LLM gets the same evidence and writes a report without
+  the multi-analyst pipeline) and compares (adds ~$0.03 per run)
+- (d) Both (b) and (c) — compare against Perplexity AND against a simpler
+  single-model approach
+- (e) Something else — describe what "demonstrably outperform" means to
+  you in practice
 
-And: always-on, opt-in flag, or periodic calibration (every Nth run)?
-
-**Default:** Option (d) — keep post-hoc comparison via scripts. Add a
-`--compare-baseline` flag for on-demand checking.
+**Default:** Option (a) — keep post-hoc comparison via scripts.
 
 ---
 
