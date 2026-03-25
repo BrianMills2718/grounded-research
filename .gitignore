@@ -20,3 +20,4 @@ docs/original_plans_may_be_deprecated/
 # Hook session state
 .claude/hook_log.jsonl
 .~lock*
+docs/archive/
