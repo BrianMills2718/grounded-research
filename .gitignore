@@ -24,3 +24,13 @@ docs/archive/
 .claude/
 scripts/phase_minus1.py
 scripts/run_storm.py
+AGENTS.md
+scripts/meta/
+scripts/check_doc_coupling.py
+scripts/sync_plan_status.py
+scripts/check_required_reading.py
+scripts/check_adr_invariants.py
+scripts/check_markdown_links.py
+scripts/ci_checks.py
+scripts/relationships.yaml
+.github/
