@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from grounded_research.canonicalize import extract_raw_claims
+from grounded_research.canonicalize import deduplicate_claims, extract_raw_claims
 from grounded_research.models import (
     AnalystRun,
     Counterargument,
@@ -120,3 +120,104 @@ async def test_extract_raw_claims_skips_failed_analysts(monkeypatch: pytest.Monk
 
     assert raw_claims == []
     assert claim_to_analyst == {}
+
+
+@pytest.mark.asyncio
+async def test_dedup_retry_then_fallback_on_invalid_grouping(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Invalid dedup output should retry once, then promote claims 1:1 on failure."""
+    # mock-ok: verifies local retry/fallback control flow around the external LLM boundary.
+    call_count = 0
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+        nonlocal call_count
+        call_count += 1
+        assert task == "claim_deduplication"
+        if call_count == 1:
+            return response_model(
+                groups=[
+                    {
+                        "canonical_statement": "Merged claim",
+                        "raw_claim_ids": ["RC-1", "RC-1"],
+                        "confidence": "medium",
+                    }
+                ]
+            ), {}
+        return response_model(
+            groups=[
+                {
+                    "canonical_statement": "Still invalid",
+                    "raw_claim_ids": ["RC-unknown"],
+                    "confidence": "medium",
+                }
+            ]
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    raw_claims = [
+        RawClaim(id="RC-1", statement="Claim one", evidence_ids=["E-1"], confidence="high"),
+        RawClaim(id="RC-2", statement="Claim two", evidence_ids=["E-2"], confidence="medium"),
+    ]
+    claim_to_analyst = {"RC-1": "Alpha", "RC-2": "Beta"}
+
+    canonical_claims = await deduplicate_claims(
+        raw_claims,
+        claim_to_analyst,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert call_count == 2
+    assert len(canonical_claims) == 2
+    assert [claim.source_raw_claim_ids for claim in canonical_claims] == [["RC-1"], ["RC-2"]]
+
+
+@pytest.mark.asyncio
+async def test_dedup_retry_accepts_corrected_grouping(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A valid retry result should be accepted instead of triggering fallback."""
+    # mock-ok: verifies local retry acceptance logic around the external LLM boundary.
+    call_count = 0
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+        nonlocal call_count
+        call_count += 1
+        assert task == "claim_deduplication"
+        if call_count == 1:
+            return response_model(
+                groups=[
+                    {
+                        "canonical_statement": "Incomplete grouping",
+                        "raw_claim_ids": ["RC-1"],
+                        "confidence": "medium",
+                    }
+                ]
+            ), {}
+        return response_model(
+            groups=[
+                {
+                    "canonical_statement": "Merged claim",
+                    "raw_claim_ids": ["RC-1", "RC-2"],
+                    "confidence": "high",
+                }
+            ]
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    raw_claims = [
+        RawClaim(id="RC-1", statement="Claim one", evidence_ids=["E-1"], confidence="high"),
+        RawClaim(id="RC-2", statement="Claim one rephrased", evidence_ids=["E-2"], confidence="medium"),
+    ]
+    claim_to_analyst = {"RC-1": "Alpha", "RC-2": "Beta"}
+
+    canonical_claims = await deduplicate_claims(
+        raw_claims,
+        claim_to_analyst,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert call_count == 2
+    assert len(canonical_claims) == 1
+    assert canonical_claims[0].source_raw_claim_ids == ["RC-1", "RC-2"]
+    assert canonical_claims[0].analyst_sources == ["Alpha", "Beta"] or canonical_claims[0].analyst_sources == ["Beta", "Alpha"]

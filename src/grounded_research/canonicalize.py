@@ -190,66 +190,122 @@ async def deduplicate_claims(
             min_length=1,
         )
 
-    messages = render_prompt(
-        str(_PROJECT_ROOT / "prompts" / "dedup.yaml"),
-        raw_claims=[c.model_dump() for c in raw_claims],
-    )
-
-    model = get_model("deduplication")
-    result, _meta = await acall_llm_structured(
-        model,
-        messages,
-        response_model=DeduplicationResult,
-        task="claim_deduplication",
-        trace_id=f"{trace_id}/dedup",
-        max_budget=max_budget,
-        fallback_models=get_fallback_models("deduplication"),
-    )
-
     # Build canonical claims from groups
     import logging
     logger = logging.getLogger(__name__)
 
     raw_claim_map = {c.id: c for c in raw_claims}
-    canonical_claims: list[Claim] = []
 
-    for group in result.groups:
-        # Merge provenance from all raw claims in the group
-        source_ids = group.raw_claim_ids
-        analyst_sources = list({
-            claim_to_analyst[rid] for rid in source_ids if rid in claim_to_analyst
-        })
-        evidence_ids: list[str] = []
-        for rid in source_ids:
-            if rid in raw_claim_map:
-                evidence_ids.extend(raw_claim_map[rid].evidence_ids)
-        evidence_ids = list(dict.fromkeys(evidence_ids))  # deduplicate preserving order
-
-        canonical_claims.append(Claim(
-            statement=group.canonical_statement,
-            source_raw_claim_ids=source_ids,
-            analyst_sources=analyst_sources,
-            evidence_ids=evidence_ids,
-            confidence=group.confidence if group.confidence in ("high", "medium", "low") else "medium",
-        ))
-
-    # Fail-loud fallback: if dedup returned 0 groups from >0 raw claims,
-    # promote each raw claim 1:1 rather than losing everything
-    if len(canonical_claims) == 0 and len(raw_claims) > 0:
+    def _fallback_promote() -> list[Claim]:
         logger.warning(
-            "Dedup returned 0 groups from %d raw claims — promoting raw claims 1:1",
+            "Dedup output invalid after retry for %d raw claims — promoting raw claims 1:1",
             len(raw_claims),
         )
-        for rc in raw_claims:
-            canonical_claims.append(Claim(
+        return [
+            Claim(
                 statement=rc.statement,
                 source_raw_claim_ids=[rc.id],
                 analyst_sources=[claim_to_analyst.get(rc.id, "unknown")],
                 evidence_ids=rc.evidence_ids,
                 confidence=rc.confidence,
-            ))
+            )
+            for rc in raw_claims
+        ]
 
-    return canonical_claims
+    def _build_claims(groups: list[ClaimGroup]) -> list[Claim]:
+        canonical_claims: list[Claim] = []
+        for group in groups:
+            source_ids = group.raw_claim_ids
+            analyst_sources = list({
+                claim_to_analyst[rid] for rid in source_ids if rid in claim_to_analyst
+            })
+            evidence_ids: list[str] = []
+            for rid in source_ids:
+                if rid in raw_claim_map:
+                    evidence_ids.extend(raw_claim_map[rid].evidence_ids)
+            evidence_ids = list(dict.fromkeys(evidence_ids))
+
+            canonical_claims.append(Claim(
+                statement=group.canonical_statement,
+                source_raw_claim_ids=source_ids,
+                analyst_sources=analyst_sources,
+                evidence_ids=evidence_ids,
+                confidence=group.confidence if group.confidence in ("high", "medium", "low") else "medium",
+            ))
+        return canonical_claims
+
+    def _validate_groups(groups: list[ClaimGroup]) -> list[str]:
+        errors: list[str] = []
+        if not groups:
+            errors.append("Dedup returned zero groups.")
+            return errors
+
+        seen: list[str] = []
+        unknown_ids: list[str] = []
+        for idx, group in enumerate(groups, start=1):
+            if not group.raw_claim_ids:
+                errors.append(f"Group {idx} is empty.")
+                continue
+            for rid in group.raw_claim_ids:
+                if rid not in raw_claim_map:
+                    unknown_ids.append(rid)
+                else:
+                    seen.append(rid)
+
+        if unknown_ids:
+            errors.append(f"Unknown raw claim IDs referenced: {sorted(set(unknown_ids))}")
+
+        duplicates = sorted({rid for rid in seen if seen.count(rid) > 1})
+        if duplicates:
+            errors.append(f"Duplicate raw claim IDs across groups: {duplicates}")
+
+        missing = sorted(set(raw_claim_map) - set(seen))
+        if missing:
+            errors.append(f"Missing raw claim IDs from groups: {missing}")
+
+        return errors
+
+    async def _call_dedup(messages: list[dict[str, str]], call_trace_id: str, call_budget: float) -> DeduplicationResult:
+        result, _meta = await acall_llm_structured(
+            get_model("deduplication"),
+            messages,
+            response_model=DeduplicationResult,
+            task="claim_deduplication",
+            trace_id=call_trace_id,
+            max_budget=call_budget,
+            fallback_models=get_fallback_models("deduplication"),
+        )
+        return result
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "dedup.yaml"),
+        raw_claims=[c.model_dump() for c in raw_claims],
+    )
+
+    first_result = await _call_dedup(messages, f"{trace_id}/dedup", max_budget * 0.5)
+    validation_errors = _validate_groups(first_result.groups)
+    if not validation_errors:
+        return _build_claims(first_result.groups)
+
+    logger.warning("Dedup attempt 1 invalid: %s", " | ".join(validation_errors))
+    retry_messages = messages + [
+        {
+            "role": "user",
+            "content": (
+                "The previous grouping was structurally invalid. Fix it.\n"
+                f"Validation errors: {' | '.join(validation_errors)}\n"
+                "Return a corrected grouping where every raw claim ID appears exactly once, "
+                "no unknown IDs appear, and no group is empty."
+            ),
+        }
+    ]
+    retry_result = await _call_dedup(retry_messages, f"{trace_id}/dedup_retry", max_budget * 0.5)
+    retry_errors = _validate_groups(retry_result.groups)
+    if retry_errors:
+        logger.warning("Dedup retry invalid: %s", " | ".join(retry_errors))
+        return _fallback_promote()
+
+    return _build_claims(retry_result.groups)
 
 
 # ---------------------------------------------------------------------------
