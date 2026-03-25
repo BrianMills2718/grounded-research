@@ -148,40 +148,38 @@ def extract_key_section(text: str, question: str, max_chars: int = _KEY_SECTION_
 
 
 async def _fetch_pdf_with_llamaparse(url: str, question: str = "") -> str:
-    """Parse a PDF URL using LlamaParse API and return text notes.
+    """Parse a PDF URL using PyMuPDF (local, no API key required).
 
-    Raises ValueError if LLAMA_CLOUD_API_KEY is not set — PDF parsing requires
-    the API key. Returns the parsed markdown with full text saved to disk, same
-    structure as a regular fetch_page() result.
+    Downloads the PDF and extracts text locally. Falls back gracefully
+    on corrupted or inaccessible PDFs.
     """
-    api_key = os.environ.get("LLAMA_CLOUD_API_KEY")
-    if not api_key:
-        raise ValueError(
-            "LLAMA_CLOUD_API_KEY is not set. PDF parsing requires LlamaParse. "
-            "Set LLAMA_CLOUD_API_KEY in your .env or ~/.secrets/api_keys.env."
-        )
+    import httpx
 
-    from llama_cloud import AsyncLlamaCloud
-
-    client = AsyncLlamaCloud(api_key=api_key)
     try:
-        result = await client.parsing.parse(
-            tier="fast",
-            version="latest",
-            source_url=url,
-            expand=["text"],
-        )
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            pdf_bytes = resp.content
     except Exception as e:
         return json.dumps({
             "url": url,
             "content_type": "pdf",
-            "error": f"LlamaParse failed: {type(e).__name__}: {e}",
+            "error": f"PDF download failed: {type(e).__name__}: {e}",
             "text": "",
         })
 
-    # result.text is a Text object with .pages (list of TextPage with .text)
-    pages = result.text.pages if result.text else []
-    full_text = "\n\n".join(p.text for p in pages if p.text)
+    try:
+        import fitz  # pymupdf
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        full_text = "\n\n".join(page.get_text() for page in doc)
+        doc.close()
+    except Exception as e:
+        return json.dumps({
+            "url": url,
+            "content_type": "pdf",
+            "error": f"PDF parsing failed: {type(e).__name__}: {e}",
+            "text": "",
+        })
 
     pages_dir = _get_pages_dir()
     file_path = pages_dir / f"{_url_hash(url)}.txt"
@@ -193,14 +191,14 @@ async def _fetch_pdf_with_llamaparse(url: str, question: str = "") -> str:
     return json.dumps({
         "url": url,
         "content_type": "pdf",
-        "parsed_via": "LlamaParse",
+        "parsed_via": "PyMuPDF",
         "file_path": str(file_path),
         "char_count": len(full_text),
         "notes": notes,
         "key_section": key_section,
         "question": question,
         "note": (
-            "PDF parsed via LlamaParse. Full text saved to file_path. "
+            "PDF parsed via PyMuPDF. Full text saved to file_path. "
             "Use read_page(file_path) for more."
         ),
     })
@@ -334,10 +332,15 @@ async def fetch_page(url: str, question: str = "") -> str:
 
         api_key = os.environ.get("LLAMA_CLOUD_API_KEY")
         if api_key:
-            remote_result = json.loads(await _fetch_pdf_with_llamaparse(url, question))
-            if "error" not in remote_result:
-                return json.dumps(remote_result)
-            local_result["llamaparse_error"] = remote_result["error"]
+            try:
+                remote_result = json.loads(await _fetch_pdf_with_llamaparse(url, question))
+                if "error" not in remote_result:
+                    return json.dumps(remote_result)
+                local_result["llamaparse_error"] = remote_result["error"]
+            except Exception as exc:
+                local_result["llamaparse_error"] = (
+                    f"LlamaParse fallback failed: {type(exc).__name__}: {exc}"
+                )
 
         return json.dumps(local_result)
 

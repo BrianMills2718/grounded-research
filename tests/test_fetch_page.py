@@ -76,3 +76,35 @@ async def test_fetch_page_uses_local_pdf_parser_before_cloud(monkeypatch: pytest
 
     assert result["parsed_via"] == "pypdf"
     assert result["content_type"] == "pdf"
+
+
+@pytest.mark.asyncio
+async def test_fetch_page_pdf_returns_structured_error_when_cloud_fallback_breaks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A broken cloud fallback must not raise out of fetch_page."""
+    async def fake_fetch_pdf_locally(url: str, question: str = "") -> str:
+        return json.dumps({
+            "url": url,
+            "content_type": "pdf",
+            "error": "Local PDF parsing failed: no text extracted",
+            "text": "",
+        })
+
+    async def fake_fetch_pdf_with_llamaparse(url: str, question: str = "") -> str:  # pragma: no cover
+        raise ModuleNotFoundError("No module named 'llama_cloud'")
+
+    monkeypatch.setattr(
+        "grounded_research.tools.fetch_page._fetch_pdf_locally",
+        fake_fetch_pdf_locally,
+    )
+    monkeypatch.setattr(
+        "grounded_research.tools.fetch_page._fetch_pdf_with_llamaparse",
+        fake_fetch_pdf_with_llamaparse,
+    )
+    monkeypatch.setenv("LLAMA_CLOUD_API_KEY", "test-key")
+
+    result = json.loads(await fetch_page("https://example.com/paper.pdf", question="What did the pilot show?"))
+
+    assert result["error"] == "Local PDF parsing failed: no text extracted"
+    assert "llamaparse_error" in result
