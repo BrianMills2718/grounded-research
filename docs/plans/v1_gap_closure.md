@@ -1,78 +1,90 @@
-# Plan: V1 Design Gap Closure
+# Plan: V1 Gap Closure After Design Clarification
 
 **Source:** Tyler's review of current codebase vs original V1 design
-**Status:** Planned
+**Status:** Awaiting answers to `docs/QUESTIONS_FOR_TYLER.md`
 **Priority:** High
 
-## Gaps (ordered by impact)
+## Why this plan changed
 
-### 1. Claim Extraction Precision
-**Gap:** Analysts produce "pilot programs show minimal effects" not "The Finnish
-experiment (N=2,000, 2017-2018) found no significant employment difference."
-**Root cause:** Prompt instruction exists but isn't biting. Schema `Field(description)`
-for RawClaim.statement says to include specifics but LLMs still abstract.
-**Fix:** Two-part:
-- (a) Add a claim validation pass after extraction: check each claim for
-  quantitative specifics (regex for N=, %, study names). Flag abstract claims.
-- (b) If abstract claims detected, re-prompt the analyst with the specific
-  evidence items and ask for revision with concrete details.
-**Where:** New function in `canonicalize.py`, new prompt `prompts/validate_claims.yaml`
-**Acceptance:** ≥ 50% of claims contain named studies or specific numbers
+The previous version mixed real implementation gaps with config choices.
+Production model picks do not block implementation. The blocking issues are the
+ones that change contracts, control flow, and evaluation criteria.
 
-### 2. Add Claude to Analyst Pool
-**Gap:** No Anthropic models in the analyst pool. Missing a major reasoning architecture.
-**Fix:** Add `openrouter/anthropic/claude-sonnet-4-6` to analyst_models config.
-Expand from 3 to 4 analysts (or replace DeepSeek).
-**Where:** `config/config.yaml` analyst_models
-**Decision needed:** 3 analysts (replace DeepSeek) or 4 analysts (add Claude)?
-4 is better for disagreement diversity but costs more.
-**Acceptance:** Claude analyst produces claims with different analytical character
+## Design Gates
 
-### 3. Protocol-Level Anti-Conformity
-**Gap:** ADR-0004 checks that non-inconclusive verdicts have new_evidence_ids,
-but doesn't validate that the evidence actually supports the position change.
-LLM could cite irrelevant evidence.
-**Fix:** After arbitration, validate: for each claim_update, check that at least
-one new_evidence_id's content is semantically relevant to the claim being updated.
-Simple LLM call: "Does this evidence [text] support changing this claim [text]
-from [old status] to [new status]? Yes/No with reasoning."
-**Where:** `verify.py` after `arbitrate_dispute()`, new prompt
-**Acceptance:** No verdict changes without validated evidence relevance
+These answers are required before implementation should start:
 
-### 4. Anonymization Enforcement in Code
-**Gap:** Alpha/Beta/Gamma labels exist but no string replacement strips model
-self-identification from outputs. "As an OpenAI model..." would leak through.
-**Fix:** After each analyst run, regex scan for model identity phrases
-("As a [model]", "OpenAI", "GPT", "Claude", "Gemini", "DeepSeek", "as an AI")
-in claims, summary, and recommendations. Strip or warn.
-**Where:** `engine.py` after analyst runs (extend existing evidence leakage check)
-**Acceptance:** No model identity strings in analyst outputs passed to downstream
+1. **Product boundary**
+   The repo currently straddles two positions: adjudication-first layer vs full
+   end-to-end research system. This changes docs, benchmarks, and failure
+   interpretation.
+2. **Claim contract**
+   Claim precision needs an explicit structural contract before adding retries
+   or validators.
+3. **Ambiguity and interrupt policy**
+   Early clarification vs late surfacing is a control-flow decision, not a
+   prompt tweak.
+4. **Anti-conformity enforcement**
+   "Only change position for valid reasons" needs a schema and validator
+   contract.
+5. **Acceptance harness**
+   Baseline discipline belongs first in an offline benchmark gate, not as an
+   arbitrary runtime feature.
 
-### 5. Baseline Discipline at Pipeline Level
-**Gap:** No in-pipeline check that the result beats single-shot. Comparison
-scripts exist but aren't part of the pipeline.
-**Fix:** Optional post-pipeline baseline check: after report generation, run
-a single-shot synthesis on the same evidence bundle and compare via judge.
-Flag if pipeline score ≤ single-shot score.
-**Where:** `engine.py` as optional post-pipeline step, config flag `run_baseline_check: false`
-**Decision needed:** Always run (doubles cost) or opt-in flag?
-**Acceptance:** Pipeline warns if it doesn't beat single-shot on a given run
+## Implementation Work After Clarification
 
-### 6. Dedup Reliability
-**Gap:** Dedup returns 0 groups ~30% of runs via OpenRouter/Gemini. Fallback
-works but means no dedup happened.
-**Fix:**
-- (a) Switch dedup model to gpt-5-nano (already done in config, but verify)
-- (b) Add retry: if 0 groups returned, retry once with a simplified prompt
-- (c) If still 0, fall back to 1:1 (current behavior)
-**Where:** `canonicalize.py` deduplicate_claims()
-**Acceptance:** 0-groups rate < 5%
+### 1. Claim Precision Enforcement
+
+**Gap:** Claims are often too abstract relative to source detail.
+**Planned work:** Add a structured claim-specificity validator plus one retry
+path using source excerpts.
+**Where:** `canonicalize.py`, `models.py`, new prompt template
+**Acceptance:** Defined by the final claim contract, not by an arbitrary
+percentage threshold.
+
+### 2. Protocol-Level Anti-Conformity
+
+**Gap:** The current system can cite new evidence IDs without proving the cited
+evidence actually justifies the claim update.
+**Planned work:** Extend arbitration outputs and add a post-arbitration
+validator for each `claim_update`.
+**Where:** `verify.py`, `models.py`, new prompt template
+**Acceptance:** No claim update is accepted unless it satisfies the agreed
+enforcement contract.
+
+### 3. Dedup Reliability
+
+**Gap:** Dedup can return zero groups, forcing 1:1 fallback.
+**Planned work:** Keep current fallback, add one retry path, and verify the
+dedup model/prompt pair is stable.
+**Where:** `canonicalize.py`
+**Acceptance:** Zero-group outcomes become rare enough that fallback is
+exceptional rather than routine.
+
+### 4. Analyst Anonymization Hardening
+
+**Gap:** Alpha/Beta/Gamma labels exist, but model self-identification should be
+mechanically blocked rather than assumed absent.
+**Planned work:** Add a post-analyst scrub/validation pass for model identity
+phrases.
+**Where:** `engine.py`
+**Acceptance:** Downstream stages never receive analyst text that identifies the
+underlying model family.
+
+### 5. Evaluation Harness
+
+**Gap:** The repo has comparison scripts, but the acceptance gate is not yet
+the canonical driver of implementation choices.
+**Planned work:** Freeze the benchmark set, baselines, rubric, and pass/fail
+threshold in code and docs.
+**Where:** comparison scripts, docs, fixtures
+**Acceptance:** A failed benchmark run gives an unambiguous no-go result.
 
 ## Implementation Order
 
-1. #2 Claude analyst (config change, 5 min)
-2. #4 Anonymization (regex scan, 15 min)
-3. #6 Dedup retry (add retry logic, 15 min)
-4. #1 Claim precision validation (new function + prompt, 30 min)
-5. #3 Anti-conformity validation (new function + prompt, 30 min)
-6. #5 Baseline discipline (optional post-pipeline, 45 min)
+1. Lock the design gates from `docs/QUESTIONS_FOR_TYLER.md`
+2. Implement claim contract enforcement
+3. Implement anti-conformity enforcement
+4. Harden dedup reliability
+5. Harden anonymization
+6. Freeze the evaluation harness

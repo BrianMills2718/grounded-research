@@ -1,14 +1,12 @@
 # Feature Status: v1 Scorecard vs Current Implementation
 
 **Source:** `v1_Pruning_Scorecard.xlsx`
-**Assessed:** 2026-03-23
+**Assessed:** 2026-03-24
 
 ## Legend
 
 - **DONE**: Implemented and verified
-- **PARTIAL**: Partially implemented or simplified beyond original spec
-- **NOT STARTED**: In the scorecard as KEEP/SIMPLIFY but not yet built
-- **DEFERRED**: Marked DEFER in scorecard
+- **SKIP**: Intentionally left unimplemented after review
 - **CUT**: Marked CUT in scorecard
 
 ---
@@ -19,7 +17,7 @@
 |---|---------|---------|--------|-------|
 | 1 | Restate query as precise core question | KEEP | **DONE** | `QuestionDecomposition.core_question` reformulates via LLM. |
 | 2 | Break into 2-6 typed sub-questions | KEEP | **DONE** | `SubQuestion` with type (factual/causal/comparative/evaluative/scope) + falsification target. ADR-0006. |
-| 3 | Identify ambiguous terms & assign definitions | CUT | CUT | — |
+| 3 | Identify ambiguous terms & assign definitions | CUT | **DONE** | `AmbiguousTerm` schema in decomposition. Passed through to analysts. Originally cut, later implemented. |
 | 4 | Map optimization axes & tradeoffs | KEEP | **DONE** | `QuestionDecomposition.optimization_axes` (2-4 key tradeoffs). Passed to synthesis as organizing framework. |
 | 5 | Build research plan with falsification targets | SIMPLIFY | **DONE** | `QuestionDecomposition.research_plan` + per-sub-question `falsification_target`. Drives counterfactual search queries. |
 | 6 | Assess complexity level | CUT | CUT | — |
@@ -29,21 +27,21 @@
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 8 | Check coverage of decomposition | DEFER | DEFERRED | — |
-| 9 | Flag directional bias | DEFER | DEFERRED | — |
-| 10 | Check granularity | DEFER | DEFERRED | — |
-| 11 | Assess falsification target quality | DEFER | DEFERRED | — |
-| 12 | Issue verdict (proceed/caveats/revise) | DEFER | DEFERRED | — |
+| 8 | Check coverage of decomposition | DEFER | **DONE** | `DecompositionValidation.coverage_ok` + `coverage_gaps` in validation pass. |
+| 9 | Flag directional bias | DEFER | **DONE** | `DecompositionValidation.bias_flags` in validation pass. |
+| 10 | Check granularity | DEFER | **DONE** | `DecompositionValidation.granularity_issues` in validation pass. |
+| 11 | Assess falsification target quality | DEFER | SKIP | Intentionally skipped as low-value meta-validation. |
+| 12 | Issue verdict (proceed/caveats/revise) | DEFER | **DONE** | `decompose_with_validation()` retries once on `revise`. |
 
 ## STAGE 2 — BROAD RETRIEVAL & EVIDENCE NORMALIZATION
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
 | 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | `generate_search_queries()` creates 15 diverse queries via LLM. Not per-sub-question (no sub-questions exist yet) but per-question with diversity prompting. |
-| 14 | Optional Grok/Reddit real-time scan | DEFER | DEFERRED | — |
+| 14 | Optional Grok/Reddit real-time scan | DEFER | SKIP | Separate search-provider integration, not treated as a core pipeline feature. |
 | 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py`: LLM batch scoring (authoritative/reliable/unknown/unreliable). Per Brian's critique: LLM, not URL lookup. |
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
-| 17 | Echo detection across sources | DEFER | DEFERRED | — |
+| 17 | Echo detection across sources | DEFER | SKIP | Intentionally skipped; judged not worth building in v1. |
 | 18 | Conflict-aware compression | SIMPLIFY | **DONE** | `compress.py`: priority-based compression preserving authoritative sources, sub-question coverage, and diversity. |
 | 19 | Check evidence sufficiency | KEEP | **DONE** | Per-sub-question coverage check: flags sub-questions with < 2 evidence items as gaps. `EvidenceItem.sub_question_id` tracks origin. |
 | 20 | Enforce search budget & diminishing-returns cutoff | SIMPLIFY | **DONE** | Fixed budget: `num_queries` and `max_sources` in config. No diminishing-returns logic. |
@@ -66,7 +64,7 @@
 | 27 | Decompose analyses into atomic claims | KEEP | **DONE** | `extract_raw_claims()` pulls claims from analyst runs. |
 | 28 | Deduplicate claims across models | KEEP | **DONE** | `deduplicate_claims()` via LLM grouping. |
 | 29 | Assign global IDs & carry forward evidence labels | KEEP | **DONE** | C- prefix IDs, evidence_ids propagated through dedup. |
-| 30 | Evidence-label leakage check | DEFER | DEFERRED | — |
+| 30 | Evidence-label leakage check | DEFER | **DONE** | URL regex scan on analyst outputs emits `PipelineWarning` on leakage. |
 | 31 | Identify cross-model conflicts & classify dispute type | KEEP | **DONE** | `detect_disputes()` with 4 dispute types. |
 | 32 | Assess decision-criticality per dispute | KEEP | **DONE** | Severity classification with schema-level guidance. Fixed in this session — was defaulting to "notable" for everything. |
 | 33 | Compute resolution routing deterministically | KEEP | **DONE** | `DISPUTE_ROUTING` code-owned table. |
@@ -79,7 +77,7 @@
 | 35 | Search for both supporting & disconfirming evidence | KEEP | **DONE** | Fresh evidence fetched via Brave Search during arbitration. |
 | 36 | Schema-driven single-turn critique per dispute | KEEP | **DONE** | `arbitrate_dispute()` with structured ArbitrationResult. |
 | 37 | Update claim statuses in ledger | KEEP | **DONE** | `ArbitrationResult.claim_updates` applied to ledger. |
-| 38 | Shuffle analyst positions to prevent primacy bias | CUT | CUT | — |
+| 38 | Shuffle analyst positions to prevent primacy bias | CUT | **DONE** | `verify.py` shuffles claim order with fixed seed per dispute before arbitration. |
 | 39 | Enforce budget controls | SIMPLIFY | **DONE** | `max_disputes`, `max_turns` in config. No novelty detection. |
 
 ## STAGE 6a — USER-STEERING INTERRUPT
@@ -94,7 +92,7 @@
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
 | 42 | Context compaction | SIMPLIFY | **DONE** | `compress.py` reduces evidence to threshold. Evidence truncated to 400 chars in long_report prompt. |
-| 43 | Self-preference bias guard | DEFER | DEFERRED | Tested with two judge models (Gemini + GPT-5-nano) — no self-preference detected. |
+| 43 | Self-preference bias guard | DEFER | SKIP | Tested with two judge models (Gemini + GPT-5-nano); no self-preference detected. |
 | 44 | Adapt synthesis by dispute resolution type | KEEP | **DONE** | `synthesis_mode` config: "analytical" (inferences beyond sources, marked) vs "grounded" (ledger-only). Disputes handled differently by mode. |
 | 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | `FinalReport.recommendation` + `alternatives`. Long report has verdict + alternatives sections. |
 | 46 | Tier B: Disagreement map, alternatives, confidence | KEEP | **DONE** | `FinalReport.disagreement_summary`, `alternatives`, confidence as enum. |
@@ -116,15 +114,13 @@
 
 | Status | Count | Items |
 |--------|-------|-------|
-| **DONE** | 30 | #1, 2, 4, 5, 7, 13, 15, 16, 19, 20-24, 26-29, 31-37, 39, 44-50, 51-52 |
-| **PARTIAL** | 0 | — |
-| **NOT STARTED** (KEEP/SIMPLIFY) | 0 | — |
-| **DEFERRED** | 9 | #8-12, 14, 17, 30, 43 |
-| **CUT** | 3 | #3, 6, 38 |
+| **DONE** | 47 | All KEEP/SIMPLIFY features, plus promoted DEFER items #8, #9, #10, #12, #30 and previously cut items #3, #38 |
+| SKIP | 4 | #11, #14, #17, #43 |
+| **CUT** | 1 | #6 |
 
-**42/52 features implemented. 4 skipped. 3 cut. Full scorecard complete.**
+**47/52 features implemented. 4 intentionally skipped. 1 cut.**
 
-*Updated 2026-03-24: All KEEP/SIMPLIFY features done. 6 DEFER features promoted and implemented. See scorecard audit commit for full divergence report.*
+*Updated 2026-03-24 from the current spreadsheet, not from stale prose notes.*
 
 ## Intentionally Skipped Features
 

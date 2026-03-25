@@ -1,162 +1,178 @@
-# Questions for Tyler: Design Clarification
+# Questions for Tyler: Implementation-Blocking Decisions
 
-These questions address the gaps Tyler identified in his review. Each question
-has a default answer that we'll implement if no response is given. Tyler should
-override any defaults he disagrees with.
+This doc asks only the questions that change code paths, contracts, or
+acceptance criteria. It does not ask for production model picks, cost ceilings,
+or other config values. Those can be shipped later as `config` changes.
 
-**How to respond:** For each question, give a concrete answer that we can
-turn into a code change. "I think X is important" isn't actionable.
-"Use approach (b) with these specific models" is.
+**Current assumption:** development keeps using cheap models so iteration stays
+fast. Production model selection is a separate config concern and does not block
+implementation.
 
-If you don't care about a question, say "use default" and we'll implement
-the default answer listed.
-
----
-
-## 1. Reasoning Frames
-
-**Context:** The pipeline uses 3 frames (verification-first, structured
-decomposition, step-back abstraction) to force analytical divergence across
-models. The Choi et al. "Artificial Hivemind" paper shows models converge on
-similar outputs even across families.
-
-**Question:** Are these the right 3 frames? Should we add/replace any?
-In your manual cross-examination process, what analytical lenses produced
-genuinely different conclusions on the same evidence?
-
-**Default:** Keep current 3 frames. They're defined in `prompts/analyst.yaml`
-and configurable in `config/config.yaml` — adding new frames is a config +
-prompt change.
+**How to respond:** For each question, either say `use default` or give a
+concrete rule we can encode in code, schemas, prompts, tests, or docs.
 
 ---
 
-## 2. Scope
+## 1. Product Boundary
 
-**Context:** The codebase now owns the full journey (question → search →
-analyze → arbitrate → report). Tyler's review says the V1 is a "general-purpose
-reasoning orchestrator" but CLAUDE.md says "adjudication-first, not a new
-end-to-end research pipeline."
+**Why this matters:** The repo currently says two different things.
+`README.md` presents a full question-to-report research system. `CLAUDE.md`
+still says v1 is an adjudication-first layer over shared evidence. This changes
+what the benchmark is, what docs should promise, and which failure modes matter.
 
-**Question:** Should this be positioned as general-purpose (any research
-question) or specifically for contested/nuanced topics? On pure enumeration
-questions (e.g., "list all UBI pilot programs") we lose to Perplexity. On
-contested policy/science questions we win 5/5.
+**Question:** What is the intended v1 product boundary?
 
-**Default:** General-purpose with a documented strength on contested topics.
+- Option A: Adjudication-first system. Cold-start retrieval stays available, but
+  the thesis and benchmark focus on multi-analyst disagreement over shared
+  evidence.
+- Option B: Full end-to-end research system. Retrieval, decomposition,
+  adjudication, and synthesis are all part of the product thesis.
+- Option C: Hybrid. End-to-end flow is supported, but success is judged
+  primarily on contested questions where adjudication adds value.
 
----
-
-## 3. Model Selection for Production
-
-**Context:** We're using cheap models during development and testing
-(GPT-5-nano, Gemini 2.5 Flash, DeepSeek Chat) to iterate fast without
-burning money. These cheap models already win 5/6 vs Perplexity Deep
-Research. Tyler's V1 specifies frontier models (GPT-5.4, Claude Opus
-4.6, Gemini 3.1 Pro) — the pipeline is designed so you swap models via
-config without code changes.
-
-**Questions:**
-- (a) Which specific models do you want for the 3 analyst slots when
-  you actually use this? (We'll ship a `config/config_production.yaml`
-  with your choices alongside the cheap testing config.)
-- (b) Which model for synthesis?
-- (c) What's your acceptable cost per run?
-- (d) Should Claude be a 4th analyst (more disagreement, higher cost)
-  or replace DeepSeek (keep 3 analysts)?
-
-**Default:** Ship two configs: `config.yaml` (cheap, for testing/development)
-and `config_production.yaml` (frontier models, for real use).
+**Default:** Option C.
 
 ---
 
-## 4. Claim Precision
+## 2. Claim Contract
 
-**Context:** This is the #1 quality gap. Analysts see evidence containing
-"The Finnish experiment (N=2,000, 2017-2018)" but produce claims like
-"pilot programs show minimal effects." Prompt instructions to be specific
-haven't solved it.
+**Why this matters:** "Be more specific" is not a contract. Before adding claim
+validators or retries, we need to know what a valid claim must contain and what
+should happen when the source does not support that level of specificity.
 
-**Questions:**
-- (a) In your manual process, how did you get study-level specificity?
-  Did you ask follow-up questions? Paste source text back? Use a specific
-  prompt pattern?
-- (b) Should we add a post-extraction validation pass that checks claims
-  for specificity and re-prompts if too abstract? (Adds ~$0.02/run)
-- (c) Is this a model capability issue (cheap models can't extract specifics)
-  or a prompt issue?
+**Question:** What must a claim include to be accepted into the ledger?
 
-**Default:** Add claim validation pass. If >50% of claims lack named studies
-or specific numbers, re-prompt the analyst with the relevant evidence items
-and ask for revision.
+Please answer in this shape:
 
----
+- Always required:
+- Required when available in the source:
+- Acceptable fallback when specificity is impossible:
+- Failure behavior: retry, drop, or mark low-specificity
 
-## 5. Anti-Conformity Mechanism
+**Default:**
 
-**Context:** Tyler's V1 says "a model may only change position when citing
-new evidence, a corrected assumption, or a resolved contradiction." Current
-code checks that verdicts have new_evidence_ids but doesn't validate that
-the evidence is relevant to the position change.
-
-**Question:** What specifically should the validation check? Options:
-- (a) LLM call: "Does evidence X support changing claim Y?" (adds ~$0.01/dispute)
-- (b) Schema constraint: ArbitrationResult requires `justification` field
-  that must reference specific evidence content, not just IDs
-- (c) Both (a) and (b)
-- (d) Something else — describe the mechanism
-
-**Default:** Option (a) — post-arbitration LLM validation call.
+- Always required: self-contained statement, direction/polarity, evidence IDs
+- Required when available in the source: source/study name, timeframe, and at
+  least one concrete detail such as a number, population, or measured outcome
+- Acceptable fallback when specificity is impossible: keep the claim but mark it
+  `low_specificity` in structured state
+- Failure behavior: one retry with source excerpts, then keep only if marked
+  `low_specificity`
 
 ---
 
-## 6. Quality Validation
+## 3. Ambiguity And User Interrupt Policy
 
-**Context:** We currently validate by comparing pipeline output against
-Perplexity Deep Research using a blind LLM judge (5 dimensions, no provenance
-bias). The pipeline wins 5/6 test questions. Tyler's V1 says the pipeline
-should demonstrably outperform simpler approaches.
+**Why this matters:** There are two materially different designs:
 
-**Question:** What quality check do you want?
-- (a) Keep current approach: compare against Perplexity via scripts when
-  we want to validate (current — works well, not automated)
-- (b) Add a `--validate` flag that automatically runs the pipeline output
-  against Perplexity Deep Research and reports the score (adds ~$0.05 +
-  Perplexity API cost per run)
-- (c) Add a `--validate` flag that runs a single-model-playing-all-roles
-  baseline (one LLM gets the same evidence and writes a report without
-  the multi-analyst pipeline) and compares (adds ~$0.03 per run)
-- (d) Both (b) and (c) — compare against Perplexity AND against a simpler
-  single-model approach
-- (e) Something else — describe what "demonstrably outperform" means to
-  you in practice
+- detect ambiguity early and ask before retrieval
+- let the pipeline continue, then surface unresolved ambiguity later
 
-**Default:** Option (a) — keep post-hoc comparison via scripts.
+This changes control flow, user experience, and wasted work.
 
----
+**Question:** When should the system interrupt the user?
 
-## 7. Acceptance Test
+- Option A: Before retrieval, when ambiguity would materially change the search
+  plan or recommendation
+- Option B: Only after dispute detection, as the current late-stage interrupt
+- Option C: Never interrupt; always surface alternatives in the report
+- Option D: Mixed policy. Specify exactly which cases interrupt early and which
+  are only surfaced later
 
-**Context:** When Tyler runs this on a question, we need to know what he
-checks to evaluate quality.
-
-**Questions:**
-- (a) Does he read the report and judge subjectively?
-- (b) Does he compare against Perplexity/GPT-Researcher output?
-- (c) Does he check the trace.json for provenance completeness?
-- (d) Does he have specific questions he plans to test on?
-- (e) What's the minimum quality bar — "better than Perplexity on most
-  questions" or "better than Perplexity on all questions" or something else?
-
-**Default:** "Better than Perplexity on ≥4/6 diverse questions" (current: 5/6).
+**Default:** Option D. Interrupt early for material spec ambiguity that would
+change retrieval or ranking. Keep the current late-stage interrupt for
+preference/ambiguity disputes discovered downstream. Max 2 questions.
 
 ---
 
-## How to Respond
+## 4. Anti-Conformity Enforcement Contract
 
-For each question, just state your answer. Example:
+**Why this matters:** "Only change position with new evidence, corrected
+assumption, or resolved contradiction" needs a code-level rule. Otherwise the
+system only gestures at rigor.
 
-> **Q3:** (a) GPT-5.4, Claude Opus 4.6, Gemini 3.1 Pro. (b) Claude Opus 4.6.
-> (c) Up to $3/run. (d) Replace DeepSeek with Claude, keep 3 analysts.
+**Question:** What must be true before a claim update is accepted?
 
-We'll turn your responses into implementation tasks with specific file
-changes and acceptance criteria.
+Please answer in this shape:
+
+- Allowed basis for changing a claim:
+- Evidence/justification fields the schema must carry:
+- Validator behavior on failure:
+- Should failed validation be a hard gate or only a warning?
+
+**Default:**
+
+- Allowed basis: `new_evidence`, `corrected_assumption`, or
+  `resolved_contradiction`
+- Schema must carry: `basis_type`, cited evidence IDs, and short textual
+  justification tied to the cited evidence
+- Validator behavior on failure: reject that claim update and record a warning
+  in trace state
+- Enforcement level: hard gate per `claim_update`
+
+---
+
+## 5. Analyst Diversity Mechanism
+
+**Why this matters:** If the Choi homogeneity concern applies here, changing
+model names is not enough. We need to know whether Tyler wants stronger
+protocol-level diversity than "different models + different frames."
+
+**Question:** What diversity mechanism should be enforced in code?
+
+- Option A: Keep current approach: cross-family models plus distinct reasoning
+  frames
+- Option B: Fixed analyst roles with distinct duties, such as skeptic,
+  decomposer, verifier
+- Option C: Add a critique/revision loop between analysts
+- Option D: Partition or mask evidence so analysts reason over different views
+- Option E: Another specific mechanism
+
+**Default:** Option A for v1, with diversity judged by benchmark results rather
+than more orchestration complexity.
+
+---
+
+## 6. Acceptance Harness
+
+**Why this matters:** "Better than Perplexity" is a slogan until we define the
+benchmark set, baselines, rubric, and pass threshold. This is the actual gate
+for implementation decisions.
+
+**Question:** What is the acceptance harness for v1?
+
+Please answer in this shape:
+
+- Benchmark questions:
+- Required baselines:
+- Scoring dimensions:
+- Pass threshold:
+- Is this an offline evaluation gate, a runtime flag, or both?
+
+**Default:**
+
+- Benchmark questions: current fixed 6-question set unless Tyler provides a new
+  canonical set
+- Required baselines: Perplexity Deep Research and one single-model
+  same-evidence baseline
+- Scoring dimensions: current blind judge dimensions plus provenance
+  completeness
+- Pass threshold: pipeline wins on at least 4/6 with no provenance regressions
+- Evaluation mode: offline gate first; runtime validation can remain optional
+
+---
+
+## How To Respond
+
+For each question, either say `use default` or answer in the requested shape.
+Example:
+
+> **Q2**
+> Always required: self-contained statement, evidence IDs.
+> Required when available in the source: study name, timeframe, measured
+> outcome, at least one number.
+> Acceptable fallback: mark `low_specificity`.
+> Failure behavior: retry once, then drop.
+
+We will turn the answers into code changes, schema updates, and explicit
+acceptance criteria.
