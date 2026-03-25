@@ -61,6 +61,11 @@ likely weakened downstream dispute localization.
 **Observed:** UBI post-Wave-1 benchmark (`output/ubi_wave1_post/trace.json`)
 **Fix:** Add stronger non-merge guidance for enumeration questions, consider chunked or staged dedup, and treat repeated fallback on dense claim sets as a first-class benchmark failure.
 
+Follow-up benchmark signal: the clean Wave 2 UBI rerun avoided the explicit
+fallback path but still produced `40 raw -> 40 canonical` claims with only 3
+disputes. That is an improvement in structural integrity, but it still suggests
+weak canonical merging on dense enumeration-style questions.
+
 ### Claim extraction evidence-ID hallucination
 The Claimify stage still invents invalid evidence/source identifiers on hard
 questions. The current code strips bad IDs and now drops claims that become
@@ -81,6 +86,38 @@ lost access to several NBER, IZA, World Bank, and IMF PDFs this way.
 **Observed:** 2026-03-25 UBI rerun logged multiple `No module named 'llama_cloud'`
 fetch failures during collection.
 **Fix:** Either install the dependency as part of the supported environment, or replace the PDF path with a supported parser/fallback that does not silently reduce evidence quality on study-heavy questions.
+
+Follow-up benchmark signal: local-first PDF parsing materially improved the UBI
+collection pass to 99 evidence items, 2 gaps, and 26 authoritative sources,
+but the downstream report still lost 20 vs 24 to Perplexity. Retrieval was a
+real bottleneck, but not the only remaining one.
+
+### Shared observability DB can kill long benchmark runs
+Long UBI runs can fail in Phase 5 if `llm_client` budget accounting reads from
+the shared observability SQLite database while other workloads hold it open.
+The clean 2026-03-25 Wave 2 UBI rerun completed through adjudication and then
+failed on `sqlite3.OperationalError: database is locked` before report
+generation.
+
+**Files:** external dependency in `~/projects/llm_client`, surfaced by `engine.py`
+**Observed:** `output/ubi_wave2_full/trace.json` completed through adjudication;
+report generation succeeded only after resuming export with an isolated
+`LLM_CLIENT_DB_PATH`.
+**Fix:** llm_client should tolerate concurrent readers/writers more robustly or
+grounded-research benchmark runs should use a run-local observability DB by
+default.
+
+### Provider response hangs can stall long structured calls indefinitely
+Bundle-based UBI retries showed OpenRouter-backed structured calls can sit in
+HTTP response-body reads indefinitely when timeout policy bans explicit
+request timeouts. This made a full pipeline retry stall during Claimify despite
+the earlier clean raw-question run proving the phase could complete.
+
+**Files:** external dependency in `~/projects/llm_client` and provider path in LiteLLM/OpenRouter
+**Observed:** interrupted retry stack showed the process blocked in
+`httpx`/`aiohttp` response reads during `extract_raw_claims()`.
+**Fix:** allow justified long but finite request timeouts on benchmark runs, or
+add better stuck-call detection and retry behavior in shared infra.
 
 ### Sub-question evidence tagging incomplete
 Evidence items are tagged with `sub_question_id` based on which search query

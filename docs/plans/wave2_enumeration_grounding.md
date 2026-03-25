@@ -27,6 +27,15 @@ Observed in the UBI benchmark:
   1:1 promotion on a dense 47-claim set
 - the report cited canonical claims that had no evidence IDs until the
   immediate post-benchmark extraction fix was added
+- after the PDF and anchoring fixes, a clean rerun collected 50 sources, 99
+  evidence items, 2 gaps, and 26 authoritative sources
+- the resumed export from that clean rerun produced a grounded report with 28
+  cited claims and 0 grounding warnings
+- fair comparison still scored 20 vs Perplexity's 24, so retrieval and
+  grounding improved integrity but did not close the benchmark gap
+- the same Wave 2 bundle still beat the single-shot baseline, so the
+  multi-analyst architecture continues to add value even though UBI still loses
+  to Perplexity
 
 ---
 
@@ -73,6 +82,8 @@ Do not leave study access dependent on an optional missing package.
 Status:
 - local-first PDF parsing implemented in `fetch_page.py`
 - verified on a previously failing NBER UBI paper (`w27351.pdf`) using local `pypdf`
+- clean UBI rerun collected 26 authoritative sources (up from 9 pre-fix and 20
+  in the interrupted post-fix collection check)
 
 ### 2. Tighten Claimify evidence anchoring
 
@@ -89,6 +100,8 @@ Status:
 - prompt now enumerates valid evidence IDs explicitly
 - claim-extraction response schema now constrains `evidence_ids` to the run's
   actual candidate `E-...` IDs
+- clean UBI rerun and resumed export finished with 40 claims and 0 claims
+  lacking evidence IDs
 
 ### 3. Add dense-claim dedup strategy
 
@@ -106,6 +119,14 @@ Examples:
 
 Do not accept repeated 1:1 fallback as a normal outcome on benchmark questions.
 
+Current benchmark signal:
+
+- the clean Wave 2 UBI rerun did not emit the prior invalid-group + retry
+  warnings
+- however, canonicalization still produced `40 raw -> 40 canonical`, so dense
+  claim sets remain effectively under-canonicalized on this question even
+  without an explicit 1:1 fallback event
+
 ### 4. Add benchmark-level acceptance checks
 
 Use UBI as the first gate question for this wave.
@@ -117,6 +138,9 @@ Required checks:
 - dedup does not end in 1:1 fallback on the UBI benchmark
 - fair comparison score against cached Perplexity report improves over the
   post-Wave-1 UBI run
+- if the score does not improve, inspect whether the remaining loss is driven
+  more by enumeration coverage or by weak canonical merging before changing
+  retrieval again
 
 ---
 
@@ -135,10 +159,10 @@ Required checks:
 
 - [ ] Standard environment can retrieve the key study PDFs needed for UBI-like questions
 - [ ] Claimify no longer routinely invents invalid evidence/source IDs on the UBI benchmark
-- [ ] No cited claim in the final report lacks evidence IDs
-- [ ] UBI dedup completes without 1:1 fallback
+- [x] No cited claim in the final report lacks evidence IDs
+- [ ] UBI dedup completes without ineffective `raw == canonical` non-merging on dense UBI runs
 - [ ] Fair comparison vs cached Perplexity improves from the current post-Wave-1 UBI result
-- [ ] Pipeline still beats the single-shot baseline on the same bundle
+- [x] Pipeline still beats the single-shot baseline on the same bundle
 
 ---
 
@@ -149,3 +173,12 @@ Required checks:
   wave.
 - Do not switch production models for this wave. Fix the method on the cheap
   development stack first.
+- 2026-03-25 benchmark result:
+  - `output/ubi_wave2_full/` captured the clean raw-question rerun through
+    adjudication before export failed on shared observability DB contention
+  - `output/ubi_wave2_export_resume/` resumed export successfully from the
+    saved trace using an isolated observability DB and explicit request
+    timeouts
+  - fair comparison vs cached Perplexity remained `20` vs `24`
+  - fair comparison vs the same-bundle single-shot baseline favored the
+    pipeline strongly
