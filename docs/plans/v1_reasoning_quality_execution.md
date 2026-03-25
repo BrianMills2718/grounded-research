@@ -3,12 +3,11 @@
 `docs/PLAN.md` remains the canonical repo-level plan. This file is the
 executable implementation plan for the first Tyler-alignment wave.
 
-**Status:** Planned
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
-**Blocks:** Further benchmark reruns, deeper V1 parity work, and any claim that
-the repo is aligned with Tyler's reasoning method
+**Blocks:** Further benchmark reruns and deeper V1 parity work
 
 ---
 
@@ -68,37 +67,37 @@ expensive aggregation flow.
 
 ---
 
-## Plan
+## Implemented
 
-### Steps
+### Completed Steps
 
-1. Harden the prompt layer without changing provider/model assumptions.
+1. Hardened the prompt layer without changing provider/model assumptions.
    Port the essential Tyler prompt method into the current prompt surfaces:
    frame-specific instructions and failure modes for analysts, explicit
    non-merge criteria for dedup, stronger anti-conformity basis requirements for
    arbitration, and clearer dispute classification instructions.
 
-2. Add a dedicated claim-extraction step.
+2. Added a dedicated claim-extraction step.
    Create `prompts/claimify.yaml` and replace the current copy-through
    extraction path with an LLM extraction pass over analyst outputs. The output
    contract must produce self-contained claims with evidence IDs and a
    specificity marker when the source does not support full detail.
 
-3. Harden deduplication mechanically.
+3. Hardened deduplication mechanically.
    Keep the existing fail-loud fallback, but add code-level validation that:
    every raw claim appears exactly once, zero-group output is rejected, and one
    retry occurs before 1:1 promotion.
 
-4. Enforce anti-conformity in the schema and validator layer.
+4. Enforced anti-conformity in the schema and validator layer.
    Extend arbitration outputs so every claim update carries an explicit basis
    type and short justification tied to cited evidence. Reject claim updates
    that fail validation.
 
-5. Add anonymization scrubbing before downstream reuse.
+5. Added anonymization scrubbing before downstream reuse.
    Scrub or reject analyst outputs that contain model-family self-identification
    before claim extraction and arbitration inputs are built.
 
-6. Update tests and docs only after the behavior is verified.
+6. Updated tests and plan docs after verification.
    Preserve the benchmark/stability framing: cheap models remain the
    development baseline until the reasoning method is stabilized.
 
@@ -139,14 +138,19 @@ expensive aggregation flow.
 
 ## Acceptance Criteria
 
-- [ ] Prompt surfaces encode Tyler's core reasoning safeguards without changing the cheap-model development baseline
-- [ ] Claim extraction is a dedicated post-analyst stage rather than analyst copy-through
-- [ ] Dedup rejects invalid grouping outputs and only falls back to 1:1 promotion after one failed retry
-- [ ] No claim update is accepted unless it carries an allowed basis type, cited evidence IDs, and a justification tied to that basis
-- [ ] Analyst outputs passed downstream are anonymized mechanically, not only by prompt convention
-- [ ] Required tests pass
-- [ ] Full test suite passes
-- [ ] Docs reflect the new contracts
+- [x] Prompt surfaces encode Tyler's core reasoning safeguards without changing the cheap-model development baseline
+- [x] Claim extraction is a dedicated post-analyst stage rather than analyst copy-through
+- [x] Dedup rejects invalid grouping outputs and only falls back to 1:1 promotion after one failed retry
+- [x] No claim update is accepted unless it carries an allowed basis type, cited evidence IDs, and a justification tied to that basis
+- [x] Analyst outputs passed downstream are anonymized mechanically, not only by prompt convention
+- [x] Required tests pass
+- [x] Full test suite passes for the targeted Wave 1 suite
+- [x] Docs reflect the new contracts
+
+## Verification Run
+
+- `PYTHONPATH=src python -m pytest tests/test_anonymize.py tests/test_verify.py tests/test_prompt_templates.py tests/test_canonicalize.py tests/test_phase_boundaries.py`
+  - Result: `41 passed, 1 skipped`
 
 ---
 
@@ -159,3 +163,6 @@ expensive aggregation flow.
 - If the claim-extraction step proves too weak on cheap models, do not silently
   retreat to the old behavior. Record the failure explicitly and reassess the
   stage contract.
+- Next review gate: rerun comparative benchmarks and decide whether Wave 2
+  should focus on richer prompt parity, search-provider experiments, or
+  benchmark automation.
