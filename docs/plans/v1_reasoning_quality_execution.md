@@ -31,6 +31,7 @@ expensive aggregation flow.
 ## References Reviewed
 
 - `docs/plans/v1_spec_alignment.md` - current reconciliation memo
+- `docs/notebooks/04_reasoning_quality_alignment_wave1.ipynb` - planning artifact for this wave
 - `2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md` - Tyler's staged build order
 - `2026_0325_tyler_feedback/2. V1_DESIGN.md` - design constraints and protocol intent
 - `2026_0325_tyler_feedback/4. V1_PROMPTS.md` - prompt method to preserve
@@ -61,6 +62,7 @@ expensive aggregation flow.
 - `tests/test_phase_boundaries.py` (modify)
 - `tests/test_canonicalize.py` (create)
 - `tests/test_verify.py` (create)
+- `docs/notebooks/04_reasoning_quality_alignment_wave1.ipynb` (create/update)
 - `docs/FEATURE_STATUS.md` (modify if any implementation status language changes)
 - `docs/TECH_DEBT.md` (modify to remove or narrow resolved items)
 
@@ -99,6 +101,19 @@ expensive aggregation flow.
 6. Update tests and docs only after the behavior is verified.
    Preserve the benchmark/stability framing: cheap models remain the
    development baseline until the reasoning method is stabilized.
+
+---
+
+## Failure Modes
+
+| Failure Mode | Detection | Response |
+|--------------|-----------|----------|
+| Prompt hardening produces cleaner JSON but weaker reasoning | Frozen-case prompt review and benchmark spot checks show less specificity or weaker counterarguments | Revert the prompt change, isolate the prompt surface, and port smaller Tyler elements one at a time |
+| Claimify step produces vague or duplicated claims on cheap models | New claim extraction tests fail or extracted claims lose specificity relative to analyst text | Keep the dedicated stage, tighten schema descriptions, add one retry path, and reassess prompt scope before widening rollout |
+| Dedup retry hides systematic grouping failures | Retry succeeds structurally but still collapses distinct claims or leaves coverage holes | Add validation that checks one-to-one raw claim coverage and suspicious over-merging before accepting retry output |
+| Anti-conformity validation becomes too weak to matter | Claim updates pass without meaningful basis justification | Tighten required fields and reject updates rather than downgrading to warnings |
+| Anti-conformity validation becomes too strict and blocks legitimate updates | Arbitration results fail frequently despite clearly relevant fresh evidence | Review failing cases, improve justification instructions, and adjust the validator at the contract level rather than bypassing it |
+| Anonymization scrub mutates substantive content | Tests show meaning changed or evidence references were altered | Restrict scrubbing to model-identity phrases only and fail loud on ambiguous cases |
 
 ---
 
