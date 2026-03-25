@@ -21,3 +21,6 @@ docs/original_plans_may_be_deprecated/
 .claude/hook_log.jsonl
 .~lock*
 docs/archive/
+.claude/
+scripts/phase_minus1.py
+scripts/run_storm.py
