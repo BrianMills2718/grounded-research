@@ -13,6 +13,7 @@ configured (e.g. single-phase mode), a temp directory is used automatically.
 """
 
 import hashlib
+import io
 import json
 import os
 import re
@@ -205,6 +206,111 @@ async def _fetch_pdf_with_llamaparse(url: str, question: str = "") -> str:
     })
 
 
+def _extract_pdf_text_locally(pdf_bytes: bytes) -> tuple[str, str]:
+    """Extract PDF text using locally available parsers.
+
+    The standard dev environment should be able to read research PDFs without
+    requiring an external parsing API. Try simple, observable local parsers
+    first and return both the extracted text and the parser name.
+    """
+    errors: list[str] = []
+
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        text = "\n\n".join((page.extract_text() or "").strip() for page in reader.pages).strip()
+        if text:
+            return text, "pypdf"
+        errors.append("pypdf returned no text")
+    except Exception as exc:
+        errors.append(f"pypdf failed: {type(exc).__name__}: {exc}")
+
+    try:
+        import pymupdf
+
+        with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:
+            text = "\n\n".join(page.get_text("text").strip() for page in doc).strip()
+        if text:
+            return text, "pymupdf"
+        errors.append("pymupdf returned no text")
+    except Exception as exc:
+        errors.append(f"pymupdf failed: {type(exc).__name__}: {exc}")
+
+    raise ValueError("; ".join(errors))
+
+
+def _build_pdf_result(url: str, full_text: str, question: str, parsed_via: str) -> str:
+    """Build the shared JSON result for a successfully parsed PDF."""
+    pages_dir = _get_pages_dir()
+    file_path = pages_dir / f"{_url_hash(url)}.txt"
+    file_path.write_text(full_text, encoding="utf-8")
+
+    notes = full_text[:_NOTES_CHARS]
+    key_section = extract_key_section(full_text, question) if question else ""
+
+    return json.dumps({
+        "url": url,
+        "content_type": "pdf",
+        "parsed_via": parsed_via,
+        "file_path": str(file_path),
+        "char_count": len(full_text),
+        "notes": notes,
+        "key_section": key_section,
+        "question": question,
+        "note": (
+            f"PDF parsed via {parsed_via}. Full text saved to file_path. "
+            "Use read_page(file_path) for more."
+        ),
+    })
+
+
+async def _fetch_pdf_locally(url: str, question: str = "") -> str:
+    """Download and parse a PDF using local libraries only."""
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (compatible; InvestigativeResearchBot/1.0; "
+            "+https://github.com/BrianMills2718/research_v2)"
+        ),
+        "Accept": "application/pdf,*/*;q=0.8",
+    }
+
+    try:
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            timeout=_TIMEOUT,
+            headers=headers,
+        ) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        return json.dumps({
+            "url": url,
+            "content_type": "pdf",
+            "error": f"HTTP {exc.response.status_code}: {exc.response.reason_phrase}",
+            "text": "",
+        })
+    except httpx.RequestError as exc:
+        return json.dumps({
+            "url": url,
+            "content_type": "pdf",
+            "error": f"Request failed: {type(exc).__name__}: {exc}",
+            "text": "",
+        })
+
+    try:
+        full_text, parsed_via = _extract_pdf_text_locally(response.content)
+    except ValueError as exc:
+        return json.dumps({
+            "url": url,
+            "content_type": "pdf",
+            "error": f"Local PDF parsing failed: {exc}",
+            "text": "",
+        })
+
+    return _build_pdf_result(url, full_text, question, parsed_via)
+
+
 async def fetch_page(url: str, question: str = "") -> str:
     """Fetch a web page, save full text to disk, return notes for context.
 
@@ -222,7 +328,18 @@ async def fetch_page(url: str, question: str = "") -> str:
                   Passed to read_page later if you need deeper context.
     """
     if _is_pdf_url(url):
-        return await _fetch_pdf_with_llamaparse(url, question)
+        local_result = json.loads(await _fetch_pdf_locally(url, question))
+        if "error" not in local_result:
+            return json.dumps(local_result)
+
+        api_key = os.environ.get("LLAMA_CLOUD_API_KEY")
+        if api_key:
+            remote_result = json.loads(await _fetch_pdf_with_llamaparse(url, question))
+            if "error" not in remote_result:
+                return json.dumps(remote_result)
+            local_result["llamaparse_error"] = remote_result["error"]
+
+        return json.dumps(local_result)
 
     headers = {
         "User-Agent": (

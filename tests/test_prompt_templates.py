@@ -110,11 +110,14 @@ def test_claimify_prompt_renders_with_atomic_extraction_rules() -> None:
                 "content": "Tool X beat Tool Y by 20% but used 2x the memory.",
             }
         ],
+        valid_evidence_ids=["E-1"],
     )
 
     assert "atomize compound claims into single assertions" in messages[0]["content"]
     assert "Do not invent new evidence IDs" in messages[0]["content"]
+    assert "Never emit source IDs" in messages[0]["content"]
     assert "Analyst Claims" in messages[1]["content"]
+    assert "Valid Evidence IDs" in messages[1]["content"]
 
 
 def test_arbitration_prompt_renders_with_anti_conformity_basis_language() -> None:

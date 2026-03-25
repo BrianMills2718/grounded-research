@@ -18,17 +18,18 @@ from grounded_research.models import (
 
 
 @pytest.mark.asyncio
-async def test_extract_raw_claims_uses_claim_extraction_and_strips_invalid_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Claim extraction should assign fresh RC- IDs and keep only valid evidence IDs."""
+async def test_extract_raw_claims_uses_claim_extraction_with_valid_evidence_whitelist(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Claim extraction should expose the valid evidence whitelist in the prompt and output."""
     # mock-ok: LLM boundary is external; this test verifies local prompt wiring and post-processing.
     async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
         assert task == "claim_extraction"
         assert "Analyst Claims" in messages[1]["content"]
+        assert "Valid Evidence IDs" in messages[1]["content"]
         result = response_model(
             claims=[
                 {
                     "statement": "The Finnish Basic Income Experiment (2017-2018, N=2,000) found no employment gain.",
-                    "evidence_ids": ["E-1", "E-missing"],
+                    "evidence_ids": ["E-1"],
                     "confidence": "high",
                     "reasoning": "Split from the analyst's broader summary claim.",
                 }
@@ -93,14 +94,14 @@ async def test_extract_raw_claims_drops_claims_without_any_valid_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Claims that lose all evidence during cleanup must not enter the ledger."""
-    # mock-ok: verifies local post-processing for invalid evidence references.
+    # mock-ok: verifies local post-processing for ungrounded claim extraction output.
     async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
         assert task == "claim_extraction"
         result = response_model(
             claims=[
                 {
                     "statement": "Ungrounded synthesized claim about pilot design heterogeneity.",
-                    "evidence_ids": ["S-1", "E-missing"],
+                    "evidence_ids": [],
                     "confidence": "medium",
                     "reasoning": "This should be dropped because it cites no valid evidence items.",
                 }

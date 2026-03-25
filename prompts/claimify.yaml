@@ -22,6 +22,11 @@ messages:
         contains them.
       - Do not invent new evidence IDs. Only use evidence IDs from the provided
         candidate set.
+      - Never emit source IDs (`S-...`), claim IDs (`C-...` or `RC-...`), or
+        placeholder labels as evidence IDs.
+      - If a candidate claim cannot be grounded in one or more valid
+        candidate evidence IDs, omit it rather than returning an ungrounded
+        claim.
       - Do not add claims that are absent from the analyst's structured output.
       - Keep claims narrow when evidence is mixed or incomplete.
       - You are not deduplicating or resolving disputes here.
@@ -82,7 +87,16 @@ messages:
       {% endfor %}
       {% endif %}
 
+      {% if valid_evidence_ids %}
+      ## Valid Evidence IDs
+      Use only these evidence IDs in `evidence_ids`:
+      {% for evidence_id in valid_evidence_ids %}
+      - {{ evidence_id }}
+      {% endfor %}
+      {% endif %}
+
       ## Instructions
       Extract atomic raw claims from this analyst's structured output.
       Normalize and split claims where needed, but preserve specific detail and
-      valid evidence lineage.
+      valid evidence lineage. Return only claims that can be anchored to the
+      valid evidence IDs listed above.

@@ -45,6 +45,7 @@ async def extract_raw_claims(
     """
     from llm_client import acall_llm_structured, render_prompt
     from pydantic import BaseModel, Field
+    from typing import Literal
 
     import logging
 
@@ -53,34 +54,6 @@ async def extract_raw_claims(
     evidence_by_id = {e.id: e for e in bundle.evidence}
     source_by_id = {s.id: s for s in bundle.sources}
 
-    class ExtractedRawClaim(BaseModel):
-        """LLM-facing atomic claim without system-assigned IDs."""
-
-        statement: str = Field(
-            description=(
-                "A self-contained, falsifiable claim rewritten from the analyst's "
-                "input claims. Preserve concrete entities, dates, numbers, and "
-                "benchmarks when available."
-            ),
-        )
-        evidence_ids: list[str] = Field(
-            default_factory=list,
-            description="Evidence IDs from the provided candidate set that support this claim.",
-        )
-        confidence: str = Field(description="high, medium, or low")
-        reasoning: str = Field(
-            default="",
-            description="Why this atomic claim was extracted and how it maps back to the analyst's input.",
-        )
-
-    class ClaimExtractionResult(BaseModel):
-        """LLM output for one analyst's claim extraction pass."""
-
-        claims: list[ExtractedRawClaim] = Field(
-            default_factory=list,
-            description="Atomic normalized claims extracted from the analyst's structured output.",
-        )
-
     all_claims: list[RawClaim] = []
     claim_to_analyst: dict[str, str] = {}
 
@@ -88,7 +61,7 @@ async def extract_raw_claims(
     if not successful_runs:
         return all_claims, claim_to_analyst
 
-    async def _extract_for_run(run: AnalystRun) -> tuple[AnalystRun, ClaimExtractionResult]:
+    async def _extract_for_run(run: AnalystRun) -> tuple[AnalystRun, BaseModel]:
         cited_evidence_ids = {
             eid
             for claim in run.claims
@@ -102,12 +75,63 @@ async def extract_raw_claims(
             if eid in valid_evidence_ids
         )
 
+        if not cited_evidence_ids:
+            logger.warning(
+                "Claim extraction %s: no valid cited evidence IDs available; skipping extraction",
+                run.analyst_label,
+            )
+
+            class EmptyClaimExtractionResult(BaseModel):
+                """No-op extraction result when there is no valid candidate evidence."""
+
+                claims: list[RawClaim] = Field(default_factory=list)
+
+            return run, EmptyClaimExtractionResult()
+
         relevant_evidence = [evidence_by_id[eid].model_dump() for eid in cited_evidence_ids]
         relevant_sources = [
             source_by_id[e.source_id].model_dump(mode="json")
             for e in (evidence_by_id[eid] for eid in cited_evidence_ids)
             if e.source_id in source_by_id
         ]
+        ordered_candidate_ids = sorted(cited_evidence_ids)
+        AllowedEvidenceId = Literal.__getitem__(tuple(ordered_candidate_ids))
+
+        class ExtractedRawClaim(BaseModel):
+            """LLM-facing atomic claim without system-assigned IDs."""
+
+            statement: str = Field(
+                description=(
+                    "A self-contained, falsifiable claim rewritten from the analyst's "
+                    "input claims. Preserve concrete entities, dates, numbers, and "
+                    "benchmarks when available."
+                ),
+            )
+            evidence_ids: list[AllowedEvidenceId] = Field(
+                default_factory=list,
+                description=(
+                    "One or more supporting evidence IDs chosen only from the "
+                    f"candidate set: {ordered_candidate_ids}. Do not emit source IDs "
+                    "or invented evidence IDs."
+                ),
+            )
+            confidence: str = Field(description="high, medium, or low")
+            reasoning: str = Field(
+                default="",
+                description="Why this atomic claim was extracted and how it maps back to the analyst's input.",
+            )
+
+        class ClaimExtractionResult(BaseModel):
+            """LLM output for one analyst's claim extraction pass."""
+
+            claims: list[ExtractedRawClaim] = Field(
+                default_factory=list,
+                description=(
+                    "Atomic normalized claims extracted from the analyst's structured "
+                    "output. Omit any claim that cannot be grounded in the candidate "
+                    "evidence IDs."
+                ),
+            )
 
         messages = render_prompt(
             str(_PROJECT_ROOT / "prompts" / "claimify.yaml"),
@@ -119,6 +143,7 @@ async def extract_raw_claims(
             counterarguments=[counterargument.model_dump() for counterargument in run.counterarguments],
             evidence=relevant_evidence,
             source_records=relevant_sources,
+            valid_evidence_ids=ordered_candidate_ids,
         )
 
         result, _meta = await acall_llm_structured(

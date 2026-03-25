@@ -1,6 +1,6 @@
 # Plan: Wave 2 Enumeration and Grounding Recovery
 
-**Status:** Planned
+**Status:** In progress
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
@@ -70,6 +70,10 @@ Pre-make the environment decision:
 
 Do not leave study access dependent on an optional missing package.
 
+Status:
+- local-first PDF parsing implemented in `fetch_page.py`
+- verified on a previously failing NBER UBI paper (`w27351.pdf`) using local `pypdf`
+
 ### 2. Tighten Claimify evidence anchoring
 
 Make Claimify harder to drift:
@@ -80,6 +84,11 @@ Make Claimify harder to drift:
 
 The success condition is not just “fewer bad IDs.” It is “fewer valuable claims
 lost because the model failed to anchor them correctly.”
+
+Status:
+- prompt now enumerates valid evidence IDs explicitly
+- claim-extraction response schema now constrains `evidence_ids` to the run's
+  actual candidate `E-...` IDs
 
 ### 3. Add dense-claim dedup strategy
 
