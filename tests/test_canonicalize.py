@@ -89,6 +89,76 @@ async def test_extract_raw_claims_uses_claim_extraction_and_strips_invalid_evide
 
 
 @pytest.mark.asyncio
+async def test_extract_raw_claims_drops_claims_without_any_valid_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Claims that lose all evidence during cleanup must not enter the ledger."""
+    # mock-ok: verifies local post-processing for invalid evidence references.
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+        assert task == "claim_extraction"
+        result = response_model(
+            claims=[
+                {
+                    "statement": "Ungrounded synthesized claim about pilot design heterogeneity.",
+                    "evidence_ids": ["S-1", "E-missing"],
+                    "confidence": "medium",
+                    "reasoning": "This should be dropped because it cites no valid evidence items.",
+                }
+            ]
+        )
+        return result, {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="Do UBI pilots reduce workforce participation?"),
+        sources=[
+            SourceRecord(
+                id="S-1",
+                url="https://example.com/ubi",
+                title="UBI paper",
+                quality_tier="reliable",
+            )
+        ],
+        evidence=[
+            EvidenceItem(
+                id="E-1",
+                source_id="S-1",
+                content="A valid evidence item exists, but the extracted claim does not cite it.",
+                content_type="text",
+            )
+        ],
+    )
+    analyst_runs = [
+        AnalystRun(
+            analyst_label="Alpha",
+            model="openrouter/openai/gpt-5-nano",
+            frame="verification_first",
+            claims=[
+                RawClaim(
+                    statement="Some pilots vary substantially in design.",
+                    evidence_ids=["E-1"],
+                    confidence="medium",
+                )
+            ],
+            recommendations=[Recommendation(statement="Compare pilot designs before generalizing.")],
+            counterarguments=[Counterargument(target="recommendation", argument="Design variation may still hide common effects.", evidence_ids=["E-1"])],
+            summary="Pilot design varies substantially.",
+        )
+    ]
+
+    raw_claims, claim_to_analyst = await extract_raw_claims(
+        analyst_runs,
+        bundle,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert raw_claims == []
+    assert claim_to_analyst == {}
+
+
+@pytest.mark.asyncio
 async def test_extract_raw_claims_skips_failed_analysts(monkeypatch: pytest.MonkeyPatch) -> None:
     """Failed analyst runs should not trigger claim extraction calls."""
     # mock-ok: verifies no external LLM call occurs when all analysts failed.

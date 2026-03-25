@@ -50,6 +50,38 @@ may be a structured output parsing issue with OpenRouter's Gemini routing.
 **Frequency:** ~30% of runs via OpenRouter
 **Fix:** Investigate whether the prompt or schema needs adjustment for OpenRouter routing. Consider a retry before falling back.
 
+### Enumeration-heavy dedup instability
+Dense claim sets from enumeration-heavy questions can still defeat the dedup
+stage even after the retry guard. On the 2026-03-25 UBI rerun, a 47-claim set
+produced one invalid dedup result, one invalid retry result, and then fell back
+to 1:1 promotion. This preserved claims but inflated the canonical ledger and
+likely weakened downstream dispute localization.
+
+**File:** `src/grounded_research/canonicalize.py`
+**Observed:** UBI post-Wave-1 benchmark (`output/ubi_wave1_post/trace.json`)
+**Fix:** Add stronger non-merge guidance for enumeration questions, consider chunked or staged dedup, and treat repeated fallback on dense claim sets as a first-class benchmark failure.
+
+### Claim extraction evidence-ID hallucination
+The Claimify stage still invents invalid evidence/source identifiers on hard
+questions. The current code strips bad IDs and now drops claims that become
+ungrounded after cleanup, which prevents ledger pollution but can also discard
+otherwise valuable claims when the model fails to anchor them correctly.
+
+**File:** `src/grounded_research/canonicalize.py`
+**Observed:** 2026-03-25 UBI reruns produced repeated invalid IDs such as `S-...`,
+`C1-def-...`, and nonexistent `E-...` values during claim extraction.
+**Fix:** Tighten the Claimify prompt/schema so only provided `E-...` IDs are valid outputs, consider presenting a smaller explicit candidate list, and add benchmark checks for dropped claims caused by evidence cleanup.
+
+### PDF retrieval depends on missing optional parser
+Study-heavy questions are currently penalized when important PDFs require the
+`llama_cloud` parsing path and that dependency is not installed. The UBI run
+lost access to several NBER, IZA, World Bank, and IMF PDFs this way.
+
+**Files:** `src/grounded_research/tools/fetch_page.py`, environment setup
+**Observed:** 2026-03-25 UBI rerun logged multiple `No module named 'llama_cloud'`
+fetch failures during collection.
+**Fix:** Either install the dependency as part of the supported environment, or replace the PDF path with a supported parser/fallback that does not silently reduce evidence quality on study-heavy questions.
+
 ### Sub-question evidence tagging incomplete
 Evidence items are tagged with `sub_question_id` based on which search query
 found them. But `_select_diverse()` round-robins across queries, and the

@@ -144,6 +144,13 @@ async def extract_raw_claims(
                     invalid,
                 )
             cleaned_ids = [eid for eid in extracted.evidence_ids if eid in valid_evidence_ids]
+            if not cleaned_ids:
+                logger.warning(
+                    "Claim extraction %s: dropping ungrounded claim after evidence cleanup: %s",
+                    run.analyst_label,
+                    extracted.statement[:160],
+                )
+                continue
             claim = RawClaim(
                 statement=extracted.statement,
                 evidence_ids=cleaned_ids,
