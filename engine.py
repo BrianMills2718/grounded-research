@@ -31,6 +31,7 @@ async def run_pipeline(
     """Run the full adjudication pipeline."""
     from grounded_research.ingest import load_manual_bundle, validate_bundle
     from grounded_research.analysts import run_analysts
+    from grounded_research.anonymize import scrub_analyst_run
     from grounded_research.canonicalize import (
         extract_raw_claims,
         deduplicate_claims,
@@ -109,6 +110,15 @@ async def run_pipeline(
         import re
         url_pattern = re.compile(r'https?://\S+')
         for run in succeeded:
+            redactions = scrub_analyst_run(run)
+            if redactions:
+                state.add_warning(
+                    "analyze",
+                    "identity_leakage_scrubbed",
+                    f"Scrubbed {len(redactions)} self-identification field(s) from analyst {run.analyst_label}.",
+                    analyst_label=run.analyst_label,
+                    redacted_fields=redactions,
+                )
             for claim in run.claims:
                 urls_in_claim = url_pattern.findall(claim.statement)
                 if urls_in_claim:
