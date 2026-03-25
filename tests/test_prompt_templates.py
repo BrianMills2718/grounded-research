@@ -138,6 +138,9 @@ def test_arbitration_prompt_renders_with_anti_conformity_basis_language() -> Non
     assert "new evidence" in messages[0]["content"]
     assert "corrected assumption" in messages[0]["content"]
     assert "resolved contradiction" in messages[0]["content"]
+    assert "`claim_updates` is a list of structured objects" in messages[0]["content"]
+    assert "cited_evidence_ids" in messages[0]["content"]
+    assert "justification" in messages[0]["content"]
     assert "treat fresh evidence" in messages[1]["content"]
     assert "required basis" in messages[1]["content"]
 

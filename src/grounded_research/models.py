@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +80,12 @@ ArbitrationVerdict = Literal[
     "revised",
     "refuted",
     "inconclusive",
+]
+
+ClaimUpdateBasis = Literal[
+    "new_evidence",
+    "corrected_assumption",
+    "resolved_contradiction",
 ]
 
 SubQuestionType = Literal["factual", "causal", "comparative", "evaluative", "scope"]
@@ -506,11 +512,77 @@ class ArbitrationResult(BaseModel):
     reasoning: str = Field(
         description="The arbitration reasoning chain.",
     )
-    claim_updates: dict[str, ClaimStatus] = Field(
-        default_factory=dict,
-        description="Map of Claim.id → new ClaimStatus resulting from this arbitration.",
+    claim_updates: list["ClaimUpdate"] = Field(
+        default_factory=list,
+        description=(
+            "Structured per-claim updates produced by this arbitration. "
+            "Every update must name the claim, the new status, the basis type, "
+            "the fresh evidence IDs supporting the change, and a concise "
+            "justification tying the evidence to the update."
+        ),
     )
     completed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @field_validator("claim_updates", mode="before")
+    @classmethod
+    def _normalize_legacy_claim_updates(cls, value: object) -> object:
+        """Accept older trace artifacts that stored claim_updates as a dict.
+
+        Live arbitration uses the structured ClaimUpdate contract. Historical
+        traces may still contain the earlier dict[str, ClaimStatus] shape and
+        should remain readable for boundary tests and inspection.
+        """
+        if isinstance(value, dict):
+            return [
+                {
+                    "claim_id": claim_id,
+                    "new_status": new_status,
+                    "basis_type": "new_evidence",
+                    "cited_evidence_ids": [],
+                    "justification": (
+                        "Legacy trace: structured claim-update basis and cited "
+                        "fresh evidence were not recorded."
+                    ),
+                }
+                for claim_id, new_status in value.items()
+            ]
+        return value
+
+
+class ClaimUpdate(BaseModel):
+    """A single claim-status mutation justified by arbitration evidence.
+
+    Claim updates are first-class so the verifier can enforce Tyler's
+    anti-conformity rule at the protocol level instead of relying only on
+    prompt wording.
+    """
+
+    claim_id: str = Field(description="The canonical Claim.id whose status should change.")
+    new_status: ClaimStatus = Field(
+        description=(
+            "The claim status after arbitration. Use supported, revised, or "
+            "refuted for concrete changes. Do not use initial."
+        ),
+    )
+    basis_type: ClaimUpdateBasis = Field(
+        description=(
+            "Why the claim is allowed to change: new evidence, corrected "
+            "assumption, or resolved contradiction."
+        ),
+    )
+    cited_evidence_ids: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Fresh evidence IDs that directly support this change. These must "
+            "come from the dispute's newly retrieved evidence set."
+        ),
+    )
+    justification: str = Field(
+        description=(
+            "Concise explanation of how the cited evidence supports the new "
+            "status for this claim."
+        ),
+    )
 
 
 class ClaimLedger(BaseModel):
@@ -745,5 +817,6 @@ are included in the report but not auto-resolved.
 # ---------------------------------------------------------------------------
 
 EvidenceBundle.model_rebuild()
+ArbitrationResult.model_rebuild()
 DownstreamHandoff.model_rebuild()
 PipelineState.model_rebuild()

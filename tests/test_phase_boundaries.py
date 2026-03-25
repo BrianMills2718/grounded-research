@@ -220,8 +220,7 @@ class TestPhase4ToPhase5:
         """Claim status updates in arbitration must reference real claims."""
         claim_ids = {c.id for c in ledger.claims}
         for ar in ledger.arbitration_results:
-            # claim_updates is dict[str, ClaimStatus] — keys are claim IDs
-            unknown = [cid for cid in ar.claim_updates if cid not in claim_ids]
+            unknown = [update.claim_id for update in ar.claim_updates if update.claim_id not in claim_ids]
             assert not unknown, (
                 f"Arbitration for {ar.dispute_id} updates unknown claims: {unknown}"
             )

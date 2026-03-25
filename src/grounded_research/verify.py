@@ -20,6 +20,7 @@ from grounded_research.config import get_budget, get_fallback_models, get_model,
 from grounded_research.models import (
     ArbitrationResult,
     Claim,
+    ClaimUpdate,
     ClaimLedger,
     Dispute,
     EvidenceBundle,
@@ -66,8 +67,153 @@ def _build_inconclusive_result(dispute_id: str, reason: str) -> ArbitrationResul
         verdict="inconclusive",
         new_evidence_ids=[],
         reasoning=reason,
-        claim_updates={},
+        claim_updates=[],
     )
+
+
+def _validate_claim_updates(
+    dispute: Dispute,
+    updates: list[ClaimUpdate],
+    claim_map: dict[str, Claim],
+    fresh_evidence_ids: set[str],
+) -> tuple[list[ClaimUpdate], list[VerificationWarning]]:
+    """Filter arbitration claim updates to the protocol-valid subset.
+
+    The anti-conformity contract is enforced here, not left to prompt wording:
+    every live claim change must target a disputed claim, cite retrieved fresh
+    evidence, and provide a non-empty justification.
+    """
+    warnings: list[VerificationWarning] = []
+    valid_updates: list[ClaimUpdate] = []
+    seen_claim_ids: set[str] = set()
+    dispute_claim_ids = set(dispute.claim_ids)
+
+    for update in updates:
+        if update.claim_id in seen_claim_ids:
+            warnings.append(VerificationWarning(
+                code="verification_duplicate_claim_update",
+                message=f"Duplicate claim update for {update.claim_id} in dispute {dispute.id}.",
+                context={"dispute_id": dispute.id, "claim_id": update.claim_id},
+            ))
+            continue
+
+        if update.claim_id not in claim_map:
+            warnings.append(VerificationWarning(
+                code="verification_missing_claim",
+                message=f"Arbitration references unknown claim {update.claim_id}.",
+                context={"dispute_id": dispute.id, "claim_id": update.claim_id},
+            ))
+            continue
+
+        if update.claim_id not in dispute_claim_ids:
+            warnings.append(VerificationWarning(
+                code="verification_claim_outside_dispute",
+                message=f"Arbitration tried to update claim {update.claim_id} outside dispute {dispute.id}.",
+                context={"dispute_id": dispute.id, "claim_id": update.claim_id},
+            ))
+            continue
+
+        if update.new_status == "initial":
+            warnings.append(VerificationWarning(
+                code="verification_invalid_claim_status",
+                message=f"Arbitration returned non-terminal status 'initial' for claim {update.claim_id}.",
+                context={"dispute_id": dispute.id, "claim_id": update.claim_id, "new_status": update.new_status},
+            ))
+            continue
+
+        cited_fresh_ids = [eid for eid in update.cited_evidence_ids if eid in fresh_evidence_ids]
+        if not cited_fresh_ids:
+            warnings.append(VerificationWarning(
+                code="verification_claim_update_missing_fresh_evidence",
+                message=f"Claim update for {update.claim_id} lacks valid fresh evidence IDs.",
+                context={
+                    "dispute_id": dispute.id,
+                    "claim_id": update.claim_id,
+                    "cited_evidence_ids": update.cited_evidence_ids,
+                },
+            ))
+            continue
+
+        if not update.justification.strip():
+            warnings.append(VerificationWarning(
+                code="verification_claim_update_missing_justification",
+                message=f"Claim update for {update.claim_id} has empty justification.",
+                context={"dispute_id": dispute.id, "claim_id": update.claim_id},
+            ))
+            continue
+
+        valid_updates.append(
+            update.model_copy(update={"cited_evidence_ids": cited_fresh_ids})
+        )
+        seen_claim_ids.add(update.claim_id)
+
+    return valid_updates, warnings
+
+
+def _enforce_arbitration_protocol(
+    dispute: Dispute,
+    result: ArbitrationResult,
+    claim_map: dict[str, Claim],
+    fresh_evidence_ids: set[str],
+) -> tuple[ArbitrationResult, list[VerificationWarning]]:
+    """Apply protocol-level validation to arbitration output.
+
+    A non-inconclusive verdict survives only if it cites fresh evidence and
+    carries at least one valid structured claim update.
+    """
+    warnings: list[VerificationWarning] = []
+    valid_new_evidence_ids = [eid for eid in result.new_evidence_ids if eid in fresh_evidence_ids]
+
+    if result.verdict == "inconclusive":
+        if result.claim_updates:
+            warnings.append(VerificationWarning(
+                code="verification_inconclusive_with_updates",
+                message=f"Inconclusive arbitration for {dispute.id} returned claim updates; dropping them.",
+                context={"dispute_id": dispute.id, "claim_update_count": len(result.claim_updates)},
+            ))
+        return result.model_copy(
+            update={
+                "new_evidence_ids": valid_new_evidence_ids,
+                "claim_updates": [],
+            }
+        ), warnings
+
+    if not valid_new_evidence_ids:
+        warnings.append(VerificationWarning(
+            code="verification_no_fresh_ids",
+            message=f"Dispute {dispute.id} verdict had no valid fresh evidence IDs.",
+            context={"dispute_id": dispute.id, "verdict": result.verdict},
+        ))
+        return _build_inconclusive_result(
+            dispute.id,
+            "Arbitration did not return valid fresh-evidence IDs.",
+        ), warnings
+
+    valid_updates, update_warnings = _validate_claim_updates(
+        dispute=dispute,
+        updates=result.claim_updates,
+        claim_map=claim_map,
+        fresh_evidence_ids=set(valid_new_evidence_ids),
+    )
+    warnings.extend(update_warnings)
+
+    if not valid_updates:
+        warnings.append(VerificationWarning(
+            code="verification_no_valid_claim_updates",
+            message=f"Dispute {dispute.id} produced no protocol-valid claim updates.",
+            context={"dispute_id": dispute.id, "verdict": result.verdict},
+        ))
+        return _build_inconclusive_result(
+            dispute.id,
+            "Arbitration did not produce any protocol-valid claim updates tied to fresh evidence.",
+        ), warnings
+
+    return result.model_copy(
+        update={
+            "new_evidence_ids": valid_new_evidence_ids,
+            "claim_updates": valid_updates,
+        }
+    ), warnings
 
 
 async def generate_verification_queries(
@@ -127,14 +273,12 @@ async def arbitrate_dispute(
 ) -> ArbitrationResult:
     """Arbitrate a single dispute using evidence plus fresh evidence (Phase 4b).
 
-    Returns a typed ArbitrationResult with fresh evidence IDs constrained to newly
-    fetched evidence. Non-evidence-backed supportive verdicts are forced to
-    inconclusive.
+    Returns a typed ArbitrationResult using an LLM-facing response schema that
+    excludes system-assigned fields. Protocol validation happens after the call.
     """
     import random as _random
     from llm_client import acall_llm_structured, render_prompt
-
-    fresh_evidence_ids = {item.id for item in fresh_evidence}
+    from pydantic import BaseModel, Field
 
     # Shuffle claim order to prevent primacy bias (#38)
     shuffled_claims = list(claims)
@@ -148,12 +292,26 @@ async def arbitrate_dispute(
         fresh_evidence=[e.model_dump() for e in fresh_evidence],
     )
 
+    class ArbitrationDecision(BaseModel):
+        """LLM-facing arbitration payload without system-assigned fields."""
+
+        verdict: str = Field(description="supported, revised, refuted, or inconclusive")
+        new_evidence_ids: list[str] = Field(
+            default_factory=list,
+            description="Fresh evidence IDs that materially support the verdict.",
+        )
+        reasoning: str = Field(description="Reasoning chain for the verdict.")
+        claim_updates: list[ClaimUpdate] = Field(
+            default_factory=list,
+            description="Structured claim-level updates justified by the fresh evidence.",
+        )
+
     model = get_model("arbitration")
     try:
         result, _meta = await acall_llm_structured(
             model,
             messages,
-            response_model=ArbitrationResult,
+            response_model=ArbitrationDecision,
             task="dispute_arbitration",
             trace_id=f"{trace_id}/arb/{dispute.id}",
             max_budget=max_budget,
@@ -165,18 +323,14 @@ async def arbitrate_dispute(
             f"Arbitration call failed before a decision: {exc}",
         )
 
-    result.dispute_id = dispute.id
-    result.new_evidence_ids = [eid for eid in result.new_evidence_ids if eid in fresh_evidence_ids]
-
-    if result.verdict in {"supported", "revised", "refuted"} and not result.new_evidence_ids:
-        result.verdict = "inconclusive"
-        result.claim_updates = {}
-        result.reasoning = (
-            "The verdict was not supported by retrievable `new_evidence_ids`. "
-            "Promoted to inconclusive under fail-loud rules."
-        )
-
-    return result
+    verdict = result.verdict if result.verdict in {"supported", "revised", "refuted", "inconclusive"} else "inconclusive"
+    return ArbitrationResult(
+        dispute_id=dispute.id,
+        verdict=verdict,
+        new_evidence_ids=result.new_evidence_ids,
+        reasoning=result.reasoning,
+        claim_updates=result.claim_updates,
+    )
 
 
 async def _collect_fresh_evidence_for_dispute(
@@ -416,31 +570,32 @@ async def verify_disputes(
         )
         llm_calls += 1
 
-        if result.verdict != "inconclusive" and not result.new_evidence_ids:
-            dispute_updates.append(VerificationWarning(
-                code="verification_no_fresh_ids",
-                message=f"Dispute {dispute.id} verdict had no fresh evidence IDs.",
-                context={"dispute_id": dispute.id, "verdict": result.verdict},
-            ))
-            result = _build_inconclusive_result(
-                dispute.id,
-                "Arbitration did not return valid fresh-evidence IDs.",
-            )
+        result, protocol_warnings = _enforce_arbitration_protocol(
+            dispute=dispute,
+            result=result,
+            claim_map=claim_map,
+            fresh_evidence_ids={item.id for item in new_evidence},
+        )
+        dispute_updates.extend(protocol_warnings)
 
         if result.verdict != "inconclusive":
             dispute.resolved = True
             dispute.resolution_summary = result.reasoning[:200]
-            for claim_id, new_status in result.claim_updates.items():
-                claim = ledger.claim_by_id(claim_id)
+            for update in result.claim_updates:
+                claim = ledger.claim_by_id(update.claim_id)
                 if claim is None:
                     dispute_updates.append(VerificationWarning(
                         code="verification_missing_claim",
-                        message=f"Arbitration references unknown claim {claim_id}.",
-                        context={"dispute_id": dispute.id, "claim_id": claim_id},
+                        message=f"Arbitration references unknown claim {update.claim_id}.",
+                        context={"dispute_id": dispute.id, "claim_id": update.claim_id},
                     ))
                     continue
-                claim.status = new_status
-                claim.status_reason = f"Arbitration {result.id}: {result.verdict}"
+                claim.status = update.new_status
+                cited = ", ".join(update.cited_evidence_ids[:3])
+                claim.status_reason = (
+                    f"Arbitration {result.id} ({update.basis_type}; evidence {cited}): "
+                    f"{update.justification}"
+                )
         else:
             dispute.resolved = False
             dispute.resolution_summary = result.reasoning[:200]

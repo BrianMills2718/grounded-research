@@ -20,16 +20,23 @@ messages:
 
       Anti-conformity rules:
       - A claim position may only change because of new evidence, a corrected assumption, or a resolved contradiction.
-      - In your reasoning, state which of those basis types justifies the
-        change.
+      - For every claim update, set `basis_type` to exactly one of:
+        `new_evidence`, `corrected_assumption`, or `resolved_contradiction`.
+      - For every claim update, include `cited_evidence_ids` containing only
+        fresh evidence IDs that directly justify that update.
+      - For every claim update, include `justification` explaining how the
+        cited fresh evidence supports the new status.
       - Do not treat "another position sounds more persuasive" as a valid basis.
 
       Decision rules:
-      - Connect each claim update to specific evidence IDs.
+      - `claim_updates` is a list of structured objects, not a map.
+      - Each claim update object must contain: `claim_id`, `new_status`,
+        `basis_type`, `cited_evidence_ids`, and `justification`.
       - If the evidence is mixed, narrow the update or return inconclusive.
       - Prefer revised over supported/refuted when the evidence changes the
         claim's scope rather than flipping it cleanly.
       - If no update is justified for a claim, leave it unchanged.
+      - If verdict is inconclusive, return an empty `claim_updates` list.
 
   - role: user
     content: |
@@ -66,7 +73,10 @@ messages:
 
       Evaluate this dispute using all evidence, but treat fresh evidence as the
       required basis for any non-inconclusive outcome.
-      In your reasoning, explicitly explain whether the update is driven by new
-      evidence, a corrected assumption, or a resolved contradiction.
-      For each claim, specify whether its status should change and only change it
-      when the cited evidence clearly justifies that update.
+      For each claim update you return:
+      - use one of the listed basis types
+      - cite only fresh evidence IDs in `cited_evidence_ids`
+      - explain the change in `justification`
+      - do not update claims that are not part of this dispute
+      If no protocol-valid update is justified, return `verdict =
+      inconclusive` and an empty `claim_updates` list.
