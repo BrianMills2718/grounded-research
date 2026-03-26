@@ -1,13 +1,15 @@
 # Plan: Configurable Research Depth
 
-**Status:** Planned
+**Status:** Partially implemented / deferred continuation
 **Priority:** High — directly addresses the #1 competitive gap
 
 ## Problem
 
-The pipeline runs at one fixed depth. For enumeration-heavy topics (UBI
-with 20+ pilot programs), this isn't enough. Perplexity wins because it
-searches more broadly and extracts more specific details per source.
+The repo now ships `standard`, `deep`, and `thorough` depth profiles for
+source count, compression threshold, claim targets, synthesis length, and
+budget. The remaining gap is not the existence of depth modes; it is the
+deeper per-source extraction, multi-round arbitration, and sectioned synthesis
+extensions described below.
 
 Brian's feedback: "this is meant to be an expensive longer running more
 heavily researched result."

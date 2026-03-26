@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-03-24
+**Last updated:** 2026-03-26
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
@@ -30,60 +30,48 @@ configurable depth modes (standard/deep/thorough).
 - 3 features cut (#3 ambiguity was un-cut and implemented, #6 complexity
   assessment, #38 shuffling was un-cut and implemented)
 
-## Next: Quality & Competitive Parity
+## Next: Wave 2 Completion
 
-The remaining gap with Perplexity (-3 on fasting) is not architectural.
-It's about: (1) preserving quantitative detail through the pipeline, (2)
-citing specific organizational positions, (3) addressing population-specific
-cautions. These are prompt tuning problems.
+The active frontier is no longer raw architecture work. It is finishing Wave 2
+so long benchmark runs complete reliably and the UBI-style enumeration gap can
+be measured cleanly after the method changes already shipped.
 
-### Priority 1: Close the Fasting Gap
+### Priority 1: Runtime Reliability For Long Benchmark Runs
 
-**Goal:** Score ≥ 23/25 on fasting (currently 21).
-
-**Actions:**
-- Analyst prompt: "cite specific organizational positions by name (AHA, ADA,
-  WHO)" and "address population-specific cautions (pregnancy, elderly,
-  disordered eating)"
-- Verify quantitative claims fix is working (was blocked by rate limit)
-- Re-run fasting comparison
-
-**Gate:** Fair comparison ≥ 23/25 on fasting, no regression on sanctions/PFAS.
-
-### Priority 2: Multi-Question Validation
-
-**Goal:** Confidence the pipeline generalizes beyond the 3 test questions.
+**Goal:** Eliminate the current operational blockers on full benchmark runs.
 
 **Actions:**
-- Run pipeline on 3 new questions from different domains (technology,
-  economics, science)
-- Compare each against Perplexity deep research
-- Track win rate and dimension-level scores
+- use a run-local `LLM_CLIENT_DB_PATH` for benchmark runs
+- pass explicit long but finite request timeouts at long structured call sites
+- verify both raw-question and fixture entry paths apply the same runtime policy
 
-**Gate:** Pipeline scores ≥ 22/25 on each new question (fair comparison, GPT-5-nano judge). Wins or ties on ≥ 4/6 total questions vs Perplexity sonar-deep-research.
+**Gate:** Improved-bundle benchmark runs complete end-to-end without shared DB
+lock failure or indefinite provider wait as the primary blocker.
 
-### Priority 3: Search Diversification
+### Priority 2: Close The UBI Enumeration Gap
 
-**Goal:** Multiple search providers for evidence diversity.
-
-**Actions:**
-- Add Exa (semantic search) alongside Brave (keyword search)
-- Or add Tavily (built-in content extraction)
-- Compare evidence diversity: same question with 1 provider vs 2
-
-**Gate:** On the same question, 2 providers produce evidence covering ≥ 1 more sub-question than 1 provider alone. Measured by sub-question coverage count.
-
-### Priority 4: Cost Optimization
-
-**Goal:** Reduce per-run cost below $0.03 without quality regression.
+**Goal:** Improve the current UBI fair comparison result after Wave 2 retrieval,
+anchoring, and canonicalization work.
 
 **Actions:**
-- Identify which LLM calls can use cheaper models (query generation,
-  dedup, compression)
-- Profile token usage per phase from observability DB
-- Test with gemini-2.5-flash-lite for non-critical calls
+- rerun the improved UBI benchmark on the safer runtime policy
+- confirm whether dense canonicalization still under-merges on the completed run
+- adjust the next quality slice from completed evidence, not partial runs
 
-**Gate:** Cost ≤ $0.03 per run (measured from observability DB), no score regression below 22/25 on any test question.
+**Gate:** Fair comparison against cached Perplexity improves over the current
+Wave 2 result, while the pipeline still beats the same-bundle single-shot baseline.
+
+### Priority 3: Documentation Authority Reconciliation
+
+**Goal:** Make the active planning and status docs agree on what is current.
+
+**Actions:**
+- align `docs/plans/CLAUDE.md`, `docs/ROADMAP.md`, and `CLAUDE.md`
+- mark depth modes as partially implemented rather than purely planned
+- ensure the active plan set reflects the current frontier
+
+**Gate:** No active doc points to a stale “next step” that conflicts with the
+actual active implementation wave.
 
 ### Deferred: Recent-First Evidence Ranking
 

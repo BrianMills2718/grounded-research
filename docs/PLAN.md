@@ -24,7 +24,7 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status (2026-03-24)
+## Current Status (2026-03-26)
 
 **v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational.**
 
@@ -639,3 +639,8 @@ Specifically:
 1. classify each major implementation surface as `accept`, `hold`, or `discard`
 2. do not let a full-engine draft skip ahead of `Phase -1`
 3. only after that adoption review, run or extend the smallest `Phase -1` slice
+Current active implementation frontier:
+
+- `docs/plans/wave2_enumeration_grounding.md`
+- `docs/plans/wave2_runtime_reliability.md`
+- `docs/plans/docs_authority_reconciliation.md`
