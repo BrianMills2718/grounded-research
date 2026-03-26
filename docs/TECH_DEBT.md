@@ -103,9 +103,12 @@ generation.
 **Observed:** `output/ubi_wave2_full/trace.json` completed through adjudication;
 report generation succeeded only after resuming export with an isolated
 `LLM_CLIENT_DB_PATH`.
-**Fix:** llm_client should tolerate concurrent readers/writers more robustly or
-grounded-research benchmark runs should use a run-local observability DB by
-default.
+Project-local mitigation landed on 2026-03-26: pipeline runs now configure a
+run-local `LLM_CLIENT_DB_PATH` under the output directory by default.
+
+**Remaining fix:** `llm_client` should still become more robust under true
+concurrent multi-process readers/writers so projects do not all need this
+mitigation policy forever.
 
 ### Provider response hangs can stall long structured calls indefinitely
 Bundle-based UBI retries showed OpenRouter-backed structured calls can sit in
@@ -116,8 +119,13 @@ the earlier clean raw-question run proving the phase could complete.
 **Files:** external dependency in `~/projects/llm_client` and provider path in LiteLLM/OpenRouter
 **Observed:** interrupted retry stack showed the process blocked in
 `httpx`/`aiohttp` response reads during `extract_raw_claims()`.
-**Fix:** allow justified long but finite request timeouts on benchmark runs, or
-add better stuck-call detection and retry behavior in shared infra.
+Project-local mitigation landed on 2026-03-26: grounded-research now passes
+config-driven finite request timeouts through the long-running `llm_client`
+call sites.
+
+**Remaining fix:** confirm on real completed benchmark runs that later-stage
+provider hangs are eliminated, then decide whether shared-infra stuck-call
+detection is still necessary.
 
 Follow-up benchmark signal: serializing claim extraction removed the earlier
 Phase 3a timeout failure on the improved 2026-03-25 UBI bundle, but a rerun

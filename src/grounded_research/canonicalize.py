@@ -28,6 +28,7 @@ from grounded_research.models import (
     RawClaim,
     DISPUTE_ROUTING,
 )
+from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -167,6 +168,7 @@ async def extract_raw_claims(
                 response_model=ClaimExtractionResult,
                 task="claim_extraction",
                 trace_id=f"{trace_id}/claim_extract/{run.analyst_label}",
+                timeout=get_request_timeout("claim_extraction"),
                 max_budget=max_budget / len(successful_runs),
                 fallback_models=get_fallback_models("claim_extraction"),
             )
@@ -333,6 +335,7 @@ async def deduplicate_claims(
             response_model=DeduplicationResult,
             task="claim_deduplication",
             trace_id=call_trace_id,
+            timeout=get_request_timeout("deduplication"),
             max_budget=call_budget,
             fallback_models=get_fallback_models("deduplication"),
         )
@@ -590,6 +593,7 @@ async def detect_disputes(
         response_model=DisputeDetectionResult,
         task="dispute_classification",
         trace_id=f"{trace_id}/disputes",
+        timeout=get_request_timeout("dispute_classification"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("dispute_classification"),
     )

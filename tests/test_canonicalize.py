@@ -23,8 +23,9 @@ from grounded_research.models import (
 async def test_extract_raw_claims_uses_claim_extraction_with_valid_evidence_whitelist(monkeypatch: pytest.MonkeyPatch) -> None:
     """Claim extraction should expose the valid evidence whitelist in the prompt and output."""
     # mock-ok: LLM boundary is external; this test verifies local prompt wiring and post-processing.
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
         assert task == "claim_extraction"
+        assert timeout == 240
         assert "Analyst Claims" in messages[1]["content"]
         assert "Valid Evidence IDs" in messages[1]["content"]
         result = response_model(
@@ -97,8 +98,9 @@ async def test_extract_raw_claims_drops_claims_without_any_valid_evidence(
 ) -> None:
     """Claims that lose all evidence during cleanup must not enter the ledger."""
     # mock-ok: verifies local post-processing for ungrounded claim extraction output.
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
         assert task == "claim_extraction"
+        assert timeout == 240
         result = response_model(
             claims=[
                 {
@@ -203,9 +205,10 @@ async def test_extract_raw_claims_respects_configured_concurrency(
     active_calls = 0
     max_active_calls = 0
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
         nonlocal active_calls, max_active_calls
         assert task == "claim_extraction"
+        assert timeout == 240
         active_calls += 1
         max_active_calls = max(max_active_calls, active_calls)
         await asyncio.sleep(0.01)
@@ -283,10 +286,11 @@ async def test_dedup_retry_then_fallback_on_invalid_grouping(monkeypatch: pytest
     # mock-ok: verifies local retry/fallback control flow around the external LLM boundary.
     call_count = 0
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
         nonlocal call_count
         call_count += 1
         assert task == "claim_deduplication"
+        assert timeout == 180
         if call_count == 1:
             return response_model(
                 groups=[
@@ -333,10 +337,11 @@ async def test_dedup_retry_accepts_corrected_grouping(monkeypatch: pytest.Monkey
     # mock-ok: verifies local retry acceptance logic around the external LLM boundary.
     call_count = 0
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
         nonlocal call_count
         call_count += 1
         assert task == "claim_deduplication"
+        assert timeout == 180
         if call_count == 1:
             return response_model(
                 groups=[
@@ -386,8 +391,9 @@ async def test_dense_dedup_partitions_claims_into_similarity_buckets(
     # mock-ok: verifies local staged-partition control flow around the external LLM boundary.
     bucket_calls: list[list[str]] = []
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
         assert task == "claim_deduplication"
+        assert timeout == 180
         raw_claim_ids = []
         for message in messages:
             content = message.get("content", "")

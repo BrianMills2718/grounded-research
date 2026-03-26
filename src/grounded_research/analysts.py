@@ -13,6 +13,7 @@ from pathlib import Path
 
 from grounded_research.config import get_budget, get_model, load_config
 from grounded_research.models import AnalystRun, EvidenceBundle
+from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -71,6 +72,7 @@ async def run_analyst(
             response_model=AnalystRun,
             task="analyst_reasoning",
             trace_id=f"{trace_id}/{label}",
+            timeout=get_request_timeout("analyst"),
             max_budget=max_budget,
             fallback_models=get_fallback_models("analyst"),
         )

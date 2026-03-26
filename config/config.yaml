@@ -124,6 +124,22 @@ deduplication:
 phase_concurrency:
   claim_extraction_max_concurrency: 1
 
+runtime_reliability:
+  use_run_local_observability_db: true
+  timeout_policy: "allow"
+  request_timeouts_s:
+    decomposition: 120
+    query_generation: 120
+    source_scoring: 180
+    analyst: 180
+    claim_extraction: 240
+    deduplication: 180
+    dispute_classification: 180
+    verification_query_generation: 120
+    arbitration: 240
+    synthesis: 240
+    long_report: 300
+
 # Synthesis mode controls how far the LONG REPORT goes beyond the claim ledger.
 # The claim ledger, trace.json, and handoff.json always have full provenance
 # regardless of this setting — they are always grounded.

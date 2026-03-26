@@ -38,6 +38,7 @@ from grounded_research.models import (
     ResearchQuestion,
     SourceRecord,
 )
+from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -305,6 +306,7 @@ async def generate_search_queries(
                 response_model=SearchQueries,
                 task="query_generation",
                 trace_id=f"{trace_id}/queries/{sq_id}",
+                timeout=get_request_timeout("query_generation"),
                 max_budget=max_budget / len(sub_questions),
                 fallback_models=get_fallback_models("analyst"),
             )
@@ -342,6 +344,7 @@ async def generate_search_queries(
         response_model=SearchQueries,
         task="query_generation",
         trace_id=f"{trace_id}/queries",
+        timeout=get_request_timeout("query_generation"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("analyst"),
     )

@@ -8,8 +8,10 @@ evidence support.
 
 from __future__ import annotations
 
+import pytest
+
 from grounded_research.models import ArbitrationResult, Claim, ClaimUpdate, Dispute
-from grounded_research.verify import _enforce_arbitration_protocol
+from grounded_research.verify import _enforce_arbitration_protocol, arbitrate_dispute
 
 
 def _make_claim(claim_id: str) -> Claim:
@@ -119,3 +121,36 @@ def test_arbitration_result_accepts_legacy_dict_claim_updates() -> None:
     assert len(result.claim_updates) == 1
     assert result.claim_updates[0].claim_id == "C-1"
     assert result.claim_updates[0].new_status == "revised"
+
+
+@pytest.mark.asyncio
+async def test_arbitrate_dispute_passes_configured_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Arbitration calls should use the configured finite request timeout."""
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+        assert task == "dispute_arbitration"
+        assert timeout == 240
+        return response_model(
+            verdict="inconclusive",
+            new_evidence_ids=[],
+            reasoning="No fresh evidence materially changed the claim.",
+            claim_updates=[],
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    dispute = _make_dispute(["C-1", "C-2"])
+    claims = [_make_claim("C-1"), _make_claim("C-2")]
+    evidence = []
+
+    result = await arbitrate_dispute(
+        dispute=dispute,
+        claims=claims,
+        available_evidence=evidence,
+        fresh_evidence=evidence,
+        trace_id="trace-1",
+        max_budget=0.5,
+    )
+
+    assert result.verdict == "inconclusive"

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import DecompositionValidation, QuestionDecomposition, _make_id
+from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -42,6 +43,7 @@ async def decompose_question(
         response_model=QuestionDecomposition,
         task="question_decomposition",
         trace_id=f"{trace_id}/decompose",
+        timeout=get_request_timeout("decomposition"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("decomposition"),
     )
@@ -80,6 +82,7 @@ async def validate_decomposition(
         response_model=DecompositionValidation,
         task="decomposition_validation",
         trace_id=f"{trace_id}/validate_decomp",
+        timeout=get_request_timeout("decomposition"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("decomposition"),
     )

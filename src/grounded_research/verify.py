@@ -32,6 +32,7 @@ from grounded_research.models import (
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP
+from grounded_research.runtime_policy import get_request_timeout
 
 
 @dataclass(frozen=True)
@@ -256,6 +257,7 @@ async def generate_verification_queries(
         response_model=QueryBatchResult,
         task="verification_query_generation",
         trace_id=f"{trace_id}/queries",
+        timeout=get_request_timeout("verification_query_generation"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("arbitration"),
     )
@@ -314,6 +316,7 @@ async def arbitrate_dispute(
             response_model=ArbitrationDecision,
             task="dispute_arbitration",
             trace_id=f"{trace_id}/arb/{dispute.id}",
+            timeout=get_request_timeout("arbitration"),
             max_budget=max_budget,
             fallback_models=get_fallback_models("arbitration"),
         )

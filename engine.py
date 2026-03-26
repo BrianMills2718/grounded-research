@@ -21,6 +21,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from grounded_research.config import get_budget, get_depth_config, load_config
 from grounded_research.models import PipelineState, PhaseTrace
+from grounded_research.runtime_policy import configure_run_runtime
 
 
 async def run_pipeline(
@@ -44,6 +45,7 @@ async def run_pipeline(
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
     state = PipelineState(run_id=run_id)
+    runtime_policy = configure_run_runtime(run_id, output_dir)
 
     config = load_config()
     depth = get_depth_config()
@@ -52,6 +54,8 @@ async def run_pipeline(
     print(f"=== Grounded Research Adjudication Engine ===")
     print(f"Run ID: {run_id}")
     print(f"Depth: {config.get('depth', 'standard')}, Budget: ${total_budget:.2f}")
+    if runtime_policy["db_path"]:
+        print(f"Observability DB: {runtime_policy['db_path']}")
     print()
 
     try:
@@ -319,10 +323,13 @@ async def run_pipeline_from_question(
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
+    runtime_policy = configure_run_runtime(run_id, output_dir)
 
     # --- Decompose question into sub-questions (with validation) ---
     print(f"=== Question Decomposition ===")
     print(f"Raw question: {question}")
+    if runtime_policy["db_path"]:
+        print(f"Observability DB: {runtime_policy['db_path']}")
     print()
 
     decomposition, validation = await decompose_with_validation(question, trace_id)

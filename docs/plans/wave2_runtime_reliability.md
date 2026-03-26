@@ -4,7 +4,7 @@
 executable implementation plan for the runtime-reliability slice that now
 blocks Wave 2 benchmark completion.
 
-**Status:** Planned
+**Status:** In progress
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
@@ -162,10 +162,10 @@ current method can complete real benchmark runs consistently enough to measure.
 
 ## Acceptance Criteria
 
-- [ ] Both engine entry paths configure a run-local observability DB by default
-- [ ] All long-running `llm_client` call sites use config-driven finite request timeouts
-- [ ] Targeted tests pass
-- [ ] Phase-boundary tests pass
+- [x] Both engine entry paths configure a run-local observability DB by default
+- [x] All long-running `llm_client` call sites use config-driven finite request timeouts
+- [x] Targeted tests pass
+- [x] Phase-boundary tests pass
 - [ ] `TECH_DEBT.md` is updated to reflect the new runtime policy
 
 ---
@@ -175,3 +175,9 @@ current method can complete real benchmark runs consistently enough to measure.
 - This wave is intentionally operational. It is not a model-method change.
 - Do not add another observability backend here; use the existing `llm_client`
   runtime and the already-landed `tool_calls` surface.
+- Implemented 2026-03-26:
+  - `runtime_reliability` config section
+  - `runtime_policy.py`
+  - run-local `LLM_CLIENT_DB_PATH` wiring in both engine entry paths
+  - explicit `timeout=` propagation across collection, analysts,
+    canonicalization, verification, and export call sites

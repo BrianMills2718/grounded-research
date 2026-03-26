@@ -23,6 +23,7 @@ from grounded_research.models import (
     PipelineState,
     PipelineWarning,
 )
+from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -91,6 +92,7 @@ async def generate_report(
         response_model=FinalReport,
         task="report_synthesis",
         trace_id=f"{trace_id}/synthesis",
+        timeout=get_request_timeout("synthesis"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("synthesis"),
     )
@@ -167,6 +169,7 @@ async def render_long_report(
         messages,
         task="long_report_synthesis",
         trace_id=f"{trace_id}/long_report",
+        timeout=get_request_timeout("long_report"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("synthesis"),
     )

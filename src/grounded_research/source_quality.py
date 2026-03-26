@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import EvidenceBundle
+from grounded_research.runtime_policy import get_request_timeout
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ async def score_source_quality(
             response_model=_SourceQualityBatch,
             task="source_quality_scoring",
             trace_id=f"{trace_id}/source_quality",
+            timeout=get_request_timeout("source_scoring"),
             max_budget=max_budget,
             fallback_models=get_fallback_models("source_scoring") or get_fallback_models("dispute_classification"),
         )
