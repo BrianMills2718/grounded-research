@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -416,7 +416,6 @@ class AnalystRun(BaseModel):
     recommendations: list[Recommendation] = Field(default_factory=list)
     counterarguments: list[Counterargument] = Field(
         default_factory=list,
-        min_length=1,
         description="At least one counterargument against the analyst's own recommendation. Required.",
     )
     summary: str = Field(
@@ -433,6 +432,15 @@ class AnalystRun(BaseModel):
     def succeeded(self) -> bool:
         """Whether this analyst run completed without error."""
         return self.error is None
+
+    @model_validator(mode="after")
+    def _validate_counterarguments_when_successful(self) -> "AnalystRun":
+        """Require counterarguments only for successful analyst outputs."""
+        if self.error is None and not self.counterarguments:
+            raise ValueError(
+                "Successful AnalystRun outputs must include at least one counterargument."
+            )
+        return self
 
 
 # ---------------------------------------------------------------------------

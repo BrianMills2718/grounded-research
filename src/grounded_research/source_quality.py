@@ -10,6 +10,7 @@ See docs/plans/phase_b_source_quality.md for design decisions.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -19,6 +20,7 @@ from grounded_research.models import EvidenceBundle
 from grounded_research.runtime_policy import get_request_timeout
 
 logger = logging.getLogger(__name__)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 QualityTier = Literal["authoritative", "reliable", "unknown", "unreliable"]
 
@@ -53,7 +55,7 @@ async def score_source_quality(
     Updates SourceRecord.quality_tier from the default to a per-source
     assessment. On failure, logs a warning and leaves all as "reliable".
     """
-    from llm_client import acall_llm_structured
+    from llm_client import acall_llm_structured, render_prompt
 
     if not bundle.sources:
         return
@@ -69,20 +71,13 @@ async def score_source_quality(
         model = get_model("dispute_classification")  # fallback to same-tier model
 
     try:
+        messages = render_prompt(
+            str(_PROJECT_ROOT / "prompts" / "source_scoring.yaml"),
+            source_lines=source_lines,
+        )
         result, _meta = await acall_llm_structured(
             model,
-            [
-                {"role": "system", "content": (
-                    "You are a source quality assessor. For each source, assign a quality tier "
-                    "based on the URL domain and title. Be accurate — government agencies, "
-                    "peer-reviewed journals, and major think tanks are authoritative. Major news "
-                    "outlets are reliable. Blogs and forums are unknown. SEO farms are unreliable."
-                )},
-                {"role": "user", "content": (
-                    "Score the quality of each source:\n\n"
-                    + "\n".join(source_lines)
-                )},
-            ],
+            messages,
             response_model=_SourceQualityBatch,
             task="source_quality_scoring",
             trace_id=f"{trace_id}/source_quality",

@@ -170,6 +170,26 @@ def get_collection_ranking_config() -> dict[str, Any]:
     return defaults
 
 
+def get_evidence_policy_config() -> dict[str, Any]:
+    """Get evidence-presentation policy with stable defaults.
+
+    This keeps prompt rendering limits in config rather than hidden in
+    individual templates.
+    """
+    cfg = load_config()
+    configured = cfg.get("evidence_policy", {})
+    defaults: dict[str, Any] = {
+        "default_time_sensitivity": "mixed",
+        "recency_weight": 0.5,
+        "compression_threshold": 80,
+        "synthesis_evidence_cap": 30,
+        "structured_content_truncation_chars": 500,
+        "long_report_content_truncation_chars": 400,
+    }
+    defaults.update(configured)
+    return defaults
+
+
 def get_phase_concurrency_config() -> dict[str, int]:
     """Get per-phase concurrency controls with safe defaults."""
     cfg = load_config()

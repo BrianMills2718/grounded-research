@@ -114,6 +114,9 @@ evidence_policy:
   default_time_sensitivity: "mixed"
   recency_weight: 0.5
   compression_threshold: 80
+  synthesis_evidence_cap: 30
+  structured_content_truncation_chars: 500
+  long_report_content_truncation_chars: 400
 
 deduplication:
   staged_trigger_claims: 20

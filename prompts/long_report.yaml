@@ -206,7 +206,7 @@ messages:
       ## Evidence ({{ evidence | length }} items)
 
       {% for item in evidence %}
-      **{{ item.id }}** ({{ item.source_id }}): {{ item.content[:400] }}
+      **{{ item.id }}** ({{ item.source_id }}): {{ item.content[:long_report_content_truncation_chars] }}
       {% endfor %}
 
       ## Canonical Claims ({{ claims | length }}, synthesized from {{ analyst_count }} independent analysts)

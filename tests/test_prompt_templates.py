@@ -179,6 +179,43 @@ def test_dispute_classify_prompt_renders_with_type_guidance() -> None:
     assert "Do not create disputes for stylistic differences" in messages[0]["content"]
 
 
+def test_query_generation_prompt_renders_sub_question_mode() -> None:
+    """Query-generation prompt should render the sub-question contract via YAML."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "query_generation.yaml"),
+        mode="sub_question",
+        question="What is the evidence on Universal Basic Income and labor outcomes?",
+        topic_anchors=["Universal Basic Income", "UBI"],
+        sub_question={
+            "type": "comparative",
+            "text": "How do labor effects vary across pilots?",
+            "falsification_target": "Evidence showing no meaningful variation.",
+        },
+        recency_note="Include the current year in at least half the queries.",
+        query_count=4,
+    )
+
+    assert "keep every query explicitly anchored to the parent topic" in messages[0]["content"]
+    assert "generate exactly 4 queries" in messages[0]["content"]
+    assert "Required topic anchors" in messages[1]["content"]
+    assert "Universal Basic Income" in messages[1]["content"]
+
+
+def test_source_scoring_prompt_renders_yaml_template() -> None:
+    """Source-scoring prompt should render from prompt data, not inline strings."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "source_scoring.yaml"),
+        source_lines=[
+            "- S-1: National Bureau of Economic Research | https://nber.org/paper",
+            "- S-2: Personal blog | https://example.com/post",
+        ],
+    )
+
+    assert "Assign each source one quality tier" in messages[0]["content"]
+    assert "Score the quality of each source" in messages[1]["content"]
+    assert "S-1" in messages[1]["content"]
+
+
 def test_synthesis_prompt_renders_with_repair_feedback() -> None:
     """Structured synthesis prompt should render repair feedback when provided."""
     messages = render_prompt(
@@ -190,6 +227,8 @@ def test_synthesis_prompt_renders_with_repair_feedback() -> None:
         arbitration_results=[],
         evidence_gaps=[],
         validation_feedback=["Unresolved dispute D-1 not mentioned in report"],
+        synthesis_evidence_cap=30,
+        structured_content_truncation_chars=500,
     )
 
     assert "Repair Feedback" in messages[1]["content"]
@@ -213,6 +252,7 @@ def test_long_report_prompt_renders_with_placeholder_ban_and_repair_feedback() -
         sub_questions=[],
         optimization_axes=[],
         repair_feedback=["Remove symbolic placeholder token matching `X-Y%?`."],
+        long_report_content_truncation_chars=400,
     )
 
     assert "Never use symbolic placeholders" in messages[0]["content"]

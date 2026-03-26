@@ -4,40 +4,9 @@ Known issues not worth fixing now but should be addressed eventually.
 
 ## Code Quality
 
-### Inline prompts (code review #4-5)
-`collect.py` query generation and `source_quality.py` scoring prompts are
-inline Python strings, not YAML templates. Violates CLAUDE.md rule 8
-("Prompts as Data"). Won't change output quality but hurts maintainability.
-
-**Files:** `src/grounded_research/collect.py:84-96,114-128`, `src/grounded_research/source_quality.py:73-80`
-**Fix:** Move to `prompts/query_generation.yaml` and `prompts/source_scoring.yaml`
-
-### Hardcoded truncation in prompts (code review #12-13)
-`synthesis.yaml` caps evidence at `evidence[:30]` and `long_report.yaml`
-truncates content at `content[:400]`. Both hardcoded in Jinja2 templates,
-not configurable via config.yaml. The two prompts also use different limits
-(`[:500]` vs `[:400]`) with no documented reason.
-
-**Files:** `prompts/synthesis.yaml:35`, `prompts/long_report.yaml:188`
-**Fix:** Move to `evidence_policy.synthesis_evidence_cap` and `evidence_policy.content_truncation_chars` in config.yaml
-
-### Counterarguments schema fragility (code review #14)
-`AnalystRun.counterarguments` has `default_factory=list` AND `min_length=1`.
-Works because Pydantic v2 doesn't validate defaults from `default_factory`.
-If Pydantic changes this behavior, failed AnalystRun creation (which passes
-no counterarguments) will break.
-
-**File:** `src/grounded_research/models.py:412-414`
-**Fix:** Use a validator that enforces min_length only when `error is None`
-
-### PhaseTrace post-creation mutation (code review #15)
-`engine.py:255` mutates `PhaseTrace.llm_calls` after appending to
-`state.phase_traces`. The trace is correct at write time but the mutation
-pattern is fragile — any code reading the trace between append and mutation
-would see wrong data.
-
-**File:** `engine.py:255`
-**Fix:** Create PhaseTrace after all phase work is done, not before
+The previously tracked prompt/config/schema hygiene issues were resolved in the
+2026-03-26 post-Wave-2 hardening slice. Remaining debt is concentrated in
+pipeline quality behavior and shared-infrastructure follow-up.
 
 ## Pipeline Issues
 

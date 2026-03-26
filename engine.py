@@ -254,15 +254,6 @@ async def run_pipeline(
                 state.add_warning("export", "grounding", err)
                 print(f"  GROUNDING WARNING: {err}")
 
-        state.phase_traces.append(PhaseTrace(
-            phase="export",
-            started_at=phase_start,
-            completed_at=datetime.now(timezone.utc),
-            succeeded=True,
-            llm_calls=1,
-            output_summary=f"Report with {len(report.cited_claim_ids)} cited claims, {len(grounding_errors)} grounding warnings",
-        ))
-
         # Render long-form report
         print("  Rendering long-form report (3,000-6,000 words)...")
         long_report_md = await render_long_report(
@@ -271,12 +262,18 @@ async def run_pipeline(
         )
         print(f"  Long report: {len(long_report_md)} chars, ~{len(long_report_md.split())} words")
 
-        state.phase_traces[-1].llm_calls = 2  # structured + long-form
-        state.phase_traces[-1].output_summary = (
-            f"Structured report: {len(report.cited_claim_ids)} cited claims, "
-            f"{len(grounding_errors)} grounding warnings. "
-            f"Long report: ~{len(long_report_md.split())} words."
-        )
+        state.phase_traces.append(PhaseTrace(
+            phase="export",
+            started_at=phase_start,
+            completed_at=datetime.now(timezone.utc),
+            succeeded=True,
+            llm_calls=2,
+            output_summary=(
+                f"Structured report: {len(report.cited_claim_ids)} cited claims, "
+                f"{len(grounding_errors)} grounding warnings. "
+                f"Long report: ~{len(long_report_md.split())} words."
+            ),
+        ))
 
         # Mark complete before writing so trace.json reflects final state
         state.current_phase = "complete"

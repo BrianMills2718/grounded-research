@@ -6,6 +6,7 @@ import pytest
 
 from grounded_research.export import generate_report, render_long_report
 from grounded_research.models import (
+    AnalystRun,
     Claim,
     ClaimLedger,
     Dispute,
@@ -231,3 +232,27 @@ async def test_render_long_report_repairs_placeholder_tokens(
     assert len(calls) == 2
     assert "Repair Feedback" in calls[1][1]["content"]
     assert "X-Y" not in markdown
+
+
+def test_successful_analyst_run_requires_counterarguments() -> None:
+    """Successful analyst outputs must carry at least one counterargument."""
+    with pytest.raises(ValueError):
+        AnalystRun(
+            analyst_label="Alpha",
+            model="openrouter/openai/gpt-5-nano",
+            frame="verification_first",
+            summary="A successful run without counterarguments should fail validation.",
+        )
+
+
+def test_failed_analyst_run_allows_empty_counterarguments() -> None:
+    """Failed analyst trace artifacts should not require semantic counterarguments."""
+    result = AnalystRun(
+        analyst_label="Alpha",
+        model="openrouter/openai/gpt-5-nano",
+        frame="verification_first",
+        error="rate limit",
+    )
+
+    assert result.counterarguments == []
+    assert not result.succeeded

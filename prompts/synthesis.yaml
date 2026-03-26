@@ -33,9 +33,9 @@ messages:
 
       ## Evidence (for context — cite claims, not evidence directly)
 
-      {% for item in evidence[:30] %}
+      {% for item in evidence[:synthesis_evidence_cap] %}
       ### {{ item.id }} (from {{ item.source_id }})
-      {{ item.content[:500] }}
+      {{ item.content[:structured_content_truncation_chars] }}
       {% endfor %}
 
       ## Claims (from the canonical ledger)

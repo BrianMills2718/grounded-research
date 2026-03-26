@@ -16,7 +16,11 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from grounded_research.config import get_fallback_models, get_model
+from grounded_research.config import (
+    get_evidence_policy_config,
+    get_fallback_models,
+    get_model,
+)
 from grounded_research.models import (
     ClaimLedger,
     DownstreamHandoff,
@@ -90,6 +94,7 @@ async def generate_report(
         repair_feedback: list[str],
         trace_suffix: str,
     ) -> FinalReport:
+        evidence_policy = get_evidence_policy_config()
         messages = render_prompt(
             str(_PROJECT_ROOT / "prompts" / "synthesis.yaml"),
             question=state.question.model_dump(),
@@ -99,6 +104,10 @@ async def generate_report(
             arbitration_results=[a.model_dump() for a in state.claim_ledger.arbitration_results],
             evidence_gaps=state.evidence_bundle.gaps,
             validation_feedback=repair_feedback,
+            synthesis_evidence_cap=int(evidence_policy["synthesis_evidence_cap"]),
+            structured_content_truncation_chars=int(
+                evidence_policy["structured_content_truncation_chars"]
+            ),
         )
         report, _meta = await acall_llm_structured(
             model,
@@ -188,6 +197,7 @@ async def render_long_report(
 
     # Synthesis mode and depth from config
     config = load_config()
+    evidence_policy = get_evidence_policy_config()
     synthesis_mode = config.get("synthesis_mode", "grounded")
     from grounded_research.config import get_depth_config
     depth = get_depth_config()
@@ -211,6 +221,9 @@ async def render_long_report(
             sub_questions=sub_questions,
             optimization_axes=optimization_axes,
             repair_feedback=repair_feedback,
+            long_report_content_truncation_chars=int(
+                evidence_policy["long_report_content_truncation_chars"]
+            ),
         )
         result = await acall_llm(
             model,

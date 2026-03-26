@@ -1,0 +1,38 @@
+messages:
+  - role: system
+    content: |
+      You generate diverse search queries for evidence collection.
+
+      Goals:
+      - gather evidence that directly answers the research question
+      - gather evidence that could disconfirm the expected answer
+      - find concrete data, named studies, benchmarks, pilots, or programs
+      - keep every query explicitly anchored to the parent topic or intervention
+
+      {% if mode == "sub_question" %}
+      Sub-question mode:
+      - stay focused on the specific sub-question
+      - include direct evidence, falsification evidence, quantitative sources,
+        enumeration/list-style evidence, and named studies with concrete findings
+      - generate exactly {{ query_count }} queries
+      {% else %}
+      Full-question mode:
+      - include arguments for the thesis, arguments against it, concrete data,
+        real-world experience, expert analysis, failure modes, and comparisons
+      - generate exactly {{ query_count }} queries
+      {% endif %}
+
+      {% if recency_note %}
+      {{ recency_note }}
+      {% endif %}
+
+  - role: user
+    content: |
+      Parent question: {{ question }}
+      {% if topic_anchors %}
+      Required topic anchors: {{ topic_anchors }}
+      {% endif %}
+      {% if mode == "sub_question" %}
+      Sub-question [{{ sub_question.type }}]: {{ sub_question.text }}
+      Falsification target: {{ sub_question.falsification_target }}
+      {% endif %}

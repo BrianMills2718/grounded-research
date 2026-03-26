@@ -108,6 +108,12 @@ Pass condition:
 - no remaining known inline prompt debt on active call sites
 - truncation/evidence-cap policy is config-driven rather than template-literal
 
+Status:
+- completed on 2026-03-26
+- query generation and source scoring now render from YAML prompt files
+- synthesis evidence caps and truncation limits now come from
+  `config/config.yaml`
+
 ### 3. Schema And Trace Construction Hardening
 
 - replace the `counterarguments` default/min-length fragility with an explicit
@@ -117,6 +123,12 @@ Pass condition:
 Pass condition:
 - schema behavior no longer depends on Pydantic default-factory quirks
 - phase traces are constructed atomically
+
+Status:
+- completed on 2026-03-26
+- `AnalystRun.counterarguments` now validates explicitly only for successful
+  runs
+- export `PhaseTrace` is now constructed atomically after both synthesis calls
 
 ### 4. Sub-Question Evidence Tagging
 
@@ -144,12 +156,12 @@ Pass condition:
 
 - [ ] Dense enumeration-heavy runs improve beyond effectively `raw == canonical`
       no-op behavior when genuine overlaps exist
-- [ ] Remaining active inline prompt debt is moved into YAML prompt files
-- [ ] Synthesis truncation/evidence-cap limits are configurable in
+- [x] Remaining active inline prompt debt is moved into YAML prompt files
+- [x] Synthesis truncation/evidence-cap limits are configurable in
       `config/config.yaml`
-- [ ] `AnalystRun.counterarguments` no longer relies on fragile default/min-length
+- [x] `AnalystRun.counterarguments` no longer relies on fragile default/min-length
       interaction
-- [ ] `PhaseTrace` is constructed atomically rather than post-mutated
+- [x] `PhaseTrace` is constructed atomically rather than post-mutated
 - [ ] Sub-question evidence tagging no longer obviously undercounts relevant
       evidence on known benchmark cases
 - [ ] Tests covering canonicalization, collection, export, and phase boundaries
@@ -168,3 +180,8 @@ Minimum verification surface for this plan:
 
 Add benchmark reruns only after the dense-canonicalization slice is verified in
 unit and phase-boundary tests.
+
+Current verified slice:
+
+- `PYTHONPATH=src python -m pytest tests/test_prompt_templates.py tests/test_export.py tests/test_collect.py tests/test_phase_boundaries.py -q`
+  - Result: `48 passed, 1 skipped`

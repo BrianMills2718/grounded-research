@@ -253,7 +253,7 @@ async def generate_search_queries(
     Returns (queries, query_to_sq_id) where query_to_sq_id maps each query
     string to the sub-question ID that generated it (empty dict if no sub-questions).
     """
-    from llm_client import acall_llm_structured
+    from llm_client import acall_llm_structured, render_prompt
     from pydantic import BaseModel, Field
 
     class SearchQueries(BaseModel):
@@ -279,30 +279,18 @@ async def generate_search_queries(
         # Generate queries for all sub-questions in parallel
         async def _gen_sq_queries(sq):
             sq_id = sq.get("id", "sq")
+            messages = render_prompt(
+                str(_PROJECT_ROOT / "prompts" / "query_generation.yaml"),
+                mode="sub_question",
+                question=question,
+                topic_anchors=topic_anchors,
+                sub_question=sq,
+                recency_note=recency_note,
+                query_count=queries_per_sq,
+            )
             sq_result, _meta = await acall_llm_structured(
                 model,
-                [
-                    {"role": "system", "content": (
-                        "Generate diverse search queries for a specific research sub-question. "
-                        "Every query must remain explicitly anchored to the parent topic or "
-                        "intervention from the original question. Queries that drift into "
-                        "generic background literature without the parent topic are invalid.\n"
-                        "Include queries that would find:\n"
-                        "(1) direct evidence answering the sub-question\n"
-                        "(2) evidence that would DISPROVE the expected answer\n"
-                        "(3) concrete data, statistics, or primary sources\n"
-                        "(4) lists or surveys of specific programs, studies, benchmarks, or pilots\n"
-                        "(5) named studies with sample sizes and quantitative findings\n"
-                        f"\n{recency_note}\n"
-                        f"Generate exactly {queries_per_sq} queries."
-                    )},
-                    {"role": "user", "content": (
-                        f"Parent question: {question}\n"
-                        f"Required topic anchors: {topic_anchors}\n"
-                        f"Sub-question [{sq['type']}]: {sq['text']}\n"
-                        f"Falsification target: {sq['falsification_target']}"
-                    )},
-                ],
+                messages,
                 response_model=SearchQueries,
                 task="query_generation",
                 trace_id=f"{trace_id}/queries/{sq_id}",
@@ -322,25 +310,17 @@ async def generate_search_queries(
         return all_queries, query_to_sq
 
     # Fallback: monolithic question-level generation
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "query_generation.yaml"),
+        mode="question",
+        question=question,
+        topic_anchors=topic_anchors,
+        recency_note=recency_note,
+        query_count=num_queries,
+    )
     result, _meta = await acall_llm_structured(
         model,
-        [
-            {"role": "system", "content": (
-                "Generate diverse search queries to gather comprehensive evidence "
-                "for answering a research question. Include queries that would find:\n"
-                "(1) arguments FOR the main thesis\n"
-                "(2) arguments AGAINST or alternatives\n"
-                "(3) concrete data, benchmarks, or performance comparisons\n"
-                "(4) real-world experience reports and case studies\n"
-                "(5) expert opinions, reviews, or analyses\n"
-                "(6) limitations, criticisms, and failure modes\n"
-                "(7) comparison with competing approaches\n"
-                "(8) long-term maintainability and scaling evidence\n"
-                f"\n{recency_note}\n"
-                f"Generate exactly {num_queries} queries."
-            )},
-            {"role": "user", "content": question},
-        ],
+        messages,
         response_model=SearchQueries,
         task="query_generation",
         trace_id=f"{trace_id}/queries",
