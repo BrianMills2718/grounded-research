@@ -34,10 +34,10 @@ configurable depth modes (standard/deep/thorough).
 
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 
-The post-Wave-2 cleanup plan is complete, and the first depth-continuation
-wave is now complete as well. The repo-local frontier is preserving those
-gains and only opening another expansion wave when a benchmark points to a
-clear grounded-research-specific bottleneck.
+The post-Wave-2 cleanup plan, the first depth-continuation wave, and the
+sectioned-synthesis export wave are now complete. The repo-local frontier is
+again preserving those gains and only opening another expansion wave when a
+benchmark points to a clear grounded-research-specific bottleneck.
 
 ### Priority 1: Preserve The Current UBI Win On Future Reruns
 
@@ -61,20 +61,23 @@ regress below the current saved result.
 surfaces in place without turning this repo back into a generic runtime or
 retrieval layer.
 
-**Current depth-wave anchor:** the 2026-03-26 live deep collection smoke in
-`output/depth_wave1_smoke/` completed with `5` sources, `19` evidence items,
-`14` LLM-extracted items, and `0` gaps.
+**Current depth-wave anchors:**
+- `output/depth_wave1_smoke/`: deep collection smoke completed with `5` sources,
+  `19` evidence items, `14` LLM-extracted items, and `0` gaps
+- `output/sectioned_synthesis_gate_post2/`: thorough rerender completed with
+  `11,281` words, `7` section headings, and no placeholder tokens
 
 **Actions:**
 - keep `standard` mode on the legacy low-cost extraction path
 - keep richer extraction gated to `deep` and `thorough`
 - preserve multi-round arbitration as a depth-only behavior
-- do not add sectioned synthesis unless a saved benchmark shows the current
-  single-call long-report path is the actual bottleneck
+- preserve sectioned synthesis as the `thorough`-mode long-report path
+- do not reopen report rendering again unless a saved benchmark shows a new
+  export-specific bottleneck
 
 **Gate:** A future deep/thorough benchmark rerun must show either:
 - a regression that requires fixing this wave, or
-- a clear sectioned-synthesis bottleneck before opening the next depth wave
+- a clear new export bottleneck before opening the next depth wave
 
 ### Priority 3: Shared-Infra Follow-Up, Not New Repo-Local Complexity
 
@@ -100,7 +103,7 @@ The next 24 hours of work should be treated as three explicit buckets:
 
 1. `grounded-research`
    - preserve the saved benchmark anchors
-   - preserve the completed depth-wave behavior
+   - preserve the completed depth-wave and sectioned-synthesis behavior
    - only open a new repo-local plan from a completed benchmark trigger
 2. shared runtime
    - land any remaining `llm_client` durability/query follow-through on `main`
@@ -113,11 +116,11 @@ The next 24 hours of work should be treated as three explicit buckets:
 ### Priority 4: Choose The Next Benchmark Wave Explicitly
 
 **Candidates:**
-- `depth_modes.md` continuation via sectioned synthesis, if a benchmark proves
-  long-report generation is now the active bottleneck
 - recent-first evidence ranking
 - another dense, study-heavy benchmark question if the goal is to stress the
   canonicalization/retrieval stack again
+- prompt-eval or benchmark work on export quality if longer reports still lose
+  on usefulness despite the new sectioned path
 
 **Gate:** Write or refresh the relevant plan doc before implementation. Do not
 reopen broad cleanup work without a benchmark-triggered reason.

@@ -7,9 +7,10 @@
 
 The repo now ships `standard`, `deep`, and `thorough` depth profiles for
 source count, compression threshold, claim targets, synthesis length, and
-budget. Wave 1 continuation is complete: deeper per-source extraction and
-multi-round arbitration now exist. The remaining gap is sectioned synthesis
-and any later benchmark-driven continuation beyond that.
+budget. The first continuation waves are complete: deeper per-source
+extraction, multi-round arbitration, and sectioned synthesis for long thorough
+reports now exist. Any later continuation must be opened from a new benchmark
+trigger, not from this document alone.
 
 Brian's feedback: "this is meant to be an expensive longer running more
 heavily researched result."
@@ -72,7 +73,7 @@ the specific gap and try again.
 **Where:** `verify.py`: loop in `verify_disputes()` with configurable max_rounds
 **Cost:** ~2-3x current arbitration cost
 
-### Phase 4: Sectioned synthesis (still open, may need llm_client support)
+### Phase 4: Sectioned synthesis (completed in Wave 2)
 
 For 10K+ word reports, a single LLM call may hit output token limits.
 Options:
@@ -82,12 +83,9 @@ Options:
 - (c) Two-pass: breadth pass covering all sub-questions, then depth
   pass expanding important findings
 
-**Recommendation:** Start with (b) — sectioned synthesis. Each section
-is an independent LLM call that can be long and detailed. The joining
-call stitches them together.
-
-**llm_client needed?** Only if we need to split a single structured output
-across multiple calls. Otherwise, just multiple `acall_llm` calls.
+**Result:** implemented with config-backed section thresholds and the existing
+`long_report.yaml` prompt family. Sections are rendered independently and
+joined mechanically; no extra shared-infra split orchestration was required.
 
 ## Pre-Made Decisions
 

@@ -1,6 +1,6 @@
 # Sectioned Synthesis Wave 1
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Prove whether the current single-call long-report path is the
 active depth bottleneck, and implement sectioned synthesis only if the gate
 shows that `thorough` mode undershoots its target.
@@ -119,3 +119,42 @@ Acceptance:
 | sectioned synthesis inflates length but loses coherence | output longer but structurally worse | tighten section contracts and keep a joining pass |
 | sectioned synthesis breaks grounding/style continuity | tests or rerender show citation drift or placeholder regressions | preserve repair logic and keep the same prompt family across sections |
 | output length improves but benchmark utility does not | later benchmark still underwhelms | record the uncertainty and open the next wave from the benchmark, not from style preference |
+
+## Result
+
+Completed on `2026-03-26`.
+
+Gate result before implementation:
+
+- input trace: `output/ubi_wave2_report_calibrated/trace.json`
+- forced depth: `thorough`
+- output: `output/sectioned_synthesis_gate/`
+- result: `6,792` words, `0` section headings, no placeholder tokens
+- decision: failed the `< 9,000` word gate, so sectioned synthesis was justified
+
+Implemented:
+
+1. config-backed sectioned synthesis policy for deeper report targets
+2. section-mode rendering on the existing `long_report.yaml` prompt family
+3. mechanical section composition in `export.py`
+4. explicit per-section word targets to keep the composed report from collapsing
+   back toward single-call length
+
+Post-implementation gate:
+
+- output: `output/sectioned_synthesis_gate_post2/`
+- result: `11,281` words, `7` section headings, no placeholder tokens
+- verdict: thorough-mode export gate passed
+
+Verified:
+
+- `PYTHONPATH=src python -m pytest tests/test_export.py tests/test_prompt_templates.py tests/test_phase_boundaries.py -q`
+  - `44 passed, 1 skipped`
+
+Residual uncertainty:
+
+- the saved gate used the calibrated UBI trace rather than a fresh full
+  end-to-end `thorough` run
+- if a later benchmark shows the longer report hurts usefulness, the next wave
+  should tune section content or prompt_eval the export path rather than
+  reopening unrelated pipeline phases

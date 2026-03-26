@@ -79,12 +79,14 @@ Current operational notes:
   page text, while `standard` keeps the cheaper notes/key-section path
 - deeper modes now allow multi-round arbitration when earlier rounds remain
   inconclusive
+- `thorough` long-report rendering now uses sectioned synthesis when the word
+  target crosses the configured threshold; `standard` keeps the single-call path
 - runtime-safe benchmark policy now uses run-local observability DBs and
   explicit finite request timeouts for long runs
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
-- the next repo-local depth candidate is sectioned synthesis, but only if a
-  later benchmark shows the current long-report path is the bottleneck
+- there is no active repo-local hardening backlog; the next wave must be opened
+  by a completed benchmark trigger
 
 ## Governance Surfaces
 

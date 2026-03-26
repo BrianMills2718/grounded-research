@@ -15,9 +15,9 @@
 | [wave2_report_synthesis_calibration.md](wave2_report_synthesis_calibration.md) | Completed | Export repair loops and stronger synthesis structure removed warnings/placeholders and recovered the UBI comparison. |
 | [docs_authority_reconciliation.md](docs_authority_reconciliation.md) | Completed | CLAUDE, PLAN, ROADMAP, and the plan index now reflect the same current frontier. |
 | [tyler_v1_followthrough.md](tyler_v1_followthrough.md) | Completed | Locks the Tyler V1 package as reference material, records intentional divergences, and closes the repo-local March 26 follow-through. |
-| [depth_modes.md](depth_modes.md) | Partially implemented / deferred continuation | Standard/deep/thorough profiles shipped. Wave 1 deeper extraction and multi-round arbitration are complete; sectioned synthesis remains the next depth candidate if a benchmark proves it is needed. |
+| [depth_modes.md](depth_modes.md) | Completed | Standard/deep/thorough profiles shipped with deeper extraction, multi-round arbitration, and sectioned synthesis for long thorough-mode reports. Future depth work now requires a new benchmark-triggered plan. |
 | [depth_modes_wave1_execution.md](depth_modes_wave1_execution.md) | Completed | Wave 1 depth continuation shipped: goal-driven evidence extraction in deep/thorough, multi-round arbitration, and a passing live deep collection smoke gate. |
-| [sectioned_synthesis_wave1.md](sectioned_synthesis_wave1.md) | In Progress | Benchmark-triggered export wave: prove whether single-call `thorough` rerender misses the target, then implement sectioned synthesis only if the gate fails. |
+| [sectioned_synthesis_wave1.md](sectioned_synthesis_wave1.md) | Completed | Benchmark-triggered export wave closed: the single-call `thorough` rerender failed the gate, sectioned synthesis was implemented, and the saved rerender now clears 11k words. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |
