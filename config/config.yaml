@@ -121,6 +121,9 @@ deduplication:
   max_doc_frequency_ratio: 0.45
   min_shared_informative_tokens: 1
 
+phase_concurrency:
+  claim_extraction_max_concurrency: 1
+
 # Synthesis mode controls how far the LONG REPORT goes beyond the claim ledger.
 # The claim ledger, trace.json, and handoff.json always have full provenance
 # regardless of this setting — they are always grounded.

@@ -168,3 +168,14 @@ def get_collection_ranking_config() -> dict[str, Any]:
     }
     defaults.update(configured)
     return defaults
+
+
+def get_phase_concurrency_config() -> dict[str, int]:
+    """Get per-phase concurrency controls with safe defaults."""
+    cfg = load_config()
+    configured = cfg.get("phase_concurrency", {})
+    defaults: dict[str, int] = {
+        "claim_extraction_max_concurrency": 1,
+    }
+    defaults.update(configured)
+    return defaults

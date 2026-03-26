@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from grounded_research.canonicalize import deduplicate_claims, extract_raw_claims
@@ -191,6 +193,88 @@ async def test_extract_raw_claims_skips_failed_analysts(monkeypatch: pytest.Monk
 
     assert raw_claims == []
     assert claim_to_analyst == {}
+
+
+@pytest.mark.asyncio
+async def test_extract_raw_claims_respects_configured_concurrency(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Claim extraction fan-out should obey the configured concurrency cap."""
+    active_calls = 0
+    max_active_calls = 0
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+        nonlocal active_calls, max_active_calls
+        assert task == "claim_extraction"
+        active_calls += 1
+        max_active_calls = max(max_active_calls, active_calls)
+        await asyncio.sleep(0.01)
+        active_calls -= 1
+        return response_model(
+            claims=[
+                {
+                    "statement": f"Extracted claim for {trace_id}",
+                    "evidence_ids": ["E-1"],
+                    "confidence": "medium",
+                    "reasoning": "Concurrency test",
+                }
+            ]
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr(
+        "grounded_research.canonicalize.get_phase_concurrency_config",
+        lambda: {"claim_extraction_max_concurrency": 1},
+    )
+
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="Test question"),
+        sources=[
+            SourceRecord(
+                id="S-1",
+                url="https://example.com/source",
+                title="Source",
+                quality_tier="authoritative",
+            )
+        ],
+        evidence=[
+            EvidenceItem(
+                id="E-1",
+                source_id="S-1",
+                content="Evidence content",
+                content_type="text",
+            )
+        ],
+    )
+    analyst_runs = [
+        AnalystRun(
+            analyst_label=label,
+            model="openrouter/openai/gpt-5-nano",
+            frame="verification_first",
+            claims=[
+                RawClaim(
+                    statement=f"Claim from {label}",
+                    evidence_ids=["E-1"],
+                    confidence="medium",
+                )
+            ],
+            recommendations=[Recommendation(statement="Recommendation")],
+            counterarguments=[Counterargument(target="recommendation", argument="Counter", evidence_ids=["E-1"])],
+            summary=f"Summary {label}",
+        )
+        for label in ("Alpha", "Beta", "Gamma")
+    ]
+
+    raw_claims, claim_to_analyst = await extract_raw_claims(
+        analyst_runs,
+        bundle,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert len(raw_claims) == 3
+    assert len(claim_to_analyst) == 3
+    assert max_active_calls == 1
 
 
 @pytest.mark.asyncio

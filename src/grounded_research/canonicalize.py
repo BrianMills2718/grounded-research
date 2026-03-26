@@ -12,7 +12,12 @@ from pathlib import Path
 import re
 from typing import Any
 
-from grounded_research.config import get_dedup_config, get_fallback_models, get_model
+from grounded_research.config import (
+    get_dedup_config,
+    get_fallback_models,
+    get_model,
+    get_phase_concurrency_config,
+)
 from grounded_research.models import (
     AnalystRun,
     EvidenceBundle,
@@ -63,101 +68,109 @@ async def extract_raw_claims(
     if not successful_runs:
         return all_claims, claim_to_analyst
 
+    phase_concurrency = get_phase_concurrency_config()
+    claim_extraction_max_concurrency = max(
+        1,
+        int(phase_concurrency.get("claim_extraction_max_concurrency", 1)),
+    )
+    extraction_semaphore = asyncio.Semaphore(claim_extraction_max_concurrency)
+
     async def _extract_for_run(run: AnalystRun) -> tuple[AnalystRun, BaseModel]:
-        cited_evidence_ids = {
-            eid
-            for claim in run.claims
-            for eid in claim.evidence_ids
-            if eid in valid_evidence_ids
-        }
-        cited_evidence_ids.update(
-            eid
-            for counterargument in run.counterarguments
-            for eid in counterargument.evidence_ids
-            if eid in valid_evidence_ids
-        )
-
-        if not cited_evidence_ids:
-            logger.warning(
-                "Claim extraction %s: no valid cited evidence IDs available; skipping extraction",
-                run.analyst_label,
+        async with extraction_semaphore:
+            cited_evidence_ids = {
+                eid
+                for claim in run.claims
+                for eid in claim.evidence_ids
+                if eid in valid_evidence_ids
+            }
+            cited_evidence_ids.update(
+                eid
+                for counterargument in run.counterarguments
+                for eid in counterargument.evidence_ids
+                if eid in valid_evidence_ids
             )
 
-            class EmptyClaimExtractionResult(BaseModel):
-                """No-op extraction result when there is no valid candidate evidence."""
+            if not cited_evidence_ids:
+                logger.warning(
+                    "Claim extraction %s: no valid cited evidence IDs available; skipping extraction",
+                    run.analyst_label,
+                )
 
-                claims: list[RawClaim] = Field(default_factory=list)
+                class EmptyClaimExtractionResult(BaseModel):
+                    """No-op extraction result when there is no valid candidate evidence."""
 
-            return run, EmptyClaimExtractionResult()
+                    claims: list[RawClaim] = Field(default_factory=list)
 
-        relevant_evidence = [evidence_by_id[eid].model_dump() for eid in cited_evidence_ids]
-        relevant_sources = [
-            source_by_id[e.source_id].model_dump(mode="json")
-            for e in (evidence_by_id[eid] for eid in cited_evidence_ids)
-            if e.source_id in source_by_id
-        ]
-        ordered_candidate_ids = sorted(cited_evidence_ids)
-        AllowedEvidenceId = Literal.__getitem__(tuple(ordered_candidate_ids))
+                return run, EmptyClaimExtractionResult()
 
-        class ExtractedRawClaim(BaseModel):
-            """LLM-facing atomic claim without system-assigned IDs."""
+            relevant_evidence = [evidence_by_id[eid].model_dump() for eid in cited_evidence_ids]
+            relevant_sources = [
+                source_by_id[e.source_id].model_dump(mode="json")
+                for e in (evidence_by_id[eid] for eid in cited_evidence_ids)
+                if e.source_id in source_by_id
+            ]
+            ordered_candidate_ids = sorted(cited_evidence_ids)
+            AllowedEvidenceId = Literal.__getitem__(tuple(ordered_candidate_ids))
 
-            statement: str = Field(
-                description=(
-                    "A self-contained, falsifiable claim rewritten from the analyst's "
-                    "input claims. Preserve concrete entities, dates, numbers, and "
-                    "benchmarks when available."
-                ),
+            class ExtractedRawClaim(BaseModel):
+                """LLM-facing atomic claim without system-assigned IDs."""
+
+                statement: str = Field(
+                    description=(
+                        "A self-contained, falsifiable claim rewritten from the analyst's "
+                        "input claims. Preserve concrete entities, dates, numbers, and "
+                        "benchmarks when available."
+                    ),
+                )
+                evidence_ids: list[AllowedEvidenceId] = Field(
+                    default_factory=list,
+                    description=(
+                        "One or more supporting evidence IDs chosen only from the "
+                        f"candidate set: {ordered_candidate_ids}. Do not emit source IDs "
+                        "or invented evidence IDs."
+                    ),
+                )
+                confidence: str = Field(description="high, medium, or low")
+                reasoning: str = Field(
+                    default="",
+                    description="Why this atomic claim was extracted and how it maps back to the analyst's input.",
+                )
+
+            class ClaimExtractionResult(BaseModel):
+                """LLM output for one analyst's claim extraction pass."""
+
+                claims: list[ExtractedRawClaim] = Field(
+                    default_factory=list,
+                    description=(
+                        "Atomic normalized claims extracted from the analyst's structured "
+                        "output. Omit any claim that cannot be grounded in the candidate "
+                        "evidence IDs."
+                    ),
+                )
+
+            messages = render_prompt(
+                str(_PROJECT_ROOT / "prompts" / "claimify.yaml"),
+                analyst_label=run.analyst_label,
+                analyst_summary=run.summary,
+                analyst_claims=[claim.model_dump() for claim in run.claims],
+                assumptions=[assumption.model_dump() for assumption in run.assumptions],
+                recommendations=[recommendation.model_dump() for recommendation in run.recommendations],
+                counterarguments=[counterargument.model_dump() for counterargument in run.counterarguments],
+                evidence=relevant_evidence,
+                source_records=relevant_sources,
+                valid_evidence_ids=ordered_candidate_ids,
             )
-            evidence_ids: list[AllowedEvidenceId] = Field(
-                default_factory=list,
-                description=(
-                    "One or more supporting evidence IDs chosen only from the "
-                    f"candidate set: {ordered_candidate_ids}. Do not emit source IDs "
-                    "or invented evidence IDs."
-                ),
+
+            result, _meta = await acall_llm_structured(
+                get_model("claim_extraction"),
+                messages,
+                response_model=ClaimExtractionResult,
+                task="claim_extraction",
+                trace_id=f"{trace_id}/claim_extract/{run.analyst_label}",
+                max_budget=max_budget / len(successful_runs),
+                fallback_models=get_fallback_models("claim_extraction"),
             )
-            confidence: str = Field(description="high, medium, or low")
-            reasoning: str = Field(
-                default="",
-                description="Why this atomic claim was extracted and how it maps back to the analyst's input.",
-            )
-
-        class ClaimExtractionResult(BaseModel):
-            """LLM output for one analyst's claim extraction pass."""
-
-            claims: list[ExtractedRawClaim] = Field(
-                default_factory=list,
-                description=(
-                    "Atomic normalized claims extracted from the analyst's structured "
-                    "output. Omit any claim that cannot be grounded in the candidate "
-                    "evidence IDs."
-                ),
-            )
-
-        messages = render_prompt(
-            str(_PROJECT_ROOT / "prompts" / "claimify.yaml"),
-            analyst_label=run.analyst_label,
-            analyst_summary=run.summary,
-            analyst_claims=[claim.model_dump() for claim in run.claims],
-            assumptions=[assumption.model_dump() for assumption in run.assumptions],
-            recommendations=[recommendation.model_dump() for recommendation in run.recommendations],
-            counterarguments=[counterargument.model_dump() for counterargument in run.counterarguments],
-            evidence=relevant_evidence,
-            source_records=relevant_sources,
-            valid_evidence_ids=ordered_candidate_ids,
-        )
-
-        result, _meta = await acall_llm_structured(
-            get_model("claim_extraction"),
-            messages,
-            response_model=ClaimExtractionResult,
-            task="claim_extraction",
-            trace_id=f"{trace_id}/claim_extract/{run.analyst_label}",
-            max_budget=max_budget / len(successful_runs),
-            fallback_models=get_fallback_models("claim_extraction"),
-        )
-        return run, result
+            return run, result
 
     extraction_results = await asyncio.gather(*[_extract_for_run(run) for run in successful_runs])
 
