@@ -119,13 +119,14 @@ largest quality-oriented technical debt in the current pipeline.
 **Fix:** keep the current staged dedup path, but add stronger non-merge/merge
 controls or a better equivalence-screening strategy before the next enumeration-heavy benchmark wave.
 
-### Sub-question evidence tagging incomplete
-Evidence items are tagged with `sub_question_id` based on which search query
-found them. But `_select_diverse()` round-robins across queries, and the
-tag only comes from the first query that found a URL. If a source was found
-by multiple sub-question queries, only the first tag survives. This causes
-sub-questions to show 0 evidence even when relevant evidence exists.
+### Sub-question evidence tagging origin collapse resolved locally
+The obvious undercount bug is fixed: evidence now retains all matched
+`sub_question_ids` from shared URLs, and coverage/compression consume the full
+tag set instead of only the first query-origin tag. That closes the false-zero
+coverage failure mode.
 
-**File:** `src/grounded_research/collect.py:235-250`
-**Observed:** LLM SWE question had 3 sub-questions with 0 evidence despite 94 total items
-**Fix:** Tag evidence by checking content relevance against sub-questions (LLM call), not just search query origin
+**Files:** `src/grounded_research/collect.py`, `src/grounded_research/compress.py`, `engine.py`
+**Resolved:** 2026-03-26
+**Residual question:** If we later need semantic tagging beyond search-origin
+multi-tagging, that should be evaluated as a benchmark-driven enhancement, not
+as unresolved correctness debt.

@@ -492,7 +492,7 @@ async def collect_evidence(
     gaps: list[str] = []
 
     source_map: dict[str, SourceRecord] = {}
-    source_sq_map: dict[str, str | None] = {}  # url → sub_question_id
+    source_sq_ids_map: dict[str, list[str]] = {}  # url → all matched sub-question IDs
     for result in selected:
         url = result["url"]
         title = result.get("title", "")
@@ -511,10 +511,9 @@ async def collect_evidence(
         sources.append(source)
         source_map[url] = source
 
-        # Use the richest sub-question mapping (all queries that found this URL)
-        sq_ids = url_sq_ids.get(url, set())
-        source_sq_map[url] = next(iter(sq_ids)) if sq_ids else None
-        sq_id = query_to_sq.get(result.get("search_query", ""))
+        # Preserve every matched sub-question tag so coverage is not undercounted.
+        sq_ids = sorted(url_sq_ids.get(url, set()))
+        source_sq_ids_map[url] = sq_ids
 
         # Add search snippet as evidence
         if description and len(description) > 30:
@@ -524,7 +523,7 @@ async def collect_evidence(
                 content_type="summary",
                 relevance_note=f"Search snippet for: {result.get('search_query', '')}",
                 extraction_method="upstream",
-                sub_question_id=sq_id,
+                sub_question_ids=sq_ids,
             ))
 
     # Fetch page content in parallel (with Jina Reader fallback for 403s)
@@ -666,7 +665,7 @@ async def collect_evidence(
 
     for url, page_data in fetch_results:
         source = source_map[url]
-        sq_id = source_sq_map.get(url)
+        sq_ids = source_sq_ids_map.get(url, [])
         if page_data is None:
             gaps.append(f"Failed to fetch {url}")
             continue
@@ -681,7 +680,7 @@ async def collect_evidence(
                 content_type="text",
                 relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
                 extraction_method="llm",
-                sub_question_id=sq_id,
+                sub_question_ids=sq_ids,
             ))
 
         notes = page_data.get("notes", "")
@@ -692,7 +691,7 @@ async def collect_evidence(
                 content_type="summary",
                 relevance_note=f"Page summary ({char_count} chars total)",
                 extraction_method="llm",
-                sub_question_id=sq_id,
+                sub_question_ids=sq_ids,
             ))
 
     print(f"  Collected {len(sources)} sources, {len(evidence)} evidence items, {len(gaps)} gaps")

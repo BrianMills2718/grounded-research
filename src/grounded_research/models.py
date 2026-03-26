@@ -256,10 +256,30 @@ class EvidenceItem(BaseModel):
         default="upstream",
         description="How this evidence was extracted. 'upstream' = imported from research_v3 or similar.",
     )
-    sub_question_id: str | None = Field(
-        default=None,
-        description="SQ- ID of the sub-question whose search query found this evidence. None for non-decomposed runs.",
+    sub_question_ids: list[str] = Field(
+        default_factory=list,
+        description=(
+            "SQ- IDs of the sub-questions whose search queries surfaced this evidence. "
+            "Empty for non-decomposed runs."
+        ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _upgrade_legacy_sub_question_field(cls, data: Any) -> Any:
+        """Accept older traces that stored only one sub-question tag."""
+        if not isinstance(data, dict):
+            return data
+
+        if "sub_question_ids" in data:
+            return data
+
+        legacy_id = data.get("sub_question_id")
+        if legacy_id:
+            upgraded = dict(data)
+            upgraded["sub_question_ids"] = [legacy_id]
+            return upgraded
+        return data
 
 
 class EvidenceBundle(BaseModel):

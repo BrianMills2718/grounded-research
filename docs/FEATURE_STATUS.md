@@ -48,7 +48,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
 | 17 | Echo detection across sources | DEFER | SKIP | Intentionally skipped; judged not worth building in v1. |
 | 18 | Conflict-aware compression | SIMPLIFY | **DONE** | `compress.py`: priority-based compression preserving authoritative sources, sub-question coverage, and diversity. |
-| 19 | Check evidence sufficiency | KEEP | **DONE** | Per-sub-question coverage check: flags sub-questions with < 2 evidence items as gaps. `EvidenceItem.sub_question_id` tracks origin. |
+| 19 | Check evidence sufficiency | KEEP | **DONE** | Per-sub-question coverage check: flags sub-questions with < 2 evidence items as gaps. `EvidenceItem.sub_question_ids` preserves all matched sub-question tags for shared URLs. |
 | 20 | Enforce search budget & diminishing-returns cutoff | SIMPLIFY | **DONE** | Fixed budget: `num_queries` and `max_sources` in config. No diminishing-returns logic. |
 
 ## STAGE 3 — INDEPENDENT CANDIDATE GENERATION

@@ -1,8 +1,8 @@
 """Conflict-aware evidence compression.
 
 Reduces evidence count when it exceeds the configured threshold while
-preserving: (1) all authoritative-source evidence, (2) evidence from
-different sub-questions, (3) evidence diversity. Drops redundant
+preserving: (1) all authoritative-source evidence, (2) evidence that
+covers different sub-questions, (3) evidence diversity. Drops redundant
 evidence from low-quality sources first.
 
 See docs/plans/phase_b_source_quality.md for design.
@@ -25,7 +25,7 @@ def compress_evidence(
 
     Priority (keep first):
     1. Evidence from authoritative sources
-    2. Evidence with sub_question_id (ensures sub-question coverage)
+    2. Evidence tagged to at least one sub-question (ensures sub-question coverage)
     3. Evidence from reliable sources
     4. Evidence from unknown/unreliable sources (dropped first)
 
@@ -43,22 +43,21 @@ def compress_evidence(
     def _priority(e) -> tuple[int, bool, str]:
         quality = source_quality.get(e.source_id, "unknown")
         tier = {"authoritative": 0, "reliable": 1, "unknown": 2, "unreliable": 3}.get(quality, 2)
-        has_sq = e.sub_question_id is not None
+        has_sq = bool(e.sub_question_ids)
         return (tier, not has_sq, e.id)  # lower = higher priority
 
     sorted_evidence = sorted(bundle.evidence, key=_priority)
 
-    # Keep up to threshold, ensuring at least one per sub-question
+    # Keep up to threshold, ensuring at least one item per sub-question tag.
     kept: list = []
     seen_sq: set[str] = set()
-    seen_sources: set[str] = set()
 
     # First pass: ensure sub-question coverage
     for e in sorted_evidence:
-        if e.sub_question_id and e.sub_question_id not in seen_sq:
+        uncovered_sq_ids = [sq_id for sq_id in e.sub_question_ids if sq_id not in seen_sq]
+        if uncovered_sq_ids:
             kept.append(e)
-            seen_sq.add(e.sub_question_id)
-            seen_sources.add(e.source_id)
+            seen_sq.update(uncovered_sq_ids)
 
     # Second pass: fill up to threshold by priority
     for e in sorted_evidence:

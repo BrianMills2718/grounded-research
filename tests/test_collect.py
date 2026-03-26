@@ -303,3 +303,73 @@ async def test_collect_evidence_logs_fetch_and_jina_fallback(
         "succeeded",
     ]
     assert all(record.trace_id == "trace-collect" for record in logged_records)
+
+
+@pytest.mark.asyncio
+async def test_collect_evidence_preserves_all_matching_sub_question_tags(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Evidence from a shared URL should keep every matching sub-question tag."""
+
+    async def fake_generate_search_queries(*args, **kwargs):
+        return [
+            "ubi labor supply pilot",
+            "ubi poverty pilot",
+        ], {
+            "ubi labor supply pilot": "SQ-1",
+            "ubi poverty pilot": "SQ-2",
+        }
+
+    monkeypatch.setattr(
+        "grounded_research.collect.generate_search_queries",
+        fake_generate_search_queries,
+    )
+
+    async def fake_search_web(
+        query: str,
+        count: int = 10,
+        freshness: str = "none",
+        *,
+        trace_id=None,
+        task=None,
+    ) -> str:
+        assert trace_id == "trace-multitag"
+        assert task == "collection.search"
+        return (
+            '{"results": [{"title": "Pilot result", "url": "https://example.com/pilot", '
+            '"description": "Search snippet long enough to be included as evidence.", '
+            '"age": "1 day"}]}'
+        )
+
+    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+
+    async def fake_score_source_quality(bundle, trace_id, max_budget):
+        for source in bundle.sources:
+            source.quality_tier = "authoritative"
+
+    monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
+    monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
+    monkeypatch.setattr("grounded_research.tools.fetch_page.set_pages_dir", lambda path: None)
+    monkeypatch.setattr(
+        "grounded_research.collect.log_tool_call",
+        lambda record: None,
+    )
+
+    async def fake_fetch_page(url: str, question: str = "") -> str:
+        return (
+            '{"url": "https://example.com/pilot", "content_type": "text/html", '
+            '"char_count": 321, "notes": "Page summary long enough to be included as evidence.", '
+            '"key_section": "Key section long enough to be included as evidence and clearly relevant."}'
+        )
+
+    monkeypatch.setattr("grounded_research.tools.fetch_page.fetch_page", fake_fetch_page)
+
+    bundle = await collect_evidence(
+        question="What happened in the UBI pilot?",
+        trace_id="trace-multitag",
+        max_sources=1,
+        max_budget=0.1,
+    )
+
+    assert len(bundle.evidence) >= 3
+    assert all(item.sub_question_ids == ["SQ-1", "SQ-2"] for item in bundle.evidence)

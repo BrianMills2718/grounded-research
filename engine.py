@@ -84,7 +84,11 @@ async def run_pipeline(
         # --- Evidence sufficiency check (if decomposition available) ---
         if decomposition is not None:
             from collections import Counter
-            sq_coverage = Counter(e.sub_question_id for e in bundle.evidence if e.sub_question_id)
+            sq_coverage = Counter(
+                sq_id
+                for evidence_item in bundle.evidence
+                for sq_id in evidence_item.sub_question_ids
+            )
             for sq in decomposition.sub_questions:
                 count = sq_coverage.get(sq.id, 0)
                 if count < 2:

@@ -139,6 +139,12 @@ Pass condition:
 - coverage checks no longer show obvious false-zero sub-question coverage when
   the bundle clearly contains relevant evidence
 
+Status:
+- implemented on 2026-03-26 via explicit multi-tag preservation
+- evidence now retains all matched `sub_question_ids` from shared URLs
+- coverage and compression consume all tags instead of only the first one
+- benchmark confirmation still pending on the next dense-question rerun
+
 ---
 
 ## Failure Modes
@@ -162,7 +168,7 @@ Pass condition:
 - [x] `AnalystRun.counterarguments` no longer relies on fragile default/min-length
       interaction
 - [x] `PhaseTrace` is constructed atomically rather than post-mutated
-- [ ] Sub-question evidence tagging no longer obviously undercounts relevant
+- [x] Sub-question evidence tagging no longer obviously undercounts relevant
       evidence on known benchmark cases
 - [ ] Tests covering canonicalization, collection, export, and phase boundaries
       pass after each slice
@@ -185,3 +191,5 @@ Current verified slice:
 
 - `PYTHONPATH=src python -m pytest tests/test_prompt_templates.py tests/test_export.py tests/test_collect.py tests/test_phase_boundaries.py -q`
   - Result: `48 passed, 1 skipped`
+- `PYTHONPATH=src python -m pytest tests/test_collect.py tests/test_compress.py tests/test_phase_boundaries.py -q`
+  - Result: `37 passed, 1 skipped`
