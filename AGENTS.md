@@ -270,6 +270,12 @@ architectural decision that the plan did not pre-make.
 If a real uncertainty appears mid-run, document it in the active plan and
 `docs/TECH_DEBT.md`, then keep moving on the remaining non-blocked work.
 
+Treat long execution waves as continuous work, not as a sequence of
+conversation-sized patches. If a next-24-hour plan exists, the default
+behavior is to keep executing the full wave until every pre-made step is done
+or a real blocker is hit. Do not pause merely because the work became slow,
+large, or multi-commit.
+
 ### 13. Documentation Governance Is In Scope
 
 This repo intentionally keeps a documentation-governance layer alongside the
