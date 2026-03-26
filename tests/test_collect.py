@@ -7,6 +7,7 @@ import pytest
 from grounded_research.collect import (
     _anchor_queries,
     _extract_topic_anchors,
+    collect_evidence,
     _score_search_result,
     _select_diverse,
     generate_search_queries,
@@ -229,3 +230,75 @@ def test_select_diverse_prefers_prefetch_quality_tier_within_query(
     )
 
     assert selected[0]["url"] == "https://example.com/stronger"
+
+
+@pytest.mark.asyncio
+async def test_collect_evidence_logs_fetch_and_jina_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Collection fetch orchestration should emit shared tool-call records."""
+
+    logged_records = []
+
+    async def fake_generate_search_queries(*args, **kwargs):
+        return ["ubi pilot program"], {"ubi pilot program": "SQ-1"}
+
+    monkeypatch.setattr(
+        "grounded_research.collect.generate_search_queries",
+        fake_generate_search_queries,
+    )
+
+    async def fake_search_web(query: str, count: int = 10, freshness: str = "none", *, trace_id=None, task=None):
+        assert trace_id == "trace-collect"
+        assert task == "collection.search"
+        return (
+            '{"results": [{"title": "Pilot result", "url": "https://example.com/pilot", '
+            '"description": "Search snippet", "age": "1 day"}]}'
+        )
+
+    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+
+    async def fake_score_source_quality(bundle, trace_id, max_budget):
+        for source in bundle.sources:
+            source.quality_tier = "authoritative"
+
+    monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
+    monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
+    monkeypatch.setattr("grounded_research.tools.fetch_page.set_pages_dir", lambda path: None)
+
+    async def fake_fetch_page(url: str, question: str = "") -> str:
+        return '{"url": "https://example.com/pilot", "error": "HTTP 403: Forbidden"}'
+
+    async def fake_fetch_page_jina(url: str, question: str = "") -> str:
+        return (
+            '{"url": "https://example.com/pilot", "fetched_via": "jina_reader", '
+            '"content_type": "text/markdown", "char_count": 321, "notes": "body", '
+            '"key_section": "section"}'
+        )
+
+    monkeypatch.setattr("grounded_research.tools.fetch_page.fetch_page", fake_fetch_page)
+    monkeypatch.setattr("grounded_research.tools.jina_reader.fetch_page_jina", fake_fetch_page_jina)
+    monkeypatch.setattr("grounded_research.collect.log_tool_call", lambda record: logged_records.append(record))
+
+    bundle = await collect_evidence(
+        question="What happened in the UBI pilot?",
+        trace_id="trace-collect",
+        max_sources=1,
+        max_budget=0.1,
+    )
+
+    assert len(bundle.sources) == 1
+    assert bundle.sources[0].quality_tier == "authoritative"
+    assert [record.provider for record in logged_records] == [
+        "local_fetch_page",
+        "local_fetch_page",
+        "jina_reader",
+        "jina_reader",
+    ]
+    assert [record.status for record in logged_records] == [
+        "started",
+        "failed",
+        "started",
+        "succeeded",
+    ]
+    assert all(record.trace_id == "trace-collect" for record in logged_records)

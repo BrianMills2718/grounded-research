@@ -7,6 +7,7 @@ import os
 from collections.abc import Mapping
 from typing import Literal
 
+from llm_client.observability import log_tool_call
 from open_web_retrieval import OpenWebRetrievalClient, SearchQuery
 
 Freshness = Literal["pd", "pw", "pm", "py", "none"]
@@ -29,6 +30,9 @@ async def search_web(
     query: str,
     count: int = 10,
     freshness: Freshness = "none",
+    *,
+    trace_id: str | None = None,
+    task: str = "collection.search",
 ) -> str:
     """Search the web using the shared Brave adapter and return normalized results.
 
@@ -51,9 +55,9 @@ async def search_web(
         recency_days=_freshness_days(freshness),
         locale="en",
     )
-    client = OpenWebRetrievalClient(brave_api_key=api_key)
+    client = OpenWebRetrievalClient(brave_api_key=api_key, tool_call_logger=log_tool_call)
     try:
-        hits = client.search(query_model)
+        hits = client.search(query_model, trace_id=trace_id, task=task)
     except OpenWebRetrievalError as exc:
         if (
             getattr(exc, "error_code", "") == "OPEN_WEB_RETRIEVAL_ERROR"

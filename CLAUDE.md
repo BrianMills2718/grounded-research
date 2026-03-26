@@ -151,6 +151,11 @@ Use `llm_client` for:
 - shared observability
 - prompt rendering
 
+Collection observability should use the shared `llm_client` `tool_calls`
+surface. Search calls should flow through `open_web_retrieval` with the run
+`trace_id` and collection task name. Project-local fetch wrappers may emit the
+same shared `tool_calls` directly until the fetch path is migrated.
+
 Do not hand-roll direct LiteLLM calls or subprocess wrappers.
 
 This repo owns contracts, schemas, validation, and grounded artifacts.

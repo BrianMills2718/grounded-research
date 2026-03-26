@@ -19,7 +19,12 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 import re
+import time
+from typing import Literal
 from urllib.parse import urlparse
+from uuid import uuid4
+
+from llm_client.observability import ToolCallResult, log_tool_call
 
 from grounded_research.config import (
     get_collection_ranking_config,
@@ -37,6 +42,78 @@ from grounded_research.models import (
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
+
+
+def _tool_call_started(
+    *,
+    tool_name: str,
+    operation: str,
+    provider: str,
+    target: str,
+    trace_id: str,
+    task: str,
+    metrics: dict[str, object] | None = None,
+) -> tuple[str, str, float]:
+    """Log one shared started tool-call record and return timing state."""
+
+    call_id = f"toolcall_{uuid4().hex}"
+    started_at = datetime.now(timezone.utc).isoformat()
+    started_monotonic = time.monotonic()
+    log_tool_call(
+        ToolCallResult(
+            call_id=call_id,
+            tool_name=tool_name,
+            operation=operation,
+            provider=provider,
+            target=target,
+            status="started",
+            started_at=started_at,
+            attempt=1,
+            task=task,
+            trace_id=trace_id,
+            metrics=dict(metrics or {}),
+        )
+    )
+    return call_id, started_at, started_monotonic
+
+
+def _tool_call_finished(
+    *,
+    call_id: str,
+    started_at: str,
+    started_monotonic: float,
+    tool_name: str,
+    operation: str,
+    provider: str,
+    target: str,
+    trace_id: str,
+    task: str,
+    status: Literal["succeeded", "failed"],
+    metrics: dict[str, object] | None = None,
+    error_type: str | None = None,
+    error_message: str | None = None,
+) -> None:
+    """Log one shared final tool-call record."""
+
+    log_tool_call(
+        ToolCallResult(
+            call_id=call_id,
+            tool_name=tool_name,
+            operation=operation,
+            provider=provider,
+            target=target,
+            status=status,
+            started_at=started_at,
+            ended_at=datetime.now(timezone.utc).isoformat(),
+            duration_ms=max(0, int(round((time.monotonic() - started_monotonic) * 1000))),
+            attempt=1,
+            task=task,
+            trace_id=trace_id,
+            metrics=dict(metrics or {}),
+            error_type=error_type,
+            error_message=error_message,
+        )
+    )
 
 
 def _extract_topic_anchors(question: str) -> list[str]:
@@ -337,14 +414,26 @@ async def collect_evidence(
         """Search one query, return results with query tag."""
         results = []
         try:
-            raw = await search_web(q, count=results_per_query, freshness=freshness)
+            raw = await search_web(
+                q,
+                count=results_per_query,
+                freshness=freshness,
+                trace_id=trace_id,
+                task="collection.search",
+            )
             data = json.loads(raw)
             for r in data.get("results", []):
                 r["search_query"] = q
                 results.append(r)
 
             if time_sensitivity == "time_sensitive":
-                raw_unfiltered = await search_web(q, count=3, freshness="none")
+                raw_unfiltered = await search_web(
+                    q,
+                    count=3,
+                    freshness="none",
+                    trace_id=trace_id,
+                    task="collection.search",
+                )
                 data_unfiltered = json.loads(raw_unfiltered)
                 for r in data_unfiltered.get("results", []):
                     r["search_query"] = q
@@ -458,23 +547,134 @@ async def collect_evidence(
     # Fetch page content in parallel (with Jina Reader fallback for 403s)
     async def _fetch_one(url: str, idx: int) -> tuple[str, dict | None]:
         """Fetch one page, return (url, page_data) or (url, None) on failure."""
+        call_id, started_at, started_monotonic = _tool_call_started(
+            tool_name="grounded_research",
+            operation="fetch_page",
+            provider="local_fetch_page",
+            target=url,
+            trace_id=trace_id,
+            task="collection.fetch",
+        )
         try:
             print(f"  Fetching [{idx+1}/{len(selected)}] {url[:60]}...")
             raw_page = await fetch_page(url, question=question)
             page_data = json.loads(raw_page)
 
             if page_data.get("error") and "403" in str(page_data.get("error", "")):
+                _tool_call_finished(
+                    call_id=call_id,
+                    started_at=started_at,
+                    started_monotonic=started_monotonic,
+                    tool_name="grounded_research",
+                    operation="fetch_page",
+                    provider="local_fetch_page",
+                    target=url,
+                    trace_id=trace_id,
+                    task="collection.fetch",
+                    status="failed",
+                    metrics={"fallback": "jina_reader"},
+                    error_type="HTTP403Fallback",
+                    error_message=str(page_data.get("error", "")),
+                )
+                fallback_call_id, fallback_started_at, fallback_started_monotonic = _tool_call_started(
+                    tool_name="grounded_research",
+                    operation="fetch_page",
+                    provider="jina_reader",
+                    target=url,
+                    trace_id=trace_id,
+                    task="collection.fetch",
+                )
                 from grounded_research.tools.jina_reader import fetch_page_jina
                 print(f"    → 403 blocked, retrying via Jina Reader...")
                 raw_page = await fetch_page_jina(url, question=question)
                 page_data = json.loads(raw_page)
+                if page_data.get("error"):
+                    _tool_call_finished(
+                        call_id=fallback_call_id,
+                        started_at=fallback_started_at,
+                        started_monotonic=fallback_started_monotonic,
+                        tool_name="grounded_research",
+                        operation="fetch_page",
+                        provider="jina_reader",
+                        target=url,
+                        trace_id=trace_id,
+                        task="collection.fetch",
+                        status="failed",
+                        error_type="JinaReaderError",
+                        error_message=str(page_data.get("error", "")),
+                    )
+                else:
+                    _tool_call_finished(
+                        call_id=fallback_call_id,
+                        started_at=fallback_started_at,
+                        started_monotonic=fallback_started_monotonic,
+                        tool_name="grounded_research",
+                        operation="fetch_page",
+                        provider="jina_reader",
+                        target=url,
+                        trace_id=trace_id,
+                        task="collection.fetch",
+                        status="succeeded",
+                        metrics={
+                            "content_type": str(page_data.get("content_type", "")),
+                            "char_count": int(page_data.get("char_count", 0) or 0),
+                            "fetched_via": str(page_data.get("fetched_via", "jina_reader")),
+                        },
+                    )
+                    return url, page_data
+                if page_data.get("error"):
+                    return url, None
 
             if page_data.get("error"):
+                _tool_call_finished(
+                    call_id=call_id,
+                    started_at=started_at,
+                    started_monotonic=started_monotonic,
+                    tool_name="grounded_research",
+                    operation="fetch_page",
+                    provider="local_fetch_page",
+                    target=url,
+                    trace_id=trace_id,
+                    task="collection.fetch",
+                    status="failed",
+                    error_type="FetchPageError",
+                    error_message=str(page_data.get("error", "")),
+                )
                 return url, None
+            _tool_call_finished(
+                call_id=call_id,
+                started_at=started_at,
+                started_monotonic=started_monotonic,
+                tool_name="grounded_research",
+                operation="fetch_page",
+                provider="local_fetch_page",
+                target=url,
+                trace_id=trace_id,
+                task="collection.fetch",
+                status="succeeded",
+                metrics={
+                    "content_type": str(page_data.get("content_type", "")),
+                    "char_count": int(page_data.get("char_count", 0) or 0),
+                },
+            )
             return url, page_data
         except Exception as e:
             import logging
             logging.getLogger(__name__).warning("Fetch failed for %s: %s", url, e)
+            _tool_call_finished(
+                call_id=call_id,
+                started_at=started_at,
+                started_monotonic=started_monotonic,
+                tool_name="grounded_research",
+                operation="fetch_page",
+                provider="local_fetch_page",
+                target=url,
+                trace_id=trace_id,
+                task="collection.fetch",
+                status="failed",
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
             return url, None
 
     # Run all fetches concurrently
