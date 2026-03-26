@@ -139,28 +139,16 @@ explicit finite request timeouts. The remaining shared-infra issue is
 durability and nicer defaults in `llm_client`, not a current grounded-research
 blocker.
 
-### Benchmark comparison harness still uses stale timeout-policy defaults
-The pipeline itself now runs under a benchmark-safe runtime policy, but
-`scripts/compare_fair.py` still logs `LLM_CLIENT_TIMEOUT_POLICY=ban` and
-disables explicit request timeouts. This no longer blocks comparisons in the
-current environment, but it is inconsistent with the safer runtime policy used
-by the pipeline itself.
+### Dense canonicalization remains weaker than ideal on enumeration-heavy runs
+The benchmark is now recovered, but dense enumeration-style bundles can still
+produce weak canonical merging (`raw == canonical`) even when the final report
+quality is acceptable. This is no longer the top blocker, but it remains the
+largest quality-oriented technical debt in the current pipeline.
 
-**Files:** `scripts/compare_fair.py` and/or shared `llm_client` call-site policy
-**Observed:** 2026-03-26 fair comparisons for `output/ubi_wave2_coverage_breadth/`
-and `output/ubi_wave2_report_calibrated/`
-**Fix:** Run benchmark/comparison scripts under the same explicit timeout policy
-as the pipeline so long judge calls fail predictably instead of waiting indefinitely.
-
-### Verification-time retrieval still has weak trace propagation
-Wave 0 tool-call observability landed for collection, but the improved UBI
-reruns showed verification-time Brave searches still writing `tool_calls` rows
-with missing `trace_id`. That weakens diagnostics exactly where dispute
-verification matters most.
-
-**Files:** verification retrieval path in `src/grounded_research/verify.py` and shared retrieval wrappers
-**Observed:** `output/ubi_wave2_coverage_breadth/llm_observability.db`
-**Fix:** propagate `trace_id`/`task` through verification query search/fetch so dispute-resolution retrieval is queryable end-to-end.
+**Files:** `src/grounded_research/canonicalize.py`, `prompts/dedup.yaml`
+**Observed:** 2026-03-26 calibrated UBI rerun still produced `39 raw -> 39 canonical`
+**Fix:** keep the current staged dedup path, but add stronger non-merge/merge
+controls or a better equivalence-screening strategy before the next enumeration-heavy benchmark wave.
 
 ### Sub-question evidence tagging incomplete
 Evidence items are tagged with `sub_question_id` based on which search query

@@ -68,9 +68,6 @@ regress below the current calibrated result.
 **Actions:**
 - improve dense canonicalization on enumeration-heavy runs (`raw == canonical`
   still happens too often even when the benchmark now passes)
-- clean up benchmark-harness timeout policy so comparison scripts use the same
-  runtime safety policy as the pipeline
-- propagate trace metadata cleanly through verification-time retrieval calls
 
 **Gate:** Remaining debt items are explicit and no longer masquerade as active
 benchmark blockers.

@@ -373,7 +373,13 @@ async def _collect_fresh_evidence_for_dispute(
             break
 
         try:
-            raw_results = await search_web(query, count=max_results_per_query, freshness=freshness)
+            raw_results = await search_web(
+                query,
+                count=max_results_per_query,
+                freshness=freshness,
+                trace_id=f"{trace_id}/search/{dispute.id}",
+                task="verification.search",
+            )
             payload = json.loads(raw_results)
             search_results = payload.get("results", [])
         except Exception as exc:

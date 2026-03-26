@@ -11,6 +11,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -56,12 +57,28 @@ well-reasoned, not how they reference sources.
 """
 
 
+def _configure_compare_runtime(output_name: str) -> None:
+    """Apply the same safe runtime policy used by the main pipeline.
+
+    The comparison harness should not silently run under a stricter timeout
+    policy than the pipeline it is evaluating. Use a run-local observability DB
+    as well so judge runs do not contend on the shared SQLite file.
+    """
+    os.environ["LLM_CLIENT_TIMEOUT_POLICY"] = "allow"
+    os.environ["LLM_CLIENT_DB_PATH"] = str(PROJECT_ROOT / "output" / f"{output_name}_llm_observability.db")
+
+
 async def compare_fair(
     report_a_path: Path,
     report_b_path: Path,
     judge_model: str = "openrouter/openai/gpt-5-nano",
 ) -> None:
     """Run fair comparison without provenance bias."""
+    stem_a = report_a_path.parent.name
+    stem_b = report_b_path.parent.name
+    output_name = f"fair_{stem_a}_vs_{stem_b}"
+    _configure_compare_runtime(output_name)
+
     from llm_client import acall_llm
 
     report_a = report_a_path.read_text()
@@ -103,9 +120,8 @@ Then give your overall verdict on which is more useful for a decision-maker.
     print(llm_result.content)
 
     # Save
-    stem_a = report_a_path.parent.name
-    stem_b = report_b_path.parent.name
-    out = PROJECT_ROOT / "output" / f"fair_{stem_a}_vs_{stem_b}.md"
+    out = PROJECT_ROOT / "output" / f"{output_name}.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
         f"# Fair Comparison (no provenance bias)\n\n"
         f"**Judge:** {judge_model}\n"

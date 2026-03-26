@@ -1,4 +1,4 @@
-"""Tests for arbitration protocol enforcement.
+"""Tests for arbitration protocol enforcement and verification wiring.
 
 These tests exercise the local anti-conformity validation layer around
 arbitration output. The LLM boundary is mocked elsewhere; here we verify that
@@ -8,10 +8,19 @@ evidence support.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
-from grounded_research.models import ArbitrationResult, Claim, ClaimUpdate, Dispute
-from grounded_research.verify import _enforce_arbitration_protocol, arbitrate_dispute
+from grounded_research.models import (
+    ArbitrationResult,
+    Claim,
+    ClaimUpdate,
+    Dispute,
+    EvidenceBundle,
+    ResearchQuestion,
+)
+from grounded_research.verify import _collect_fresh_evidence_for_dispute, _enforce_arbitration_protocol, arbitrate_dispute
 
 
 def _make_claim(claim_id: str) -> Claim:
@@ -154,3 +163,37 @@ async def test_arbitrate_dispute_passes_configured_timeout(
     )
 
     assert result.verdict == "inconclusive"
+
+
+@pytest.mark.asyncio
+async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verification-time search should propagate trace metadata for observability."""
+    captured: dict[str, str | None] = {}
+
+    async def fake_search_web(query: str, count: int = 10, freshness: str = "none", *, trace_id=None, task=None):
+        captured["trace_id"] = trace_id
+        captured["task"] = task
+        return json.dumps({"results": []})
+
+    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+
+    dispute = _make_dispute(["C-1", "C-2"])
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="What is the evidence?"),
+        sources=[],
+        evidence=[],
+        gaps=[],
+    )
+
+    _sources, _evidence, warnings = await _collect_fresh_evidence_for_dispute(
+        dispute=dispute,
+        queries=["test query"],
+        bundle=bundle,
+        trace_id="trace-root",
+    )
+
+    assert captured["trace_id"] == "trace-root/search/D-1"
+    assert captured["task"] == "verification.search"
+    assert any(w.code == "verification_no_results" for w in warnings)
