@@ -214,11 +214,14 @@ Required checks:
 - Do not switch production models for this wave. Fix the method on the cheap
   development stack first.
 - 2026-03-25 benchmark result:
-  - `output/ubi_wave2_full/` captured the clean raw-question rerun through
-    adjudication before export failed on shared observability DB contention
-  - `output/ubi_wave2_export_resume/` resumed export successfully from the
-    saved trace using an isolated observability DB and explicit request
-    timeouts
-  - fair comparison vs cached Perplexity remained `20` vs `24`
-  - fair comparison vs the same-bundle single-shot baseline favored the
-    pipeline strongly
+- `output/ubi_wave2_full/` captured the clean raw-question rerun through
+  adjudication before export failed on shared observability DB contention
+- `output/ubi_wave2_export_resume/` resumed export successfully from the
+  saved trace using an isolated observability DB and explicit request
+  timeouts
+- fair comparison vs cached Perplexity remained `20` vs `24`
+- fair comparison vs the same-bundle single-shot baseline favored the
+  pipeline strongly
+- later 2026-03-26 coverage-breadth and report-calibration slices recovered the
+  UBI benchmark to `24` vs `23` in favor of the pipeline, even though dense
+  canonicalization still remains weaker than ideal on enumeration-heavy runs

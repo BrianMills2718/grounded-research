@@ -632,20 +632,20 @@ disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
-Continue the benchmark-driven Wave 2 follow-up rather than revisiting
-architecture review.
+Continue the post-Wave-2 cleanup rather than reopening solved benchmark gaps.
 
 Specifically:
 
-1. keep the now-working runtime policy as the default benchmark path
-2. improve analyst/claim coverage breadth on rich enumeration-heavy bundles
-3. re-run the improved UBI gate and compare against cached Perplexity
+1. update the status/plan docs to reflect the calibrated UBI result
+2. preserve the current benchmark-safe runtime + coverage + report-calibration path
+3. focus new engineering work on residual debt, not on re-solving the already-recovered UBI benchmark
 
 Current active implementation frontier:
 
 - `docs/plans/wave2_enumeration_grounding.md`
-- `docs/plans/wave2_coverage_breadth.md`
 - `docs/plans/docs_authority_reconciliation.md`
+- `docs/plans/wave2_coverage_breadth.md`
+- `docs/plans/wave2_report_synthesis_calibration.md`
 
 Recently completed gate:
 

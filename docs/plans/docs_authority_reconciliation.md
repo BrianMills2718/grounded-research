@@ -4,7 +4,7 @@
 remaining documentation cleanup needed so the active implementation state and
 the active plans stop contradicting each other.
 
-**Status:** Planned
+**Status:** Completed
 **Type:** design
 **Priority:** Medium
 **Blocked By:** None
@@ -57,7 +57,7 @@ priorities and makes review harder than the code itself.
 
 ## Pre-Made Decisions
 
-1. The active implementation frontier is `Wave 2 completion + runtime reliability`.
+1. The active implementation frontier is the post-Wave-2 cleanup surface, not the old runtime-blocked UBI recovery state.
 2. `depth_modes.md` is not “planned from scratch”; it is partially implemented
    with deeper follow-on work deferred.
 3. `ROADMAP.md` must stop leading with older fasting/search-diversification
@@ -83,15 +83,15 @@ priorities and makes review harder than the code itself.
 
 ## Acceptance Criteria
 
-- [ ] `CLAUDE.md` and `AGENTS.md` match exactly
-- [ ] `docs/plans/CLAUDE.md` reflects actual active/completed plan state
-- [ ] `docs/ROADMAP.md` matches the real current frontier
-- [ ] No active doc claims that depth modes are entirely unimplemented
+- [x] `CLAUDE.md` and `AGENTS.md` match exactly
+- [x] `docs/plans/CLAUDE.md` reflects actual active/completed plan state
+- [x] `docs/ROADMAP.md` matches the real current frontier
+- [x] No active doc claims that depth modes are entirely unimplemented
 
 ---
 
 ## Notes
 
-- This plan is deliberately separate from runtime implementation work.
-- It should be completed alongside, but not confused with, the Wave 2
-  reliability slice.
+- Completed 2026-03-26 after the runtime, coverage, and report-calibration
+  slices landed and the README/ROADMAP/plan surfaces were updated to reflect
+  the calibrated UBI result.

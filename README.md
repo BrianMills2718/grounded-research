@@ -1,6 +1,6 @@
 # grounded-research
 
-Multi-analyst research platform that beats Perplexity Deep Research on 5/6 test questions. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
+Multi-analyst research platform that currently beats cached Perplexity Deep Research on the tracked 6-question benchmark set. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
 
 ## Results
 
@@ -12,7 +12,7 @@ Blind evaluation (GPT-5-nano judge, citation format ignored):
 | PFAS health risks | **24**/25 | 20/25 | Pipeline |
 | Intermittent fasting | **24**/25 | 22/25 | Pipeline |
 | LLM capabilities | **24**/25 | 20/25 | Pipeline |
-| Universal basic income | 21/25 | **25**/25 | Perplexity |
+| Universal basic income | **24**/25 | 23/25 | Pipeline |
 | Gut microbiome & mental health | **20**/25 | 18/25 | Pipeline |
 
 Cost: ~$0.06/run (standard), ~$0.25 (deep), ~$1.00 (thorough).

@@ -3,7 +3,7 @@
 `docs/PLAN.md` remains the canonical repo-level plan. This file is the
 executable plan for the next quality slice after the coverage-breadth rerun.
 
-**Status:** Active
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
@@ -100,8 +100,19 @@ Specifically:
 
 ## Acceptance Criteria
 
-- [ ] Structured report no longer emits grounding warnings on the improved UBI gate
-- [ ] Long report no longer contains symbolic placeholders such as `X-Y%`
-- [ ] Fair comparison improves over the current post-coverage-breadth result, or
-      the remaining synthesis bottleneck becomes narrower and explicit
+- [x] Structured report no longer emits grounding warnings on the improved UBI gate
+- [x] Long report no longer contains symbolic placeholders such as `X-Y%`
+- [x] Fair comparison improves over the current post-coverage-breadth result
 
+---
+
+## Notes
+
+- Completed 2026-03-26:
+  - structured-report repair loop eliminated the previous unresolved-dispute
+    grounding warning
+  - long-report repair loop removed symbolic placeholder output
+  - calibrated UBI rerun produced 39 canonical claims, 31 cited claims, and 0 warnings
+  - fair comparison vs cached Perplexity shifted to favor the pipeline on
+    decision usefulness, with implied totals of 24 for the pipeline vs 23 for
+    Perplexity in the saved judge output

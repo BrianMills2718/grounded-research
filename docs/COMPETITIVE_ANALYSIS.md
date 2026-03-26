@@ -238,3 +238,31 @@ Updated win rate (with fixed LLM SWE): **5/6 (83%)**.
 Only loss: UBI — dense pilot program data where Perplexity cites specific
 study numbers (NBER N=, Alaska PFD amounts, Finnish pilot duration/results).
 Pipeline wins everywhere else including technology (after bug fixes).
+
+### UBI Recovery Re-run (2026-03-26)
+
+After the Wave 2 runtime, coverage-breadth, and report-calibration slices:
+
+- improved UBI bundle completed end-to-end with 0 warnings
+- analysts each produced 8 claims (configured target)
+- canonical claim ledger expanded to 39 claims
+- long report cited 31 claims and removed the earlier placeholder/grounding issues
+
+Fair comparison vs cached Perplexity:
+
+| Question | Pipeline | Perplexity | Winner | Notes |
+|----------|----------|------------|--------|-------|
+| UBI | **24** | 23 | **Pipeline** | Judge preferred the pipeline on decision usefulness after calibration |
+
+Updated tracked 6-question outcome:
+
+| Question | Domain | Pipeline | Perplexity | Winner |
+|----------|--------|----------|------------|--------|
+| EU sanctions | Policy | **23** | 22 | **Pipeline** |
+| PFAS | Health/Regulatory | **24** | 20 | **Pipeline** |
+| Fasting | Health/Science | **24** | 22 | **Pipeline** |
+| LLM SWE | Technology | **24** | 20 | **Pipeline** |
+| UBI | Economics | **24** | 23 | **Pipeline** |
+| Gut-brain | Science | **20** | 18 | **Pipeline** |
+
+**Win rate: 6/6 (100%)** on the tracked benchmark set.

@@ -87,10 +87,11 @@ lost access to several NBER, IZA, World Bank, and IMF PDFs this way.
 fetch failures during collection.
 **Fix:** Either install the dependency as part of the supported environment, or replace the PDF path with a supported parser/fallback that does not silently reduce evidence quality on study-heavy questions.
 
-Follow-up benchmark signal: local-first PDF parsing materially improved the UBI
-collection pass to 99 evidence items, 2 gaps, and 26 authoritative sources,
-but the downstream report still lost 20 vs 24 to Perplexity. Retrieval was a
-real bottleneck, but not the only remaining one.
+Follow-up benchmark signal at that stage: local-first PDF parsing materially
+improved the UBI collection pass to 99 evidence items, 2 gaps, and 26
+authoritative sources, but the downstream report still lost 20 vs 24 to
+Perplexity. Later coverage-breadth and report-calibration slices recovered the
+benchmark, confirming retrieval was a real bottleneck but not the only one.
 
 ### Shared observability DB can kill long benchmark runs
 Long UBI runs can fail in Phase 5 if `llm_client` budget accounting reads from
@@ -138,18 +139,28 @@ explicit finite request timeouts. The remaining shared-infra issue is
 durability and nicer defaults in `llm_client`, not a current grounded-research
 blocker.
 
-### Analyst/claim coverage underuses rich evidence bundles
-The improved-bundle UBI runtime-gate run completed successfully but still
-under-covered the breadth already present in the evidence bundle. The bundle
-contains named programs/studies including Finland, Alaska, Kenya, Stockton,
-Mincome, Ontario, Iran, Mongolia, Madhya Pradesh, and Namibia, yet the final
-claim ledger held only 20 canonical claims and over-indexed Alaska. The long
-report cited essentially the full claim ledger, so the bottleneck appears to be
-earlier analyst/Claimify coverage rather than export formatting.
+### Benchmark comparison harness still uses stale timeout-policy defaults
+The pipeline itself now runs under a benchmark-safe runtime policy, but
+`scripts/compare_fair.py` still logs `LLM_CLIENT_TIMEOUT_POLICY=ban` and
+disables explicit request timeouts. This no longer blocks comparisons in the
+current environment, but it is inconsistent with the safer runtime policy used
+by the pipeline itself.
 
-**Files:** `src/grounded_research/analysts.py`, `prompts/analyst.yaml`, possibly `prompts/claimify.yaml`
-**Observed:** `output/ubi_wave2_runtime_gate/trace.json`, `output/ubi_wave2_runtime_gate/report.md`, `output/fair_ubi_wave2_runtime_gate_vs_ubi_perplexity.md`
-**Fix:** Wire `analyst_claim_target` into prompt/runtime behavior, add one under-coverage retry for rich bundles, and re-run the improved UBI gate before changing export again.
+**Files:** `scripts/compare_fair.py` and/or shared `llm_client` call-site policy
+**Observed:** 2026-03-26 fair comparisons for `output/ubi_wave2_coverage_breadth/`
+and `output/ubi_wave2_report_calibrated/`
+**Fix:** Run benchmark/comparison scripts under the same explicit timeout policy
+as the pipeline so long judge calls fail predictably instead of waiting indefinitely.
+
+### Verification-time retrieval still has weak trace propagation
+Wave 0 tool-call observability landed for collection, but the improved UBI
+reruns showed verification-time Brave searches still writing `tool_calls` rows
+with missing `trace_id`. That weakens diagnostics exactly where dispute
+verification matters most.
+
+**Files:** verification retrieval path in `src/grounded_research/verify.py` and shared retrieval wrappers
+**Observed:** `output/ubi_wave2_coverage_breadth/llm_observability.db`
+**Fix:** propagate `trace_id`/`task` through verification query search/fetch so dispute-resolution retrieval is queryable end-to-end.
 
 ### Sub-question evidence tagging incomplete
 Evidence items are tagged with `sub_question_id` based on which search query

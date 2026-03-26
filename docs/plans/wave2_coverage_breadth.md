@@ -4,7 +4,7 @@
 executable implementation plan for the next quality slice after the runtime
 reliability gate passed on the UBI benchmark.
 
-**Status:** Active
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
@@ -157,11 +157,11 @@ evidence-backed cases, the final report cannot recover that missing breadth.
 
 ## Acceptance Criteria
 
-- [ ] `analyst_claim_target` is actually used by runtime prompt generation
-- [ ] Rich-bundle under-coverage triggers one corrective analyst retry
-- [ ] Sparse bundles do not retry unnecessarily
-- [ ] Improved-bundle UBI rerun produces materially broader analyst outputs than the current runtime-gate run
-- [ ] Fair comparison vs cached Perplexity improves or the next narrower bottleneck is made explicit from completed evidence
+- [x] `analyst_claim_target` is actually used by runtime prompt generation
+- [x] Rich-bundle under-coverage triggers one corrective analyst retry
+- [x] Sparse bundles do not retry unnecessarily
+- [x] Improved-bundle UBI rerun produces materially broader analyst outputs than the current runtime-gate run
+- [x] Fair comparison vs cached Perplexity improves or the next narrower bottleneck is made explicit from completed evidence
 
 ---
 
@@ -172,3 +172,11 @@ evidence-backed cases, the final report cannot recover that missing breadth.
   blaming coverage prompts.
 - The current UBI runtime-gate report already cites all 20 canonical claims.
   That is why this slice starts before export.
+- Completed 2026-03-26:
+  - all three analysts reached the standard-depth target of 8 claims on the
+    improved UBI bundle
+  - the improved rerun produced 38 canonical claims and 31 cited claims in the
+    long report
+  - the fair comparison still exposed a narrower remaining bottleneck in report
+    synthesis, which moved the next slice to export calibration instead of
+    another analyst-layer rewrite
