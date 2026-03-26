@@ -284,9 +284,11 @@ def test_long_report_prompt_renders_section_mode() -> None:
         section_brief="Analyze the distinction in depth.",
         section_position=2,
         section_count=5,
+        section_word_target="1,500-2,000",
         long_report_content_truncation_chars=400,
     )
 
     assert "Section Mode" in messages[0]["content"]
     assert "kind: distinction" in messages[0]["content"]
+    assert "word target: 1,500-2,000" in messages[0]["content"]
     assert "Write only this section of the larger report." in messages[1]["content"]

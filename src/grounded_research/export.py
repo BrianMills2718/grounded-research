@@ -132,6 +132,16 @@ def _build_section_specs(
     return section_specs
 
 
+def _build_section_word_target(word_target: str, section_count: int) -> str:
+    """Build a per-section target string from the overall word target."""
+    upper = _parse_word_target_upper_bound(word_target)
+    if upper <= 0 or section_count < 1:
+        return word_target
+    per_section_upper = max(1200, round(upper / section_count))
+    per_section_lower = max(900, int(per_section_upper * 0.75))
+    return f"{per_section_lower:,}-{per_section_upper:,}"
+
+
 def validate_grounding(
     report: FinalReport,
     ledger: ClaimLedger,
@@ -306,6 +316,7 @@ async def render_long_report(
         section_brief: str = "",
         section_position: int = 1,
         section_count: int = 1,
+        section_word_target: str = "",
     ) -> str:
         messages = render_prompt(
             str(_PROJECT_ROOT / "prompts" / "long_report.yaml"),
@@ -328,6 +339,7 @@ async def render_long_report(
             section_brief=section_brief,
             section_position=section_position,
             section_count=section_count,
+            section_word_target=section_word_target,
             long_report_content_truncation_chars=int(
                 evidence_policy["long_report_content_truncation_chars"]
             ),
@@ -350,6 +362,7 @@ async def render_long_report(
         )
         rendered_sections: list[str] = []
         per_section_budget = max_budget / max(1, len(section_specs))
+        section_word_target = _build_section_word_target(word_target, len(section_specs))
         for idx, section_spec in enumerate(section_specs, start=1):
             section_markdown = await _render_once(
                 repair_feedback=repair_feedback,
@@ -360,6 +373,7 @@ async def render_long_report(
                 section_brief=section_spec["brief"],
                 section_position=idx,
                 section_count=len(section_specs),
+                section_word_target=section_word_target,
             )
             rendered_sections.append(section_markdown.strip())
         return "\n\n".join(section for section in rendered_sections if section)

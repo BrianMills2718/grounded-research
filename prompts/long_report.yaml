@@ -100,6 +100,7 @@ messages:
       - kind: {{ section_kind }}
       - title: {{ section_title }}
       - brief: {{ section_brief }}
+      - word target: {{ section_word_target | default(word_target) }}
 
       Write only the material for this section. Do not reproduce the full
       report.
@@ -280,7 +281,8 @@ messages:
       Write only this section of the larger report.
       Build a substantive argument for the section brief above, cite claims
       inline, and avoid repeating material outside this section. Use markdown
-      headings appropriate for this section only.
+      headings appropriate for this section only. Aim for
+      {{ section_word_target | default(word_target) }} words for this section.
       {% else %}
       Write the definitive research report answering the question above.
       Build an argument. Make distinctions. Cite evidence. Be honest about
