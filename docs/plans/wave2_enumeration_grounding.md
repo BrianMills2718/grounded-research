@@ -127,6 +127,13 @@ Current benchmark signal:
   claim sets remain effectively under-canonicalized on this question even
   without an explicit 1:1 fallback event
 
+Status:
+- staged bucketed dedup is now implemented in `canonicalize.py`
+- dense runs are partitioned conservatively by evidence overlap and informative
+  token/entity overlap before per-bucket dedup
+- unit and phase-boundary tests pass
+- UBI rerun gate still pending
+
 ### 4. Add benchmark-level acceptance checks
 
 Use UBI as the first gate question for this wave.

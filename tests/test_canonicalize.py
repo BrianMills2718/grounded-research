@@ -292,3 +292,108 @@ async def test_dedup_retry_accepts_corrected_grouping(monkeypatch: pytest.Monkey
     assert len(canonical_claims) == 1
     assert canonical_claims[0].source_raw_claim_ids == ["RC-1", "RC-2"]
     assert canonical_claims[0].analyst_sources == ["Alpha", "Beta"] or canonical_claims[0].analyst_sources == ["Beta", "Alpha"]
+
+
+@pytest.mark.asyncio
+async def test_dense_dedup_partitions_claims_into_similarity_buckets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dense claim sets should be deduped in smaller semantic buckets."""
+    # mock-ok: verifies local staged-partition control flow around the external LLM boundary.
+    bucket_calls: list[list[str]] = []
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models):
+        assert task == "claim_deduplication"
+        raw_claim_ids = []
+        for message in messages:
+            content = message.get("content", "")
+            for line in content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("### RC-"):
+                    raw_claim_ids.append(stripped.removeprefix("### ").strip())
+        bucket_calls.append(raw_claim_ids)
+
+        if set(raw_claim_ids) == {"RC-1", "RC-2"}:
+            return response_model(
+                groups=[
+                    {
+                        "canonical_statement": "Finland's basic income trial showed no employment gain.",
+                        "raw_claim_ids": ["RC-1", "RC-2"],
+                        "confidence": "high",
+                    }
+                ]
+            ), {}
+        if set(raw_claim_ids) == {"RC-3", "RC-4"}:
+            return response_model(
+                groups=[
+                    {
+                        "canonical_statement": "Stockton's SEED pilot improved transitions into full-time work.",
+                        "raw_claim_ids": ["RC-3", "RC-4"],
+                        "confidence": "high",
+                    }
+                ]
+            ), {}
+
+        raise AssertionError(f"Unexpected dedup bucket: {raw_claim_ids}")
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr(
+        "grounded_research.canonicalize.get_dedup_config",
+        lambda: {
+            "staged_trigger_claims": 4,
+            "bucket_max_claims": 2,
+            "max_doc_frequency_ratio": 0.8,
+            "min_shared_informative_tokens": 1,
+        },
+    )
+
+    raw_claims = [
+        RawClaim(
+            id="RC-1",
+            statement="Finland basic income trial found no employment gain.",
+            evidence_ids=["E-1"],
+            confidence="high",
+        ),
+        RawClaim(
+            id="RC-2",
+            statement="The Finland basic income experiment showed no increase in employment.",
+            evidence_ids=["E-2"],
+            confidence="medium",
+        ),
+        RawClaim(
+            id="RC-3",
+            statement="Stockton SEED improved transitions into full-time work.",
+            evidence_ids=["E-3"],
+            confidence="high",
+        ),
+        RawClaim(
+            id="RC-4",
+            statement="The Stockton pilot increased full-time employment transitions for recipients.",
+            evidence_ids=["E-4"],
+            confidence="medium",
+        ),
+    ]
+    claim_to_analyst = {
+        "RC-1": "Alpha",
+        "RC-2": "Beta",
+        "RC-3": "Gamma",
+        "RC-4": "Alpha",
+    }
+
+    canonical_claims = await deduplicate_claims(
+        raw_claims,
+        claim_to_analyst,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert len(bucket_calls) == 2
+    assert {frozenset(call) for call in bucket_calls} == {
+        frozenset({"RC-1", "RC-2"}),
+        frozenset({"RC-3", "RC-4"}),
+    }
+    assert len(canonical_claims) == 2
+    assert {frozenset(claim.source_raw_claim_ids) for claim in canonical_claims} == {
+        frozenset({"RC-1", "RC-2"}),
+        frozenset({"RC-3", "RC-4"}),
+    }

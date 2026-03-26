@@ -119,3 +119,21 @@ def get_budget(key: str) -> int | float:
     if val is None:
         raise KeyError(f"No budget configured for '{key}' in config/config.yaml")
     return val
+
+
+def get_dedup_config() -> dict[str, int | float]:
+    """Get dedup-specific policy with config overrides.
+
+    These controls are intentionally separate from general evidence policy
+    because dense-claim canonicalization has its own stability tradeoffs.
+    """
+    cfg = load_config()
+    configured = cfg.get("deduplication", {})
+    defaults: dict[str, int | float] = {
+        "staged_trigger_claims": 20,
+        "bucket_max_claims": 12,
+        "max_doc_frequency_ratio": 0.45,
+        "min_shared_informative_tokens": 1,
+    }
+    defaults.update(configured)
+    return defaults

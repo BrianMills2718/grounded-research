@@ -7,10 +7,12 @@ produces the canonical ClaimLedger with disputes.
 from __future__ import annotations
 
 import asyncio
+from collections import Counter, defaultdict
 from pathlib import Path
+import re
 from typing import Any
 
-from grounded_research.config import get_fallback_models, get_model
+from grounded_research.config import get_dedup_config, get_fallback_models, get_model
 from grounded_research.models import (
     AnalystRun,
     EvidenceBundle,
@@ -225,14 +227,28 @@ async def deduplicate_claims(
     # Build canonical claims from groups
     import logging
     logger = logging.getLogger(__name__)
+    dedup_cfg = get_dedup_config()
+    staged_trigger_claims = int(dedup_cfg["staged_trigger_claims"])
+    bucket_max_claims = int(dedup_cfg["bucket_max_claims"])
+    max_doc_frequency_ratio = float(dedup_cfg["max_doc_frequency_ratio"])
+    min_shared_informative_tokens = int(dedup_cfg["min_shared_informative_tokens"])
 
     raw_claim_map = {c.id: c for c in raw_claims}
+    total_claims = len(raw_claims)
 
-    def _fallback_promote() -> list[Claim]:
-        logger.warning(
-            "Dedup output invalid after retry for %d raw claims — promoting raw claims 1:1",
-            len(raw_claims),
-        )
+    if not raw_claims:
+        return []
+
+    def _promote_raw_claims(
+        claims_subset: list[RawClaim],
+        *,
+        log_warning: bool,
+    ) -> list[Claim]:
+        if log_warning:
+            logger.warning(
+                "Dedup output invalid after retry for %d raw claims — promoting raw claims 1:1",
+                len(claims_subset),
+            )
         return [
             Claim(
                 statement=rc.statement,
@@ -241,7 +257,7 @@ async def deduplicate_claims(
                 evidence_ids=rc.evidence_ids,
                 confidence=rc.confidence,
             )
-            for rc in raw_claims
+            for rc in claims_subset
         ]
 
     def _build_claims(groups: list[ClaimGroup]) -> list[Claim]:
@@ -266,7 +282,7 @@ async def deduplicate_claims(
             ))
         return canonical_claims
 
-    def _validate_groups(groups: list[ClaimGroup]) -> list[str]:
+    def _validate_groups(groups: list[ClaimGroup], allowed_claim_ids: set[str]) -> list[str]:
         errors: list[str] = []
         if not groups:
             errors.append("Dedup returned zero groups.")
@@ -279,7 +295,7 @@ async def deduplicate_claims(
                 errors.append(f"Group {idx} is empty.")
                 continue
             for rid in group.raw_claim_ids:
-                if rid not in raw_claim_map:
+                if rid not in allowed_claim_ids:
                     unknown_ids.append(rid)
                 else:
                     seen.append(rid)
@@ -291,7 +307,7 @@ async def deduplicate_claims(
         if duplicates:
             errors.append(f"Duplicate raw claim IDs across groups: {duplicates}")
 
-        missing = sorted(set(raw_claim_map) - set(seen))
+        missing = sorted(allowed_claim_ids - set(seen))
         if missing:
             errors.append(f"Missing raw claim IDs from groups: {missing}")
 
@@ -309,35 +325,206 @@ async def deduplicate_claims(
         )
         return result
 
-    messages = render_prompt(
-        str(_PROJECT_ROOT / "prompts" / "dedup.yaml"),
-        raw_claims=[c.model_dump() for c in raw_claims],
+    stopwords = {
+        "about", "across", "after", "against", "among", "because", "between",
+        "claim", "claims", "current", "different", "during", "effect",
+        "effects", "evidence", "finding", "findings", "impact", "impacts",
+        "include", "includes", "many", "participants", "pilot", "pilots",
+        "program", "programs", "reported", "results", "show", "shows",
+        "showed", "study", "studies", "their", "there", "these", "they",
+        "this", "through", "universal", "basic", "income", "employment",
+        "workforce", "participation", "labor", "market", "markets", "workers",
+        "the", "for", "into", "from", "with", "without", "that", "than",
+        "work", "works", "worked", "working", "increase", "increased",
+        "improved", "found", "experiment", "experiments", "trial", "trials",
+    }
+
+    def _claim_tokens(statement: str) -> set[str]:
+        return {
+            token
+            for token in re.findall(r"[a-zA-Z0-9][a-zA-Z0-9_-]{2,}", statement.lower())
+            if token not in stopwords
+        }
+
+    def _token_family(token: str) -> str:
+        if len(token) >= 6:
+            return token[:5]
+        return token
+
+    raw_tokens = {claim.id: _claim_tokens(claim.statement) for claim in raw_claims}
+    token_doc_freq = Counter(
+        token
+        for tokens in raw_tokens.values()
+        for token in tokens
     )
 
-    first_result = await _call_dedup(messages, f"{trace_id}/dedup", max_budget * 0.5)
-    validation_errors = _validate_groups(first_result.groups)
-    if not validation_errors:
-        return _build_claims(first_result.groups)
-
-    logger.warning("Dedup attempt 1 invalid: %s", " | ".join(validation_errors))
-    retry_messages = messages + [
-        {
-            "role": "user",
-            "content": (
-                "The previous grouping was structurally invalid. Fix it.\n"
-                f"Validation errors: {' | '.join(validation_errors)}\n"
-                "Return a corrected grouping where every raw claim ID appears exactly once, "
-                "no unknown IDs appear, and no group is empty."
-            ),
+    informative_tokens = {
+        claim.id: {
+            token
+            for token in raw_tokens[claim.id]
+            if token_doc_freq[token] / total_claims <= max_doc_frequency_ratio
         }
-    ]
-    retry_result = await _call_dedup(retry_messages, f"{trace_id}/dedup_retry", max_budget * 0.5)
-    retry_errors = _validate_groups(retry_result.groups)
-    if retry_errors:
-        logger.warning("Dedup retry invalid: %s", " | ".join(retry_errors))
-        return _fallback_promote()
+        for claim in raw_claims
+    }
+    informative_token_families = {
+        claim.id: {_token_family(token) for token in informative_tokens[claim.id]}
+        for claim in raw_claims
+    }
 
-    return _build_claims(retry_result.groups)
+    def _claims_should_share_bucket(left: RawClaim, right: RawClaim) -> bool:
+        if set(left.evidence_ids) & set(right.evidence_ids):
+            return True
+        shared_tokens = informative_tokens[left.id] & informative_tokens[right.id]
+        if len(shared_tokens) >= min_shared_informative_tokens:
+            return True
+        shared_families = (
+            informative_token_families[left.id]
+            & informative_token_families[right.id]
+        )
+        return len(shared_families) >= min_shared_informative_tokens
+
+    def _split_large_component(component: list[RawClaim]) -> list[list[RawClaim]]:
+        anchor_buckets: dict[str, list[RawClaim]] = defaultdict(list)
+        for claim in component:
+            candidate_tokens = informative_tokens[claim.id]
+            if candidate_tokens:
+                anchor = min(
+                    candidate_tokens,
+                    key=lambda token: (token_doc_freq[token], len(token), token),
+                )
+            else:
+                anchor = claim.id
+            anchor_buckets[anchor].append(claim)
+
+        if len(anchor_buckets) == 1:
+            only_bucket = next(iter(anchor_buckets.values()))
+            return [
+                only_bucket[idx: idx + bucket_max_claims]
+                for idx in range(0, len(only_bucket), bucket_max_claims)
+            ]
+
+        staged_buckets: list[list[RawClaim]] = []
+        for anchor in sorted(anchor_buckets):
+            bucket_claims = anchor_buckets[anchor]
+            if len(bucket_claims) <= bucket_max_claims:
+                staged_buckets.append(bucket_claims)
+                continue
+            for idx in range(0, len(bucket_claims), bucket_max_claims):
+                staged_buckets.append(bucket_claims[idx: idx + bucket_max_claims])
+        return staged_buckets
+
+    def _partition_raw_claims() -> list[list[RawClaim]]:
+        if total_claims < staged_trigger_claims:
+            return [raw_claims]
+
+        claim_ids = [claim.id for claim in raw_claims]
+        adjacency: dict[str, set[str]] = {claim_id: set() for claim_id in claim_ids}
+        for idx, left in enumerate(raw_claims):
+            for right in raw_claims[idx + 1:]:
+                if _claims_should_share_bucket(left, right):
+                    adjacency[left.id].add(right.id)
+                    adjacency[right.id].add(left.id)
+
+        components: list[list[RawClaim]] = []
+        seen: set[str] = set()
+        for claim in raw_claims:
+            if claim.id in seen:
+                continue
+            queue = [claim.id]
+            component_ids: list[str] = []
+            while queue:
+                current = queue.pop()
+                if current in seen:
+                    continue
+                seen.add(current)
+                component_ids.append(current)
+                queue.extend(adjacency[current] - seen)
+
+            component = [raw_claim_map[claim_id] for claim_id in component_ids]
+            if len(component) <= bucket_max_claims:
+                components.append(component)
+            else:
+                components.extend(_split_large_component(component))
+
+        logger.info(
+            "Staged dedup partitioned %d raw claims into %d bucket(s)",
+            total_claims,
+            len(components),
+        )
+        return components
+
+    async def _dedup_bucket(
+        claims_subset: list[RawClaim],
+        bucket_index: int,
+        call_budget: float,
+    ) -> list[Claim]:
+        if len(claims_subset) == 1:
+            return _promote_raw_claims(claims_subset, log_warning=False)
+
+        messages = render_prompt(
+            str(_PROJECT_ROOT / "prompts" / "dedup.yaml"),
+            raw_claims=[claim.model_dump() for claim in claims_subset],
+        )
+        allowed_claim_ids = {claim.id for claim in claims_subset}
+
+        first_result = await _call_dedup(
+            messages,
+            f"{trace_id}/dedup/bucket_{bucket_index}",
+            call_budget * 0.5,
+        )
+        validation_errors = _validate_groups(first_result.groups, allowed_claim_ids)
+        if not validation_errors:
+            return _build_claims(first_result.groups)
+
+        logger.warning(
+            "Dedup bucket %d attempt 1 invalid: %s",
+            bucket_index,
+            " | ".join(validation_errors),
+        )
+        retry_messages = messages + [
+            {
+                "role": "user",
+                "content": (
+                    "The previous grouping was structurally invalid. Fix it.\n"
+                    f"Validation errors: {' | '.join(validation_errors)}\n"
+                    "Return a corrected grouping where every raw claim ID appears exactly once, "
+                    "no unknown IDs appear, and no group is empty."
+                ),
+            }
+        ]
+        retry_result = await _call_dedup(
+            retry_messages,
+            f"{trace_id}/dedup_retry/bucket_{bucket_index}",
+            call_budget * 0.5,
+        )
+        retry_errors = _validate_groups(retry_result.groups, allowed_claim_ids)
+        if retry_errors:
+            logger.warning(
+                "Dedup bucket %d retry invalid: %s",
+                bucket_index,
+                " | ".join(retry_errors),
+            )
+            return _promote_raw_claims(claims_subset, log_warning=True)
+
+        return _build_claims(retry_result.groups)
+
+    buckets = _partition_raw_claims()
+    if len(buckets) == 1:
+        return await _dedup_bucket(buckets[0], 1, max_budget)
+
+    bucket_budget = max_budget / len(buckets)
+    bucket_results = await asyncio.gather(*[
+        _dedup_bucket(bucket, idx, bucket_budget)
+        for idx, bucket in enumerate(buckets, start=1)
+    ])
+    canonical_claims = [claim for claims in bucket_results for claim in claims]
+    logger.info(
+        "Staged dedup produced %d canonical claims from %d raw claims across %d buckets",
+        len(canonical_claims),
+        total_claims,
+        len(buckets),
+    )
+    return canonical_claims
 
 
 # ---------------------------------------------------------------------------

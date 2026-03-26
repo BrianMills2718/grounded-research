@@ -62,6 +62,12 @@ evidence_policy:
   recency_weight: 0.5
   compression_threshold: 80
 
+deduplication:
+  staged_trigger_claims: 20
+  bucket_max_claims: 12
+  max_doc_frequency_ratio: 0.45
+  min_shared_informative_tokens: 1
+
 # Synthesis mode controls how far the LONG REPORT goes beyond the claim ledger.
 # The claim ledger, trace.json, and handoff.json always have full provenance
 # regardless of this setting — they are always grounded.
