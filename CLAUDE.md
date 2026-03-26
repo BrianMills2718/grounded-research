@@ -258,6 +258,25 @@ At minimum, the plan must define:
 
 If scope, sequencing, or acceptance criteria change, update `docs/PLAN.md` first.
 
+### 13. Continuous Wave Execution
+
+When a repo-local plan has pre-made decisions and acceptance criteria, execute
+the full wave continuously. Do not stop after one commit, one patch, or one
+test pass just because a local slice landed.
+
+The default behavior in this repo is:
+
+- finish the current gated wave end-to-end
+- log uncertainties in the active plan, roadmap, or tech-debt surface
+- continue to the next pre-made step immediately
+- stop only for:
+  - a real external blocker
+  - a failed gate that changes the implementation decision
+  - a user redirect
+
+Do not create fake pause points. If the next step is already decided in the
+plan, do it.
+
 If the change is architectural, update the relevant ADR before continuing.
 
 When implementing against an accepted active plan, continue autonomously until
