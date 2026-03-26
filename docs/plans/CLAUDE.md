@@ -14,6 +14,7 @@
 | [wave2_coverage_breadth.md](wave2_coverage_breadth.md) | Completed | Analyst coverage-target wiring and one under-coverage retry broadened the UBI claim set on rich bundles. |
 | [wave2_report_synthesis_calibration.md](wave2_report_synthesis_calibration.md) | Completed | Export repair loops and stronger synthesis structure removed warnings/placeholders and recovered the UBI comparison. |
 | [docs_authority_reconciliation.md](docs_authority_reconciliation.md) | Completed | CLAUDE, PLAN, ROADMAP, and the plan index now reflect the same current frontier. |
+| [tyler_v1_followthrough.md](tyler_v1_followthrough.md) | Completed | Locks the Tyler V1 package as reference material, records intentional divergences, and closes the repo-local March 26 follow-through. |
 | [depth_modes.md](depth_modes.md) | Partially implemented / deferred continuation | Standard/deep/thorough profiles shipped; deeper extraction/arbitration/synthesis extensions remain deferred. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |

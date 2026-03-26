@@ -127,6 +127,9 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 Current open work is intentionally narrow:
 
 - deferred depth continuation: `docs/plans/depth_modes.md`
+- Tyler V1 reference map and follow-through:
+  `docs/TYLER_V1_CURRENT_REPO_MAP.md`,
+  `docs/plans/tyler_v1_followthrough.md`
 - historical Tyler-spec reconciliation reference:
   `docs/plans/v1_spec_alignment.md`
 - completed post-Wave-2 hardening reference:

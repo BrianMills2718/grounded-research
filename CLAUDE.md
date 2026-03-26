@@ -156,6 +156,19 @@ surface. Search calls should flow through `open_web_retrieval` with the run
 `trace_id` and collection task name. Project-local fetch wrappers may emit the
 same shared `tool_calls` directly until the fetch path is migrated.
 
+Search-provider adapters and provider-specific API clients belong in shared
+infrastructure, not in this repo. If Tavily or Exa parity work is needed,
+implement it in `open_web_retrieval` and import it here.
+
+The `research_v3` -> `grounded-research` handoff path is valid and proven:
+`research_v3` exports `EvidenceBundle` JSON and this repo accepts it via
+`engine.py --fixture bundle.json`.
+
+Gemini structured-output quality is not assumed to be neutral under strict JSON
+Schema decoding. If Gemini is used in reasoning-critical structured stages,
+compare schema-constrained mode against prompt-guided JSON mode and log the
+result before standardizing on one path.
+
 Do not hand-roll direct LiteLLM calls or subprocess wrappers.
 
 This repo owns contracts, schemas, validation, and grounded artifacts.
@@ -250,6 +263,10 @@ If the change is architectural, update the relevant ADR before continuing.
 When implementing against an accepted active plan, continue autonomously until
 that plan's acceptance criteria are satisfied or a real blocker is reached.
 Do not stop at a convenient intermediate slice just because one patch landed.
+Do not stop after a single commit if the active plan still has open work.
+Drive the current wave all the way to its acceptance gate in one session unless
+you hit a real blocker, a destructive-action boundary, or an unplanned
+architectural decision that the plan did not pre-make.
 If a real uncertainty appears mid-run, document it in the active plan and
 `docs/TECH_DEBT.md`, then keep moving on the remaining non-blocked work.
 
