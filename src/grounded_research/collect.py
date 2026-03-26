@@ -18,6 +18,7 @@ import asyncio
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 
 from grounded_research.config import get_fallback_models, get_model, load_config
 from grounded_research.models import (
@@ -30,6 +31,56 @@ from grounded_research.models import (
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
+
+
+def _extract_topic_anchors(question: str) -> list[str]:
+    """Extract explicit topic anchors to keep generated queries on-topic.
+
+    This is intentionally lightweight and conservative. It only returns anchors
+    we can identify with high confidence from the original question text.
+    """
+    anchors: list[str] = []
+    seen: set[str] = set()
+
+    for phrase in re.findall(r"\b(?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b", question):
+        if phrase not in seen:
+            anchors.append(phrase)
+            seen.add(phrase)
+        acronym = "".join(word[0].upper() for word in phrase.split())
+        if len(acronym) >= 2 and acronym not in seen:
+            anchors.append(acronym)
+            seen.add(acronym)
+
+    lowered = question.lower()
+    for phrase in ("guaranteed income", "cash transfer", "cash transfers"):
+        if phrase in lowered and phrase not in seen:
+            anchors.append(phrase)
+            seen.add(phrase)
+
+    return anchors
+
+
+def _anchor_queries(queries: list[str], topic_anchors: list[str]) -> list[str]:
+    """Ensure generated queries retain the parent topic/intervention anchor."""
+    if not topic_anchors:
+        return queries
+
+    anchored: list[str] = []
+    seen: set[str] = set()
+    primary_anchor = topic_anchors[0]
+    lower_anchors = [anchor.lower() for anchor in topic_anchors]
+
+    for query in queries:
+        query_text = query.strip()
+        if not query_text:
+            continue
+        if not any(anchor in query_text.lower() for anchor in lower_anchors):
+            query_text = f"{primary_anchor} {query_text}"
+        if query_text not in seen:
+            anchored.append(query_text)
+            seen.add(query_text)
+
+    return anchored
 
 
 async def generate_search_queries(
@@ -64,6 +115,7 @@ async def generate_search_queries(
         )
 
     model = get_model("analyst")
+    topic_anchors = _extract_topic_anchors(question)
 
     if sub_questions:
         # Generate queries per sub-question for focused coverage
@@ -79,6 +131,9 @@ async def generate_search_queries(
                 [
                     {"role": "system", "content": (
                         "Generate diverse search queries for a specific research sub-question. "
+                        "Every query must remain explicitly anchored to the parent topic or "
+                        "intervention from the original question. Queries that drift into "
+                        "generic background literature without the parent topic are invalid.\n"
                         "Include queries that would find:\n"
                         "(1) direct evidence answering the sub-question\n"
                         "(2) evidence that would DISPROVE the expected answer\n"
@@ -89,6 +144,8 @@ async def generate_search_queries(
                         f"Generate exactly {queries_per_sq} queries."
                     )},
                     {"role": "user", "content": (
+                        f"Parent question: {question}\n"
+                        f"Required topic anchors: {topic_anchors}\n"
                         f"Sub-question [{sq['type']}]: {sq['text']}\n"
                         f"Falsification target: {sq['falsification_target']}"
                     )},
@@ -103,9 +160,10 @@ async def generate_search_queries(
 
         sq_results = await asyncio.gather(*[_gen_sq_queries(sq) for sq in sub_questions])
         for sq_id, queries in sq_results:
-            for q in queries:
+            anchored_queries = _anchor_queries(queries, topic_anchors)
+            for q in anchored_queries:
                 query_to_sq[q] = sq_id
-            all_queries.extend(queries)
+            all_queries.extend(anchored_queries)
 
         return all_queries, query_to_sq
 
@@ -394,5 +452,4 @@ def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
             break
 
     return selected
-
 

@@ -84,6 +84,9 @@ Status:
 - verified on a previously failing NBER UBI paper (`w27351.pdf`) using local `pypdf`
 - clean UBI rerun collected 26 authoritative sources (up from 9 pre-fix and 20
   in the interrupted post-fix collection check)
+- sub-question query generation now carries explicit parent-question topic
+  anchors and mechanically re-anchors queries that drift away from the core
+  intervention/topic
 
 ### 2. Tighten Claimify evidence anchoring
 
