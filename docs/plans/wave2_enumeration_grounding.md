@@ -93,6 +93,10 @@ Status:
   still happens before source-quality scoring and currently round-robins raw
   search results, so weaker sources can crowd out stronger academic/government
   sources even when the right domains were already present in search results
+- pre-fetch source-quality scoring is now wired into selection; a search-only
+  validation on the UBI query set selected 50 URLs with `32 authoritative`,
+  `7 reliable`, and `11 unknown` candidates, with the top of the set dominated
+  by NBER, PMC, Stanford, Berkeley, IMF, and World Bank sources
 
 ### 2. Tighten Claimify evidence anchoring
 

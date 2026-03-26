@@ -149,6 +149,12 @@ def _score_search_result(result: dict, ranking_cfg: dict[str, object]) -> tuple[
         score += 1
         reasons.append("rich_snippet")
 
+    quality_tier = str(result.get("prefetch_quality_tier", "")).lower()
+    quality_bonus_map = ranking_cfg.get("quality_tier_bonus", {})
+    if quality_tier and isinstance(quality_bonus_map, dict):
+        score += int(quality_bonus_map.get(quality_tier, 0))
+        reasons.append(f"quality={quality_tier}")
+
     return score, ",".join(reasons) or "neutral"
 
 
@@ -368,6 +374,43 @@ async def collect_evidence(
 
     print(f"  Found {len(all_search_results)} unique URLs across {len(queries)} queries")
 
+    # Score candidate source quality before fetch so fetch budget is spent on
+    # stronger candidates, not just the first diverse URLs returned by search.
+    if all_search_results:
+        candidate_sources: list[SourceRecord] = []
+        candidate_urls: list[str] = []
+        for result in all_search_results:
+            candidate_sources.append(
+                SourceRecord(
+                    url=result["url"],
+                    title=result.get("title", ""),
+                    source_type="web_search",
+                    quality_tier="reliable",
+                    retrieved_at=datetime.now(timezone.utc),
+                    recency_score=_estimate_recency(result.get("age", "")),
+                )
+            )
+            candidate_urls.append(result["url"])
+
+        candidate_bundle = EvidenceBundle(
+            question=research_q,
+            sources=candidate_sources,
+            evidence=[],
+            gaps=[],
+            imported_from="brave_search_candidates",
+        )
+        from grounded_research.source_quality import score_source_quality
+
+        print("  Scoring candidate source quality before fetch...")
+        await score_source_quality(candidate_bundle, f"{trace_id}/candidate_pool", max_budget=max_budget * 0.05)
+        candidate_quality_by_url = {
+            source.url: source.quality_tier for source in candidate_bundle.sources
+        }
+        for result in all_search_results:
+            result["prefetch_quality_tier"] = candidate_quality_by_url.get(
+                result["url"], "reliable"
+            )
+
     # Select top results — prefer diversity across queries
     selected = _select_diverse(all_search_results, max_sources)
 
@@ -389,7 +432,7 @@ async def collect_evidence(
             url=url,
             title=title,
             source_type="web_search",
-            quality_tier="reliable",
+            quality_tier=result.get("prefetch_quality_tier", "reliable"),
             retrieved_at=datetime.now(timezone.utc),
             recency_score=recency_score,
         )
@@ -479,10 +522,6 @@ async def collect_evidence(
         imported_from="brave_search",
     )
 
-    # Score source quality (LLM-based, batch)
-    from grounded_research.source_quality import score_source_quality
-    print("  Scoring source quality...")
-    await score_source_quality(bundle, trace_id, max_budget=max_budget * 0.05)
     tier_counts = {}
     for s in bundle.sources:
         tier_counts[s.quality_tier] = tier_counts.get(s.quality_tier, 0) + 1

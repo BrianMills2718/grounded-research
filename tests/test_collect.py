@@ -94,6 +94,12 @@ def test_score_search_result_prefers_authoritative_pdf_sources() -> None:
         "deprioritized_domain_penalty": 6,
         "preferred_title_bonus": 2,
         "deprioritized_title_penalty": 3,
+        "quality_tier_bonus": {
+            "authoritative": 8,
+            "reliable": 3,
+            "unknown": 0,
+            "unreliable": -6,
+        },
     }
 
     strong_score, _ = _score_search_result(
@@ -132,6 +138,12 @@ def test_select_diverse_ranks_within_query_before_round_robin(
             "deprioritized_domain_penalty": 6,
             "preferred_title_bonus": 2,
             "deprioritized_title_penalty": 3,
+            "quality_tier_bonus": {
+                "authoritative": 8,
+                "reliable": 3,
+                "unknown": 0,
+                "unreliable": -6,
+            },
         },
     )
 
@@ -169,3 +181,51 @@ def test_select_diverse_ranks_within_query_before_round_robin(
         "https://www.nber.org/system/files/working_papers/w25598/w25598.pdf",
         "https://openknowledge.worldbank.org/handle/10986/1234",
     ]
+
+
+def test_select_diverse_prefers_prefetch_quality_tier_within_query(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Prefetch quality should outrank a weaker same-query result."""
+    monkeypatch.setattr(
+        "grounded_research.collect.get_collection_ranking_config",
+        lambda: {
+            "preferred_domain_patterns": [],
+            "deprioritized_domain_patterns": [],
+            "preferred_title_terms": [],
+            "deprioritized_title_terms": [],
+            "pdf_bonus": 0,
+            "preferred_domain_bonus": 0,
+            "deprioritized_domain_penalty": 0,
+            "preferred_title_bonus": 0,
+            "deprioritized_title_penalty": 0,
+            "quality_tier_bonus": {
+                "authoritative": 8,
+                "reliable": 3,
+                "unknown": 0,
+                "unreliable": -6,
+            },
+        },
+    )
+
+    selected = _select_diverse(
+        [
+            {
+                "search_query": "q1",
+                "url": "https://example.com/weaker",
+                "title": "Weaker result",
+                "description": "summary",
+                "prefetch_quality_tier": "unknown",
+            },
+            {
+                "search_query": "q1",
+                "url": "https://example.com/stronger",
+                "title": "Stronger result",
+                "description": "summary",
+                "prefetch_quality_tier": "authoritative",
+            },
+        ],
+        max_items=1,
+    )
+
+    assert selected[0]["url"] == "https://example.com/stronger"

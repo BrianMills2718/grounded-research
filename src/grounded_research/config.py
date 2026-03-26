@@ -159,6 +159,12 @@ def get_collection_ranking_config() -> dict[str, Any]:
         "deprioritized_domain_penalty": 6,
         "preferred_title_bonus": 2,
         "deprioritized_title_penalty": 3,
+        "quality_tier_bonus": {
+            "authoritative": 8,
+            "reliable": 3,
+            "unknown": 0,
+            "unreliable": -6,
+        },
     }
     defaults.update(configured)
     return defaults
