@@ -87,6 +87,12 @@ Status:
 - sub-question query generation now carries explicit parent-question topic
   anchors and mechanically re-anchors queries that drift away from the core
   intervention/topic
+- the anchored-query rerun removed the prior off-topic subgroup-literature
+  error, but the fair comparison worsened to 17 vs Perplexity's 25
+- collection review showed the remaining issue more clearly: source selection
+  still happens before source-quality scoring and currently round-robins raw
+  search results, so weaker sources can crowd out stronger academic/government
+  sources even when the right domains were already present in search results
 
 ### 2. Tighten Claimify evidence anchoring
 
@@ -151,6 +157,8 @@ Required checks:
 - if the score does not improve, inspect whether the remaining loss is driven
   more by enumeration coverage or by weak canonical merging before changing
   retrieval again
+- current diagnosis after the anchored-query rerun: retrieval still needs a
+  mechanical ranking layer before fetch, not another prompt-only query tweak
 
 ---
 

@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from grounded_research.collect import _anchor_queries, _extract_topic_anchors, generate_search_queries
+from grounded_research.collect import (
+    _anchor_queries,
+    _extract_topic_anchors,
+    _score_search_result,
+    _select_diverse,
+    generate_search_queries,
+)
 
 
 def test_extract_topic_anchors_builds_phrase_and_acronym() -> None:
@@ -74,3 +80,92 @@ async def test_generate_search_queries_subquestions_include_parent_topic_context
     assert queries[1] == "UBI pilot employment effects Finland Alaska"
     assert query_to_sq[queries[0]] == "SQ-1"
     assert query_to_sq[queries[1]] == "SQ-1"
+
+
+def test_score_search_result_prefers_authoritative_pdf_sources() -> None:
+    """Mechanical pre-fetch scoring should boost likely high-value study sources."""
+    ranking_cfg = {
+        "preferred_domain_patterns": ["nber.org", ".gov"],
+        "deprioritized_domain_patterns": ["coursehero.com"],
+        "preferred_title_terms": ["working paper", "evaluation"],
+        "deprioritized_title_terms": ["study guide"],
+        "pdf_bonus": 3,
+        "preferred_domain_bonus": 5,
+        "deprioritized_domain_penalty": 6,
+        "preferred_title_bonus": 2,
+        "deprioritized_title_penalty": 3,
+    }
+
+    strong_score, _ = _score_search_result(
+        {
+            "url": "https://www.nber.org/system/files/working_papers/w25598/w25598.pdf",
+            "title": "Universal Basic Income in the Developing World Working Paper",
+            "description": "NBER working paper with detailed empirical evidence.",
+        },
+        ranking_cfg,
+    )
+    weak_score, _ = _score_search_result(
+        {
+            "url": "https://www.coursehero.com/file/251355593/Study-Guide.docx/",
+            "title": "Evaluating Universal Basic Income Study Guide",
+            "description": "Short secondary summary.",
+        },
+        ranking_cfg,
+    )
+
+    assert strong_score > weak_score
+
+
+def test_select_diverse_ranks_within_query_before_round_robin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Within-query ranking should prefer strong sources while preserving diversity."""
+    monkeypatch.setattr(
+        "grounded_research.collect.get_collection_ranking_config",
+        lambda: {
+            "preferred_domain_patterns": ["nber.org", "worldbank.org"],
+            "deprioritized_domain_patterns": ["coursehero.com"],
+            "preferred_title_terms": ["working paper", "evidence"],
+            "deprioritized_title_terms": ["study guide"],
+            "pdf_bonus": 3,
+            "preferred_domain_bonus": 5,
+            "deprioritized_domain_penalty": 6,
+            "preferred_title_bonus": 2,
+            "deprioritized_title_penalty": 3,
+        },
+    )
+
+    selected = _select_diverse(
+        [
+            {
+                "search_query": "q1",
+                "url": "https://www.coursehero.com/file/1/",
+                "title": "UBI Study Guide",
+                "description": "summary",
+            },
+            {
+                "search_query": "q1",
+                "url": "https://www.nber.org/system/files/working_papers/w25598/w25598.pdf",
+                "title": "Universal Basic Income Working Paper",
+                "description": "Detailed empirical evidence from NBER working paper.",
+            },
+            {
+                "search_query": "q2",
+                "url": "https://openknowledge.worldbank.org/handle/10986/1234",
+                "title": "Exploring Universal Basic Income: Evidence and Policy",
+                "description": "World Bank evidence overview with program comparisons.",
+            },
+            {
+                "search_query": "q2",
+                "url": "https://example.com/blog-post",
+                "title": "My UBI opinion",
+                "description": "Blog commentary",
+            },
+        ],
+        max_items=2,
+    )
+
+    assert [item["url"] for item in selected] == [
+        "https://www.nber.org/system/files/working_papers/w25598/w25598.pdf",
+        "https://openknowledge.worldbank.org/handle/10986/1234",
+    ]

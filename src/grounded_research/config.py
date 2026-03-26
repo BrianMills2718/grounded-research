@@ -137,3 +137,28 @@ def get_dedup_config() -> dict[str, int | float]:
     }
     defaults.update(configured)
     return defaults
+
+
+def get_collection_ranking_config() -> dict[str, Any]:
+    """Get search-result ranking policy with config overrides.
+
+    Collection ranking is separate from source-quality scoring because it is a
+    pre-fetch mechanical policy for deciding which URLs are worth spending
+    fetch budget on.
+    """
+    cfg = load_config()
+    collection = cfg.get("collection", {})
+    configured = collection.get("ranking", {})
+    defaults: dict[str, Any] = {
+        "preferred_domain_patterns": [],
+        "deprioritized_domain_patterns": [],
+        "preferred_title_terms": [],
+        "deprioritized_title_terms": [],
+        "pdf_bonus": 3,
+        "preferred_domain_bonus": 5,
+        "deprioritized_domain_penalty": 6,
+        "preferred_title_bonus": 2,
+        "deprioritized_title_penalty": 3,
+    }
+    defaults.update(configured)
+    return defaults

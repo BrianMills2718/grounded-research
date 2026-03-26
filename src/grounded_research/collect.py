@@ -19,8 +19,14 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 import re
+from urllib.parse import urlparse
 
-from grounded_research.config import get_fallback_models, get_model, load_config
+from grounded_research.config import (
+    get_collection_ranking_config,
+    get_fallback_models,
+    get_model,
+    load_config,
+)
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
@@ -81,6 +87,69 @@ def _anchor_queries(queries: list[str], topic_anchors: list[str]) -> list[str]:
             seen.add(query_text)
 
     return anchored
+
+
+def _score_search_result(result: dict, ranking_cfg: dict[str, object]) -> tuple[int, str]:
+    """Score a raw search result before fetch.
+
+    This is a mechanical budget-allocation policy, not a semantic source
+    quality judgment. It exists to spend fetch budget on URLs that are more
+    likely to contain high-value evidence before the later LLM quality pass.
+    """
+    url = str(result.get("url", ""))
+    title = str(result.get("title", ""))
+    description = str(result.get("description", ""))
+    host = urlparse(url).netloc.lower()
+    title_lower = title.lower()
+    description_lower = description.lower()
+    text = f"{title_lower} {description_lower}"
+    score = 0
+    reasons: list[str] = []
+
+    preferred_domains = [
+        str(pattern).lower()
+        for pattern in ranking_cfg.get("preferred_domain_patterns", [])
+    ]
+    deprioritized_domains = [
+        str(pattern).lower()
+        for pattern in ranking_cfg.get("deprioritized_domain_patterns", [])
+    ]
+    preferred_terms = [
+        str(term).lower()
+        for term in ranking_cfg.get("preferred_title_terms", [])
+    ]
+    deprioritized_terms = [
+        str(term).lower()
+        for term in ranking_cfg.get("deprioritized_title_terms", [])
+    ]
+
+    if url.lower().endswith(".pdf"):
+        score += int(ranking_cfg.get("pdf_bonus", 3))
+        reasons.append("pdf")
+
+    if any(pattern in host for pattern in preferred_domains):
+        score += int(ranking_cfg.get("preferred_domain_bonus", 5))
+        reasons.append("preferred_domain")
+
+    if any(pattern in host for pattern in deprioritized_domains):
+        score -= int(ranking_cfg.get("deprioritized_domain_penalty", 6))
+        reasons.append("deprioritized_domain")
+
+    preferred_hits = sum(1 for term in preferred_terms if term and term in text)
+    if preferred_hits:
+        score += preferred_hits * int(ranking_cfg.get("preferred_title_bonus", 2))
+        reasons.append(f"preferred_terms={preferred_hits}")
+
+    deprioritized_hits = sum(1 for term in deprioritized_terms if term and term in text)
+    if deprioritized_hits:
+        score -= deprioritized_hits * int(ranking_cfg.get("deprioritized_title_penalty", 3))
+        reasons.append(f"deprioritized_terms={deprioritized_hits}")
+
+    if description and len(description) >= 120:
+        score += 1
+        reasons.append("rich_snippet")
+
+    return score, ",".join(reasons) or "neutral"
 
 
 async def generate_search_queries(
@@ -425,13 +494,21 @@ async def collect_evidence(
 def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
     """Select results with diversity across search queries.
 
-    Round-robin picks from each query's results to avoid one query
-    dominating the evidence set.
+    Within each query bucket, results are mechanically ranked before the
+    round-robin pass so weak domains do not crowd out stronger sources before
+    fetch. Diversity across queries is still preserved.
     """
+    ranking_cfg = get_collection_ranking_config()
     by_query: dict[str, list[dict]] = {}
     for r in results:
         q = r.get("search_query", "")
         by_query.setdefault(q, []).append(r)
+
+    for q, items in by_query.items():
+        items.sort(
+            key=lambda item: _score_search_result(item, ranking_cfg),
+            reverse=True,
+        )
 
     selected: list[dict] = []
     seen: set[str] = set()
@@ -452,4 +529,3 @@ def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
             break
 
     return selected
-

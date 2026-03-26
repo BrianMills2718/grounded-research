@@ -56,6 +56,54 @@ collection:
   num_queries: 15
   results_per_query: 10
   max_sources: 50
+  ranking:
+    preferred_domain_patterns:
+      - ".gov"
+      - ".edu"
+      - "nber.org"
+      - "worldbank.org"
+      - "imf.org"
+      - "oecd.org"
+      - "poverty-action.org"
+      - "givedirectly.org"
+      - "stanford.edu"
+      - "wiley.com"
+      - "springer.com"
+      - "sciencedirect.com"
+      - "ncbi.nlm.nih.gov"
+    deprioritized_domain_patterns:
+      - "wikipedia.org"
+      - "coursehero.com"
+      - "substack.com"
+      - "medium.com"
+      - "blogspot.com"
+      - "wordpress.com"
+      - "youtube.com"
+      - "reddit.com"
+      - "twitter.com"
+      - "facebook.com"
+      - "linkedin.com"
+      - "trendingworld.info"
+    preferred_title_terms:
+      - "systematic review"
+      - "meta-analysis"
+      - "working paper"
+      - "randomized"
+      - "experiment"
+      - "pilot"
+      - "evidence"
+      - "evaluation"
+      - "review"
+    deprioritized_title_terms:
+      - "study guide"
+      - "opinion"
+      - "explainer"
+      - "map"
+    pdf_bonus: 3
+    preferred_domain_bonus: 5
+    deprioritized_domain_penalty: 6
+    preferred_title_bonus: 2
+    deprioritized_title_penalty: 3
 
 evidence_policy:
   default_time_sensitivity: "mixed"
