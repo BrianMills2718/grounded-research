@@ -259,3 +259,34 @@ def test_long_report_prompt_renders_with_placeholder_ban_and_repair_feedback() -
     assert "Comparative evidence table" in messages[0]["content"]
     assert "Reconciling the apparent contradictions" in messages[0]["content"]
     assert "Repair Feedback" in messages[1]["content"]
+
+
+def test_long_report_prompt_renders_section_mode() -> None:
+    """Long-report prompt should support the sectioned synthesis mode."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "long_report.yaml"),
+        question={"text": "What is the evidence?", "scope_notes": ""},
+        sources=[],
+        evidence=[],
+        claims=[],
+        disputes=[],
+        arbitration_results=[],
+        evidence_gaps=[],
+        analyst_count=3,
+        synthesis_mode="analytical",
+        word_target="10,000-15,000",
+        sub_questions=[],
+        optimization_axes=[],
+        repair_feedback=[],
+        section_mode=True,
+        section_kind="distinction",
+        section_title="Fiscal feasibility versus labor response",
+        section_brief="Analyze the distinction in depth.",
+        section_position=2,
+        section_count=5,
+        long_report_content_truncation_chars=400,
+    )
+
+    assert "Section Mode" in messages[0]["content"]
+    assert "kind: distinction" in messages[0]["content"]
+    assert "Write only this section of the larger report." in messages[1]["content"]

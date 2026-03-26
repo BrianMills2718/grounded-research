@@ -18,6 +18,7 @@ from pathlib import Path
 
 from grounded_research.config import (
     get_evidence_policy_config,
+    get_export_policy_config,
     get_fallback_models,
     get_model,
 )
@@ -39,6 +40,96 @@ _PLACEHOLDER_PATTERNS = (
     re.compile(r"\bTBD\b", re.IGNORECASE),
     re.compile(r"\[insert[^\]]*\]", re.IGNORECASE),
 )
+
+
+def _parse_word_target_upper_bound(word_target: str) -> int:
+    """Parse the upper bound from a display word target like `10,000-15,000`."""
+    numbers = [int(part.replace(",", "")) for part in re.findall(r"\d[\d,]*", word_target)]
+    if not numbers:
+        return 0
+    return max(numbers)
+
+
+def _should_use_sectioned_synthesis(depth_name: str, word_target: str) -> bool:
+    """Decide whether long-report rendering should use section composition."""
+    export_policy = get_export_policy_config()
+    enabled_depths = {
+        str(depth).strip()
+        for depth in export_policy.get("sectioned_synthesis_enabled_depths", [])
+    }
+    min_target = int(export_policy.get("sectioned_synthesis_min_word_target", 9000))
+    return depth_name in enabled_depths and _parse_word_target_upper_bound(word_target) >= min_target
+
+
+def _build_section_specs(
+    *,
+    optimization_axes: list[str],
+    sub_questions: list[dict[str, object]],
+) -> list[dict[str, str]]:
+    """Build the ordered section plan for sectioned long-report synthesis."""
+    export_policy = get_export_policy_config()
+    max_distinctions = int(export_policy.get("sectioned_synthesis_max_distinction_sections", 4))
+
+    section_specs: list[dict[str, str]] = [
+        {
+            "kind": "intro",
+            "title": "Title, executive summary, and framing",
+            "brief": (
+                "Write the report title, executive summary, why the question matters, "
+                "and the key distinctions that organize the rest of the analysis."
+            ),
+        }
+    ]
+
+    distinction_axes = optimization_axes[:max_distinctions]
+    if distinction_axes:
+        for axis in distinction_axes:
+            section_specs.append({
+                "kind": "distinction",
+                "title": axis,
+                "brief": (
+                    f"Analyze this key distinction in depth: {axis}. Present the strongest "
+                    "evidence, named studies or programs, disagreements, and the most "
+                    "defensible reading of the evidence."
+                ),
+            })
+    else:
+        fallback_titles = [
+            "What the strongest direct evidence shows",
+            "Reconciling the contradictory cases",
+            "Broader implications and decision significance",
+        ]
+        fallback_briefs = [
+            "Cover the strongest direct evidence, major studies, pilots, and quantitative findings.",
+            "Explain why apparently conflicting findings can all be true in different contexts.",
+            "Connect the evidence to broader institutional, macro, and decision-relevant implications.",
+        ]
+        for idx, title in enumerate(fallback_titles[:max_distinctions]):
+            if idx < len(sub_questions):
+                sq_text = str(sub_questions[idx].get("text", ""))
+                brief = (
+                    f"Center this section on the sub-question `{sq_text}` while still building "
+                    "a coherent argument from the strongest relevant claims and evidence."
+                )
+            else:
+                brief = fallback_briefs[idx]
+            section_specs.append({
+                "kind": "distinction",
+                "title": title,
+                "brief": brief,
+            })
+
+    section_specs.append({
+        "kind": "final",
+        "title": "Contradictions, implications, verdict, and alternatives",
+        "brief": (
+            "Write the remaining closing sections: reconciling contradictions when needed, "
+            "broader implications, what the evidence does not tell us, the verdict, "
+            "alternatives and when to choose them, what would change the recommendation, "
+            "and the closing summary."
+        ),
+    })
+    return section_specs
 
 
 def validate_grounding(
@@ -186,7 +277,7 @@ async def render_long_report(
     assert state.evidence_bundle is not None
     assert state.question is not None
 
-    from grounded_research.config import load_config
+    from grounded_research.config import get_depth_config, load_config
 
     # Pass decomposition context if available
     sub_questions = []
@@ -199,13 +290,23 @@ async def render_long_report(
     config = load_config()
     evidence_policy = get_evidence_policy_config()
     synthesis_mode = config.get("synthesis_mode", "grounded")
-    from grounded_research.config import get_depth_config
     depth = get_depth_config()
+    depth_name = str(config.get("depth", "standard"))
     word_target = depth.get("synthesis_word_target", "5,000-6,000")
 
     model = get_model("synthesis")
 
-    async def _render_once(repair_feedback: list[str], trace_suffix: str) -> str:
+    async def _render_once(
+        repair_feedback: list[str],
+        trace_suffix: str,
+        *,
+        section_mode: bool = False,
+        section_kind: str = "",
+        section_title: str = "",
+        section_brief: str = "",
+        section_position: int = 1,
+        section_count: int = 1,
+    ) -> str:
         messages = render_prompt(
             str(_PROJECT_ROOT / "prompts" / "long_report.yaml"),
             question=state.question.model_dump(),
@@ -221,6 +322,12 @@ async def render_long_report(
             sub_questions=sub_questions,
             optimization_axes=optimization_axes,
             repair_feedback=repair_feedback,
+            section_mode=section_mode,
+            section_kind=section_kind,
+            section_title=section_title,
+            section_brief=section_brief,
+            section_position=section_position,
+            section_count=section_count,
             long_report_content_truncation_chars=int(
                 evidence_policy["long_report_content_truncation_chars"]
             ),
@@ -236,14 +343,45 @@ async def render_long_report(
         )
         return result.content
 
-    markdown = await _render_once(repair_feedback=[], trace_suffix="")
+    async def _render_sectioned_report(repair_feedback: list[str], trace_suffix: str) -> str:
+        section_specs = _build_section_specs(
+            optimization_axes=optimization_axes,
+            sub_questions=sub_questions,
+        )
+        rendered_sections: list[str] = []
+        per_section_budget = max_budget / max(1, len(section_specs))
+        for idx, section_spec in enumerate(section_specs, start=1):
+            section_markdown = await _render_once(
+                repair_feedback=repair_feedback,
+                trace_suffix=f"{trace_suffix}/section_{idx}",
+                section_mode=True,
+                section_kind=section_spec["kind"],
+                section_title=section_spec["title"],
+                section_brief=section_spec["brief"],
+                section_position=idx,
+                section_count=len(section_specs),
+            )
+            rendered_sections.append(section_markdown.strip())
+        return "\n\n".join(section for section in rendered_sections if section)
+
+    if _should_use_sectioned_synthesis(depth_name, word_target):
+        markdown = await _render_sectioned_report(repair_feedback=[], trace_suffix="")
+    else:
+        markdown = await _render_once(repair_feedback=[], trace_suffix="")
+
     issues = _find_long_report_quality_issues(markdown)
     if issues:
         _LOG.warning(
             "Long report quality validation failed; retrying once. issues=%s",
             issues,
         )
-        markdown = await _render_once(repair_feedback=issues, trace_suffix="/repair_1")
+        if _should_use_sectioned_synthesis(depth_name, word_target):
+            markdown = await _render_sectioned_report(
+                repair_feedback=issues,
+                trace_suffix="/repair_1",
+            )
+        else:
+            markdown = await _render_once(repair_feedback=issues, trace_suffix="/repair_1")
 
     return markdown
 

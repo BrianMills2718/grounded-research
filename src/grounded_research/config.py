@@ -264,3 +264,20 @@ def get_runtime_reliability_config() -> dict[str, Any]:
             defaults["request_timeouts_s"].update(request_timeouts)
         defaults.update({k: v for k, v in configured.items() if k != "request_timeouts_s"})
     return defaults
+
+
+def get_export_policy_config() -> dict[str, Any]:
+    """Get export-specific rendering policy with config overrides.
+
+    Export policy is separate from evidence policy because sectioned synthesis
+    changes how the report is rendered, not what evidence is shown in prompts.
+    """
+    cfg = load_config()
+    configured = cfg.get("export_policy", {})
+    defaults: dict[str, Any] = {
+        "sectioned_synthesis_min_word_target": 9000,
+        "sectioned_synthesis_max_distinction_sections": 4,
+        "sectioned_synthesis_enabled_depths": ["thorough"],
+    }
+    defaults.update(configured)
+    return defaults

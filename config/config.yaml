@@ -163,3 +163,9 @@ runtime_reliability:
 #   claim ledger remains fully grounded — the report is a rendering, not the
 #   source of truth.
 synthesis_mode: "analytical"
+
+export_policy:
+  sectioned_synthesis_min_word_target: 9000
+  sectioned_synthesis_max_distinction_sections: 4
+  sectioned_synthesis_enabled_depths:
+    - "thorough"

@@ -91,6 +91,26 @@ messages:
          a quantitative estimate, say explicitly that the estimate cannot be
          supported from the available evidence.
 
+      {% if section_mode | default(false) %}
+      ## Section Mode
+
+      You are writing only one section of a larger report.
+
+      Section {{ section_position }} of {{ section_count }}:
+      - kind: {{ section_kind }}
+      - title: {{ section_title }}
+      - brief: {{ section_brief }}
+
+      Write only the material for this section. Do not reproduce the full
+      report.
+
+      Section-specific rules:
+      - `intro`: write `# <Title>`, `## Executive summary`, `## The core question and why it matters`, and `## The key distinctions`.
+      - `distinction`: write exactly one `## {{ section_title }}` section that develops the specified distinction in depth.
+      - `final`: write the remaining closing sections needed to finish the report, including verdict and alternatives.
+      {% endif %}
+
+      {% if not (section_mode | default(false)) %}
       ## Report structure
 
       Write the report in this order. Do NOT include meta-commentary about the
@@ -144,6 +164,7 @@ messages:
          conditions, not vague possibilities.
       11. **Closing summary** (2-3 sentences restating the verdict and the
           single most important thing for the reader to remember.)
+      {% endif %}
 
       ## Writing rules
 
@@ -255,9 +276,16 @@ messages:
 
       ## Your Task
 
+      {% if section_mode | default(false) %}
+      Write only this section of the larger report.
+      Build a substantive argument for the section brief above, cite claims
+      inline, and avoid repeating material outside this section. Use markdown
+      headings appropriate for this section only.
+      {% else %}
       Write the definitive research report answering the question above.
       Build an argument. Make distinctions. Cite evidence. Be honest about
       what you don't know. {{ word_target }} words.
+      {% endif %}
       {% if repair_feedback %}
 
       ## Repair Feedback
