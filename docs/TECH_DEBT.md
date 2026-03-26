@@ -119,6 +119,11 @@ the earlier clean raw-question run proving the phase could complete.
 **Fix:** allow justified long but finite request timeouts on benchmark runs, or
 add better stuck-call detection and retry behavior in shared infra.
 
+Follow-up benchmark signal: serializing claim extraction removed the earlier
+Phase 3a timeout failure on the improved 2026-03-25 UBI bundle, but a rerun
+still stalled later in Phase 4 arbitration on the same provider timeout class.
+The active reliability problem is now broader than claim extraction fan-out.
+
 ### Sub-question evidence tagging incomplete
 Evidence items are tagged with `sub_question_id` based on which search query
 found them. But `_select_diverse()` round-robins across queries, and the

@@ -36,6 +36,11 @@ Observed in the UBI benchmark:
 - the same Wave 2 bundle still beat the single-shot baseline, so the
   multi-analyst architecture continues to add value even though UBI still loses
   to Perplexity
+- later retrieval improvements strengthened the UBI collection pass again to 50
+  sources, 106 evidence items, 2 gaps, and 30 authoritative sources
+- the next blocker is now execution stability rather than obvious retrieval
+  coverage: the improved-bundle rerun cleared Phase 3 after serializing claim
+  extraction, then stalled in Phase 4 arbitration on later provider timeouts
 
 ---
 
@@ -97,6 +102,8 @@ Status:
   validation on the UBI query set selected 50 URLs with `32 authoritative`,
   `7 reliable`, and `11 unknown` candidates, with the top of the set dominated
   by NBER, PMC, Stanford, Berkeley, IMF, and World Bank sources
+- a real collection rerun on the improved selector finished with `50 sources`,
+  `106 evidence items`, `2 gaps`, and `30 authoritative` sources
 
 ### 2. Tighten Claimify evidence anchoring
 
@@ -115,6 +122,9 @@ Status:
   actual candidate `E-...` IDs
 - clean UBI rerun and resumed export finished with 40 claims and 0 claims
   lacking evidence IDs
+- claim extraction now uses a configurable phase-concurrency cap; on the
+  improved UBI bundle, setting claim-extraction concurrency to 1 eliminated the
+  earlier Phase 3a timeout failure and let the rerun reach Phase 4
 
 ### 3. Add dense-claim dedup strategy
 
@@ -158,6 +168,8 @@ Required checks:
 - dedup does not end in 1:1 fallback on the UBI benchmark
 - fair comparison score against cached Perplexity report improves over the
   post-Wave-1 UBI run
+- improved-bundle reruns complete end-to-end without later-stage provider
+  timeout failure
 - if the score does not improve, inspect whether the remaining loss is driven
   more by enumeration coverage or by weak canonical merging before changing
   retrieval again
@@ -174,6 +186,7 @@ Required checks:
 | Claimify stops returning invalid IDs by becoming too conservative | extracted claim count collapses or specific pilot findings disappear | tighten evidence presentation, not just negative instructions |
 | Dense-claim dedup reduces fallback but over-merges distinct pilots | canonical claim count drops sharply and dispute diversity collapses | strengthen non-merge criteria and inspect raw-to-canonical mapping before accepting |
 | Grounding becomes stricter by silently dropping too much content | report quality drops while structural warnings improve | review dropped-claim accounting and restore only evidence-linked claims |
+| Retrieval fixes improve the bundle but benchmark reruns still fail before export | improved-bundle rerun reaches Phase 4 or 5 and then dies on provider timeout | treat later-stage provider stability as the active blocker before drawing benchmark conclusions from missing reports |
 
 ---
 
@@ -184,6 +197,7 @@ Required checks:
 - [x] No cited claim in the final report lacks evidence IDs
 - [ ] UBI dedup completes without ineffective `raw == canonical` non-merging on dense UBI runs
 - [ ] Fair comparison vs cached Perplexity improves from the current post-Wave-1 UBI result
+- [ ] Improved-bundle UBI rerun completes end-to-end without provider timeout failure
 - [x] Pipeline still beats the single-shot baseline on the same bundle
 
 ---
