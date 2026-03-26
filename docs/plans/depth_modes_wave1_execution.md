@@ -1,6 +1,6 @@
 # Depth Modes Wave 1 Execution
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Execute the next benchmark-driven depth continuation wave without
 reopening broad cleanup work.
 
@@ -118,6 +118,33 @@ Acceptance:
 - `tests/test_phase_boundaries.py`
 - new focused tests for any page-text helper or extraction helper added in this
   wave
+
+## Result
+
+Completed on `2026-03-26`.
+
+Implemented:
+
+1. depth-gated goal-driven evidence extraction for `deep` and `thorough`
+2. truthful persisted-page helper via `read_page()`
+3. explicit fallback to the legacy notes/key-section path with gap logging
+4. depth-aware multi-round arbitration using `arbitration_max_rounds`
+
+Verified:
+
+- `PYTHONPATH=src python -m pytest tests/test_collect.py tests/test_verify.py tests/test_phase_boundaries.py -q`
+  - `45 passed, 1 skipped`
+- live deep-mode collection smoke:
+  - output: `output/depth_wave1_smoke/`
+  - question: `What do pilot programs and academic evidence suggest about universal basic income effects on labor supply?`
+  - result: `5` sources, `19` evidence items, `14` LLM-extracted items, `0` gaps
+
+Residual uncertainty:
+
+- multi-round arbitration is verified by targeted tests in this wave, not by a
+  saved live trace that required more than one arbitration round
+- sectioned synthesis remains deferred until a benchmark shows the current
+  single-call long-report path is the active bottleneck
 
 ## Failure Modes
 

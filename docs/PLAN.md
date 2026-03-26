@@ -66,7 +66,7 @@ write_outputs() → report.md, summary.md, trace.json, handoff.json
 
 Key definitions:
 - **Decision-critical dispute**: `severity == "decision_critical"` in Dispute model. Factual conflicts where the answer depends on which side is correct.
-- **Inconclusive arbitration**: Fresh evidence search found nothing new, or found ambiguous evidence. Forces verdict to "inconclusive" and logs warning. Does not retry.
+- **Inconclusive arbitration**: Fresh evidence search found nothing new, or found ambiguous evidence. In `standard` mode this ends verification. In deeper modes it may trigger another round up to the configured cap.
 - **Analytical mode** (`synthesis_mode: "analytical"`): Long report may infer beyond sources, marked with `[analytical inference]`. Claim ledger and trace remain grounded regardless.
 - **Dedup fallback**: If LLM returns 0 groups, raw claims promoted 1:1 (no dedup, full provenance preserved).
 
@@ -75,12 +75,16 @@ Current operational notes:
   `thorough`)
 - raw-question collection uses first-party Brave-backed search and shared
   retrieval infrastructure, not a bespoke workflow engine
+- `deep` and `thorough` now add goal-driven evidence extraction on persisted
+  page text, while `standard` keeps the cheaper notes/key-section path
+- deeper modes now allow multi-round arbitration when earlier rounds remain
+  inconclusive
 - runtime-safe benchmark policy now uses run-local observability DBs and
   explicit finite request timeouts for long runs
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
-- biggest remaining quality debt is dense canonicalization on
-  enumeration-heavy questions
+- the next repo-local depth candidate is sectioned synthesis, but only if a
+  later benchmark shows the current long-report path is the bottleneck
 
 ## Governance Surfaces
 
@@ -126,7 +130,9 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 Current open work is intentionally narrow:
 
-- deferred depth continuation: `docs/plans/depth_modes.md`
+- deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
+- completed Wave 1 depth continuation reference:
+  `docs/plans/depth_modes_wave1_execution.md`
 - Tyler V1 reference map and follow-through:
   `docs/TYLER_V1_CURRENT_REPO_MAP.md`,
   `docs/plans/tyler_v1_followthrough.md`

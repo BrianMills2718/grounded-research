@@ -7,9 +7,9 @@
 
 The repo now ships `standard`, `deep`, and `thorough` depth profiles for
 source count, compression threshold, claim targets, synthesis length, and
-budget. The remaining gap is not the existence of depth modes; it is the
-deeper per-source extraction, multi-round arbitration, and sectioned synthesis
-extensions described below.
+budget. Wave 1 continuation is complete: deeper per-source extraction and
+multi-round arbitration now exist. The remaining gap is sectioned synthesis
+and any later benchmark-driven continuation beyond that.
 
 Brian's feedback: "this is meant to be an expensive longer running more
 heavily researched result."
@@ -43,7 +43,7 @@ config values at once:
 4. `prompts/analyst.yaml`: add claim count target instruction
 5. `prompts/long_report.yaml`: adjust word count target per depth
 
-### Phase 2: Goal-driven evidence extraction (needs work)
+### Phase 2: Goal-driven evidence extraction (completed in Wave 1)
 
 Currently `fetch_page` extracts one `key_section` + one `notes` per page
 using a heuristic. The extraction prompt should be goal-driven per the
@@ -63,7 +63,7 @@ miss important evidence on pages we already fetch.
 **Where:** New prompt `prompts/extract_evidence.yaml` + function in `collect.py`
 **Cost:** ~1 LLM call per source (~50-150 calls depending on depth)
 
-### Phase 3: Multi-round arbitration (needs work)
+### Phase 3: Multi-round arbitration (completed in Wave 1)
 
 Currently one round of search + arbitrate per dispute. For deep mode,
 if the first round is inconclusive, generate new search queries targeting
@@ -72,7 +72,7 @@ the specific gap and try again.
 **Where:** `verify.py`: loop in `verify_disputes()` with configurable max_rounds
 **Cost:** ~2-3x current arbitration cost
 
-### Phase 4: Sectioned synthesis (needs work, may need llm_client support)
+### Phase 4: Sectioned synthesis (still open, may need llm_client support)
 
 For 10K+ word reports, a single LLM call may hit output token limits.
 Options:

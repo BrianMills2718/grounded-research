@@ -15,8 +15,8 @@
 | [wave2_report_synthesis_calibration.md](wave2_report_synthesis_calibration.md) | Completed | Export repair loops and stronger synthesis structure removed warnings/placeholders and recovered the UBI comparison. |
 | [docs_authority_reconciliation.md](docs_authority_reconciliation.md) | Completed | CLAUDE, PLAN, ROADMAP, and the plan index now reflect the same current frontier. |
 | [tyler_v1_followthrough.md](tyler_v1_followthrough.md) | Completed | Locks the Tyler V1 package as reference material, records intentional divergences, and closes the repo-local March 26 follow-through. |
-| [depth_modes.md](depth_modes.md) | Partially implemented / deferred continuation | Standard/deep/thorough profiles shipped; deeper extraction/arbitration/synthesis extensions remain deferred. |
-| [depth_modes_wave1_execution.md](depth_modes_wave1_execution.md) | In Progress | Next benchmark-driven depth wave: richer evidence extraction in deep/thorough, multi-round arbitration, then a benchmark/docs gate. |
+| [depth_modes.md](depth_modes.md) | Partially implemented / deferred continuation | Standard/deep/thorough profiles shipped. Wave 1 deeper extraction and multi-round arbitration are complete; sectioned synthesis remains the next depth candidate if a benchmark proves it is needed. |
+| [depth_modes_wave1_execution.md](depth_modes_wave1_execution.md) | Completed | Wave 1 depth continuation shipped: goal-driven evidence extraction in deep/thorough, multi-round arbitration, and a passing live deep collection smoke gate. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

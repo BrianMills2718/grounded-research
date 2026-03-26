@@ -34,9 +34,10 @@ configurable depth modes (standard/deep/thorough).
 
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 
-The post-Wave-2 cleanup plan is now complete. The repo-local frontier is no
-longer an active hardening backlog; it is preserving the benchmark gains and
-choosing the next benchmark-driven expansion intentionally.
+The post-Wave-2 cleanup plan is complete, and the first depth-continuation
+wave is now complete as well. The repo-local frontier is preserving those
+gains and only opening another expansion wave when a benchmark points to a
+clear grounded-research-specific bottleneck.
 
 ### Priority 1: Preserve The Current UBI Win On Future Reruns
 
@@ -54,7 +55,28 @@ a saved fair comparison favoring the pipeline `24` vs cached Perplexity `22`.
 **Gate:** Future improved-bundle UBI reruns still complete end-to-end and do not
 regress below the current saved result.
 
-### Priority 2: Shared-Infra Follow-Up, Not New Repo-Local Complexity
+### Priority 2: Preserve The Depth-Wave Gain Without Reopening Broad Complexity
+
+**Goal:** Keep the new deep/thorough extraction and multi-round arbitration
+surfaces in place without turning this repo back into a generic runtime or
+retrieval layer.
+
+**Current depth-wave anchor:** the 2026-03-26 live deep collection smoke in
+`output/depth_wave1_smoke/` completed with `5` sources, `19` evidence items,
+`14` LLM-extracted items, and `0` gaps.
+
+**Actions:**
+- keep `standard` mode on the legacy low-cost extraction path
+- keep richer extraction gated to `deep` and `thorough`
+- preserve multi-round arbitration as a depth-only behavior
+- do not add sectioned synthesis unless a saved benchmark shows the current
+  single-call long-report path is the actual bottleneck
+
+**Gate:** A future deep/thorough benchmark rerun must show either:
+- a regression that requires fixing this wave, or
+- a clear sectioned-synthesis bottleneck before opening the next depth wave
+
+### Priority 3: Shared-Infra Follow-Up, Not New Repo-Local Complexity
 
 **Goal:** Avoid reopening settled project code when the remaining issues now
 live in shared infrastructure or future benchmark expansion.
@@ -78,8 +100,8 @@ The next 24 hours of work should be treated as three explicit buckets:
 
 1. `grounded-research`
    - preserve the saved benchmark anchors
-   - avoid reopening repo-local complexity without a new benchmark-triggered
-     reason
+   - preserve the completed depth-wave behavior
+   - only open a new repo-local plan from a completed benchmark trigger
 2. shared runtime
    - land any remaining `llm_client` durability/query follow-through on `main`
    - keep runtime policy and observability improvements shared, not local
@@ -88,10 +110,11 @@ The next 24 hours of work should be treated as three explicit buckets:
    - use `prompt_eval` for Gemini structured-output comparison before changing
      execution policy here
 
-### Priority 3: Choose The Next Benchmark Wave Explicitly
+### Priority 4: Choose The Next Benchmark Wave Explicitly
 
 **Candidates:**
-- `depth_modes.md` continuation
+- `depth_modes.md` continuation via sectioned synthesis, if a benchmark proves
+  long-report generation is now the active bottleneck
 - recent-first evidence ranking
 - another dense, study-heavy benchmark question if the goal is to stress the
   canonicalization/retrieval stack again
