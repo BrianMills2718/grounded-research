@@ -60,14 +60,33 @@ regress below the current saved result.
 live in shared infrastructure or future benchmark expansion.
 
 **Actions:**
-- push any remaining runtime-default improvements into `llm_client`
+- finish any remaining runtime-default improvements in `llm_client`
 - continue using `open_web_retrieval` and shared observability rather than
   reintroducing project-local fetch/runtime logic
+- keep Tavily/Exa provider-parity work in `open_web_retrieval`, not here
+- evaluate Gemini structured-output quality in `llm_client` / `prompt_eval`
+  before expanding Gemini's reasoning-critical structured stages
 - use `prompt_eval` for future prompt/model comparison work instead of adding
   new ad hoc comparison surfaces here
 
 **Gate:** No new repo-local complexity is added unless a completed benchmark run
 shows a clear grounded-research-specific bottleneck.
+
+### Immediate 24h Ownership
+
+The next 24 hours of work should be treated as three explicit buckets:
+
+1. `grounded-research`
+   - preserve the saved benchmark anchors
+   - avoid reopening repo-local complexity without a new benchmark-triggered
+     reason
+2. shared runtime
+   - land any remaining `llm_client` durability/query follow-through on `main`
+   - keep runtime policy and observability improvements shared, not local
+3. shared retrieval / evaluation
+   - keep provider-adapter work in `open_web_retrieval`
+   - use `prompt_eval` for Gemini structured-output comparison before changing
+     execution policy here
 
 ### Priority 3: Choose The Next Benchmark Wave Explicitly
 

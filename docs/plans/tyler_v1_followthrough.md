@@ -54,7 +54,11 @@ This follow-through is complete only if:
 These are real, but not repo-local:
 
 1. `open_web_retrieval`: Tavily/Exa provider parity and provider semantics
-2. `llm_client` / `prompt_eval`: Gemini structured-output quality evaluation
+   (see shared-infra Plan 09)
+2. `llm_client`: runtime durability / trace-query follow-through
+   (see shared-infra Plan 20)
+3. `llm_client` / `prompt_eval`: Gemini structured-output quality evaluation
+   for reasoning-critical structured stages
 
 ## Verification
 
