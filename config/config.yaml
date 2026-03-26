@@ -124,6 +124,12 @@ deduplication:
 phase_concurrency:
   claim_extraction_max_concurrency: 1
 
+analysis_coverage:
+  analyst_retry_on_undercoverage: true
+  analyst_retry_min_evidence_items: 25
+  analyst_retry_min_claim_ratio: 0.75
+  analyst_retry_max_attempts: 1
+
 runtime_reliability:
   use_run_local_observability_db: true
   timeout_policy: "allow"

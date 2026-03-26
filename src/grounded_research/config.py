@@ -181,6 +181,25 @@ def get_phase_concurrency_config() -> dict[str, int]:
     return defaults
 
 
+def get_analysis_coverage_config() -> dict[str, int | float | bool]:
+    """Get analyst coverage policy with config overrides.
+
+    This policy governs whether rich evidence bundles trigger a single
+    corrective retry when an analyst returns materially fewer claims than the
+    configured depth-profile target.
+    """
+    cfg = load_config()
+    configured = cfg.get("analysis_coverage", {})
+    defaults: dict[str, int | float | bool] = {
+        "analyst_retry_on_undercoverage": True,
+        "analyst_retry_min_evidence_items": 25,
+        "analyst_retry_min_claim_ratio": 0.75,
+        "analyst_retry_max_attempts": 1,
+    }
+    defaults.update(configured)
+    return defaults
+
+
 def get_runtime_reliability_config() -> dict[str, Any]:
     """Get benchmark/runtime reliability policy with config overrides.
 

@@ -36,6 +36,11 @@ messages:
         percentages, sample sizes, durations, dates, and benchmark scores.
       - Name specific studies, trials, pilots, benchmarks, or organizations when
         the evidence identifies them.
+      - When the evidence spans multiple named studies, pilots, programs, or
+        populations, cover the important ones across your claim set instead of
+        concentrating on one vivid example.
+      - Do not collapse distinct named cases into generic "pilots show" wording
+        when the evidence identifies the cases separately.
       - Separate descriptive claims from recommendations.
       - If the evidence is mixed or thin, narrow the claim rather than writing a
         broad elegant summary.
@@ -185,7 +190,19 @@ messages:
 
       Analyze the evidence above using your assigned reasoning frame and produce
       your structured assessment.
+      Aim for approximately {{ claim_target }} distinct evidence-backed claims
+      if the bundle supports that level of coverage.
+      This bundle contains {{ source_count }} sources and {{ evidence_count }}
+      evidence items.
+      If multiple named studies, pilots, or programs are present in the
+      evidence, distribute your claims across the major ones instead of letting
+      one case dominate.
       For each claim and counterargument, cite the evidence IDs that support it.
       If a specific study, benchmark, organization, population, or numerical
       finding appears in the evidence, preserve that specificity instead of
       collapsing it into a generic summary.
+      {% if coverage_retry_note %}
+
+      Coverage correction:
+      {{ coverage_retry_note }}
+      {% endif %}

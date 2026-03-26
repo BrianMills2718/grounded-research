@@ -45,12 +45,17 @@ def test_analyst_prompt_renders_with_source_metadata() -> None:
         sub_questions=[],
         optimization_axes=[],
         ambiguous_terms=[],
+        claim_target=8,
+        source_count=1,
+        evidence_count=1,
+        coverage_retry_note="",
     )
 
     assert len(messages) == 2
     assert "INDEPENDENCE PROTOCOL" in messages[0]["content"]
     assert "Source Records" in messages[1]["content"]
     assert "specific study, benchmark, organization, population, or numerical" in messages[1]["content"]
+    assert "approximately 8 distinct evidence-backed claims" in messages[1]["content"]
 
 
 def test_dedup_prompt_renders_with_conservative_merge_rules() -> None:

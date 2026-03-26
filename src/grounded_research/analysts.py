@@ -8,20 +8,31 @@ counterarguments. Analysts never see each other's outputs.
 from __future__ import annotations
 
 import asyncio
+import logging
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
-from grounded_research.config import get_budget, get_model, load_config
+from grounded_research.config import (
+    get_analysis_coverage_config,
+    get_budget,
+    get_depth_config,
+    get_model,
+    load_config,
+)
 from grounded_research.models import AnalystRun, EvidenceBundle
 from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_LOG = logging.getLogger(__name__)
 
 
 def _render_analyst_prompt(
     bundle: EvidenceBundle,
     frame: str,
     decomposition: "QuestionDecomposition | None" = None,
+    claim_target: int = 0,
+    coverage_retry_note: str = "",
 ) -> list[dict[str, str]]:
     """Render the analyst prompt template with optional decomposition context."""
     from llm_client import render_prompt
@@ -44,7 +55,75 @@ def _render_analyst_prompt(
         sub_questions=sub_questions,
         optimization_axes=optimization_axes,
         ambiguous_terms=ambiguous_terms,
+        claim_target=claim_target,
+        source_count=len(bundle.sources),
+        evidence_count=len(bundle.evidence),
+        coverage_retry_note=coverage_retry_note,
     )
+
+
+async def _call_analyst_once(
+    model: str,
+    label: str,
+    bundle: EvidenceBundle,
+    frame: str,
+    trace_id: str,
+    max_budget: float,
+    decomposition: "QuestionDecomposition | None",
+    claim_target: int,
+    coverage_retry_note: str,
+) -> AnalystRun:
+    """Execute one analyst attempt with a specific prompt variant."""
+    from llm_client import acall_llm_structured
+
+    messages = _render_analyst_prompt(
+        bundle=bundle,
+        frame=frame,
+        decomposition=decomposition,
+        claim_target=claim_target,
+        coverage_retry_note=coverage_retry_note,
+    )
+    from grounded_research.config import get_fallback_models
+
+    result, _meta = await acall_llm_structured(
+        model,
+        messages,
+        response_model=AnalystRun,
+        task="analyst_reasoning",
+        trace_id=trace_id,
+        timeout=get_request_timeout("analyst"),
+        max_budget=max_budget,
+        fallback_models=get_fallback_models("analyst"),
+    )
+    result.analyst_label = label
+    result.model = model
+    result.frame = frame
+    result.completed_at = datetime.now(timezone.utc)
+    return result
+
+
+def _should_retry_for_undercoverage(
+    result: AnalystRun,
+    bundle: EvidenceBundle,
+    claim_target: int,
+) -> bool:
+    """Return whether a rich bundle should trigger one coverage retry."""
+    if not result.succeeded:
+        return False
+    if claim_target <= 0:
+        return False
+
+    policy = get_analysis_coverage_config()
+    if not bool(policy["analyst_retry_on_undercoverage"]):
+        return False
+    if len(bundle.evidence) < int(policy["analyst_retry_min_evidence_items"]):
+        return False
+
+    min_claims = max(
+        1,
+        math.ceil(claim_target * float(policy["analyst_retry_min_claim_ratio"])),
+    )
+    return len(result.claims) < min_claims
 
 
 async def run_analyst(
@@ -61,25 +140,51 @@ async def run_analyst(
     On failure, returns an AnalystRun with error set rather than raising.
     This preserves the trace for debugging.
     """
-    from llm_client import acall_llm_structured
-
-    messages = _render_analyst_prompt(bundle, frame, decomposition)
+    claim_target = int(get_depth_config().get("analyst_claim_target", 0))
+    max_attempts = int(get_analysis_coverage_config()["analyst_retry_max_attempts"])
     try:
-        from grounded_research.config import get_fallback_models
-        result, _meta = await acall_llm_structured(
-            model,
-            messages,
-            response_model=AnalystRun,
-            task="analyst_reasoning",
+        result = await _call_analyst_once(
+            model=model,
+            label=label,
+            bundle=bundle,
+            frame=frame,
             trace_id=f"{trace_id}/{label}",
-            timeout=get_request_timeout("analyst"),
             max_budget=max_budget,
-            fallback_models=get_fallback_models("analyst"),
+            decomposition=decomposition,
+            claim_target=claim_target,
+            coverage_retry_note="",
         )
-        result.analyst_label = label
-        result.model = model
-        result.frame = frame
-        result.completed_at = datetime.now(timezone.utc)
+
+        if _should_retry_for_undercoverage(result, bundle, claim_target) and max_attempts > 0:
+            coverage_retry_note = (
+                f"Your first pass returned {len(result.claims)} claims, which is below the "
+                f"configured target of about {claim_target} for a rich bundle with "
+                f"{len(bundle.sources)} sources and {len(bundle.evidence)} evidence items. "
+                "Re-run with broader coverage across distinct named studies, pilots, "
+                "programs, populations, and outcome patterns already present in the "
+                "evidence. Do not repeat multiple variants of the same case while "
+                "ignoring other major named cases."
+            )
+            retry_trace_id = f"{trace_id}/{label}/coverage_retry_1"
+            try:
+                retry_result = await _call_analyst_once(
+                    model=model,
+                    label=label,
+                    bundle=bundle,
+                    frame=frame,
+                    trace_id=retry_trace_id,
+                    max_budget=max_budget,
+                    decomposition=decomposition,
+                    claim_target=claim_target,
+                    coverage_retry_note=coverage_retry_note,
+                )
+                return retry_result
+            except Exception as retry_error:
+                _LOG.warning(
+                    "Coverage retry failed for analyst %s; preserving first result. error=%s",
+                    label,
+                    retry_error,
+                )
         return result
     except Exception as e:
         return AnalystRun(
