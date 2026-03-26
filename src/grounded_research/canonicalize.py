@@ -399,34 +399,78 @@ async def deduplicate_claims(
         )
         return len(shared_families) >= min_shared_informative_tokens
 
+    def _claim_similarity_score(left: RawClaim, right: RawClaim) -> tuple[int, int, int]:
+        """Rank local claim similarity for staged bucket construction.
+
+        Shared evidence is the strongest signal because claims grounded in the
+        same evidence should be considered together before the LLM is asked to
+        merge or keep them separate.
+        """
+        shared_evidence = len(set(left.evidence_ids) & set(right.evidence_ids))
+        shared_tokens = len(informative_tokens[left.id] & informative_tokens[right.id])
+        shared_families = len(
+            informative_token_families[left.id]
+            & informative_token_families[right.id]
+        )
+        return (shared_evidence, shared_tokens, shared_families)
+
     def _split_large_component(component: list[RawClaim]) -> list[list[RawClaim]]:
-        anchor_buckets: dict[str, list[RawClaim]] = defaultdict(list)
-        for claim in component:
-            candidate_tokens = informative_tokens[claim.id]
-            if candidate_tokens:
-                anchor = min(
-                    candidate_tokens,
-                    key=lambda token: (token_doc_freq[token], len(token), token),
-                )
-            else:
-                anchor = claim.id
-            anchor_buckets[anchor].append(claim)
+        similarity_scores: dict[str, dict[str, tuple[int, int, int]]] = defaultdict(dict)
+        for idx, left in enumerate(component):
+            for right in component[idx + 1:]:
+                score = _claim_similarity_score(left, right)
+                similarity_scores[left.id][right.id] = score
+                similarity_scores[right.id][left.id] = score
 
-        if len(anchor_buckets) == 1:
-            only_bucket = next(iter(anchor_buckets.values()))
-            return [
-                only_bucket[idx: idx + bucket_max_claims]
-                for idx in range(0, len(only_bucket), bucket_max_claims)
-            ]
-
+        remaining = {claim.id: claim for claim in component}
         staged_buckets: list[list[RawClaim]] = []
-        for anchor in sorted(anchor_buckets):
-            bucket_claims = anchor_buckets[anchor]
-            if len(bucket_claims) <= bucket_max_claims:
-                staged_buckets.append(bucket_claims)
-                continue
-            for idx in range(0, len(bucket_claims), bucket_max_claims):
-                staged_buckets.append(bucket_claims[idx: idx + bucket_max_claims])
+
+        while remaining:
+            seed_id = max(
+                remaining,
+                key=lambda claim_id: (
+                    sum(similarity_scores[claim_id].get(other_id, (0, 0, 0))[0] for other_id in remaining if other_id != claim_id),
+                    sum(similarity_scores[claim_id].get(other_id, (0, 0, 0))[1] for other_id in remaining if other_id != claim_id),
+                    sum(similarity_scores[claim_id].get(other_id, (0, 0, 0))[2] for other_id in remaining if other_id != claim_id),
+                    len(informative_tokens[claim_id]),
+                    claim_id,
+                ),
+            )
+            bucket_ids = [seed_id]
+            remaining.pop(seed_id)
+
+            while remaining and len(bucket_ids) < bucket_max_claims:
+                best_id: str | None = None
+                best_key: tuple[tuple[int, int, int], tuple[int, int, int], int, str] | None = None
+                for candidate_id in remaining:
+                    pair_scores = [
+                        similarity_scores[candidate_id].get(bucket_id, (0, 0, 0))
+                        for bucket_id in bucket_ids
+                    ]
+                    max_pair_score = max(pair_scores, default=(0, 0, 0))
+                    total_pair_score = (
+                        sum(score[0] for score in pair_scores),
+                        sum(score[1] for score in pair_scores),
+                        sum(score[2] for score in pair_scores),
+                    )
+                    candidate_key = (
+                        max_pair_score,
+                        total_pair_score,
+                        len(informative_tokens[candidate_id]),
+                        candidate_id,
+                    )
+                    if best_key is None or candidate_key > best_key:
+                        best_id = candidate_id
+                        best_key = candidate_key
+
+                if best_id is None or best_key is None or best_key[0] == (0, 0, 0):
+                    break
+
+                bucket_ids.append(best_id)
+                remaining.pop(best_id)
+
+            staged_buckets.append([raw_claim_map[claim_id] for claim_id in bucket_ids])
+
         return staged_buckets
 
     def _partition_raw_claims() -> list[list[RawClaim]]:

@@ -487,3 +487,101 @@ async def test_dense_dedup_partitions_claims_into_similarity_buckets(
         frozenset({"RC-1", "RC-2"}),
         frozenset({"RC-3", "RC-4"}),
     }
+
+
+@pytest.mark.asyncio
+async def test_dense_dedup_split_prefers_shared_evidence_pairs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Large semantic components should keep same-evidence claims together."""
+    bucket_calls: list[list[str]] = []
+
+    async def fake_acall_llm_structured(
+        model,
+        messages,
+        response_model,
+        task,
+        trace_id,
+        max_budget,
+        fallback_models,
+        timeout,
+    ):
+        assert task == "claim_deduplication"
+        assert timeout == 180
+        raw_claim_ids = []
+        for message in messages:
+            content = message.get("content", "")
+            for line in content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("### RC-"):
+                    raw_claim_ids.append(stripped.removeprefix("### ").strip())
+        bucket_calls.append(raw_claim_ids)
+        return response_model(
+            groups=[
+                {
+                    "canonical_statement": f"Canonicalized {'/'.join(raw_claim_ids)}",
+                    "raw_claim_ids": raw_claim_ids,
+                    "confidence": "high",
+                }
+            ]
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr(
+        "grounded_research.canonicalize.get_dedup_config",
+        lambda: {
+            "staged_trigger_claims": 4,
+            "bucket_max_claims": 2,
+            "max_doc_frequency_ratio": 0.8,
+            "min_shared_informative_tokens": 1,
+        },
+    )
+
+    raw_claims = [
+        RawClaim(
+            id="RC-1",
+            statement="APFD increased part-time employment by 17%.",
+            evidence_ids=["E-1"],
+            confidence="high",
+        ),
+        RawClaim(
+            id="RC-2",
+            statement="The Alaska Permanent Fund Dividend increased part-time employment by 17%.",
+            evidence_ids=["E-1"],
+            confidence="medium",
+        ),
+        RawClaim(
+            id="RC-3",
+            statement="APFD showed no significant full-time employment effect.",
+            evidence_ids=["E-2"],
+            confidence="high",
+        ),
+        RawClaim(
+            id="RC-4",
+            statement="The Alaska Permanent Fund Dividend showed no significant full-time employment effect.",
+            evidence_ids=["E-2"],
+            confidence="medium",
+        ),
+    ]
+    claim_to_analyst = {
+        "RC-1": "Alpha",
+        "RC-2": "Beta",
+        "RC-3": "Gamma",
+        "RC-4": "Alpha",
+    }
+
+    canonical_claims = await deduplicate_claims(
+        raw_claims,
+        claim_to_analyst,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert {frozenset(call) for call in bucket_calls} == {
+        frozenset({"RC-1", "RC-2"}),
+        frozenset({"RC-3", "RC-4"}),
+    }
+    assert {frozenset(claim.source_raw_claim_ids) for claim in canonical_claims} == {
+        frozenset({"RC-1", "RC-2"}),
+        frozenset({"RC-3", "RC-4"}),
+    }
