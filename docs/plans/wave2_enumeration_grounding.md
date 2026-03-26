@@ -38,9 +38,13 @@ Observed in the UBI benchmark:
   to Perplexity
 - later retrieval improvements strengthened the UBI collection pass again to 50
   sources, 106 evidence items, 2 gaps, and 30 authoritative sources
-- the next blocker is now execution stability rather than obvious retrieval
+- the next blocker then became execution stability rather than obvious retrieval
   coverage: the improved-bundle rerun cleared Phase 3 after serializing claim
   extraction, then stalled in Phase 4 arbitration on later provider timeouts
+- that runtime blocker has now been cleared by the runtime-reliability slice:
+  the improved-bundle UBI runtime gate completed end-to-end on 2026-03-26, and
+  the remaining loss appears to be claim-set breadth/completeness rather than
+  raw completion
 
 ---
 

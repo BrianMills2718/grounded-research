@@ -132,6 +132,25 @@ Phase 3a timeout failure on the improved 2026-03-25 UBI bundle, but a rerun
 still stalled later in Phase 4 arbitration on the same provider timeout class.
 The active reliability problem is now broader than claim extraction fan-out.
 
+Follow-up on 2026-03-26: the project-local runtime policy now completes the
+improved-bundle UBI run end-to-end under a run-local observability DB and
+explicit finite request timeouts. The remaining shared-infra issue is
+durability and nicer defaults in `llm_client`, not a current grounded-research
+blocker.
+
+### Analyst/claim coverage underuses rich evidence bundles
+The improved-bundle UBI runtime-gate run completed successfully but still
+under-covered the breadth already present in the evidence bundle. The bundle
+contains named programs/studies including Finland, Alaska, Kenya, Stockton,
+Mincome, Ontario, Iran, Mongolia, Madhya Pradesh, and Namibia, yet the final
+claim ledger held only 20 canonical claims and over-indexed Alaska. The long
+report cited essentially the full claim ledger, so the bottleneck appears to be
+earlier analyst/Claimify coverage rather than export formatting.
+
+**Files:** `src/grounded_research/analysts.py`, `prompts/analyst.yaml`, possibly `prompts/claimify.yaml`
+**Observed:** `output/ubi_wave2_runtime_gate/trace.json`, `output/ubi_wave2_runtime_gate/report.md`, `output/fair_ubi_wave2_runtime_gate_vs_ubi_perplexity.md`
+**Fix:** Wire `analyst_claim_target` into prompt/runtime behavior, add one under-coverage retry for rich bundles, and re-run the improved UBI gate before changing export again.
+
 ### Sub-question evidence tagging incomplete
 Evidence items are tagged with `sub_question_id` based on which search query
 found them. But `_select_diverse()` round-robins across queries, and the

@@ -33,33 +33,37 @@ configurable depth modes (standard/deep/thorough).
 ## Next: Wave 2 Completion
 
 The active frontier is no longer raw architecture work. It is finishing Wave 2
-so long benchmark runs complete reliably and the UBI-style enumeration gap can
-be measured cleanly after the method changes already shipped.
+after the runtime gate passed locally and the remaining UBI-style enumeration
+gap became attributable to coverage breadth rather than simple completion.
 
-### Priority 1: Runtime Reliability For Long Benchmark Runs
+### Priority 1: Coverage Breadth On Enumeration-Heavy Bundles
 
-**Goal:** Eliminate the current operational blockers on full benchmark runs.
-
-**Actions:**
-- use a run-local `LLM_CLIENT_DB_PATH` for benchmark runs
-- pass explicit long but finite request timeouts at long structured call sites
-- verify both raw-question and fixture entry paths apply the same runtime policy
-
-**Gate:** Improved-bundle benchmark runs complete end-to-end without shared DB
-lock failure or indefinite provider wait as the primary blocker.
-
-### Priority 2: Close The UBI Enumeration Gap
-
-**Goal:** Improve the current UBI fair comparison result after Wave 2 retrieval,
-anchoring, and canonicalization work.
+**Goal:** Improve the current UBI fair comparison result by getting the analyst
+and raw-claim layers to reflect the breadth already present in the evidence bundle.
 
 **Actions:**
-- rerun the improved UBI benchmark on the safer runtime policy
-- confirm whether dense canonicalization still under-merges on the completed run
-- adjust the next quality slice from completed evidence, not partial runs
+- wire `analyst_claim_target` into the real analyst prompt path
+- add one corrective retry when rich bundles produce materially under-covered
+  analyst outputs
+- verify the improved-bundle UBI rerun yields broader analyst/claim coverage
 
-**Gate:** Fair comparison against cached Perplexity improves over the current
-Wave 2 result, while the pipeline still beats the same-bundle single-shot baseline.
+**Gate:** The improved-bundle UBI rerun produces materially broader analyst
+outputs and improves the fair comparison against cached Perplexity, or exposes a
+smaller next bottleneck from completed evidence.
+
+### Priority 2: Runtime Reliability For Long Benchmark Runs
+
+**Goal:** Keep the now-working runtime gate stable for long benchmark runs.
+
+**Actions:**
+- keep run-local `LLM_CLIENT_DB_PATH` and explicit request timeouts as the
+  default runtime policy
+- confirm future benchmark reruns still complete cleanly under that policy
+- push remaining robustness into shared infra only if project-local policy stops
+  being sufficient
+
+**Gate:** Improved-bundle benchmark runs continue to complete end-to-end without
+shared DB lock failure or indefinite provider wait as the primary blocker.
 
 ### Priority 3: Documentation Authority Reconciliation
 

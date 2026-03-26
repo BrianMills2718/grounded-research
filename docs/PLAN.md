@@ -632,15 +632,21 @@ disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
-Review and triage the committed implementation surfaces.
+Continue the benchmark-driven Wave 2 follow-up rather than revisiting
+architecture review.
 
 Specifically:
 
-1. classify each major implementation surface as `accept`, `hold`, or `discard`
-2. do not let a full-engine draft skip ahead of `Phase -1`
-3. only after that adoption review, run or extend the smallest `Phase -1` slice
+1. keep the now-working runtime policy as the default benchmark path
+2. improve analyst/claim coverage breadth on rich enumeration-heavy bundles
+3. re-run the improved UBI gate and compare against cached Perplexity
+
 Current active implementation frontier:
 
 - `docs/plans/wave2_enumeration_grounding.md`
-- `docs/plans/wave2_runtime_reliability.md`
+- `docs/plans/wave2_coverage_breadth.md`
 - `docs/plans/docs_authority_reconciliation.md`
+
+Recently completed gate:
+
+- `docs/plans/wave2_runtime_reliability.md`

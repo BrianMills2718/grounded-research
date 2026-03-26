@@ -4,7 +4,7 @@
 executable implementation plan for the runtime-reliability slice that now
 blocks Wave 2 benchmark completion.
 
-**Status:** In progress
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
@@ -166,7 +166,7 @@ current method can complete real benchmark runs consistently enough to measure.
 - [x] All long-running `llm_client` call sites use config-driven finite request timeouts
 - [x] Targeted tests pass
 - [x] Phase-boundary tests pass
-- [ ] `TECH_DEBT.md` is updated to reflect the new runtime policy
+- [x] `TECH_DEBT.md` is updated to reflect the new runtime policy
 
 ---
 
@@ -181,3 +181,11 @@ current method can complete real benchmark runs consistently enough to measure.
   - run-local `LLM_CLIENT_DB_PATH` wiring in both engine entry paths
   - explicit `timeout=` propagation across collection, analysts,
     canonicalization, verification, and export call sites
+- Verified 2026-03-26:
+  - improved-bundle UBI runtime gate completed end-to-end in
+    `output/ubi_wave2_runtime_gate/`
+  - long report, structured summary, and handoff all wrote successfully
+  - the run-local observability DB prevented the previous shared-SQLite lock
+    failure mode from blocking export
+  - fair comparison still lost to cached Perplexity, so the active bottleneck
+    moved from runtime reliability to coverage breadth / completeness
