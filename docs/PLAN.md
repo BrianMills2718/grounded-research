@@ -126,10 +126,11 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 Current open work is intentionally narrow:
 
-- post-Wave-2 internal hardening: `docs/plans/post_wave2_cleanup_hardening.md`
 - deferred depth continuation: `docs/plans/depth_modes.md`
 - historical Tyler-spec reconciliation reference:
   `docs/plans/v1_spec_alignment.md`
+- completed post-Wave-2 hardening reference:
+  `docs/plans/post_wave2_cleanup_hardening.md`
 
 Historical benchmark progression and comparative results live in:
 
@@ -597,13 +598,13 @@ disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
-Continue the post-Wave-2 cleanup rather than reopening solved benchmark gaps.
+Preserve the completed benchmark gains rather than reopening solved benchmark gaps.
 
 Specifically:
 
-1. update the status/plan docs to reflect the calibrated UBI result
-2. preserve the current benchmark-safe runtime + coverage + report-calibration path
-3. focus new engineering work on residual debt, not on re-solving the already-recovered UBI benchmark
+1. keep the runtime-safe fixture benchmark path and current UBI artifacts intact
+2. choose the next expansion gate from an explicit plan before adding new complexity
+3. keep shared-infra follow-up in shared libraries rather than rebuilding it here
 
 Current active implementation frontier:
 

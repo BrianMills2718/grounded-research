@@ -241,18 +241,19 @@ Pipeline wins everywhere else including technology (after bug fixes).
 
 ### UBI Recovery Re-run (2026-03-26)
 
-After the Wave 2 runtime, coverage-breadth, and report-calibration slices:
+After the Wave 2 runtime, coverage-breadth, report-calibration, and
+post-Wave-2 hardening slices:
 
-- improved UBI bundle completed end-to-end with 0 warnings
-- analysts each produced 8 claims (configured target)
-- canonical claim ledger expanded to 39 claims
-- long report cited 31 claims and removed the earlier placeholder/grounding issues
+- improved UBI fixture bundle completed end-to-end with `0` grounding warnings
+- analysts each produced `8` claims (configured target)
+- staged dedup now materially merges dense claim families: `44 raw -> 36 canonical`
+- long report cited `31` claims and preserved the earlier repair-loop improvements
 
 Fair comparison vs cached Perplexity:
 
 | Question | Pipeline | Perplexity | Winner | Notes |
 |----------|----------|------------|--------|-------|
-| UBI | **24** | 23 | **Pipeline** | Judge preferred the pipeline on decision usefulness after calibration |
+| UBI | **24** | 22 | **Pipeline** | Judge preferred the updated pipeline on factual accuracy and decision usefulness after dense-dedup hardening |
 
 Updated tracked 6-question outcome:
 
@@ -262,7 +263,7 @@ Updated tracked 6-question outcome:
 | PFAS | Health/Regulatory | **24** | 20 | **Pipeline** |
 | Fasting | Health/Science | **24** | 22 | **Pipeline** |
 | LLM SWE | Technology | **24** | 20 | **Pipeline** |
-| UBI | Economics | **24** | 23 | **Pipeline** |
+| UBI | Economics | **24** | 22 | **Pipeline** |
 | Gut-brain | Science | **20** | 18 | **Pipeline** |
 
 **Win rate: 6/6 (100%)** on the tracked benchmark set.

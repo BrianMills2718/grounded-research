@@ -1,6 +1,6 @@
 # Plan: Post-Wave-2 Cleanup And Hardening
 
-**Status:** Active
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
@@ -98,6 +98,14 @@ Pass condition:
 - enumeration-heavy benchmark traces no longer default to effectively
   no-op canonicalization when genuine overlaps exist
 
+Status:
+- completed on 2026-03-26
+- oversized staged-dedup components now split by local similarity with shared
+  evidence weighted above lexical overlap
+- verified on a real UBI fixture rerun: `44 raw -> 36 canonical`
+- saved fair comparison favored the updated pipeline over cached Perplexity:
+  `24` vs `22`
+
 ### 2. Prompt And Config Hygiene
 
 - move query-generation prompt into `prompts/query_generation.yaml`
@@ -160,7 +168,7 @@ Status:
 
 ## Acceptance Criteria
 
-- [ ] Dense enumeration-heavy runs improve beyond effectively `raw == canonical`
+- [x] Dense enumeration-heavy runs improve beyond effectively `raw == canonical`
       no-op behavior when genuine overlaps exist
 - [x] Remaining active inline prompt debt is moved into YAML prompt files
 - [x] Synthesis truncation/evidence-cap limits are configurable in
@@ -170,7 +178,7 @@ Status:
 - [x] `PhaseTrace` is constructed atomically rather than post-mutated
 - [x] Sub-question evidence tagging no longer obviously undercounts relevant
       evidence on known benchmark cases
-- [ ] Tests covering canonicalization, collection, export, and phase boundaries
+- [x] Tests covering canonicalization, collection, export, and phase boundaries
       pass after each slice
 
 ---
@@ -193,3 +201,9 @@ Current verified slice:
   - Result: `48 passed, 1 skipped`
 - `PYTHONPATH=src python -m pytest tests/test_collect.py tests/test_compress.py tests/test_phase_boundaries.py -q`
   - Result: `37 passed, 1 skipped`
+- `PYTHONPATH=src python -m pytest tests/test_canonicalize.py tests/test_collect.py tests/test_compress.py tests/test_export.py tests/test_phase_boundaries.py -q`
+  - Result: `50 passed, 1 skipped`
+- fixture rerun: `python engine.py --fixture output/ubi_wave2_prefetch_collection/collected_bundle.json --decomposition output/ubi_wave2_prefetch_collection/decomposition.json --output-dir output/ubi_dense_dedup_eval`
+  - Result: completed with `44 raw -> 36 canonical`, `31` cited claims, `0` grounding warnings
+- fair comparison: `python scripts/compare_fair.py output/ubi_dense_dedup_eval/report.md output/ubi_perplexity/perplexity_report.md`
+  - Result: saved judge output favored pipeline `24` vs cached Perplexity `22`

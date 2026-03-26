@@ -108,16 +108,18 @@ explicit finite request timeouts. The remaining shared-infra issue is
 durability and nicer defaults in `llm_client`, not a current grounded-research
 blocker.
 
-### Dense canonicalization remains weaker than ideal on enumeration-heavy runs
-The benchmark is now recovered, but dense enumeration-style bundles can still
-produce weak canonical merging (`raw == canonical`) even when the final report
-quality is acceptable. This is no longer the top blocker, but it remains the
-largest quality-oriented technical debt in the current pipeline.
+### Dense canonicalization improved, but future dense benchmarks should still watch it
+The largest local canonicalization gap has been reduced. The staged-dedup
+splitter now keeps same-evidence claim families together when oversized
+components are partitioned, and the saved 2026-03-26 UBI fixture rerun moved
+from no-op behavior to `44 raw -> 36 canonical` with `3` merged canonical
+claims and a fair comparison win over cached Perplexity.
 
 **Files:** `src/grounded_research/canonicalize.py`, `prompts/dedup.yaml`
-**Observed:** 2026-03-26 calibrated UBI rerun still produced `39 raw -> 39 canonical`
-**Fix:** keep the current staged dedup path, but add stronger non-merge/merge
-controls or a better equivalence-screening strategy before the next enumeration-heavy benchmark wave.
+**Improved:** 2026-03-26 post-Wave-2 hardening slice
+**Residual question:** Future dense, study-heavy benchmarks should still be
+checked for over-fragmented claim families, but this is no longer the main
+open repo-local blocker.
 
 ### Sub-question evidence tagging origin collapse resolved locally
 The obvious undercount bug is fixed: evidence now retains all matched

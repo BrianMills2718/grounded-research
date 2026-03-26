@@ -32,37 +32,53 @@ configurable depth modes (standard/deep/thorough).
 - 1 feature remains cut (#6 complexity assessment; #3 ambiguity and #38
   shuffling were later un-cut and implemented)
 
-## Next: Post-Wave-2 Cleanup And Hardening
+## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 
-The active frontier is no longer recovering the UBI benchmark. That recovery
-now succeeded. The next work is tightening authority surfaces, preserving the
-new benchmark gains, and cleaning up the remaining non-blocking engineering debt.
+The post-Wave-2 cleanup plan is now complete. The repo-local frontier is no
+longer an active hardening backlog; it is preserving the benchmark gains and
+choosing the next benchmark-driven expansion intentionally.
 
-### Priority 1: Preserve The UBI Recovery On Future Reruns
+### Priority 1: Preserve The Current UBI Win On Future Reruns
 
-**Goal:** Make sure the UBI win survives future reruns and remains diagnosable.
+**Goal:** Keep the recovered UBI result stable on the runtime-safe fixture path.
+
+**Current benchmark anchor:** the 2026-03-26 dense-dedup fixture rerun completed
+with `44 raw -> 36 canonical`, `31` cited claims, `0` grounding warnings, and
+a saved fair comparison favoring the pipeline `24` vs cached Perplexity `22`.
 
 **Actions:**
 - keep the runtime-safe fixture path as the default benchmark route
-- keep the analyst coverage target and export repair loops in place
-- preserve the benchmark artifacts and note the remaining residual weaknesses
+- keep the analyst coverage target, staged dedup, and export repair loops in place
+- preserve the saved UBI dense-dedup artifacts as the current economics benchmark anchor
 
 **Gate:** Future improved-bundle UBI reruns still complete end-to-end and do not
-regress below the current calibrated result.
+regress below the current saved result.
 
-### Priority 2: Remaining Internal Engineering Debt
+### Priority 2: Shared-Infra Follow-Up, Not New Repo-Local Complexity
 
-**Goal:** Remove remaining non-blocking weaknesses that still show up in review or observability.
+**Goal:** Avoid reopening settled project code when the remaining issues now
+live in shared infrastructure or future benchmark expansion.
 
 **Actions:**
-- execute `docs/plans/post_wave2_cleanup_hardening.md`
-- improve dense canonicalization on enumeration-heavy runs (`raw == canonical`
-  still happens too often even when the benchmark now passes)
-- clean up remaining internal prompt/config/schema debt that is already tracked
-  in `docs/TECH_DEBT.md`
+- push any remaining runtime-default improvements into `llm_client`
+- continue using `open_web_retrieval` and shared observability rather than
+  reintroducing project-local fetch/runtime logic
+- use `prompt_eval` for future prompt/model comparison work instead of adding
+  new ad hoc comparison surfaces here
 
-**Gate:** Remaining debt items are explicit and no longer masquerade as active
-benchmark blockers.
+**Gate:** No new repo-local complexity is added unless a completed benchmark run
+shows a clear grounded-research-specific bottleneck.
+
+### Priority 3: Choose The Next Benchmark Wave Explicitly
+
+**Candidates:**
+- `depth_modes.md` continuation
+- recent-first evidence ranking
+- another dense, study-heavy benchmark question if the goal is to stress the
+  canonicalization/retrieval stack again
+
+**Gate:** Write or refresh the relevant plan doc before implementation. Do not
+reopen broad cleanup work without a benchmark-triggered reason.
 
 ### Completed Recently: Documentation Authority Reconciliation
 
