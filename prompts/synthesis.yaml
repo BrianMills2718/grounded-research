@@ -9,7 +9,8 @@ messages:
       - Every recommendation must cite claim IDs (C-...).
       - ONLY use claim IDs and evidence IDs that appear in the data below.
         Do NOT invent or fabricate any IDs. If you are unsure of an ID, omit it.
-      - Unresolved disputes must appear in the disagreement summary.
+      - Every unresolved dispute must appear in the disagreement summary by
+        dispute ID (D-...) and with a short explanation of what remains unresolved.
       - Evidence gaps must be explicitly listed.
       - Flip conditions: what would change the recommendation.
       - Keep cited_claim_ids populated with every claim ID you reference.
@@ -81,3 +82,13 @@ messages:
       distinctions that help a reader navigate the topic. Cite claim IDs. Explain
       how disputes were resolved and what they reveal. List evidence gaps and
       flip conditions.
+      {% if validation_feedback %}
+
+      ## Repair Feedback
+
+      Your previous structured report failed grounding validation. Fix these
+      specific issues in this regeneration:
+      {% for item in validation_feedback %}
+      - {{ item }}
+      {% endfor %}
+      {% endif %}

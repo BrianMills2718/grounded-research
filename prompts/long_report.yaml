@@ -60,6 +60,12 @@ messages:
          institutions, or policymakers on this topic. Who disagrees with whom, and
          why? What are the competing schools of thought?
 
+      4a. **Reconcile the apparent contradictions.** If major studies, pilots, or
+         programs point in different directions, include an explicit section that
+         names the contradiction and explains the likely drivers of the difference
+         (program design, duration, population, funding model, extensive vs
+         intensive margin, macro vs micro setting, or data quality).
+
       5. **Decompose causal mechanisms.** When reporting effects, separate them by
          mechanism. Don't just say "revenue declined" — say whether the decline
          came from pricing, volume, market access, or structural shifts. Quantify
@@ -80,6 +86,10 @@ messages:
       9. **Cite concretely.** Reference specific evidence (by ID) and sources (by
          title or URL) when making important claims. Cite up to three sources per
          sentence. Weave citations into prose — do not dump them in lists.
+      10. **Never use symbolic placeholders.** Do not write `X-Y`, `N=?`, `TBD`,
+         `[insert ...]`, or similar placeholders. If the evidence does not support
+         a quantitative estimate, say explicitly that the estimate cannot be
+         supported from the available evidence.
 
       ## Report structure
 
@@ -102,11 +112,20 @@ messages:
          - Quantitative decomposition where evidence supports it
          - Known third-party debates (who disagrees with whom, and why)
          - Political or institutional constraints on the findings
+         - Direct comparison of the major named studies/pilots/programs that
+           anchor the distinction
          Cite claim IDs inline (e.g., "...which multiple analysts confirmed
          (C-abc123)").
          Give each major dimension a full section (## header), not just a
          paragraph within one mega-section. If there are 4 key distinctions,
          that's 4 sections of evidence analysis.
+      5a. **Comparative evidence table** — when the evidence spans multiple named
+         studies, pilots, or programs, include one compact table comparing the
+         major cases by context, transfer design, employment effect, broader labor
+         effect, and main caveat.
+      5b. **Reconciling the apparent contradictions** — include a dedicated
+         section that explains why seemingly conflicting results can all be true
+         in different contexts.
       6. **Broader implications** — connect findings to specific macro-economic
          effects (name which budgets, GDP figures, fiscal policies are affected),
          institutional changes (which organizations are adapting and how),
@@ -239,3 +258,13 @@ messages:
       Write the definitive research report answering the question above.
       Build an argument. Make distinctions. Cite evidence. Be honest about
       what you don't know. {{ word_target }} words.
+      {% if repair_feedback %}
+
+      ## Repair Feedback
+
+      Your previous long report had concrete quality defects. Fix these in this
+      regeneration:
+      {% for item in repair_feedback %}
+      - {{ item }}
+      {% endfor %}
+      {% endif %}

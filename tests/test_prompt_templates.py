@@ -177,3 +177,45 @@ def test_dispute_classify_prompt_renders_with_type_guidance() -> None:
 
     assert "Type guidance" in messages[0]["content"]
     assert "Do not create disputes for stylistic differences" in messages[0]["content"]
+
+
+def test_synthesis_prompt_renders_with_repair_feedback() -> None:
+    """Structured synthesis prompt should render repair feedback when provided."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "synthesis.yaml"),
+        question={"text": "What is the evidence?"},
+        evidence=[],
+        claims=[],
+        disputes=[],
+        arbitration_results=[],
+        evidence_gaps=[],
+        validation_feedback=["Unresolved dispute D-1 not mentioned in report"],
+    )
+
+    assert "Repair Feedback" in messages[1]["content"]
+    assert "D-1" in messages[1]["content"]
+
+
+def test_long_report_prompt_renders_with_placeholder_ban_and_repair_feedback() -> None:
+    """Long-report prompt should forbid placeholders and accept repair feedback."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "long_report.yaml"),
+        question={"text": "What is the evidence?", "scope_notes": ""},
+        sources=[],
+        evidence=[],
+        claims=[],
+        disputes=[],
+        arbitration_results=[],
+        evidence_gaps=[],
+        analyst_count=3,
+        synthesis_mode="analytical",
+        word_target="5,000-6,000",
+        sub_questions=[],
+        optimization_axes=[],
+        repair_feedback=["Remove symbolic placeholder token matching `X-Y%?`."],
+    )
+
+    assert "Never use symbolic placeholders" in messages[0]["content"]
+    assert "Comparative evidence table" in messages[0]["content"]
+    assert "Reconciling the apparent contradictions" in messages[0]["content"]
+    assert "Repair Feedback" in messages[1]["content"]
