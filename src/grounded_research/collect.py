@@ -27,9 +27,11 @@ from uuid import uuid4
 from llm_client.observability import ToolCallResult, log_tool_call
 
 from grounded_research.config import (
+    get_depth_config,
     get_collection_ranking_config,
     get_fallback_models,
     get_model,
+    get_phase_concurrency_config,
     load_config,
 )
 from grounded_research.models import (
@@ -236,6 +238,143 @@ def _score_search_result(result: dict, ranking_cfg: dict[str, object]) -> tuple[
     return score, ",".join(reasons) or "neutral"
 
 
+async def _extract_goal_driven_evidence(
+    *,
+    question: str,
+    trace_id: str,
+    source: SourceRecord,
+    page_data: dict[str, object],
+    sub_questions: list[dict[str, object]],
+    sub_question_ids: list[str],
+    max_items: int,
+    max_chars: int,
+) -> list[EvidenceItem]:
+    """Extract multiple evidence items from one persisted page text.
+
+    This depth-only path turns an already-fetched full page into a few distinct
+    evidence items instead of relying solely on the generic notes/key-section
+    pair. It reuses the existing EvidenceItem contract so downstream phases do
+    not need a new boundary.
+    """
+    from llm_client import acall_llm_structured, render_prompt
+    from pydantic import BaseModel, Field
+
+    from grounded_research.tools.fetch_page import read_page
+
+    file_path = str(page_data.get("file_path", "")).strip()
+    if not file_path:
+        raise ValueError("Depth extraction requires page_data.file_path")
+
+    page_text = read_page(file_path, max_chars=max_chars).strip()
+    if len(page_text) < 200:
+        return []
+
+    matched_sub_questions = [
+        sq for sq in sub_questions
+        if str(sq.get("id", "")) in sub_question_ids
+    ]
+
+    class ExtractedEvidenceItem(BaseModel):
+        """LLM-facing extracted evidence payload."""
+
+        content: str = Field(
+            description="Concrete evidence-bearing passage or data point from the page.",
+        )
+        content_type: Literal["text", "data_point", "quotation", "summary"] = Field(
+            description="Best-fit evidence type for the extracted item.",
+        )
+        relevance_note: str = Field(
+            description="Why this item matters to the question or matched sub-questions.",
+        )
+
+    class ExtractionResult(BaseModel):
+        """LLM output: extracted evidence items from one page."""
+
+        items: list[ExtractedEvidenceItem] = Field(
+            default_factory=list,
+            description="Distinct evidence-bearing items from the page, capped by the prompt.",
+        )
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "extract_evidence.yaml"),
+        question=question,
+        source_title=source.title,
+        source_url=source.url,
+        matched_sub_questions=matched_sub_questions,
+        max_items=max_items,
+        page_text=page_text,
+    )
+
+    result, _meta = await acall_llm_structured(
+        get_model("evidence_extraction"),
+        messages,
+        response_model=ExtractionResult,
+        task="evidence_extraction",
+        trace_id=f"{trace_id}/extract/{source.id}",
+        timeout=get_request_timeout("evidence_extraction"),
+        max_budget=0.2,
+        fallback_models=get_fallback_models("evidence_extraction"),
+    )
+
+    extracted: list[EvidenceItem] = []
+    seen_signatures: set[str] = set()
+    for item in result.items[:max_items]:
+        content = item.content.strip()
+        if len(content) < 40:
+            continue
+        signature = content[:160].lower()
+        if signature in seen_signatures:
+            continue
+        seen_signatures.add(signature)
+        extracted.append(EvidenceItem(
+            source_id=source.id,
+            content=content,
+            content_type=item.content_type,
+            relevance_note=item.relevance_note.strip(),
+            extraction_method="llm",
+            sub_question_ids=sub_question_ids,
+        ))
+    return extracted
+
+
+def _fallback_page_evidence(
+    *,
+    source: SourceRecord,
+    page_data: dict[str, object],
+    question: str,
+    sub_question_ids: list[str],
+) -> list[EvidenceItem]:
+    """Build the existing notes/key-section evidence pair.
+
+    This remains the baseline path for standard mode and the explicit fallback
+    when depth extraction fails or yields nothing useful.
+    """
+    evidence: list[EvidenceItem] = []
+    char_count = int(page_data.get("char_count", 0) or 0)
+    key_section = str(page_data.get("key_section", ""))
+    if key_section and len(key_section) > 50:
+        evidence.append(EvidenceItem(
+            source_id=source.id,
+            content=key_section,
+            content_type="text",
+            relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
+            extraction_method="llm",
+            sub_question_ids=sub_question_ids,
+        ))
+
+    notes = str(page_data.get("notes", ""))
+    if notes and len(notes) > 50 and notes != key_section[:len(notes)]:
+        evidence.append(EvidenceItem(
+            source_id=source.id,
+            content=notes,
+            content_type="summary",
+            relevance_note=f"Page summary ({char_count} chars total)",
+            extraction_method="llm",
+            sub_question_ids=sub_question_ids,
+        ))
+    return evidence
+
+
 async def generate_search_queries(
     question: str,
     trace_id: str,
@@ -358,6 +497,8 @@ async def collect_evidence(
     from grounded_research.tools.fetch_page import fetch_page, set_pages_dir
 
     config = load_config()
+    depth_cfg = get_depth_config()
+    phase_cfg = get_phase_concurrency_config()
     collection_cfg = config.get("collection", {})
     # Only use collection config as defaults if caller didn't override
     if num_queries == 10:  # default parameter value
@@ -663,36 +804,80 @@ async def collect_evidence(
     fetch_tasks = [_fetch_one(r["url"], i) for i, r in enumerate(selected)]
     fetch_results = await asyncio.gather(*fetch_tasks)
 
+    depth_extraction_enabled = bool(depth_cfg.get("evidence_extraction_enabled", False))
+    extraction_max_sources = int(depth_cfg.get("evidence_extraction_max_sources", 0))
+    extraction_max_items = int(depth_cfg.get("evidence_extraction_items_per_source", 0))
+    extraction_max_chars = int(depth_cfg.get("evidence_extraction_max_chars", 0))
+    extraction_max_concurrency = int(phase_cfg.get("evidence_extraction_max_concurrency", 1))
+    sub_question_list = sub_questions or []
+
+    extraction_candidates: list[tuple[str, dict[str, object]]] = []
+    extracted_evidence_by_url: dict[str, list[EvidenceItem]] = {}
+    extraction_errors_by_url: dict[str, str] = {}
+
+    if depth_extraction_enabled and extraction_max_sources > 0 and extraction_max_items > 0 and extraction_max_chars > 0:
+        for url, page_data in fetch_results:
+            if page_data is None:
+                continue
+            if len(extraction_candidates) >= extraction_max_sources:
+                break
+            if not str(page_data.get("file_path", "")).strip():
+                continue
+            extraction_candidates.append((url, page_data))
+
+        if extraction_candidates:
+            semaphore = asyncio.Semaphore(max(1, extraction_max_concurrency))
+
+            async def _extract_one(url: str, page_data: dict[str, object]) -> tuple[str, list[EvidenceItem], str | None]:
+                async with semaphore:
+                    try:
+                        return (
+                            url,
+                            await _extract_goal_driven_evidence(
+                                question=question,
+                                trace_id=trace_id,
+                                source=source_map[url],
+                                page_data=page_data,
+                                sub_questions=sub_question_list,
+                                sub_question_ids=source_sq_ids_map.get(url, []),
+                                max_items=extraction_max_items,
+                                max_chars=extraction_max_chars,
+                            ),
+                            None,
+                        )
+                    except Exception as exc:
+                        return url, [], f"{type(exc).__name__}: {exc}"
+
+            extracted_results = await asyncio.gather(
+                *[_extract_one(url, page_data) for url, page_data in extraction_candidates]
+            )
+            for url, items, error in extracted_results:
+                if error is not None:
+                    extraction_errors_by_url[url] = error
+                if items:
+                    extracted_evidence_by_url[url] = items
+
     for url, page_data in fetch_results:
         source = source_map[url]
         sq_ids = source_sq_ids_map.get(url, [])
         if page_data is None:
             gaps.append(f"Failed to fetch {url}")
             continue
+        extraction_error = extraction_errors_by_url.get(url)
+        if extraction_error is not None:
+            gaps.append(f"Depth evidence extraction failed for {url}: {extraction_error}")
 
-        char_count = page_data.get("char_count", 0)
+        extracted_items = extracted_evidence_by_url.get(url, [])
+        if extracted_items:
+            evidence.extend(extracted_items)
+            continue
 
-        key_section = page_data.get("key_section", "")
-        if key_section and len(key_section) > 50:
-            evidence.append(EvidenceItem(
-                source_id=source.id,
-                content=key_section,
-                content_type="text",
-                relevance_note=f"Key section ({char_count} chars total) for: {question[:50]}",
-                extraction_method="llm",
-                sub_question_ids=sq_ids,
-            ))
-
-        notes = page_data.get("notes", "")
-        if notes and len(notes) > 50 and notes != key_section[:len(notes)]:
-            evidence.append(EvidenceItem(
-                source_id=source.id,
-                content=notes,
-                content_type="summary",
-                relevance_note=f"Page summary ({char_count} chars total)",
-                extraction_method="llm",
-                sub_question_ids=sq_ids,
-            ))
+        evidence.extend(_fallback_page_evidence(
+            source=source,
+            page_data=page_data,
+            question=question,
+            sub_question_ids=sq_ids,
+        ))
 
     print(f"  Collected {len(sources)} sources, {len(evidence)} evidence items, {len(gaps)} gaps")
 

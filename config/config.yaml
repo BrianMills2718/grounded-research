@@ -9,6 +9,7 @@ depth: "standard"
 models:
   decomposition: "openrouter/google/gemini-2.5-flash"
   analyst: "openrouter/openai/gpt-5-nano"
+  evidence_extraction: "openrouter/openai/gpt-5-nano"
   claim_extraction: "openrouter/openai/gpt-5-nano"
   deduplication: "openrouter/openai/gpt-5-nano"
   dispute_classification: "openrouter/google/gemini-2.5-flash"
@@ -23,6 +24,7 @@ models:
 model_fallbacks:
   decomposition: ["openrouter/openai/gpt-5-nano"]
   analyst: ["openrouter/openai/gpt-5-nano"]
+  evidence_extraction: ["openrouter/openai/gpt-5-nano"]
   claim_extraction: ["openrouter/openai/gpt-5-nano"]
   deduplication: ["openrouter/openai/gpt-5-nano"]
   dispute_classification: ["openrouter/openai/gpt-5-nano"]
@@ -126,6 +128,7 @@ deduplication:
 
 phase_concurrency:
   claim_extraction_max_concurrency: 1
+  evidence_extraction_max_concurrency: 2
 
 analysis_coverage:
   analyst_retry_on_undercoverage: true
@@ -141,6 +144,7 @@ runtime_reliability:
     query_generation: 120
     source_scoring: 180
     analyst: 180
+    evidence_extraction: 180
     claim_extraction: 240
     deduplication: 180
     dispute_classification: 180

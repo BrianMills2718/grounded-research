@@ -58,6 +58,10 @@ _DEPTH_PROFILES = {
         "synthesis_word_target": "5,000-6,000",
         "pipeline_max_budget_usd": 5.0,
         "arbitration_max_rounds": 1,
+        "evidence_extraction_enabled": False,
+        "evidence_extraction_max_sources": 0,
+        "evidence_extraction_items_per_source": 0,
+        "evidence_extraction_max_chars": 0,
     },
     "deep": {
         "num_queries": 30,
@@ -67,6 +71,10 @@ _DEPTH_PROFILES = {
         "synthesis_word_target": "8,000-10,000",
         "pipeline_max_budget_usd": 10.0,
         "arbitration_max_rounds": 2,
+        "evidence_extraction_enabled": True,
+        "evidence_extraction_max_sources": 20,
+        "evidence_extraction_items_per_source": 4,
+        "evidence_extraction_max_chars": 12000,
     },
     "thorough": {
         "num_queries": 50,
@@ -76,6 +84,10 @@ _DEPTH_PROFILES = {
         "synthesis_word_target": "10,000-15,000",
         "pipeline_max_budget_usd": 20.0,
         "arbitration_max_rounds": 3,
+        "evidence_extraction_enabled": True,
+        "evidence_extraction_max_sources": 30,
+        "evidence_extraction_items_per_source": 6,
+        "evidence_extraction_max_chars": 16000,
     },
 }
 
@@ -196,6 +208,7 @@ def get_phase_concurrency_config() -> dict[str, int]:
     configured = cfg.get("phase_concurrency", {})
     defaults: dict[str, int] = {
         "claim_extraction_max_concurrency": 1,
+        "evidence_extraction_max_concurrency": 2,
     }
     defaults.update(configured)
     return defaults

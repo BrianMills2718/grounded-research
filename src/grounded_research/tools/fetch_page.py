@@ -65,6 +65,22 @@ def _get_pages_dir() -> Path:
     return _tmp_pages_dir
 
 
+def read_page(file_path: str | os.PathLike[str], max_chars: int | None = None) -> str:
+    """Read persisted full page text for downstream extraction.
+
+    `fetch_page()` keeps the prompt context lean by returning short notes while
+    persisting the full extracted page text on disk. This helper is the
+    truthful read surface for later depth-gated evidence extraction.
+    """
+    path = Path(file_path)
+    text = path.read_text(encoding="utf-8")
+    if max_chars is None:
+        return text
+    if max_chars < 1:
+        raise ValueError("max_chars must be >= 1 when provided")
+    return text[:max_chars]
+
+
 def _url_hash(url: str) -> str:
     """16-char hex prefix of SHA-256 of the URL — used as filename."""
     return hashlib.sha256(url.encode()).hexdigest()[:16]

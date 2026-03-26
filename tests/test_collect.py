@@ -12,6 +12,7 @@ from grounded_research.collect import (
     _select_diverse,
     generate_search_queries,
 )
+from grounded_research.models import EvidenceItem
 
 
 def test_extract_topic_anchors_builds_phrase_and_acronym() -> None:
@@ -373,3 +374,221 @@ async def test_collect_evidence_preserves_all_matching_sub_question_tags(
 
     assert len(bundle.evidence) >= 3
     assert all(item.sub_question_ids == ["SQ-1", "SQ-2"] for item in bundle.evidence)
+
+
+@pytest.mark.asyncio
+async def test_collect_evidence_standard_mode_keeps_legacy_page_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Standard depth must not invoke the richer extraction path."""
+
+    async def fake_generate_search_queries(*args, **kwargs):
+        return ["ubi pilot"], {}
+
+    async def fake_search_web(
+        query: str,
+        count: int = 10,
+        freshness: str = "none",
+        *,
+        trace_id=None,
+        task=None,
+    ) -> str:
+        return (
+            '{"results": [{"title": "Pilot result", "url": "https://example.com/pilot", '
+            '"description": "Search snippet long enough to be included as evidence.", '
+            '"age": "1 day"}]}'
+        )
+
+    async def fake_score_source_quality(bundle, trace_id, max_budget):
+        for source in bundle.sources:
+            source.quality_tier = "authoritative"
+
+    async def fake_fetch_page(url: str, question: str = "") -> str:
+        return (
+            '{"url": "https://example.com/pilot", "content_type": "text/html", '
+            '"char_count": 321, "notes": "Page summary long enough to be included as evidence.", '
+            '"key_section": "Key section long enough to be included as evidence and clearly relevant."}'
+        )
+
+    async def fake_extract_goal_driven_evidence(**kwargs):
+        raise AssertionError("standard depth should not call goal-driven extraction")
+
+    monkeypatch.setattr("grounded_research.collect.generate_search_queries", fake_generate_search_queries)
+    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+    monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
+    monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
+    monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
+        "evidence_extraction_enabled": False,
+        "evidence_extraction_max_sources": 0,
+        "evidence_extraction_items_per_source": 0,
+        "evidence_extraction_max_chars": 0,
+    })
+    monkeypatch.setattr("grounded_research.collect.get_phase_concurrency_config", lambda: {})
+    monkeypatch.setattr("grounded_research.tools.fetch_page.set_pages_dir", lambda path: None)
+    monkeypatch.setattr("grounded_research.tools.fetch_page.fetch_page", fake_fetch_page)
+    monkeypatch.setattr("grounded_research.collect.log_tool_call", lambda record: None)
+    monkeypatch.setattr("grounded_research.collect._extract_goal_driven_evidence", fake_extract_goal_driven_evidence)
+
+    bundle = await collect_evidence(
+        question="What happened in the UBI pilot?",
+        trace_id="trace-standard",
+        max_sources=1,
+        max_budget=0.1,
+    )
+
+    assert len(bundle.evidence) == 3
+    assert any(item.content_type == "text" for item in bundle.evidence)
+    assert any(item.content_type == "summary" for item in bundle.evidence)
+
+
+@pytest.mark.asyncio
+async def test_collect_evidence_deep_mode_uses_goal_driven_extraction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deep depth should replace generic page notes with richer extracted items."""
+
+    async def fake_generate_search_queries(*args, **kwargs):
+        return ["ubi pilot"], {}
+
+    async def fake_search_web(
+        query: str,
+        count: int = 10,
+        freshness: str = "none",
+        *,
+        trace_id=None,
+        task=None,
+    ) -> str:
+        return (
+            '{"results": [{"title": "Pilot result", "url": "https://example.com/pilot", '
+            '"description": "Search snippet long enough to be included as evidence.", '
+            '"age": "1 day"}]}'
+        )
+
+    async def fake_score_source_quality(bundle, trace_id, max_budget):
+        for source in bundle.sources:
+            source.quality_tier = "authoritative"
+
+    async def fake_fetch_page(url: str, question: str = "") -> str:
+        return (
+            '{"url": "https://example.com/pilot", "content_type": "text/html", '
+            '"char_count": 3210, "file_path": "tmp-page.txt", '
+            '"notes": "Page summary long enough to be included as evidence.", '
+            '"key_section": "Key section long enough to be included as evidence and clearly relevant."}'
+        )
+
+    async def fake_extract_goal_driven_evidence(**kwargs):
+        source = kwargs["source"]
+        sq_ids = kwargs["sub_question_ids"]
+        return [
+            EvidenceItem(
+                source_id=source.id,
+                content="Finland pilot reported a short-run employment increase in one subgroup.",
+                content_type="data_point",
+                relevance_note="Direct pilot labor outcome evidence.",
+                extraction_method="llm",
+                sub_question_ids=sq_ids,
+            ),
+            EvidenceItem(
+                source_id=source.id,
+                content="The report also noted effects varied by demographic context.",
+                content_type="text",
+                relevance_note="Shows heterogeneity across participant groups.",
+                extraction_method="llm",
+                sub_question_ids=sq_ids,
+            ),
+        ]
+
+    monkeypatch.setattr("grounded_research.collect.generate_search_queries", fake_generate_search_queries)
+    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+    monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
+    monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
+    monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
+        "evidence_extraction_enabled": True,
+        "evidence_extraction_max_sources": 5,
+        "evidence_extraction_items_per_source": 4,
+        "evidence_extraction_max_chars": 4000,
+    })
+    monkeypatch.setattr("grounded_research.collect.get_phase_concurrency_config", lambda: {
+        "evidence_extraction_max_concurrency": 2,
+    })
+    monkeypatch.setattr("grounded_research.tools.fetch_page.set_pages_dir", lambda path: None)
+    monkeypatch.setattr("grounded_research.tools.fetch_page.fetch_page", fake_fetch_page)
+    monkeypatch.setattr("grounded_research.collect.log_tool_call", lambda record: None)
+    monkeypatch.setattr("grounded_research.collect._extract_goal_driven_evidence", fake_extract_goal_driven_evidence)
+
+    bundle = await collect_evidence(
+        question="What happened in the UBI pilot?",
+        trace_id="trace-deep",
+        max_sources=1,
+        max_budget=0.1,
+    )
+
+    assert len(bundle.evidence) == 3
+    assert [item.content_type for item in bundle.evidence[1:]] == ["data_point", "text"]
+
+
+@pytest.mark.asyncio
+async def test_collect_evidence_deep_mode_logs_gap_and_falls_back_on_extraction_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Depth extraction failures must stay explicit while preserving usable evidence."""
+
+    async def fake_generate_search_queries(*args, **kwargs):
+        return ["ubi pilot"], {}
+
+    async def fake_search_web(
+        query: str,
+        count: int = 10,
+        freshness: str = "none",
+        *,
+        trace_id=None,
+        task=None,
+    ) -> str:
+        return (
+            '{"results": [{"title": "Pilot result", "url": "https://example.com/pilot", '
+            '"description": "Search snippet long enough to be included as evidence.", '
+            '"age": "1 day"}]}'
+        )
+
+    async def fake_score_source_quality(bundle, trace_id, max_budget):
+        for source in bundle.sources:
+            source.quality_tier = "authoritative"
+
+    async def fake_fetch_page(url: str, question: str = "") -> str:
+        return (
+            '{"url": "https://example.com/pilot", "content_type": "text/html", '
+            '"char_count": 3210, "file_path": "tmp-page.txt", '
+            '"notes": "Page summary long enough to be included as evidence.", '
+            '"key_section": "Key section long enough to be included as evidence and clearly relevant."}'
+        )
+
+    async def fake_extract_goal_driven_evidence(**kwargs):
+        raise RuntimeError("structured extraction broke")
+
+    monkeypatch.setattr("grounded_research.collect.generate_search_queries", fake_generate_search_queries)
+    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+    monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
+    monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
+    monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
+        "evidence_extraction_enabled": True,
+        "evidence_extraction_max_sources": 5,
+        "evidence_extraction_items_per_source": 4,
+        "evidence_extraction_max_chars": 4000,
+    })
+    monkeypatch.setattr("grounded_research.collect.get_phase_concurrency_config", lambda: {
+        "evidence_extraction_max_concurrency": 1,
+    })
+    monkeypatch.setattr("grounded_research.tools.fetch_page.set_pages_dir", lambda path: None)
+    monkeypatch.setattr("grounded_research.tools.fetch_page.fetch_page", fake_fetch_page)
+    monkeypatch.setattr("grounded_research.collect.log_tool_call", lambda record: None)
+    monkeypatch.setattr("grounded_research.collect._extract_goal_driven_evidence", fake_extract_goal_driven_evidence)
+
+    bundle = await collect_evidence(
+        question="What happened in the UBI pilot?",
+        trace_id="trace-deep-error",
+        max_sources=1,
+        max_budget=0.1,
+    )
+
+    assert any("Depth evidence extraction failed" in gap for gap in bundle.gaps)
+    assert len(bundle.evidence) == 3
