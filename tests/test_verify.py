@@ -15,12 +15,21 @@ import pytest
 from grounded_research.models import (
     ArbitrationResult,
     Claim,
+    ClaimLedger,
     ClaimUpdate,
     Dispute,
     EvidenceBundle,
+    EvidenceItem,
     ResearchQuestion,
+    SourceRecord,
+    VerificationQueryBatch,
 )
-from grounded_research.verify import _collect_fresh_evidence_for_dispute, _enforce_arbitration_protocol, arbitrate_dispute
+from grounded_research.verify import (
+    _collect_fresh_evidence_for_dispute,
+    _enforce_arbitration_protocol,
+    arbitrate_dispute,
+    verify_disputes,
+)
 
 
 def _make_claim(claim_id: str) -> Claim:
@@ -197,3 +206,166 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
     assert captured["trace_id"] == "trace-root/search/D-1"
     assert captured["task"] == "verification.search"
     assert any(w.code == "verification_no_results" for w in warnings)
+
+
+@pytest.mark.asyncio
+async def test_verify_disputes_retries_inconclusive_rounds_until_resolved(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deep modes should take another round when the first arbitration is inconclusive."""
+    monkeypatch.setattr("grounded_research.verify.get_depth_config", lambda: {"arbitration_max_rounds": 2})
+
+    query_calls: list[str] = []
+    arbitration_calls: list[str] = []
+
+    async def fake_generate_verification_queries(disputes, claims, trace_id, question_text="", max_budget=1.0):
+        query_calls.append(trace_id)
+        return [VerificationQueryBatch(dispute_id=disputes[0].id, queries=[f"query-{len(query_calls)}"])]
+
+    async def fake_collect_fresh_evidence_for_dispute(dispute, queries, bundle, trace_id):
+        round_idx = len(query_calls)
+        source = SourceRecord(url=f"https://example.com/{round_idx}", title=f"Round {round_idx}")
+        evidence = EvidenceItem(
+            source_id=source.id,
+            content=f"Fresh evidence round {round_idx}",
+            content_type="text",
+            relevance_note="fresh",
+            extraction_method="llm",
+        )
+        return [source], [evidence], []
+
+    async def fake_arbitrate_dispute(dispute, claims, available_evidence, fresh_evidence, trace_id, max_budget=1.0):
+        arbitration_calls.append(trace_id)
+        if len(arbitration_calls) == 1:
+            return ArbitrationResult(
+                dispute_id=dispute.id,
+                verdict="inconclusive",
+                new_evidence_ids=[],
+                reasoning="Still mixed after round one.",
+                claim_updates=[],
+            )
+        return ArbitrationResult(
+            dispute_id=dispute.id,
+            verdict="supported",
+            new_evidence_ids=[fresh_evidence[-1].id],
+            reasoning="Round two resolves the conflict.",
+            claim_updates=[
+                ClaimUpdate(
+                    claim_id="C-1",
+                    new_status="supported",
+                    basis_type="new_evidence",
+                    cited_evidence_ids=[fresh_evidence[-1].id],
+                    justification="Fresh round-two evidence resolves the claim.",
+                )
+            ],
+        )
+
+    monkeypatch.setattr("grounded_research.verify.generate_verification_queries", fake_generate_verification_queries)
+    monkeypatch.setattr("grounded_research.verify._collect_fresh_evidence_for_dispute", fake_collect_fresh_evidence_for_dispute)
+    monkeypatch.setattr("grounded_research.verify.arbitrate_dispute", fake_arbitrate_dispute)
+
+    ledger = ClaimLedger(
+        claims=[_make_claim("C-1"), _make_claim("C-2")],
+        disputes=[_make_dispute(["C-1", "C-2"])],
+        arbitration_results=[],
+    )
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="What is the evidence?"),
+        sources=[],
+        evidence=[],
+        gaps=[],
+    )
+
+    updated_ledger, results, warnings, llm_calls = await verify_disputes(
+        ledger=ledger,
+        bundle=bundle,
+        trace_id="trace-root",
+        max_disputes=1,
+        max_budget=2.0,
+    )
+
+    assert len(query_calls) == 2
+    assert len(arbitration_calls) == 2
+    assert llm_calls == 4
+    assert results[0].verdict == "supported"
+    assert updated_ledger.disputes[0].resolved is True
+    assert updated_ledger.claims[0].status == "supported"
+    assert warnings == []
+
+
+@pytest.mark.asyncio
+async def test_verify_disputes_stops_after_first_resolved_round(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Resolved first-round disputes should not consume extra configured rounds."""
+    monkeypatch.setattr("grounded_research.verify.get_depth_config", lambda: {"arbitration_max_rounds": 3})
+
+    query_calls = 0
+    arbitration_calls = 0
+
+    async def fake_generate_verification_queries(disputes, claims, trace_id, question_text="", max_budget=1.0):
+        nonlocal query_calls
+        query_calls += 1
+        return [VerificationQueryBatch(dispute_id=disputes[0].id, queries=["query-1"])]
+
+    async def fake_collect_fresh_evidence_for_dispute(dispute, queries, bundle, trace_id):
+        source = SourceRecord(url="https://example.com/1", title="Round 1")
+        evidence = EvidenceItem(
+            source_id=source.id,
+            content="Fresh evidence round 1",
+            content_type="text",
+            relevance_note="fresh",
+            extraction_method="llm",
+        )
+        return [source], [evidence], []
+
+    async def fake_arbitrate_dispute(dispute, claims, available_evidence, fresh_evidence, trace_id, max_budget=1.0):
+        nonlocal arbitration_calls
+        arbitration_calls += 1
+        return ArbitrationResult(
+            dispute_id=dispute.id,
+            verdict="refuted",
+            new_evidence_ids=[fresh_evidence[-1].id],
+            reasoning="Round one resolves the conflict immediately.",
+            claim_updates=[
+                ClaimUpdate(
+                    claim_id="C-1",
+                    new_status="refuted",
+                    basis_type="new_evidence",
+                    cited_evidence_ids=[fresh_evidence[-1].id],
+                    justification="Fresh round-one evidence refutes the claim.",
+                )
+            ],
+        )
+
+    monkeypatch.setattr("grounded_research.verify.generate_verification_queries", fake_generate_verification_queries)
+    monkeypatch.setattr("grounded_research.verify._collect_fresh_evidence_for_dispute", fake_collect_fresh_evidence_for_dispute)
+    monkeypatch.setattr("grounded_research.verify.arbitrate_dispute", fake_arbitrate_dispute)
+
+    ledger = ClaimLedger(
+        claims=[_make_claim("C-1"), _make_claim("C-2")],
+        disputes=[_make_dispute(["C-1", "C-2"])],
+        arbitration_results=[],
+    )
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="What is the evidence?"),
+        sources=[],
+        evidence=[],
+        gaps=[],
+    )
+
+    updated_ledger, results, warnings, llm_calls = await verify_disputes(
+        ledger=ledger,
+        bundle=bundle,
+        trace_id="trace-root",
+        max_disputes=1,
+        max_budget=2.0,
+    )
+
+    assert query_calls == 1
+    assert arbitration_calls == 1
+    assert llm_calls == 2
+    assert results[0].verdict == "refuted"
+    assert updated_ledger.disputes[0].resolved is True
+    assert updated_ledger.claims[0].status == "refuted"
+    assert warnings == []

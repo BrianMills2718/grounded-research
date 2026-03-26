@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from grounded_research.config import get_budget, get_fallback_models, get_model, load_config
+from grounded_research.config import get_budget, get_depth_config, get_fallback_models, get_model, load_config
 from grounded_research.models import (
     ArbitrationResult,
     Claim,
@@ -517,80 +517,102 @@ async def verify_disputes(
     if not actionable:
         return ledger, [], [], llm_calls
 
+    depth_cfg = get_depth_config()
+    max_rounds = max(1, int(depth_cfg.get("arbitration_max_rounds", 1)))
     budget_per_dispute = max_budget / len(actionable)
     claim_map = {claim.id: claim for claim in ledger.claims}
 
-    try:
-        query_batches = await generate_verification_queries(
-            actionable,
-            list(ledger.claims),
-            trace_id=trace_id,
-            question_text=(bundle.question.text if bundle.question else ""),
-            max_budget=min(budget_per_dispute, 0.5),
-        )
-        llm_calls += 1
-        query_lookup = {batch.dispute_id: batch.queries for batch in query_batches}
-    except Exception as exc:
-        err = f"Verification query generation failed: {exc}"
-        for d in actionable:
-            dispute_updates.append(VerificationWarning(
-                code="verification_query_generation_failed",
-                message=err,
-                context={"dispute_id": d.id},
-            ))
-        arbitration_results = [_build_inconclusive_result(d.id, err) for d in actionable]
-        ledger.arbitration_results = arbitration_results
-        return ledger, arbitration_results, dispute_updates, llm_calls + 1
-
     arbitration_results: list[ArbitrationResult] = []
     for dispute in actionable:
-        queries = query_lookup.get(dispute.id) or []
-        new_sources, new_evidence, warnings = await _collect_fresh_evidence_for_dispute(
-            dispute=dispute,
-            queries=queries,
-            bundle=bundle,
-            trace_id=f"{trace_id}/verify/{dispute.id}",
-        )
-        dispute_updates.extend(warnings)
-
-        if not new_evidence:
-            arbitration_results.append(
-                _build_inconclusive_result(dispute.id, "No fresh evidence discovered.")
-            )
-            continue
-
-        bundle.sources.extend(new_sources)
-        bundle.evidence.extend(new_evidence)
-
         relevant_claims = [claim_map[cid] for cid in dispute.claim_ids if cid in claim_map]
-        relevant_evidence_ids: set[str] = set()
-        for c in relevant_claims:
-            relevant_evidence_ids.update(c.evidence_ids)
-        evidence = [e for e in bundle.evidence if e.id in relevant_evidence_ids]
-        evidence.extend(new_evidence)
-
-        result = await arbitrate_dispute(
-            dispute=dispute,
-            claims=relevant_claims,
-            available_evidence=evidence,
-            fresh_evidence=new_evidence,
-            trace_id=trace_id,
-            max_budget=budget_per_dispute,
+        cumulative_fresh_evidence: list[EvidenceItem] = []
+        latest_result = _build_inconclusive_result(
+            dispute.id,
+            "Verification did not run.",
         )
-        llm_calls += 1
 
-        result, protocol_warnings = _enforce_arbitration_protocol(
-            dispute=dispute,
-            result=result,
-            claim_map=claim_map,
-            fresh_evidence_ids={item.id for item in new_evidence},
-        )
-        dispute_updates.extend(protocol_warnings)
+        for round_idx in range(1, max_rounds + 1):
+            round_trace_id = f"{trace_id}/verify/{dispute.id}/round_{round_idx}"
+            round_budget = budget_per_dispute / max_rounds
+            try:
+                query_batches = await generate_verification_queries(
+                    [dispute],
+                    relevant_claims,
+                    trace_id=round_trace_id,
+                    question_text=(bundle.question.text if bundle.question else ""),
+                    max_budget=min(round_budget, 0.5),
+                )
+                llm_calls += 1
+                queries = query_batches[0].queries if query_batches else []
+            except Exception as exc:
+                err = f"Verification query generation failed: {exc}"
+                dispute_updates.append(VerificationWarning(
+                    code="verification_query_generation_failed",
+                    message=err,
+                    context={"dispute_id": dispute.id, "round": round_idx},
+                ))
+                latest_result = _build_inconclusive_result(dispute.id, err)
+                break
 
-        if result.verdict != "inconclusive":
+            new_sources, new_evidence, warnings = await _collect_fresh_evidence_for_dispute(
+                dispute=dispute,
+                queries=queries,
+                bundle=bundle,
+                trace_id=round_trace_id,
+            )
+            dispute_updates.extend(warnings)
+
+            if not new_evidence:
+                latest_result = _build_inconclusive_result(
+                    dispute.id,
+                    f"No fresh evidence discovered in round {round_idx}.",
+                )
+                dispute_updates.append(VerificationWarning(
+                    code="verification_round_stopped_no_fresh_evidence",
+                    message=(
+                        f"Verification stopped after round {round_idx} for dispute "
+                        f"{dispute.id} because no new evidence was discovered."
+                    ),
+                    context={"dispute_id": dispute.id, "round": round_idx},
+                ))
+                break
+
+            bundle.sources.extend(new_sources)
+            bundle.evidence.extend(new_evidence)
+            cumulative_fresh_evidence.extend(new_evidence)
+
+            relevant_evidence_ids: set[str] = set()
+            for c in relevant_claims:
+                relevant_evidence_ids.update(c.evidence_ids)
+            evidence = [e for e in bundle.evidence if e.id in relevant_evidence_ids]
+            evidence.extend(cumulative_fresh_evidence)
+
+            result = await arbitrate_dispute(
+                dispute=dispute,
+                claims=relevant_claims,
+                available_evidence=evidence,
+                fresh_evidence=cumulative_fresh_evidence,
+                trace_id=round_trace_id,
+                max_budget=round_budget,
+            )
+            llm_calls += 1
+
+            result, protocol_warnings = _enforce_arbitration_protocol(
+                dispute=dispute,
+                result=result,
+                claim_map=claim_map,
+                fresh_evidence_ids={item.id for item in cumulative_fresh_evidence},
+            )
+            dispute_updates.extend(protocol_warnings)
+            latest_result = result
+
+            if result.verdict != "inconclusive":
+                break
+
+        if latest_result.verdict != "inconclusive":
             dispute.resolved = True
-            dispute.resolution_summary = result.reasoning[:200]
-            for update in result.claim_updates:
+            dispute.resolution_summary = latest_result.reasoning[:200]
+            for update in latest_result.claim_updates:
                 claim = ledger.claim_by_id(update.claim_id)
                 if claim is None:
                     dispute_updates.append(VerificationWarning(
@@ -600,16 +622,26 @@ async def verify_disputes(
                     ))
                     continue
                 claim.status = update.new_status
+                claim_map[claim.id] = claim
                 cited = ", ".join(update.cited_evidence_ids[:3])
                 claim.status_reason = (
-                    f"Arbitration {result.id} ({update.basis_type}; evidence {cited}): "
+                    f"Arbitration {latest_result.id} ({update.basis_type}; evidence {cited}): "
                     f"{update.justification}"
                 )
         else:
             dispute.resolved = False
-            dispute.resolution_summary = result.reasoning[:200]
+            dispute.resolution_summary = latest_result.reasoning[:200]
+            if max_rounds > 1:
+                dispute_updates.append(VerificationWarning(
+                    code="verification_round_cap_hit",
+                    message=(
+                        f"Dispute {dispute.id} remained inconclusive after {max_rounds} "
+                        "verification rounds."
+                    ),
+                    context={"dispute_id": dispute.id, "rounds": max_rounds},
+                ))
 
-        arbitration_results.append(result)
+        arbitration_results.append(latest_result)
 
     resolved_count = sum(1 for d in actionable if d.resolved)
     if resolved_count == 0 and actionable:
