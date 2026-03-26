@@ -1,17 +1,18 @@
 # Plan: Wave 2 Enumeration and Grounding Recovery
 
-**Status:** In progress
+**Status:** Completed with residual follow-up
 **Type:** implementation
 **Priority:** High
 **Blocked By:** None
-**Blocks:** Reliable performance on enumeration-heavy questions such as UBI
+**Blocks:** Superseded by `post_wave2_cleanup_hardening.md` for the remaining
+dense-canonicalization debt
 
 ---
 
 ## Trigger
 
 Wave 1 stabilized the reasoning protocol and improved architectural discipline,
-but the 2026-03-25 post-Wave-1 UBI benchmark showed the remaining gap clearly:
+and the 2026-03-25 post-Wave-1 UBI benchmark showed the remaining gap clearly:
 
 - Pipeline still loses the fair comparison against Perplexity on UBI
 - Pipeline beats the single-shot baseline on the same evidence bundle
@@ -41,10 +42,12 @@ Observed in the UBI benchmark:
 - the next blocker then became execution stability rather than obvious retrieval
   coverage: the improved-bundle rerun cleared Phase 3 after serializing claim
   extraction, then stalled in Phase 4 arbitration on later provider timeouts
-- that runtime blocker has now been cleared by the runtime-reliability slice:
-  the improved-bundle UBI runtime gate completed end-to-end on 2026-03-26, and
-  the remaining loss appears to be claim-set breadth/completeness rather than
-  raw completion
+- that runtime blocker was later cleared by the runtime-reliability slice
+- later coverage-breadth and report-calibration slices recovered the UBI
+  benchmark to a calibrated pipeline win
+- the remaining residual issue is dense canonicalization quality on
+  enumeration-heavy runs, now tracked in
+  `docs/plans/post_wave2_cleanup_hardening.md`
 
 ---
 
@@ -196,12 +199,12 @@ Required checks:
 
 ## Acceptance Criteria
 
-- [ ] Standard environment can retrieve the key study PDFs needed for UBI-like questions
-- [ ] Claimify no longer routinely invents invalid evidence/source IDs on the UBI benchmark
+- [x] Standard environment can retrieve the key study PDFs needed for UBI-like questions
+- [x] Claimify no longer routinely invents invalid evidence/source IDs on the UBI benchmark
 - [x] No cited claim in the final report lacks evidence IDs
 - [ ] UBI dedup completes without ineffective `raw == canonical` non-merging on dense UBI runs
-- [ ] Fair comparison vs cached Perplexity improves from the current post-Wave-1 UBI result
-- [ ] Improved-bundle UBI rerun completes end-to-end without provider timeout failure
+- [x] Fair comparison vs cached Perplexity improves from the current post-Wave-1 UBI result
+- [x] Improved-bundle UBI rerun completes end-to-end without provider timeout failure
 - [x] Pipeline still beats the single-shot baseline on the same bundle
 
 ---

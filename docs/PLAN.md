@@ -32,7 +32,7 @@ See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
 See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
 
-### Current Execution Topology (2026-03-24)
+### Current Execution Topology (2026-03-26)
 
 When invoked with a question (`python engine.py "question"`):
 
@@ -69,21 +69,18 @@ Key definitions:
 - **Inconclusive arbitration**: Fresh evidence search found nothing new, or found ambiguous evidence. Forces verdict to "inconclusive" and logs warning. Does not retry.
 - **Analytical mode** (`synthesis_mode: "analytical"`): Long report may infer beyond sources, marked with `[analytical inference]`. Claim ledger and trace remain grounded regardless.
 - **Dedup fallback**: If LLM returns 0 groups, raw claims promoted 1:1 (no dedup, full provenance preserved).
-- full pipeline implemented with configurable depth modes (standard/deep/thorough)
-- full pipeline implemented: ingest → analyze → canonicalize → adjudicate → export
-- automatic evidence collection from raw questions via Brave Search + page extraction
-  (uses research_v3 tools, not hand-rolled)
-- Phase -1 initial validation used same model × 3 (gemini-2.5-flash-lite, general frame) —
-  measured stochastic noise, not genuine disagreement (see ADR-0005)
-- Phase -1 re-validated with cross-family models (Gemini 2.5 Flash, GPT-5-nano, DeepSeek Chat)
-  and distinct reasoning frames (verification_first, structured_decomposition, step_back_abstraction)
-- cross-family run on PFAS factual question produced 5 disputes (1 decision-critical factual
-  conflict about EPA regulatory timeline), resolved via fresh evidence arbitration
-- end-to-end verified on five questions (Redis vs PostgreSQL, Obsidian second brain, PFAS health
-  risks, EU/Russia sanctions, intermittent fasting)
-- controlled comparison complete: pipeline wins all 3 factual questions (30/30 vs 21-25/30)
-- known issue: synthesis LLM occasionally hallucinated evidence IDs (E-813da51 in fasting run);
-  grounding validation catches these but they should be prevented via prompt or post-processing
+
+Current operational notes:
+- full pipeline implemented with configurable depth modes (`standard`, `deep`,
+  `thorough`)
+- raw-question collection uses first-party Brave-backed search and shared
+  retrieval infrastructure, not a bespoke workflow engine
+- runtime-safe benchmark policy now uses run-local observability DBs and
+  explicit finite request timeouts for long runs
+- tracked 6-question benchmark currently favors the pipeline over cached
+  Perplexity deep research
+- biggest remaining quality debt is dense canonicalization on
+  enumeration-heavy questions
 
 ## Governance Surfaces
 
@@ -125,52 +122,20 @@ Adopt an implementation slice only if it:
 
 Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
-## Open Planning Items
+## Active Plan Surfaces
 
-Current open items:
+Current open work is intentionally narrow:
 
-- V1 spec alignment: see `docs/plans/v1_spec_alignment.md` for 15 identified gaps
-- Depth modes Phase 2-4: multi-pass extraction, multi-round arbitration, sectioned synthesis
-- controlled comparison (3 questions × 2 judge models):
-  | Question | GPT-5-nano judge (pre-fix) | GPT-5-nano judge (post-severity-fix) |
-  |----------|--------------------------|-------------------------------------|
-  | PFAS | 30 vs 25 (pipeline) | — |
-  | EU sanctions | 28 vs 29 (single-shot) | 29 vs 28 (pipeline) — flipped |
-  | IF fasting | 30 vs 27 (pipeline) | — |
-  | Microplastics | 27 vs 30 (single-shot) | — |
-  After severity calibration fix, pipeline wins 3/4 with GPT-5-nano.
-  Key insight: severity calibration was the primary bottleneck — arbitration
-  only fires on decision-critical disputes, so under-classification meant
-  the pipeline's most novel feature almost never ran.
-  Root cause: schema field description too terse, model too weak.
-  Fix: richer Field(description=...) + bump to gemini-2.5-flash.
-- SOTA comparison (EU sanctions, GPT-5-nano judge):
-  | Tool | Words | Citations | Score |
-  |------|-------|-----------|-------|
-  | grounded-research | 4,369 | 59 | 30/30 |
-  | GPT-Researcher | 1,560 | 0 | 23/30 |
-  | Perplexity (sonar-pro) | 440 | 4 | 19/30 |
-  | STORM | — | — | failed (sklearn bug) |
-  Pipeline beats both SOTA tools on all 6 judge dimensions. However, the
-  comparison is biased by provenance quality (dimension 6) — grounded-research
-  is designed for traceable citation IDs while GPT-Researcher/Perplexity use
-  URLs/bracketed numbers. Excluding provenance: pipeline still wins 25/25 vs
-  20/25 (GPT-Researcher) on fair-game dimensions (precision, conflict detection,
-  coverage, nuance, actionability). Perplexity comparison is also unfair —
-  sonar-pro is a fast Q&A model (440 words), not a deep research tool.
-  TODO: re-run with Perplexity sonar-deep-research for a fairer test.
-- cost accounting (from llm_client observability DB):
-  - pipeline run: $0.04-0.07 avg (NOT $2-3 as previously claimed)
-  - single-shot baseline: ~$0.01
-  - GPT-Researcher: $0.025
-  - Perplexity: ~$0.01
-  - cost premium is ~6× (NOT 100×), making cost objection largely moot
-- pipeline summary (structured FinalReport) was weaker than long report —
-  synthesis prompt improved (evidence context added, richer field descriptions).
-  Needs re-test on next run.
-- note: only PFAS question triggered arbitration (1 decision-critical dispute).
-  Sanctions and fasting had 0 decision-critical disputes. Pipeline value on
-  those came from multi-analyst structural framing, not arbitration.
+- post-Wave-2 internal hardening: `docs/plans/post_wave2_cleanup_hardening.md`
+- deferred depth continuation: `docs/plans/depth_modes.md`
+- historical Tyler-spec reconciliation reference:
+  `docs/plans/v1_spec_alignment.md`
+
+Historical benchmark progression and comparative results live in:
+
+- `docs/COMPETITIVE_ANALYSIS.md`
+- `docs/JUDGE_CRITIQUES.md`
+- benchmark output artifacts under `output/`
 
 ## Success Criteria
 

@@ -1,6 +1,11 @@
-# Judge Critiques: Where the Pipeline Loses Points
+# Judge Critiques: Historical Losses And Residual Weaknesses
 
-Extracted from blind LLM judge evaluations across 6 questions vs Perplexity deep.
+This document preserves the recurring weaknesses extracted from earlier blind
+judge evaluations against Perplexity deep research.
+
+The tracked benchmark state later improved to a calibrated 6/6 win set, but the
+themes below still matter as residual quality risks, especially on
+enumeration-heavy questions.
 
 ## Recurring Weaknesses (pipeline scores 4 where Perplexity scores 5)
 

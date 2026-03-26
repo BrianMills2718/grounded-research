@@ -64,8 +64,8 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 
 ## Planned-Future Entities
 
-- `AssumptionLedger` — cross-analyst assumption deduplication (deferred, see
-  `SCOPE_MATRIX_V2.md`)
+- `AssumptionLedger` — cross-analyst assumption deduplication (deferred; not
+  part of the current active implementation plans)
 
 ## Open Design Questions
 

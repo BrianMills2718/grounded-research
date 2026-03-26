@@ -154,8 +154,11 @@ Dispute types defined in the schema:
 
 - `factual_conflict` — v1 core, routes to `verify`
 - `interpretive_conflict` — v1 core, routes to `arbitrate`
-- `preference_conflict` — v1 core, routes to `surface` (shown in report, no auto-resolution)
-- `ambiguity` — v1 core, routes to `surface` (user-clarification routing is deferred, see `SCOPE_MATRIX_V2.md`)
+- `preference_conflict` — v1 core, routes to `surface`; in TTY mode the system
+  may ask the user for clarification before final export, otherwise the
+  unresolved alternatives remain explicit in the report
+- `ambiguity` — v1 core, routes to `surface`; material ambiguity may be surfaced
+  to the user in TTY mode and otherwise remains explicit in the report/trace
 
 Rule:
 
@@ -185,8 +188,9 @@ Rule:
 
 - verification must reference newly retrieved evidence
 - unresolved disputes remain explicit rather than being flattened away
-- hard claim-revision rule (revisions require new evidence, a corrected
-  assumption, or a resolved contradiction) is deferred — see `SCOPE_MATRIX_V2.md`
+- claim revisions are mechanically constrained: accepted updates require an
+  allowed basis (`new_evidence`, `corrected_assumption`, or
+  `resolved_contradiction`) plus cited support in structured state
 
 ### 5. Export
 
@@ -206,8 +210,9 @@ Output:
 
 Purpose:
 
-- render recommendation, alternatives, disagreement map, evidence gaps, and flip conditions
-- explicit assumptions section is deferred — see `SCOPE_MATRIX_V2.md`
+- render recommendation, alternatives, disagreement map, evidence gaps, and
+  flip conditions
+- render assumptions and open questions when they exist in structured state
 - validate grounding before export
 
 Rule:
@@ -300,9 +305,8 @@ Policy:
 
 ## Canonical Review Notebook
 
-The canonical notebook should live at:
-
-- `docs/notebooks/01_adjudication_review_journey.ipynb`
+The canonical review surface currently lives under `docs/notebooks/` as a set
+of phase and planning notebooks rather than one monolithic notebook.
 
 Its purpose is to let the user review the project as an end-to-end journey:
 
@@ -317,7 +321,11 @@ Before full implementations exist, the notebook should still emit provisional ar
 
 ## Scope and Deferrals
 
-See `docs/SCOPE_MATRIX_V2.md` for the canonical core/deferred/cut lists.
+Canonical current/deferred status lives in:
+
+- `docs/ROADMAP.md`
+- `docs/FEATURE_STATUS.md`
+- `docs/plans/CLAUDE.md`
 
 See `docs/adr/0002-approved-external-reuse-strategy.md` for external reuse
 decisions.

@@ -8,7 +8,8 @@
 |------|--------|---------|
 | [v1_spec_alignment.md](v1_spec_alignment.md) | Reference analysis | Reconciliation memo: what differs between Tyler's V1 and the current repo, ordered by implementation value. |
 | [v1_reasoning_quality_execution.md](v1_reasoning_quality_execution.md) | Completed | Wave 1 reasoning-quality stabilization: prompt hardening, claim extraction, dedup safeguards, anti-conformity, and anonymization. |
-| [wave2_enumeration_grounding.md](wave2_enumeration_grounding.md) | In progress | Benchmark-driven follow-up for study/PDF retrieval, Claimify evidence anchoring, and dense-claim dedup on enumeration-heavy questions. |
+| [wave2_enumeration_grounding.md](wave2_enumeration_grounding.md) | Completed with residual follow-up | Benchmark-driven follow-up for study/PDF retrieval, Claimify evidence anchoring, and dense-claim dedup on enumeration-heavy questions recovered the UBI benchmark; dense canonicalization remains as residual debt. |
+| [post_wave2_cleanup_hardening.md](post_wave2_cleanup_hardening.md) | Active | Remaining internal hardening: dense canonicalization, prompt/config hygiene, trace construction cleanup, and sub-question evidence tagging. |
 | [wave2_runtime_reliability.md](wave2_runtime_reliability.md) | Completed | Runtime reliability slice: run-local observability DBs, explicit request timeouts, and benchmark-safe completion policy. |
 | [wave2_coverage_breadth.md](wave2_coverage_breadth.md) | Completed | Analyst coverage-target wiring and one under-coverage retry broadened the UBI claim set on rich bundles. |
 | [wave2_report_synthesis_calibration.md](wave2_report_synthesis_calibration.md) | Completed | Export repair loops and stronger synthesis structure removed warnings/placeholders and recovered the UBI comparison. |

@@ -29,8 +29,8 @@ configurable depth modes (standard/deep/thorough).
 **What's NOT done:**
 - 4 features intentionally skipped (#11 falsification quality, #14 Grok/Reddit,
   #17 echo detection, #43 self-preference guard)
-- 3 features cut (#3 ambiguity was un-cut and implemented, #6 complexity
-  assessment, #38 shuffling was un-cut and implemented)
+- 1 feature remains cut (#6 complexity assessment; #3 ambiguity and #38
+  shuffling were later un-cut and implemented)
 
 ## Next: Post-Wave-2 Cleanup And Hardening
 
@@ -38,18 +38,7 @@ The active frontier is no longer recovering the UBI benchmark. That recovery
 now succeeded. The next work is tightening authority surfaces, preserving the
 new benchmark gains, and cleaning up the remaining non-blocking engineering debt.
 
-### Priority 1: Documentation Authority Reconciliation
-
-**Goal:** Make the main status docs agree on the current benchmark and plan state.
-
-**Actions:**
-- update README and competitive-analysis surfaces with the 2026-03-26 UBI result
-- mark completed Wave 2 slices as completed
-- remove stale references to the older UBI loss as if it were still the active state
-
-**Gate:** README, ROADMAP, PLAN, and the plan index all tell the same current story.
-
-### Priority 2: Preserve The UBI Recovery On Future Reruns
+### Priority 1: Preserve The UBI Recovery On Future Reruns
 
 **Goal:** Make sure the UBI win survives future reruns and remains diagnosable.
 
@@ -61,16 +50,25 @@ new benchmark gains, and cleaning up the remaining non-blocking engineering debt
 **Gate:** Future improved-bundle UBI reruns still complete end-to-end and do not
 regress below the current calibrated result.
 
-### Priority 3: Remaining Engineering Debt
+### Priority 2: Remaining Internal Engineering Debt
 
 **Goal:** Remove remaining non-blocking weaknesses that still show up in review or observability.
 
 **Actions:**
+- execute `docs/plans/post_wave2_cleanup_hardening.md`
 - improve dense canonicalization on enumeration-heavy runs (`raw == canonical`
   still happens too often even when the benchmark now passes)
+- clean up remaining internal prompt/config/schema debt that is already tracked
+  in `docs/TECH_DEBT.md`
 
 **Gate:** Remaining debt items are explicit and no longer masquerade as active
 benchmark blockers.
+
+### Completed Recently: Documentation Authority Reconciliation
+
+The main authority surfaces have been reconciled to the calibrated UBI result.
+The remaining cleanup work is historical-doc demotion and notebook-status
+normalization, not another status-story rewrite.
 
 ### Deferred: Recent-First Evidence Ranking
 
