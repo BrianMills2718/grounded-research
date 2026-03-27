@@ -15,6 +15,7 @@ import re
 from grounded_research.models import (
     AnalystRun,
     ArbitrationResult as RuntimeArbitrationResult,
+    Counterargument as RuntimeCounterargument,
     Claim as RuntimeClaim,
     ClaimLedger,
     ClaimUpdate as RuntimeClaimUpdate,
@@ -22,6 +23,9 @@ from grounded_research.models import (
     EvidenceBundle,
     FinalReport,
     QuestionDecomposition,
+    RawClaim,
+    Recommendation,
+    Assumption as RuntimeAssumption,
     SubQuestion as CurrentSubQuestion,
     _make_id,
 )
@@ -384,6 +388,140 @@ def current_analyst_run_to_tyler_analysis(
             "outcome": f"Tyler AnalysisObject for alias {model_alias}",
             "reasoning": "Adapter conversion from current AnalystRun into Tyler's Stage 3 contract.",
         },
+    )
+
+
+def normalize_tyler_analysis_object(
+    result: AnalysisObject,
+    *,
+    valid_source_ids: set[str],
+    model_alias: str,
+    reasoning_frame: str,
+) -> AnalysisObject:
+    """Repair Tyler Stage 3 IDs and references after LLM generation."""
+    claim_id_map: dict[str, str] = {}
+    for idx, claim in enumerate(result.claims, start=1):
+        claim_id_map[claim.id] = f"C-{idx}"
+
+    normalized_claims = [
+        claim.model_copy(
+            update={
+                "id": claim_id_map[claim.id],
+                "source_references": _ordered_unique(
+                    [source_id for source_id in claim.source_references if source_id in valid_source_ids]
+                ),
+            }
+        )
+        for claim in result.claims
+    ]
+
+    assumption_id_map: dict[str, str] = {}
+    for idx, assumption in enumerate(result.assumptions, start=1):
+        assumption_id_map[assumption.id] = f"A-{idx}"
+
+    normalized_assumptions = [
+        assumption.model_copy(
+            update={
+                "id": assumption_id_map[assumption.id],
+                "depends_on_claims": [
+                    claim_id_map[claim_id]
+                    for claim_id in assumption.depends_on_claims
+                    if claim_id in claim_id_map
+                ],
+            }
+        )
+        for assumption in result.assumptions
+    ]
+
+    evidence_used = _ordered_unique(
+        [
+            source_id
+            for source_id in result.evidence_used
+            if source_id in valid_source_ids
+        ]
+    )
+    if not evidence_used:
+        evidence_used = _ordered_unique(
+            source_id
+            for claim in normalized_claims
+            for source_id in claim.source_references
+        )
+
+    return result.model_copy(
+        update={
+            "model_alias": model_alias,
+            "reasoning_frame": reasoning_frame,
+            "claims": normalized_claims,
+            "assumptions": normalized_assumptions,
+            "evidence_used": evidence_used,
+        }
+    )
+
+
+def tyler_analysis_to_current_analyst_run(
+    analysis: AnalysisObject,
+    bundle: EvidenceBundle,
+    *,
+    analyst_label: str,
+    model_name: str,
+) -> AnalystRun:
+    """Project Tyler Stage 3 output back into the shipped AnalystRun surface."""
+    source_to_evidence_ids: dict[str, list[str]] = defaultdict(list)
+    for item in bundle.evidence:
+        source_to_evidence_ids[item.source_id].append(item.id)
+
+    raw_claims: list[RawClaim] = []
+    for idx, claim in enumerate(analysis.claims, start=1):
+        evidence_ids = _ordered_unique(
+            evidence_id
+            for source_id in claim.source_references
+            for evidence_id in source_to_evidence_ids.get(source_id, [])[:2]
+        )
+        raw_claims.append(
+            RawClaim(
+                id=f"RC-{idx}",
+                statement=claim.statement,
+                evidence_ids=evidence_ids,
+                confidence=str(claim.confidence.value).lower(),
+                reasoning=analysis.reasoning,
+            )
+        )
+
+    supporting_claim_ids = [claim.id for claim in raw_claims]
+    supporting_evidence_ids = _ordered_unique(
+        evidence_id
+        for claim in raw_claims
+        for evidence_id in claim.evidence_ids
+    )
+
+    return AnalystRun(
+        analyst_label=analyst_label,
+        model=model_name,
+        frame=analysis.reasoning_frame,
+        claims=raw_claims,
+        assumptions=[
+            RuntimeAssumption(
+                id=assumption.id,
+                statement=assumption.statement,
+                basis=assumption.if_wrong_impact,
+            )
+            for assumption in analysis.assumptions
+        ],
+        recommendations=[
+            Recommendation(
+                statement=analysis.recommendation,
+                supporting_claim_ids=supporting_claim_ids,
+                conditions="; ".join(analysis.falsification_conditions),
+            )
+        ],
+        counterarguments=[
+            RuntimeCounterargument(
+                target=analysis.recommendation,
+                argument=analysis.counter_argument.argument,
+                evidence_ids=supporting_evidence_ids[:3],
+            )
+        ],
+        summary=analysis.reasoning,
     )
 
 

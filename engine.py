@@ -34,7 +34,7 @@ async def run_pipeline(
     """Run the full adjudication pipeline."""
     from grounded_research.collect import build_tyler_evidence_package
     from grounded_research.ingest import load_manual_bundle, validate_bundle
-    from grounded_research.analysts import run_analysts
+    from grounded_research.analysts import run_analysts_tyler_v1
     from grounded_research.anonymize import scrub_analyst_run
     from grounded_research.canonicalize import (
         canonicalize_tyler_v1,
@@ -141,7 +141,14 @@ async def run_pipeline(
         state.current_phase = "analyze"
         print("\n[Phase 2] Running 3 independent analysts...")
 
-        analyst_runs = await run_analysts(bundle, trace_id, decomposition=decomposition)
+        tyler_stage_3_results, tyler_stage_3_alias_mapping, analyst_runs = await run_analysts_tyler_v1(
+            bundle=bundle,
+            stage_1_result=state.tyler_stage_1_result,
+            stage_2_result=state.tyler_stage_2_result,
+            trace_id=trace_id,
+        )
+        state.tyler_stage_3_results = tyler_stage_3_results
+        state.tyler_stage_3_alias_mapping = tyler_stage_3_alias_mapping
         state.analyst_runs = analyst_runs
 
         succeeded = [r for r in analyst_runs if r.succeeded]
@@ -194,6 +201,8 @@ async def run_pipeline(
             analyst_runs,
             bundle,
             decomposition=decomposition,
+            tyler_stage_1_result=state.tyler_stage_1_result,
+            tyler_stage_3_results=state.tyler_stage_3_results,
             trace_id=trace_id,
             max_budget=total_budget * 0.2,
         )

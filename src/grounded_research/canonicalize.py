@@ -81,6 +81,8 @@ async def canonicalize_tyler_v1(
     bundle: EvidenceBundle,
     *,
     decomposition: QuestionDecomposition | None,
+    tyler_stage_1_result: TylerDecompositionResult | None = None,
+    tyler_stage_3_results: list["AnalysisObject"] | None = None,
     trace_id: str,
     max_budget: float = 1.0,
 ) -> tuple[TylerClaimExtractionResult, ClaimLedger]:
@@ -98,22 +100,25 @@ async def canonicalize_tyler_v1(
         raise ValueError("Tyler Stage 4 requires at least 2 successful analyst runs.")
 
     original_query = bundle.question.text if bundle.question else ""
-    tyler_stage1 = await _get_tyler_stage1_result(
+    tyler_stage1 = tyler_stage_1_result or await _get_tyler_stage1_result(
         decomposition=decomposition,
         original_query=original_query,
         trace_id=f"{trace_id}/stage1_adapter",
         max_budget=max_budget * 0.15,
     )
     alias_mapping = build_tyler_alias_mapping(successful_runs)
-    tyler_stage3_results = [
-        current_analyst_run_to_tyler_analysis(
-            run=run,
-            bundle=bundle,
-            model_alias=alias_mapping[run.analyst_label],
-            reasoning_frame=_current_frame_to_tyler(run.frame),
-        )
-        for run in successful_runs
-    ]
+    if tyler_stage_3_results is None:
+        tyler_stage3_results = [
+            current_analyst_run_to_tyler_analysis(
+                run=run,
+                bundle=bundle,
+                model_alias=alias_mapping[run.analyst_label],
+                reasoning_frame=_current_frame_to_tyler(run.frame),
+            )
+            for run in successful_runs
+        ]
+    else:
+        tyler_stage3_results = list(tyler_stage_3_results)
 
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_stage4.yaml"),
