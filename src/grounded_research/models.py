@@ -24,7 +24,10 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from grounded_research.tyler_v1_models import AnalysisObject as TylerAnalysisObject
 from grounded_research.tyler_v1_models import ClaimExtractionResult as TylerClaimExtractionResult
+from grounded_research.tyler_v1_models import DecompositionResult as TylerDecompositionResult
+from grounded_research.tyler_v1_models import EvidencePackage as TylerEvidencePackage
 from grounded_research.tyler_v1_models import VerificationResult as TylerVerificationResult
 from grounded_research.tyler_v1_models import SynthesisReport as TylerSynthesisReport
 
@@ -809,7 +812,11 @@ class PipelineState(BaseModel):
     evidence_bundle: EvidenceBundle | None = None
 
     # --- Intermediate artifacts ---
+    tyler_stage_1_result: TylerDecompositionResult | None = None
+    tyler_stage_2_result: TylerEvidencePackage | None = None
     analyst_runs: list[AnalystRun] = Field(default_factory=list)
+    tyler_stage_3_alias_mapping: dict[str, str] = Field(default_factory=dict)
+    tyler_stage_3_results: list[TylerAnalysisObject] = Field(default_factory=list)
     tyler_stage_4_result: TylerClaimExtractionResult | None = None
     claim_ledger: ClaimLedger | None = None
     tyler_stage_5_result: TylerVerificationResult | None = None

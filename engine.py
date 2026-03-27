@@ -28,6 +28,7 @@ async def run_pipeline(
     fixture_path: Path,
     output_dir: Path,
     decomposition: "QuestionDecomposition | None" = None,
+    tyler_stage_1_result: "DecompositionResult | None" = None,
 ) -> PipelineState:
     """Run the full adjudication pipeline."""
     from grounded_research.ingest import load_manual_bundle, validate_bundle
@@ -44,6 +45,8 @@ async def run_pipeline(
         validate_grounding,
         write_outputs,
     )
+    from grounded_research.tyler_v1_adapters import current_decomposition_to_tyler
+    from grounded_research.tyler_v1_models import DecompositionResult
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
@@ -74,6 +77,13 @@ async def run_pipeline(
 
         state.question = bundle.question
         state.evidence_bundle = bundle
+        if tyler_stage_1_result is not None:
+            state.tyler_stage_1_result = tyler_stage_1_result
+        elif decomposition is not None:
+            state.tyler_stage_1_result = current_decomposition_to_tyler(
+                decomposition,
+                original_query=bundle.question.text,
+            )
 
         state.phase_traces.append(PhaseTrace(
             phase="ingest",
@@ -331,7 +341,7 @@ async def run_pipeline_from_question(
 ) -> PipelineState:
     """Run the full pipeline starting from a question (collects evidence automatically)."""
     from grounded_research.collect import collect_evidence
-    from grounded_research.decompose import decompose_with_validation
+    from grounded_research.decompose import decompose_with_validation_tyler_v1
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
@@ -344,7 +354,9 @@ async def run_pipeline_from_question(
         print(f"Observability DB: {runtime_policy['db_path']}")
     print()
 
-    decomposition, validation = await decompose_with_validation(question, trace_id)
+    tyler_stage_1_result, decomposition, validation = await decompose_with_validation_tyler_v1(
+        question, trace_id,
+    )
     print(f"  Core question: {decomposition.core_question[:80]}...")
     print(f"  Sub-questions: {len(decomposition.sub_questions)}")
     for sq in decomposition.sub_questions:
@@ -389,9 +401,17 @@ async def run_pipeline_from_question(
     decomp_path = output_dir / "decomposition.json"
     decomp_path.write_text(decomposition.model_dump_json(indent=2))
     print(f"  Saved decomposition: {decomp_path}")
+    tyler_decomp_path = output_dir / "tyler_stage_1.json"
+    tyler_decomp_path.write_text(tyler_stage_1_result.model_dump_json(indent=2))
+    print(f"  Saved Tyler Stage 1: {tyler_decomp_path}")
     print()
 
-    return await run_pipeline(bundle_path, output_dir, decomposition=decomposition)
+    return await run_pipeline(
+        bundle_path,
+        output_dir,
+        decomposition=decomposition,
+        tyler_stage_1_result=tyler_stage_1_result,
+    )
 
 
 def main() -> None:

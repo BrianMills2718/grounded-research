@@ -33,33 +33,12 @@ async def decompose_question(
     optimization axes, and a research plan. Uses structured output to
     guarantee schema compliance.
     """
-    from llm_client import acall_llm_structured, render_prompt
-
-    messages = render_prompt(
-        str(_PROJECT_ROOT / "prompts" / "decompose.yaml"),
+    _tyler_result, current = await decompose_question_with_tyler_adapter(
         question=question,
-        time_sensitivity=time_sensitivity,
-    )
-
-    model = get_model("decomposition")
-    result, _meta = await acall_llm_structured(
-        model,
-        messages,
-        response_model=QuestionDecomposition,
-        task="question_decomposition",
-        trace_id=f"{trace_id}/decompose",
-        timeout=get_request_timeout("decomposition"),
+        trace_id=trace_id,
         max_budget=max_budget,
-        fallback_models=get_fallback_models("decomposition"),
     )
-
-    # Assign proper SQ- IDs — the LLM may have overridden the default_factory
-    # with arbitrary values like "1", "2", etc.
-    for sq in result.sub_questions:
-        if not sq.id.startswith("SQ-"):
-            sq.id = _make_id("SQ-")
-
-    return result
+    return current
 
 
 async def decompose_question_tyler_v1(
@@ -152,26 +131,55 @@ async def decompose_with_validation(
 
     Returns (decomposition, validation). Validation is None if skipped.
     """
+    _tyler_result, current, validation = await decompose_with_validation_tyler_v1(
+        question=question,
+        trace_id=trace_id,
+        max_budget=max_budget,
+        time_sensitivity=time_sensitivity,
+    )
+    return current, validation
+
+
+async def decompose_with_validation_tyler_v1(
+    question: str,
+    trace_id: str,
+    max_budget: float = 0.5,
+    time_sensitivity: str = "mixed",
+) -> tuple[DecompositionResult, QuestionDecomposition, DecompositionValidation | None]:
+    """Run Tyler-native Stage 1, then validate the projected compatibility copy.
+
+    The live Stage 1 output is Tyler's `DecompositionResult`. The current
+    `QuestionDecomposition` remains a compatibility projection for validation
+    and downstream migration slices that still depend on the shipped contract.
+    """
     import logging
+
     logger = logging.getLogger(__name__)
 
-    decomp = await decompose_question(question, trace_id, max_budget * 0.4, time_sensitivity)
+    tyler_result = await decompose_question_tyler_v1(
+        question=question,
+        trace_id=trace_id,
+        max_budget=max_budget * 0.4,
+    )
+    current = tyler_decomposition_to_current(tyler_result)
 
     validation = await validate_decomposition(
-        question, decomp, trace_id, max_budget * 0.2,
+        question, current, trace_id, max_budget * 0.2,
     )
 
     if validation.verdict == "revise" and validation.revision_guidance:
         logger.info("Decomposition revision requested: %s", validation.revision_guidance)
-        # Re-decompose with guidance appended
         revised_question = f"{question}\n\n[Revision guidance: {validation.revision_guidance}]"
-        decomp = await decompose_question(revised_question, f"{trace_id}/retry", max_budget * 0.4, time_sensitivity)
-
-        # Validate again (but don't retry a second time)
+        tyler_result = await decompose_question_tyler_v1(
+            question=revised_question,
+            trace_id=f"{trace_id}/retry",
+            max_budget=max_budget * 0.4,
+        )
+        current = tyler_decomposition_to_current(tyler_result)
         validation = await validate_decomposition(
-            question, decomp, f"{trace_id}/retry", max_budget * 0.2,
+            question, current, f"{trace_id}/retry", max_budget * 0.2,
         )
         if validation.verdict == "revise":
             logger.warning("Decomposition still needs revision after retry, proceeding anyway")
 
-    return decomp, validation
+    return tyler_result, current, validation
