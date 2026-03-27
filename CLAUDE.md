@@ -274,7 +274,7 @@ If uncertainty appears inside an accepted wave, record it in the active plan,
 trace, or tech-debt surface and continue unless it invalidates the current
 implementation path.
 
-### 13. Continuous Wave Execution
+### 14. Continuous Wave Execution
 
 When a repo-local plan has pre-made decisions and acceptance criteria, execute
 the full wave continuously. Do not stop after one commit, one patch, or one
@@ -297,6 +297,14 @@ Benchmark-preservation waves are included in this rule. Do not stop after a
 single rerender, a partial benchmark, or an intermediate comparison file. A
 benchmark wave is only complete when the run, the comparison, the plan status,
 and the roadmap state all agree on the result.
+
+Long runtime is not, by itself, a blocker. If a benchmark or smoke run is
+still executing and there is no concrete code-level failure, keep it running
+until:
+
+- it completes,
+- it reaches the configured timeout boundary,
+- or it emits a real error that changes the implementation decision.
 
 If the change is architectural, update the relevant ADR before continuing.
 
@@ -328,7 +336,7 @@ stronger:
 - do not open speculative new work just to stay busy; close the current gate
   first
 
-### 13. Documentation Governance Is In Scope
+### 15. Documentation Governance Is In Scope
 
 This repo intentionally keeps a documentation-governance layer alongside the
 core project docs.

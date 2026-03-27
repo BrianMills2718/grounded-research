@@ -57,20 +57,43 @@ This wave is complete only if:
 
 ## Execution Order
 
+## Next 24 Hours
+
+Treat the next 24 hours as one continuous closure wave:
+
+1. complete one Tyler-native smoke trace on a small fixture
+2. rerun one tracked benchmark fixture on the Tyler-native runtime
+3. compare the result to the current saved anchor
+4. if a local artifact bug appears, fix it and rerun the same gate
+5. if only provider/runtime stalls remain, record them as shared-infra
+   blockers and close the repo-local wave honestly
+
 ### Slice 1: Smoke Gate
 
 - run `engine.py --fixture tests/fixtures/session_storage_bundle.json`
 - require a `trace.json` with Tyler Stage 1-6 fields
+- require Tyler Stage 4 to produce a non-empty claim/assumption artifact when
+  Stage 3 produced extractable assertions
 
 If it fails:
 
 - if code-level: fix locally
 - if provider/runtime stall only: record and continue to shared-infra boundary
 
+Operational rule:
+
+- allow the run to continue through the configured timeout window before
+  classifying it as stalled
+- inspect `llm_observability.db` before making any diagnosis
+
 ### Slice 2: Tracked Benchmark Rerun
 
 - rerun the tracked benchmark on the Tyler-native runtime
 - compare to the current calibrated anchor
+
+Current benchmark target:
+
+- use the saved UBI economics anchor as the tracked benchmark surface first
 
 ### Slice 3: Record Outcome
 
@@ -83,5 +106,7 @@ If it fails:
 | Failure mode | What it looks like | Response |
 |---|---|---|
 | late provider stall | live run reaches a long structured call and never returns promptly | record as shared-runtime uncertainty; do not reopen schema migration |
+| schema-valid empty Tyler Stage 4 artifact | Stage 4 returns `claim_ledger=[]` and `assumption_set=[]` despite non-empty Stage 3 analyses | retry with the configured stronger Stage 4 model; fail loud if retry is still empty |
+| near-miss Stage 4 schema failure | primary Stage 4 output contains real claims but misplaces disputes/assumptions or omits required fields | retry with the configured stronger Stage 4 model using the concrete validation failure summary |
 | benchmark regression after literal parity | Tyler-native path loses decision usefulness | record the divergence explicitly and isolate whether it is prompt/provider behavior or local contract logic |
 | silent fallback to current artifacts | smoke trace lacks Tyler stage fields even though tests pass | treat as local bug and reopen runtime wiring |

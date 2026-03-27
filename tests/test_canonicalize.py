@@ -6,17 +6,20 @@ import asyncio
 
 import pytest
 
-from grounded_research.canonicalize import deduplicate_claims, extract_raw_claims
+from grounded_research.canonicalize import canonicalize_tyler_v1, deduplicate_claims, extract_raw_claims
 from grounded_research.models import (
     AnalystRun,
     Counterargument,
     EvidenceBundle,
     EvidenceItem,
+    QuestionDecomposition,
     RawClaim,
     Recommendation,
     ResearchQuestion,
     SourceRecord,
+    SubQuestion,
 )
+from grounded_research.tyler_v1_models import ClaimExtractionResult
 
 
 @pytest.mark.asyncio
@@ -381,6 +384,296 @@ async def test_dedup_retry_accepts_corrected_grouping(monkeypatch: pytest.Monkey
     assert len(canonical_claims) == 1
     assert canonical_claims[0].source_raw_claim_ids == ["RC-1", "RC-2"]
     assert canonical_claims[0].analyst_sources == ["Alpha", "Beta"] or canonical_claims[0].analyst_sources == ["Beta", "Alpha"]
+
+
+def _tyler_stage4_bundle() -> EvidenceBundle:
+    """Fixture bundle for Tyler Stage 4 runtime retry tests."""
+    return EvidenceBundle(
+        question=ResearchQuestion(text="Should teams use Redis or PostgreSQL for session storage?"),
+        sources=[
+            SourceRecord(
+                id="S-1",
+                url="https://example.com/redis-benchmark",
+                title="Redis benchmark",
+                source_type="academic",
+                quality_tier="authoritative",
+            ),
+            SourceRecord(
+                id="S-2",
+                url="https://example.com/postgres-durability",
+                title="PostgreSQL durability",
+                source_type="academic",
+                quality_tier="authoritative",
+            ),
+        ],
+        evidence=[
+            EvidenceItem(id="E-1", source_id="S-1", content="Redis had lower p99 latency.", content_type="text"),
+            EvidenceItem(id="E-2", source_id="S-2", content="PostgreSQL preserved sessions via WAL replay.", content_type="text"),
+        ],
+    )
+
+
+def _tyler_stage4_analyst_runs() -> list[AnalystRun]:
+    """Fixture analyst runs for Tyler Stage 4 runtime retry tests."""
+    return [
+        AnalystRun(
+            analyst_label="Alpha",
+            model="openrouter/google/gemini-2.5-flash",
+            frame="verification_first",
+            claims=[
+                RawClaim(
+                    id="RC-a1",
+                    statement="Redis achieved lower p99 latency than PostgreSQL for session reads.",
+                    evidence_ids=["E-1"],
+                    confidence="high",
+                )
+            ],
+            recommendations=[Recommendation(statement="Prefer Redis when latency is primary.")],
+            counterarguments=[Counterargument(target="redis", argument="Durability may matter more than latency.", evidence_ids=["E-2"])],
+            summary="Redis is lower-latency.",
+        ),
+        AnalystRun(
+            analyst_label="Beta",
+            model="openrouter/openai/gpt-5-nano",
+            frame="structured_decomposition",
+            claims=[
+                RawClaim(
+                    id="RC-b1",
+                    statement="PostgreSQL preserved sessions across crash recovery via WAL replay.",
+                    evidence_ids=["E-2"],
+                    confidence="high",
+                )
+            ],
+            recommendations=[Recommendation(statement="Prefer PostgreSQL when durability dominates.")],
+            counterarguments=[Counterargument(target="postgres", argument="Latency is materially higher than Redis.", evidence_ids=["E-1"])],
+            summary="PostgreSQL is more durable.",
+        ),
+    ]
+
+
+def _tyler_stage4_decomposition() -> QuestionDecomposition:
+    """Fixture decomposition for Tyler Stage 4 runtime retry tests."""
+    return QuestionDecomposition(
+        core_question="Should teams use Redis or PostgreSQL for session storage?",
+        sub_questions=[
+            SubQuestion(
+                id="SQ-1",
+                text="What are the latency and throughput differences?",
+                type="comparative",
+                falsification_target="PostgreSQL matches Redis on p99 latency.",
+            ),
+            SubQuestion(
+                id="SQ-2",
+                text="What durability tradeoffs matter for session storage?",
+                type="evaluative",
+                falsification_target="Redis durability matches PostgreSQL crash recovery.",
+            ),
+        ],
+        optimization_axes=["latency vs durability"],
+        research_plan="benchmarks; crash-recovery evidence; contradictory benchmarks",
+    )
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 should retry with a stronger path when the first result is empty."""
+    # mock-ok: verifies local retry/fail-loud logic around an external LLM call.
+    calls: list[tuple[str, str]] = []
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+        calls.append((task, model))
+        assert timeout == 240
+        if task == "claim_extraction_tyler_v1":
+            return response_model.model_validate(
+                {
+                    "claim_ledger": [],
+                    "assumption_set": [],
+                    "dispute_queue": [],
+                    "statistics": {
+                        "total_claims": 0,
+                        "total_assumptions": 0,
+                        "total_disputes": 0,
+                        "disputes_by_type": {},
+                        "decision_critical_disputes": 0,
+                        "claims_per_model": {},
+                    },
+                    "stage_summary": {
+                        "stage_name": "Stage 4",
+                        "goal": "goal",
+                        "key_findings": ["empty"],
+                        "decisions_made": ["returned empty"],
+                        "outcome": "outcome",
+                        "reasoning": "reasoning",
+                    },
+                }
+            ), {}
+        assert task == "claim_extraction_tyler_v1_retry"
+        assert model == "openrouter/google/gemini-2.5-flash"
+        return response_model.model_validate(
+            {
+                "claim_ledger": [
+                    {
+                        "id": "C-bad",
+                        "statement": "Redis achieved lower p99 latency than PostgreSQL for session reads.",
+                        "source_models": ["A"],
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-1"],
+                        "status": "supported",
+                        "supporting_models": ["A"],
+                        "contesting_models": ["B"],
+                        "related_assumptions": [],
+                    }
+                ],
+                "assumption_set": [],
+                "dispute_queue": [],
+                "statistics": {
+                    "total_claims": 1,
+                    "total_assumptions": 0,
+                    "total_disputes": 0,
+                    "disputes_by_type": {},
+                    "decision_critical_disputes": 0,
+                    "claims_per_model": {"A": 1},
+                },
+                "stage_summary": {
+                    "stage_name": "Stage 4",
+                    "goal": "goal",
+                    "key_findings": ["retry succeeded"],
+                    "decisions_made": ["kept one claim"],
+                    "outcome": "outcome",
+                    "reasoning": "reasoning",
+                },
+            }
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    result, ledger = await canonicalize_tyler_v1(
+        _tyler_stage4_analyst_runs(),
+        _tyler_stage4_bundle(),
+        decomposition=_tyler_stage4_decomposition(),
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert [task for task, _model in calls] == [
+        "claim_extraction_tyler_v1",
+        "claim_extraction_tyler_v1_retry",
+    ]
+    assert len(result.claim_ledger) == 1
+    assert len(ledger.claims) == 1
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_tyler_v1_fails_loud_on_persistent_empty_stage4(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 should fail loud if both the primary call and retry remain empty."""
+    # mock-ok: verifies local fail-loud guard around an external LLM call.
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+        return response_model.model_validate(
+            {
+                "claim_ledger": [],
+                "assumption_set": [],
+                "dispute_queue": [],
+                "statistics": {
+                    "total_claims": 0,
+                    "total_assumptions": 0,
+                    "total_disputes": 0,
+                    "disputes_by_type": {},
+                    "decision_critical_disputes": 0,
+                    "claims_per_model": {},
+                },
+                "stage_summary": {
+                    "stage_name": "Stage 4",
+                    "goal": "goal",
+                    "key_findings": ["empty"],
+                    "decisions_made": ["returned empty"],
+                    "outcome": "outcome",
+                    "reasoning": "reasoning",
+                },
+            }
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    with pytest.raises(ValueError, match="empty claim ledger and assumption set after retry"):
+        await canonicalize_tyler_v1(
+            _tyler_stage4_analyst_runs(),
+            _tyler_stage4_bundle(),
+            decomposition=_tyler_stage4_decomposition(),
+            trace_id="test-trace",
+            max_budget=0.5,
+        )
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 should retry with the stronger path after a schema failure."""
+    # mock-ok: verifies local retry behavior after an external LLM schema failure.
+    calls: list[tuple[str, str]] = []
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+        calls.append((task, model))
+        if task == "claim_extraction_tyler_v1":
+            raise ValueError("dispute_queue missing; assumption_set contains dispute objects")
+        assert task == "claim_extraction_tyler_v1_retry"
+        assert model == "openrouter/google/gemini-2.5-flash"
+        return response_model.model_validate(
+            {
+                "claim_ledger": [
+                    {
+                        "id": "C-1",
+                        "statement": "Redis achieved lower p99 latency than PostgreSQL for session reads.",
+                        "source_models": ["A"],
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-1"],
+                        "status": "supported",
+                        "supporting_models": ["A"],
+                        "contesting_models": [],
+                        "related_assumptions": [],
+                    }
+                ],
+                "assumption_set": [],
+                "dispute_queue": [],
+                "statistics": {
+                    "total_claims": 1,
+                    "total_assumptions": 0,
+                    "total_disputes": 0,
+                    "disputes_by_type": {},
+                    "decision_critical_disputes": 0,
+                    "claims_per_model": {"A": 1},
+                },
+                "stage_summary": {
+                    "stage_name": "Stage 4",
+                    "goal": "goal",
+                    "key_findings": ["retry succeeded after schema failure"],
+                    "decisions_made": ["kept one claim"],
+                    "outcome": "outcome",
+                    "reasoning": "reasoning",
+                },
+            }
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    result, ledger = await canonicalize_tyler_v1(
+        _tyler_stage4_analyst_runs(),
+        _tyler_stage4_bundle(),
+        decomposition=_tyler_stage4_decomposition(),
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert [task for task, _model in calls] == [
+        "claim_extraction_tyler_v1",
+        "claim_extraction_tyler_v1_retry",
+    ]
+    assert len(result.claim_ledger) == 1
+    assert len(ledger.claims) == 1
 
 
 @pytest.mark.asyncio

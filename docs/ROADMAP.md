@@ -32,6 +32,28 @@ configurable depth modes (standard/deep/thorough).
 - 1 feature remains cut (#6 complexity assessment; #3 ambiguity and #38
   shuffling were later un-cut and implemented)
 
+## Next: Tyler Parity Benchmark Re-Anchor
+
+The contract migration wave is complete. The active repo-local wave is now
+benchmark re-anchor on the fully Tyler-native runtime.
+
+Immediate repo-local goal:
+
+- complete one Tyler-native live smoke trace with Stage 1-6 artifacts
+- ensure live Stage 4 survives cheap-model failure modes:
+  - schema-valid empty artifacts
+  - schema-invalid near-miss artifacts with real claims but malformed routing
+- rerun one tracked benchmark on that path
+- classify the result as preserved, improved, or regressed usefulness
+
+If the remaining blocker is only provider/runtime behavior, record it as a
+shared-infra issue instead of reopening local schema work.
+
+See:
+
+- `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
+- `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 
 The post-Wave-2 cleanup plan, the first depth-continuation wave, and the

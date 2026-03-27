@@ -17,6 +17,7 @@ from grounded_research.config import (
     get_fallback_models,
     get_model,
     get_phase_concurrency_config,
+    get_tyler_literal_parity_config,
 )
 from grounded_research.models import (
     AnalystRun,
@@ -54,6 +55,22 @@ def _current_frame_to_tyler(frame: str) -> str:
     if frame in {"step_back_abstraction", "structured_decomposition", "verification_first"}:
         return frame
     return "verification_first"
+
+
+def _tyler_stage4_assertion_count(stage_3_results: list["AnalysisObject"]) -> int:
+    """Count extractable Stage 3 assertions before Stage 4 runs.
+
+    A schema-valid empty Stage 4 result is only acceptable when the upstream
+    Tyler analyses are themselves empty. When analysts produced claims or
+    assumptions, Stage 4 must not silently collapse to an empty ledger.
+    """
+    return sum(len(result.claims) + len(result.assumptions) for result in stage_3_results)
+
+
+def _summarize_stage4_exception(exc: Exception) -> str:
+    """Summarize Stage 4 schema/runtime failures for a corrective retry prompt."""
+    lines = [line.strip() for line in str(exc).splitlines() if line.strip()]
+    return " | ".join(lines[:8])[:1200]
 
 
 async def _get_tyler_stage1_result(
@@ -119,6 +136,7 @@ async def canonicalize_tyler_v1(
         ]
     else:
         tyler_stage3_results = list(tyler_stage_3_results)
+    stage4_input_assertions = _tyler_stage4_assertion_count(tyler_stage3_results)
 
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_stage4.yaml"),
@@ -127,23 +145,81 @@ async def canonicalize_tyler_v1(
         stage_3_results=[analysis.model_dump(mode="json") for analysis in tyler_stage3_results],
         response_schema_json=TylerClaimExtractionResult.model_json_schema(),
     )
+    parity_policy = get_tyler_literal_parity_config()
 
-    result, _meta = await acall_llm_structured(
-        get_model("claim_extraction"),
-        messages,
-        response_model=TylerClaimExtractionResult,
-        task="claim_extraction_tyler_v1",
-        trace_id=f"{trace_id}/claim_extraction_tyler_v1",
-        timeout=get_request_timeout("claim_extraction"),
-        max_budget=max_budget,
-        fallback_models=get_fallback_models("claim_extraction"),
-    )
+    async def _run_stage4_retry(issue_summary: str) -> TylerClaimExtractionResult:
+        retry_messages = list(messages)
+        retry_messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "Correction for Tyler Stage 4: the previous response was not acceptable. "
+                    f"Issue: {issue_summary} "
+                    "Retry now. Keep the exact same schema, but place only assumptions in "
+                    "`assumption_set`, place all disputes in `dispute_queue`, populate "
+                    "`statistics.claims_per_model`, and do not return an empty claim ledger "
+                    "when the analyses contain extractable assertions."
+                ),
+            }
+        )
+        retry_model = str(parity_policy.get("stage4_retry_model") or get_model("claim_extraction"))
+        retry_fallback_models = parity_policy.get("stage4_retry_fallback_models")
+        retry_result, _retry_meta = await acall_llm_structured(
+            retry_model,
+            retry_messages,
+            response_model=TylerClaimExtractionResult,
+            task="claim_extraction_tyler_v1_retry",
+            trace_id=f"{trace_id}/claim_extraction_tyler_v1_retry",
+            timeout=get_request_timeout("claim_extraction"),
+            max_budget=max_budget,
+            fallback_models=retry_fallback_models if retry_fallback_models else get_fallback_models("claim_extraction"),
+        )
+        return retry_result
+
+    try:
+        result, _meta = await acall_llm_structured(
+            get_model("claim_extraction"),
+            messages,
+            response_model=TylerClaimExtractionResult,
+            task="claim_extraction_tyler_v1",
+            trace_id=f"{trace_id}/claim_extraction_tyler_v1",
+            timeout=get_request_timeout("claim_extraction"),
+            max_budget=max_budget,
+            fallback_models=get_fallback_models("claim_extraction"),
+        )
+    except Exception as exc:
+        if not bool(parity_policy.get("stage4_retry_on_empty_claims", True)) or stage4_input_assertions <= 0:
+            raise
+        result = await _run_stage4_retry(
+            f"schema or validation failure from the primary Stage 4 call: {_summarize_stage4_exception(exc)}"
+        )
 
     normalized = normalize_tyler_claim_extraction_result(
         result,
         valid_source_ids={source.id for source in bundle.sources},
         allowed_model_aliases=set(alias_mapping.values()),
     )
+    should_retry_empty_stage4 = (
+        bool(parity_policy.get("stage4_retry_on_empty_claims", True))
+        and stage4_input_assertions > 0
+        and not normalized.claim_ledger
+        and not normalized.assumption_set
+    )
+    if should_retry_empty_stage4:
+        retry_result = await _run_stage4_retry(
+            "the previous Stage 4 result extracted zero claims and zero assumptions "
+            f"from analyses containing {stage4_input_assertions} upstream claims/assumptions."
+        )
+        normalized = normalize_tyler_claim_extraction_result(
+            retry_result,
+            valid_source_ids={source.id for source in bundle.sources},
+            allowed_model_aliases=set(alias_mapping.values()),
+        )
+        if not normalized.claim_ledger and not normalized.assumption_set:
+            raise ValueError(
+                "Tyler Stage 4 returned an empty claim ledger and assumption set "
+                f"after retry despite {stage4_input_assertions} upstream assertions."
+            )
     ledger = tyler_stage4_to_current_ledger(
         normalized,
         analyst_runs=successful_runs,

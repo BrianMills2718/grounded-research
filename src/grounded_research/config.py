@@ -233,6 +233,24 @@ def get_analysis_coverage_config() -> dict[str, int | float | bool]:
     return defaults
 
 
+def get_tyler_literal_parity_config() -> dict[str, Any]:
+    """Get Tyler literal-parity runtime safety policy with config overrides.
+
+    The Tyler-native runtime uses stricter, larger structured schemas than the
+    original shipped pipeline. These settings guard against schema-valid but
+    analytically empty artifacts during live runs.
+    """
+    cfg = load_config()
+    configured = cfg.get("tyler_literal_parity", {})
+    defaults: dict[str, Any] = {
+        "stage4_retry_on_empty_claims": True,
+        "stage4_retry_model": "openrouter/google/gemini-2.5-flash",
+        "stage4_retry_fallback_models": ["openrouter/openai/gpt-5-nano"],
+    }
+    defaults.update(configured)
+    return defaults
+
+
 def get_runtime_reliability_config() -> dict[str, Any]:
     """Get benchmark/runtime reliability policy with config overrides.
 
