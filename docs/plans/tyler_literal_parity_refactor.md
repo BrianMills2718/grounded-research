@@ -115,16 +115,23 @@ Rewrite canonicalization around Tyler's literal `ClaimExtractionResult`.
 Files likely touched:
 
 - `canonicalize.py`
-- `models.py` or Tyler adapters
-- `prompts/claimify.yaml`
-- `prompts/dedup.yaml`
-- `prompts/dispute_classify.yaml`
+- `models.py`
+- `prompts/tyler_v1_stage4.yaml`
+- `tyler_v1_adapters.py`
 
 Acceptance:
 
 - Stage 4 emits Tyler `ClaimLedgerEntry`, `AssumptionSetEntry`,
   `DisputeQueueEntry`, and `ExtractionStatistics`
 - referential integrity checks pass
+
+Status:
+
+- Completed for Stage 4 runtime output and trace serialization.
+- Current `engine.py` now runs Tyler's literal Stage 4 prompt/schema and stores
+  the `tyler_stage_4_result` artifact in pipeline state.
+- The shipped `ClaimLedger` remains as an explicit projection from the Tyler
+  artifact so Stage 5-6 can keep running until their migrations land.
 
 ### Phase 3: Stage 5-6 Major Contract Migration
 

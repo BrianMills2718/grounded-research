@@ -25,8 +25,20 @@ from grounded_research.models import (
     Claim,
     ClaimLedger,
     Dispute,
+    QuestionDecomposition,
     RawClaim,
     DISPUTE_ROUTING,
+)
+from grounded_research.tyler_v1_adapters import (
+    build_tyler_alias_mapping,
+    current_analyst_run_to_tyler_analysis,
+    current_decomposition_to_tyler,
+    normalize_tyler_claim_extraction_result,
+    tyler_stage4_to_current_ledger,
+)
+from grounded_research.tyler_v1_models import (
+    ClaimExtractionResult as TylerClaimExtractionResult,
+    DecompositionResult as TylerDecompositionResult,
 )
 from grounded_research.runtime_policy import get_request_timeout
 
@@ -34,7 +46,110 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 # ---------------------------------------------------------------------------
-# Phase 3a: Claim extraction
+# Tyler Stage 4 migration path
+# ---------------------------------------------------------------------------
+
+def _current_frame_to_tyler(frame: str) -> str:
+    """Map the shipped analyst frame names onto Tyler's Stage 3 contract."""
+    if frame in {"step_back_abstraction", "structured_decomposition", "verification_first"}:
+        return frame
+    return "verification_first"
+
+
+async def _get_tyler_stage1_result(
+    *,
+    decomposition: QuestionDecomposition | None,
+    original_query: str,
+    trace_id: str,
+    max_budget: float,
+) -> TylerDecompositionResult:
+    """Produce a Tyler-native Stage 1 artifact for Stage 4 prompt rendering."""
+    if decomposition is not None:
+        return current_decomposition_to_tyler(decomposition, original_query=original_query)
+
+    from grounded_research.decompose import decompose_question_tyler_v1
+
+    return await decompose_question_tyler_v1(
+        question=original_query,
+        trace_id=trace_id,
+        max_budget=max_budget,
+    )
+
+
+async def canonicalize_tyler_v1(
+    analyst_runs: list[AnalystRun],
+    bundle: EvidenceBundle,
+    *,
+    decomposition: QuestionDecomposition | None,
+    trace_id: str,
+    max_budget: float = 1.0,
+) -> tuple[TylerClaimExtractionResult, ClaimLedger]:
+    """Run Tyler's literal Stage 4 contract and project it to the current ledger.
+
+    This is the primary migration path for the Stage 4 refactor. The Tyler
+    artifact is treated as the source of truth; the current ClaimLedger is an
+    explicit projection kept only so Stage 5 and Stage 6 can continue running
+    until their own migrations land.
+    """
+    from llm_client import acall_llm_structured, render_prompt
+
+    successful_runs = [run for run in analyst_runs if run.succeeded]
+    if len(successful_runs) < 2:
+        raise ValueError("Tyler Stage 4 requires at least 2 successful analyst runs.")
+
+    original_query = bundle.question.text if bundle.question else ""
+    tyler_stage1 = await _get_tyler_stage1_result(
+        decomposition=decomposition,
+        original_query=original_query,
+        trace_id=f"{trace_id}/stage1_adapter",
+        max_budget=max_budget * 0.15,
+    )
+    alias_mapping = build_tyler_alias_mapping(successful_runs)
+    tyler_stage3_results = [
+        current_analyst_run_to_tyler_analysis(
+            run=run,
+            bundle=bundle,
+            model_alias=alias_mapping[run.analyst_label],
+            reasoning_frame=_current_frame_to_tyler(run.frame),
+        )
+        for run in successful_runs
+    ]
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "tyler_v1_stage4.yaml"),
+        original_query=original_query,
+        stage_1=tyler_stage1.model_dump(mode="json"),
+        stage_3_results=[analysis.model_dump(mode="json") for analysis in tyler_stage3_results],
+        response_schema_json=TylerClaimExtractionResult.model_json_schema(),
+    )
+
+    result, _meta = await acall_llm_structured(
+        get_model("claim_extraction"),
+        messages,
+        response_model=TylerClaimExtractionResult,
+        task="claim_extraction_tyler_v1",
+        trace_id=f"{trace_id}/claim_extraction_tyler_v1",
+        timeout=get_request_timeout("claim_extraction"),
+        max_budget=max_budget,
+        fallback_models=get_fallback_models("claim_extraction"),
+    )
+
+    normalized = normalize_tyler_claim_extraction_result(
+        result,
+        valid_source_ids={source.id for source in bundle.sources},
+        allowed_model_aliases=set(alias_mapping.values()),
+    )
+    ledger = tyler_stage4_to_current_ledger(
+        normalized,
+        analyst_runs=successful_runs,
+        bundle=bundle,
+        alias_mapping=alias_mapping,
+    )
+    return normalized, ledger
+
+
+# ---------------------------------------------------------------------------
+# Legacy Phase 3a: Claim extraction
 # ---------------------------------------------------------------------------
 
 async def extract_raw_claims(

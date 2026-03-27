@@ -34,10 +34,7 @@ async def run_pipeline(
     from grounded_research.analysts import run_analysts
     from grounded_research.anonymize import scrub_analyst_run
     from grounded_research.canonicalize import (
-        extract_raw_claims,
-        deduplicate_claims,
-        detect_disputes,
-        build_ledger,
+        canonicalize_tyler_v1,
     )
     from grounded_research.verify import verify_disputes
     from grounded_research.export import generate_report, render_long_report, validate_grounding, write_outputs
@@ -153,34 +150,19 @@ async def run_pipeline(
             status = f"OK ({len(r.claims)} claims)" if r.succeeded else f"FAILED: {r.error}"
             print(f"  {r.analyst_label} ({r.model}): {status}")
 
-        # --- Phase 3a: Claim extraction ---
+        # --- Phase 3: Tyler Stage 4 claim extraction & dispute localization ---
         phase_start = datetime.now(timezone.utc)
         state.current_phase = "canonicalize"
-        print("\n[Phase 3a] Extracting raw claims...")
+        print("\n[Phase 3] Running Tyler Stage 4 claim extraction...")
 
-        raw_claims, claim_to_analyst = await extract_raw_claims(
+        tyler_stage_4_result, ledger = await canonicalize_tyler_v1(
             analyst_runs,
             bundle,
-            trace_id,
-            max_budget=total_budget * 0.1,
+            decomposition=decomposition,
+            trace_id=trace_id,
+            max_budget=total_budget * 0.2,
         )
-        print(f"  Raw claims: {len(raw_claims)}")
-
-        # --- Phase 3b: Deduplication ---
-        print("[Phase 3b] Deduplicating claims...")
-
-        canonical_claims = await deduplicate_claims(
-            raw_claims, claim_to_analyst, trace_id, max_budget=total_budget * 0.1,
-        )
-        print(f"  Canonical claims: {len(canonical_claims)} (from {len(raw_claims)} raw)")
-
-        # --- Phase 3c: Dispute detection ---
-        print("[Phase 3c] Detecting disputes...")
-
-        disputes = await detect_disputes(
-            canonical_claims, trace_id, max_budget=total_budget * 0.1,
-        )
-        ledger = build_ledger(canonical_claims, disputes)
+        state.tyler_stage_4_result = tyler_stage_4_result
         state.claim_ledger = ledger
 
         state.phase_traces.append(PhaseTrace(
@@ -188,14 +170,23 @@ async def run_pipeline(
             started_at=phase_start,
             completed_at=datetime.now(timezone.utc),
             succeeded=True,
-            llm_calls=len([r for r in analyst_runs if r.succeeded]) + 2,
-            output_summary=f"{len(canonical_claims)} claims, {len(disputes)} disputes ({len(ledger.decision_critical_disputes())} decision-critical)",
+            llm_calls=1,
+            output_summary=(
+                f"{len(tyler_stage_4_result.claim_ledger)} Tyler claims, "
+                f"{len(tyler_stage_4_result.dispute_queue)} Tyler disputes "
+                f"({tyler_stage_4_result.statistics.decision_critical_disputes} decision-critical)"
+            ),
         ))
-        print(f"  Disputes: {len(disputes)} ({len(ledger.decision_critical_disputes())} decision-critical)")
+        print(
+            "  Tyler claims: "
+            f"{len(tyler_stage_4_result.claim_ledger)} | disputes: "
+            f"{len(tyler_stage_4_result.dispute_queue)} "
+            f"({tyler_stage_4_result.statistics.decision_critical_disputes} decision-critical)"
+        )
 
         # --- User steering (preference/ambiguity disputes) ---
         preference_disputes = [
-            d for d in disputes
+            d for d in ledger.disputes
             if d.dispute_type in ("preference_conflict", "ambiguity") and not d.resolved
         ]
         if preference_disputes and sys.stdin.isatty():

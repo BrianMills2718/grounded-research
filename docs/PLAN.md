@@ -622,6 +622,13 @@ Current active implementation frontier:
 
 - `docs/plans/tyler_literal_parity_refactor.md`
 
+Current literal-parity state:
+
+- Stage 0 exact Tyler schema contract: completed
+- Stage 1-3 Tyler-native prompt and adapter surfaces: completed
+- Stage 4 Tyler-native runtime artifact: completed
+- Stage 5-6 Tyler-native runtime migration: remaining major refactor
+
 Recently completed gate:
 
 - `docs/plans/thorough_benchmark_preservation_wave1.md`

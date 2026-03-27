@@ -153,6 +153,55 @@ def test_arbitration_prompt_renders_with_anti_conformity_basis_language() -> Non
     assert "required basis" in messages[1]["content"]
 
 
+def test_tyler_stage4_prompt_renders_with_literal_claimify_contract() -> None:
+    """Tyler Stage 4 prompt should render the literal claim/dispute contract."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "tyler_v1_stage4.yaml"),
+        original_query="Should cities adopt UBI pilots?",
+        stage_1={"core_question": "Should cities adopt UBI pilots?"},
+        stage_3_results=[
+            {
+                "model_alias": "A",
+                "recommendation": "Run a bounded pilot.",
+                "claims": [
+                    {
+                        "id": "C-1",
+                        "statement": "Employment stayed flat in one pilot.",
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-1"],
+                    }
+                ],
+                "assumptions": [
+                    {"id": "A-1", "statement": "The pilot population is relevant.", "if_wrong_impact": "Recommendation weakens."}
+                ],
+                "counter_argument": {"argument": "The evidence base is still narrow."},
+                "falsification_conditions": ["A larger pilot shows harms."],
+            },
+            {
+                "model_alias": "B",
+                "recommendation": "Run a bounded pilot.",
+                "claims": [
+                    {
+                        "id": "C-2",
+                        "statement": "Recipients reported lower stress.",
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-2"],
+                    }
+                ],
+                "assumptions": [],
+                "counter_argument": {"argument": "The labor effects remain mixed."},
+                "falsification_conditions": ["A larger pilot shows labor harms."],
+            },
+        ],
+        response_schema_json={"type": "object", "properties": {}},
+    )
+
+    assert "CONSERVATIVE DEDUPLICATION" in messages[0]["content"]
+    assert "Classify each dispute into exactly one type" in messages[0]["content"]
+    assert "ANALYST A's ANALYSIS" in messages[1]["content"]
+    assert "Response schema" in messages[1]["content"]
+
+
 def test_dispute_classify_prompt_renders_with_type_guidance() -> None:
     """Dispute classifier prompt should render with strengthened type guidance."""
     messages = render_prompt(

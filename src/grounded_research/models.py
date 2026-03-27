@@ -24,6 +24,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from grounded_research.tyler_v1_models import ClaimExtractionResult as TylerClaimExtractionResult
+
 
 # ---------------------------------------------------------------------------
 # ID generation helpers
@@ -806,6 +808,7 @@ class PipelineState(BaseModel):
 
     # --- Intermediate artifacts ---
     analyst_runs: list[AnalystRun] = Field(default_factory=list)
+    tyler_stage_4_result: TylerClaimExtractionResult | None = None
     claim_ledger: ClaimLedger | None = None
 
     # --- Outputs ---

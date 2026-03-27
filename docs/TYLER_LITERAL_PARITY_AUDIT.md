@@ -43,7 +43,7 @@ Literal parity is absent for four independent reasons:
 | Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | `QuestionDecomposition` with typed `SubQuestion.text`, `falsification_target`, `optimization_axes`, free-text `research_plan`, optional `ambiguous_terms` | No |
 | Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | `EvidenceBundle` made of `SourceRecord` and `EvidenceItem` with `quality_tier`, `recency_score`, and content extracts | No |
 | Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | `AnalystRun` with `analyst_label`, `model`, `frame`, lists of `Recommendation`, `RawClaim`, `Assumption`, `Counterargument`, no Tyler `StageSummary` field | No |
-| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | split across `claimify`, `dedup`, `dispute_classify`, then assembled into repo-local `ClaimLedger` + `Dispute` + `ArbitrationResult` surfaces | No |
+| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema now run in the live runtime and serialize into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` remains as an explicit downstream projection for unmigrated Stage 5-6 code | Partial |
 | Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | repo-local `ArbitrationResult`, `ClaimUpdate`, `ClaimStatus` values `supported/revised/refuted/inconclusive` | No |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | repo-local `FinalReport` plus separate markdown long report rendering | No |
 | Prompt package | Tyler literal prompts by stage and frame | current prompt texts are adapted and expanded for current contracts | No |
@@ -56,7 +56,7 @@ Literal parity is absent for four independent reasons:
 | Stage 2 finding extraction | `prompts/extract_evidence.yaml` | Adapted, not literal |
 | Stage 2 query diversification | `prompts/query_generation.yaml` | Adapted, not literal |
 | Stage 3 analyst base + 3 frame inserts | `prompts/analyst.yaml` with inline frame branches | Adapted, not literal |
-| Stage 4 claim extraction + dispute localization | split across `prompts/claimify.yaml`, `prompts/dedup.yaml`, `prompts/dispute_classify.yaml` | Architecturally divergent |
+| Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema now active, but downstream stages still rely on a projected repo-local ledger |
 | Stage 5 verification query generation | `prompts/verification_queries.yaml` | Adapted, not literal |
 | Stage 5 arbitration | `prompts/arbitration.yaml` | Adapted, not literal |
 | Stage 6 synthesis report | `prompts/synthesis.yaml` + `prompts/long_report.yaml` | Architecturally divergent |
