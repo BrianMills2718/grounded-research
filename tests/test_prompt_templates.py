@@ -202,6 +202,124 @@ def test_tyler_stage4_prompt_renders_with_literal_claimify_contract() -> None:
     assert "Response schema" in messages[1]["content"]
 
 
+def test_tyler_stage5_arbitration_prompt_renders_literal_contract() -> None:
+    """Tyler Stage 5 arbitration prompt should render the literal dispute contract."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "tyler_v1_arbitration.yaml"),
+        original_query="Should cities adopt UBI pilots?",
+        dispute={
+            "id": "D-1",
+            "type": "empirical",
+            "description": "Whether pilots changed employment.",
+            "decision_critical_rationale": "Could change the recommendation.",
+            "model_positions": [{"model_alias": "A", "position": "No labor harm."}],
+        },
+        claim_ledger=[
+            {
+                "id": "C-1",
+                "statement": "Employment stayed flat.",
+                "evidence_label": "empirically_observed",
+                "source_references": ["S-1"],
+                "supporting_models": ["A"],
+                "contesting_models": ["B"],
+            }
+        ],
+        relevant_original_sources=[
+            {
+                "id": "S-1",
+                "title": "Pilot study",
+                "source_type": "academic",
+                "quality_score": 0.9,
+                "key_findings": [{"finding": "Employment stayed flat.", "evidence_label": "empirically_observed"}],
+            }
+        ],
+        new_evidence=[
+            {
+                "source_id": "S-99",
+                "title": "Fresh follow-up",
+                "quality_score": 0.8,
+                "key_findings": ["A follow-up found no labor decline."],
+            }
+        ],
+        response_schema_json={"type": "object", "properties": {}},
+    )
+
+    assert "ARBITRATION RULES" in messages[0]["content"]
+    assert "ANTI-CONFORMITY RULE" in messages[0]["content"]
+    assert "DISPUTE TO RESOLVE" in messages[1]["content"]
+    assert "NEW EVIDENCE" in messages[1]["content"]
+
+
+def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
+    """Tyler Stage 6 synthesis prompt should render the literal final-report contract."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "tyler_v1_synthesis.yaml"),
+        original_query="Should cities adopt UBI pilots?",
+        stage_6_user_input="Prefer lower downside risk.",
+        decision_critical_claims=[
+            {
+                "id": "C-1",
+                "statement": "Claim one.",
+                "status": "verified",
+                "evidence_label": "empirically_observed",
+                "source_references": ["S-1"],
+                "supporting_models": ["A"],
+                "contesting_models": ["B"],
+                "related_assumptions": ["A-1"],
+            }
+        ],
+        noncritical_claims=[],
+        assumption_set=[
+            {
+                "id": "A-1",
+                "statement": "Assumption one.",
+                "dependent_claims": ["C-1"],
+                "if_wrong_impact": "Recommendation weakens.",
+                "shared_across_models": True,
+            }
+        ],
+        dispute_queue=[
+            {
+                "id": "D-1",
+                "type": "interpretive",
+                "description": "Interpretation conflict.",
+                "status": "resolved",
+                "resolution_details": "Resolved in Stage 5.",
+                "remaining_uncertainty": "",
+                "decision_critical": True,
+                "decision_critical_rationale": "Changes answer.",
+            }
+        ],
+        top_sources=[
+            {
+                "id": "S-1",
+                "title": "Source one",
+                "quality_score": 0.9,
+                "source_type": "academic",
+                "contribution_summary": "Supports C-1",
+                "conflicts_resolved": ["D-1"],
+            }
+        ],
+        evidence_gaps=["Need a longer follow-up."],
+        all_stage_summaries=[
+            {
+                "stage_name": "Stage 1",
+                "goal": "goal",
+                "key_findings": ["k1", "k2"],
+                "decisions_made": ["d1"],
+                "outcome": "outcome",
+                "reasoning": "reasoning",
+            }
+        ],
+        response_schema_json={"type": "object", "properties": {}},
+    )
+
+    assert "SUBORDINATION PRINCIPLE" in messages[0]["content"]
+    assert "PRIMARY OBLIGATION" in messages[0]["content"]
+    assert "CLAIM LEDGER (decision-critical claims)" in messages[1]["content"]
+    assert "KEY EVIDENCE SOURCES" in messages[1]["content"]
+
+
 def test_dispute_classify_prompt_renders_with_type_guidance() -> None:
     """Dispute classifier prompt should render with strengthened type guidance."""
     messages = render_prompt(

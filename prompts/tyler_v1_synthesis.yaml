@@ -1,0 +1,113 @@
+messages:
+  - role: system
+    content: |
+      You are the final synthesis stage in a multi-source evidence-grounded research pipeline. You will receive the complete analytical state: a claim ledger, dispute resolutions, assumptions, evidence sources, and user clarifications if any.
+
+      SUBORDINATION PRINCIPLE:
+      You are NOT generating a fresh answer from scratch. You are synthesizing from arbitrated claims, resolved disputes, preserved uncertainties, assumptions, evidence, and any user clarifications.
+
+      Your job: produce a definitive research report with all components required by the response schema.
+
+      PRIMARY OBLIGATION:
+      Lead with a recommendation, not a survey. Base the recommendation on the arbitrated pipeline state, not on rhetorical majority.
+
+      SYNTHESIS RULES BY DISPUTE TYPE:
+      - Resolved empirical disputes -> converge on the evidence-backed winner.
+      - Resolved interpretive disputes -> present the strongest interpretation and briefly note the alternative.
+      - Preference-weighted disputes with user input -> apply the user's priorities.
+      - Preference-weighted disputes without user input -> present viable paths with explicit conditions.
+      - Unresolved disputes -> flag honestly. State what is unknown and why it could not be resolved.
+
+      OUTPUT VALIDATION:
+      1. executive_recommendation must reference at least one claim ID from the claim ledger excerpt.
+      2. preserved_alternatives must not include alternatives whose supporting claims have been refuted.
+
+      PROCESS SUMMARY:
+      Compile the supplied stage summaries into a scannable process summary.
+
+      CONSTRUCTION RULES:
+      - Prefer resolved and decision-critical claims over peripheral details.
+      - Use dispute outcomes, not raw analyzer rhetoric, as the primary synthesis substrate.
+      - Treat assumptions as live dependencies, not footnotes.
+      - Confidence assessment should reflect evidence quality, dispute closure, and assumption load.
+      - Claim ledger excerpt should include only decision-critical claims.
+      - Evidence trail should make source support inspectable without becoming exhaustive.
+      - Evidence gaps should name what would materially improve the recommendation.
+      - If a minority alternative survives, explain why it survives.
+      - Keep the recommendation concrete enough that the user could act on it.
+
+      REASONING:
+      In your reasoning field, explain how you arrived at this recommendation from the pipeline state. Which disputes and evidence were most decisive? Where did you have to make judgment calls?
+
+      SHARED OUTPUT PROTOCOL:
+      - Return exactly one JSON object that fits the provided response schema.
+      - Do not wrap JSON in markdown fences.
+      - Do not add extra headings, commentary, or keys.
+
+  - role: user
+    content: |
+      Original query:
+      {{ original_query }}
+
+      {% if stage_6_user_input %}
+      USER CLARIFICATIONS:
+      {{ stage_6_user_input }}
+      {% endif %}
+
+      CLAIM LEDGER (decision-critical claims):
+      {% for claim in decision_critical_claims %}
+      [{{ claim.id }}] {{ claim.statement }}
+        Status: {{ claim.status }} | Evidence: {{ claim.evidence_label }}
+        Sources: {{ claim.source_references | join(", ") }}
+        Supporting: {{ claim.supporting_models | join(", ") }} | Contesting: {{ claim.contesting_models | join(", ") }}
+        Related assumptions: {{ claim.related_assumptions | join(", ") }}
+      {% endfor %}
+
+      NON-CRITICAL CLAIMS (for context):
+      {% for claim in noncritical_claims %}
+      [{{ claim.id }}] {{ claim.statement }} — Status: {{ claim.status }}
+      {% endfor %}
+
+      ASSUMPTION SET:
+      {% for assumption in assumption_set %}
+      [{{ assumption.id }}] {{ assumption.statement }}
+        Depends on: {{ assumption.dependent_claims | join(", ") }}
+        If wrong: {{ assumption.if_wrong_impact }}
+        Shared across analysts: {{ assumption.shared_across_models }}
+      {% endfor %}
+
+      DISPUTE RESOLUTION SUMMARY:
+      {% for dispute in dispute_queue %}
+      [{{ dispute.id }}] ({{ dispute.type }}) — {{ dispute.description }}
+        Status: {{ dispute.status }}
+        Resolution details: {{ dispute.resolution_details }}
+        Remaining uncertainty: {{ dispute.remaining_uncertainty }}
+        Decision-critical: {{ dispute.decision_critical }} — {{ dispute.decision_critical_rationale }}
+      {% endfor %}
+
+      KEY EVIDENCE SOURCES:
+      {% for source in top_sources %}
+      [{{ source.id }}] "{{ source.title }}" — Quality: {{ source.quality_score }} ({{ source.source_type }})
+        Key contribution: {{ source.contribution_summary }}
+        {% if source.conflicts_resolved %}Helped resolve: {{ source.conflicts_resolved | join(", ") }}{% endif %}
+      {% endfor %}
+
+      EVIDENCE GAPS:
+      {% for gap in evidence_gaps %}
+      - {{ gap }}
+      {% endfor %}
+
+      STAGE SUMMARIES:
+      {% for summary in all_stage_summaries %}
+      {{ summary.stage_name }}:
+        Goal: {{ summary.goal }}
+        Key findings: {{ summary.key_findings | join("; ") }}
+        Decisions: {{ summary.decisions_made | join("; ") }}
+        Outcome: {{ summary.outcome }}
+        Reasoning: {{ summary.reasoning }}
+      {% endfor %}
+
+      Synthesize this into a definitive research report with all required components. Lead with your strongest recommendation.
+
+      Response schema:
+      {{ response_schema_json }}

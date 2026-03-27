@@ -29,6 +29,17 @@ from grounded_research.verify import (
     _enforce_arbitration_protocol,
     arbitrate_dispute,
     verify_disputes,
+    verify_disputes_tyler_v1,
+)
+from grounded_research.tyler_v1_models import (
+    ClaimExtractionResult as TylerClaimExtractionResult,
+    ClaimLedgerEntry,
+    ClaimStatus as TylerClaimStatus,
+    DisputeQueueEntry,
+    DisputeStatus,
+    DisputeType,
+    EvidenceLabel,
+    ResolutionOutcome,
 )
 
 
@@ -368,4 +379,155 @@ async def test_verify_disputes_stops_after_first_resolved_round(
     assert results[0].verdict == "refuted"
     assert updated_ledger.disputes[0].resolved is True
     assert updated_ledger.claims[0].status == "refuted"
+    assert warnings == []
+
+
+@pytest.mark.asyncio
+async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledger(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Tyler Stage 5 should become the source artifact while still updating the current ledger."""
+    monkeypatch.setattr("grounded_research.verify.get_depth_config", lambda: {"arbitration_max_rounds": 1})
+
+    async def fake_decompose_question_tyler_v1(question: str, trace_id: str, max_budget: float = 0.5):
+        from grounded_research.tyler_v1_models import DecompositionResult, ResearchPlan, StageSummary, SubQuestion
+
+        return DecompositionResult(
+            core_question=question,
+            sub_questions=[
+                SubQuestion(
+                    id="Q-1",
+                    question="What happened in the pilot?",
+                    type="empirical",
+                    research_priority="high",
+                    search_guidance="official evaluations",
+                ),
+                SubQuestion(
+                    id="Q-2",
+                    question="How should policymakers interpret the pilot?",
+                    type="interpretive",
+                    research_priority="medium",
+                    search_guidance="policy analysis",
+                ),
+            ],
+            optimization_axes=["risk vs upside"],
+            research_plan=ResearchPlan(
+                what_to_verify=["employment effects"],
+                critical_source_types=["official evaluations"],
+                falsification_targets=["evidence of harm"],
+            ),
+            stage_summary=StageSummary(
+                stage_name="Stage 1",
+                goal="goal",
+                key_findings=["k1", "k2", "k3"],
+                decisions_made=["d1"],
+                outcome="outcome",
+                reasoning="reasoning",
+            ),
+        )
+
+    async def fake_collect(dispute, queries, bundle, trace_id):
+        source = SourceRecord(url="https://example.com/fresh", title="Fresh source")
+        evidence = EvidenceItem(
+            source_id=source.id,
+            content="Fresh evidence",
+            content_type="text",
+            relevance_note="fresh",
+            extraction_method="llm",
+        )
+        return [source], [evidence], []
+
+    async def fake_arbitrate(**kwargs):
+        from grounded_research.tyler_v1_models import ArbitrationAssessment, ClaimStatusUpdate
+
+        return ArbitrationAssessment(
+            dispute_id="D-1",
+            new_evidence_summary="Fresh evidence favored C-1.",
+            reasoning="Reasoning",
+            resolution=ResolutionOutcome.CLAIM_SUPPORTED,
+            updated_claim_statuses=[
+                ClaimStatusUpdate(
+                    claim_id="C-1",
+                    new_status=TylerClaimStatus.VERIFIED,
+                    confidence_in_resolution="high",
+                    remaining_uncertainty=None,
+                )
+            ],
+        )
+
+    monkeypatch.setattr("grounded_research.decompose.decompose_question_tyler_v1", fake_decompose_question_tyler_v1)
+    monkeypatch.setattr("grounded_research.verify._collect_fresh_evidence_for_dispute", fake_collect)
+    monkeypatch.setattr("grounded_research.verify.arbitrate_dispute_tyler_v1", fake_arbitrate)
+
+    stage_4_result = TylerClaimExtractionResult(
+        claim_ledger=[
+            ClaimLedgerEntry(
+                id="C-1",
+                statement="Employment stayed flat.",
+                source_models=["A"],
+                evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+                source_references=["S-1"],
+                status=TylerClaimStatus.CONTESTED,
+                supporting_models=["A"],
+                contesting_models=["B"],
+                related_assumptions=[],
+            )
+        ],
+        assumption_set=[],
+        dispute_queue=[
+            DisputeQueueEntry(
+                id="D-1",
+                type=DisputeType.EMPIRICAL,
+                description="Whether employment changed.",
+                claims_involved=["C-1"],
+                model_positions=[],
+                decision_critical=True,
+                decision_critical_rationale="Could change answer.",
+                status=DisputeStatus.UNRESOLVED,
+                resolution_routing="stage_5_evidence",
+            )
+        ],
+        statistics={
+            "total_claims": 1,
+            "total_assumptions": 0,
+            "total_disputes": 1,
+            "disputes_by_type": {"empirical": 1},
+            "decision_critical_disputes": 1,
+            "claims_per_model": {"A": 1},
+        },
+        stage_summary={
+            "stage_name": "Stage 4",
+            "goal": "goal",
+            "key_findings": ["k1", "k2", "k3"],
+            "decisions_made": ["d1"],
+            "outcome": "outcome",
+            "reasoning": "reasoning",
+        },
+    )
+    prior_ledger = ClaimLedger(
+        claims=[_make_claim("C-1"), _make_claim("C-2")],
+        disputes=[_make_dispute(["C-1", "C-2"])],
+        arbitration_results=[],
+    )
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="Should cities adopt UBI pilots?"),
+        sources=[SourceRecord(id="S-1", url="https://example.com/source", title="Source")],
+        evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Base evidence", content_type="text")],
+        gaps=[],
+    )
+
+    verification_result, ledger, warnings, llm_calls = await verify_disputes_tyler_v1(
+        stage_4_result=stage_4_result,
+        prior_ledger=prior_ledger,
+        bundle=bundle,
+        decomposition=None,
+        trace_id="trace-1",
+        max_disputes=1,
+        max_budget=0.5,
+    )
+
+    assert verification_result.updated_claim_ledger[0].status == TylerClaimStatus.VERIFIED
+    assert ledger.claims[0].status == "supported"
+    assert ledger.arbitration_results[0].verdict == "supported"
+    assert llm_calls == 1
     assert warnings == []

@@ -18,6 +18,81 @@ from grounded_research.models import (
     SourceRecord,
     SubQuestion,
 )
+from grounded_research.tyler_v1_models import (
+    ConfidenceAssessment,
+    DisagreementMapEntry,
+    DisputeType,
+    EvidenceTrailEntry,
+    KeyAssumption,
+    PreservedAlternative,
+    StageSummary,
+    SynthesisReport,
+    Tradeoff,
+)
+
+
+def _tyler_report() -> SynthesisReport:
+    return SynthesisReport(
+        executive_recommendation="Recommendation based on C-1.",
+        conditions_of_validity=["If C-1 flips, reconsider."],
+        decision_relevant_tradeoffs=[Tradeoff(if_optimize_for="stability", then_recommend="Choose the stable option.")],
+        disagreement_map=[
+            DisagreementMapEntry(
+                dispute_id="D-1",
+                type=DisputeType.INTERPRETIVE,
+                summary="Interpretive split",
+                resolution="Resolved conservatively.",
+                action_taken="Stage 5 arbitration",
+                chosen_interpretation="Conservative",
+            )
+        ],
+        preserved_alternatives=[
+            PreservedAlternative(
+                alternative="Aggressive option",
+                conditions_for_preference="Use if upside dominates downside.",
+                supporting_claims=["C-2"],
+            )
+        ],
+        key_assumptions=[KeyAssumption(assumption_id="A-1", statement="Assumption one.", if_wrong="Recommendation weakens.")],
+        confidence_assessment=[ConfidenceAssessment(claim_summary="C-1", confidence="medium", basis="Evidence is decent.")],
+        process_summary=[
+            StageSummary(
+                stage_name="Stage 1",
+                goal="goal",
+                key_findings=["k1", "k2", "k3"],
+                decisions_made=["d1"],
+                outcome="outcome",
+                reasoning="reasoning",
+            )
+        ],
+        claim_ledger_excerpt=[
+            {
+                "claim_id": "C-1",
+                "statement": "Primary claim",
+                "final_status": "verified",
+                "resolution_path": "Stage 5 supported it.",
+            }
+        ],
+        evidence_trail=[
+            EvidenceTrailEntry(
+                source_id="S-1",
+                url="https://example.com/source",
+                quality_score=0.9,
+                key_contribution="Supports C-1",
+                conflicts_resolved=["D-1"],
+            )
+        ],
+        evidence_gaps=["Need a larger sample."],
+        reasoning="Reasoning",
+        stage_summary=StageSummary(
+            stage_name="Stage 6",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
 
 
 @pytest.mark.asyncio
@@ -78,6 +153,21 @@ async def test_generate_report_passes_configured_timeout(
     report = await generate_report(state, trace_id="trace-1", max_budget=0.5)
 
     assert report.cited_claim_ids == ["C-1"]
+
+
+@pytest.mark.asyncio
+async def test_generate_report_projects_from_tyler_stage6_when_available() -> None:
+    """Tyler Stage 6 should become the source of truth for the structured report."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What should we do?"),
+        tyler_stage_6_result=_tyler_report(),
+    )
+
+    report = await generate_report(state, trace_id="trace-1", max_budget=0.5)
+
+    assert report.cited_claim_ids == ["C-1"]
+    assert "D-1" in report.disagreement_summary
 
 
 @pytest.mark.asyncio
@@ -234,6 +324,21 @@ async def test_render_long_report_repairs_placeholder_tokens(
     assert len(calls) == 2
     assert "Repair Feedback" in calls[1][1]["content"]
     assert "X-Y" not in markdown
+
+
+@pytest.mark.asyncio
+async def test_render_long_report_uses_tyler_stage6_markdown_when_available() -> None:
+    """Tyler Stage 6 should render directly to markdown without another LLM call."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What should we do?"),
+        tyler_stage_6_result=_tyler_report(),
+    )
+
+    markdown = await render_long_report(state, trace_id="trace-1", max_budget=0.5)
+
+    assert "## Executive Recommendation" in markdown
+    assert "C-1" in markdown
 
 
 @pytest.mark.asyncio

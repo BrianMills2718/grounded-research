@@ -627,7 +627,8 @@ Current literal-parity state:
 - Stage 0 exact Tyler schema contract: completed
 - Stage 1-3 Tyler-native prompt and adapter surfaces: completed
 - Stage 4 Tyler-native runtime artifact: completed
-- Stage 5-6 Tyler-native runtime migration: remaining major refactor
+- Stage 5-6 Tyler-native runtime migration: completed
+- Remaining full-parity gap: Stage 1-3 are still adapter-fed inputs, not native runtime artifacts
 
 Recently completed gate:
 

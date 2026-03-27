@@ -152,6 +152,15 @@ Acceptance:
 - Stage 6 emits Tyler `SynthesisReport`
 - user-steering interrupt logic matches Tyler's trigger contract
 
+Status:
+
+- Completed for Stage 5 and Stage 6 runtime output and trace serialization.
+- `engine.py` now runs Tyler-native Stage 5 and Stage 6 contracts and stores
+  the results in pipeline state.
+- The shipped `ClaimLedger`, `ArbitrationResult`, `FinalReport`, and markdown
+  report remain explicit projections from the Tyler artifacts for compatibility
+  with the existing downstream surfaces.
+
 ### Phase 4: Benchmark Re-Anchor
 
 Re-run the tracked benchmark surfaces on the Tyler-native runtime.
@@ -169,6 +178,14 @@ Acceptance:
 | Stage 4 rewrite breaks dispute routing | claim/dispute references stop lining up | migrate Stage 4 with dedicated integrity tests before benchmarking |
 | Stage 6 rewrite regresses benchmark quality badly | literal parity lowers decision usefulness | record that literal Tyler parity and current benchmark optimum diverge; do not hide it |
 | provider assumptions block literal runtime parity | Tyler prompt/schema contract is ready but Tavily/Exa path is external | mark the repo-local refactor complete up to explicit shared-infra dependency boundary |
+
+## Current Remaining Gap
+
+Literal Tyler parity is still not complete end-to-end because Stages 1-3 remain
+adapter-fed rather than native runtime artifacts. The runtime now stores Tyler
+Stage 4/5/6 results, but Stage 1 decomposition, Stage 2 evidence collection,
+and Stage 3 analyst generation still originate in the shipped repo-local
+contracts before being projected into Tyler-native shapes.
 
 ## Immediate Next Step
 

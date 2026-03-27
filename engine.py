@@ -36,8 +36,14 @@ async def run_pipeline(
     from grounded_research.canonicalize import (
         canonicalize_tyler_v1,
     )
-    from grounded_research.verify import verify_disputes
-    from grounded_research.export import generate_report, render_long_report, validate_grounding, write_outputs
+    from grounded_research.verify import verify_disputes_tyler_v1
+    from grounded_research.export import (
+        generate_report,
+        generate_tyler_synthesis_report,
+        render_long_report,
+        validate_grounding,
+        write_outputs,
+    )
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
@@ -209,11 +215,17 @@ async def run_pipeline(
         print("\n[Phase 4] Verifying decision-critical disputes...")
 
         max_disputes = int(get_budget("verification_max_disputes"))
-        ledger, arb_results, adjudication_warnings, phase4_llm_calls = await verify_disputes(
-            ledger, bundle, trace_id,
+        tyler_stage_5_result, ledger, adjudication_warnings, phase4_llm_calls = await verify_disputes_tyler_v1(
+            stage_4_result=state.tyler_stage_4_result,
+            prior_ledger=ledger,
+            bundle=bundle,
+            decomposition=decomposition,
+            trace_id=trace_id,
             max_disputes=max_disputes,
             max_budget=total_budget * 0.3,
         )
+        state.tyler_stage_5_result = tyler_stage_5_result
+        arb_results = ledger.arbitration_results
         state.claim_ledger = ledger
         for warning in adjudication_warnings:
             state.add_warning(
@@ -239,6 +251,14 @@ async def run_pipeline(
         state.current_phase = "export"
         print("\n[Phase 5] Generating grounded report...")
 
+        tyler_stage_6_result = await generate_tyler_synthesis_report(
+            state,
+            decomposition=decomposition,
+            trace_id=trace_id,
+            max_budget=total_budget * 0.2,
+        )
+        state.tyler_stage_6_result = tyler_stage_6_result
+
         report = await generate_report(state, trace_id, max_budget=total_budget * 0.1)
         state.report = report
 
@@ -250,7 +270,7 @@ async def run_pipeline(
                 print(f"  GROUNDING WARNING: {err}")
 
         # Render long-form report
-        print("  Rendering long-form report (3,000-6,000 words)...")
+        print("  Rendering final report from Tyler Stage 6 synthesis...")
         long_report_md = await render_long_report(
             state, trace_id, max_budget=total_budget * 0.2,
             decomposition=decomposition,

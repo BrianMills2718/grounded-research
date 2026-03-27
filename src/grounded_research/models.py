@@ -25,6 +25,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from grounded_research.tyler_v1_models import ClaimExtractionResult as TylerClaimExtractionResult
+from grounded_research.tyler_v1_models import VerificationResult as TylerVerificationResult
+from grounded_research.tyler_v1_models import SynthesisReport as TylerSynthesisReport
 
 
 # ---------------------------------------------------------------------------
@@ -810,8 +812,10 @@ class PipelineState(BaseModel):
     analyst_runs: list[AnalystRun] = Field(default_factory=list)
     tyler_stage_4_result: TylerClaimExtractionResult | None = None
     claim_ledger: ClaimLedger | None = None
+    tyler_stage_5_result: TylerVerificationResult | None = None
 
     # --- Outputs ---
+    tyler_stage_6_result: TylerSynthesisReport | None = None
     report: FinalReport | None = None
 
     # --- Observability ---

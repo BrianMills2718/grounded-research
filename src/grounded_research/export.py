@@ -29,8 +29,16 @@ from grounded_research.models import (
     FinalReport,
     PipelineState,
     PipelineWarning,
+    QuestionDecomposition,
 )
 from grounded_research.runtime_policy import get_request_timeout
+from grounded_research.tyler_v1_adapters import (
+    current_bundle_to_tyler_evidence_package,
+    current_decomposition_to_tyler,
+    render_tyler_synthesis_markdown,
+    tyler_synthesis_to_current_report,
+)
+from grounded_research.tyler_v1_models import SynthesisReport
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _LOG = logging.getLogger(__name__)
@@ -177,12 +185,188 @@ def validate_grounding(
     return errors
 
 
+async def generate_tyler_synthesis_report(
+    state: PipelineState,
+    *,
+    decomposition: QuestionDecomposition | None,
+    trace_id: str,
+    max_budget: float = 1.0,
+) -> SynthesisReport:
+    """Run Tyler's literal Stage 6 synthesis contract."""
+    from llm_client import acall_llm_structured, render_prompt
+
+    assert state.tyler_stage_4_result is not None
+    assert state.tyler_stage_5_result is not None
+    assert state.evidence_bundle is not None
+    assert state.question is not None
+
+    if decomposition is not None:
+        tyler_stage1 = current_decomposition_to_tyler(decomposition, original_query=state.question.text)
+    else:
+        from grounded_research.decompose import decompose_question_tyler_v1
+
+        tyler_stage1 = await decompose_question_tyler_v1(
+            question=state.question.text,
+            trace_id=f"{trace_id}/stage1_for_synthesis",
+            max_budget=max_budget * 0.15,
+        )
+
+    stage_2_result = current_bundle_to_tyler_evidence_package(state.evidence_bundle, tyler_stage1)
+    stage_4_result = state.tyler_stage_4_result
+    stage_5_result = state.tyler_stage_5_result
+
+    decision_critical_claim_ids = {
+        claim_id
+        for dispute in stage_5_result.updated_dispute_queue
+        if dispute.decision_critical
+        for claim_id in dispute.claims_involved
+    }
+    decision_critical_claims = [
+        claim for claim in stage_5_result.updated_claim_ledger if claim.id in decision_critical_claim_ids
+    ]
+    noncritical_claims = [
+        claim for claim in stage_5_result.updated_claim_ledger if claim.id not in decision_critical_claim_ids
+    ]
+
+    assessment_by_dispute = {
+        assessment.dispute_id: assessment for assessment in stage_5_result.disputes_investigated
+    }
+    dispute_queue_context: list[dict[str, object]] = []
+    for dispute in stage_5_result.updated_dispute_queue:
+        assessment = assessment_by_dispute.get(dispute.id)
+        remaining_uncertainty = ""
+        if assessment:
+            remaining_bits = [
+                update.remaining_uncertainty
+                for update in assessment.updated_claim_statuses
+                if update.remaining_uncertainty
+            ]
+            remaining_uncertainty = "; ".join(bit for bit in remaining_bits if bit)
+        dispute_queue_context.append(
+            {
+                **dispute.model_dump(mode="json"),
+                "resolution_details": assessment.reasoning if assessment else "",
+                "remaining_uncertainty": remaining_uncertainty or dispute.description,
+            }
+        )
+
+    additional_source_ids = {source.source_id: source for source in stage_5_result.additional_sources}
+    top_sources: list[dict[str, object]] = []
+    for source in state.evidence_bundle.sources:
+        contribution_claims = [
+            claim.id
+            for claim in stage_5_result.updated_claim_ledger
+            if source.id in claim.source_references
+        ]
+        resolved_disputes = [
+            dispute.id
+            for dispute in stage_5_result.updated_dispute_queue
+            if dispute.status is not None and dispute.id in {
+                assessment.dispute_id for assessment in stage_5_result.disputes_investigated
+            }
+            and source.id in additional_source_ids
+        ]
+        if not contribution_claims and source.id not in additional_source_ids:
+            continue
+        top_sources.append(
+            {
+                "id": source.id,
+                "title": source.title,
+                "quality_score": {
+                    "authoritative": 0.9,
+                    "reliable": 0.75,
+                    "unknown": 0.5,
+                    "unreliable": 0.2,
+                }.get(source.quality_tier, 0.5),
+                "source_type": source.source_type,
+                "contribution_summary": (
+                    f"Supports claims {', '.join(contribution_claims[:4])}"
+                    if contribution_claims
+                    else "Retrieved during Stage 5 targeted verification."
+                ),
+                "conflicts_resolved": resolved_disputes,
+            }
+        )
+    top_sources = top_sources[:12]
+
+    evidence_gaps = list(dict.fromkeys(
+        list(state.evidence_bundle.gaps)
+        + [
+            update.remaining_uncertainty
+            for assessment in stage_5_result.disputes_investigated
+            for update in assessment.updated_claim_statuses
+            if update.remaining_uncertainty
+        ]
+    ))
+
+    stage_3_summary = {
+        "stage_name": "Stage 3: Independent Candidate Generation",
+        "goal": "Produce independent recommendations, claims, assumptions, and counterarguments from the evidence package.",
+        "key_findings": [
+            f"{len([run for run in state.analyst_runs if run.succeeded])} analysts succeeded",
+            f"{sum(len(run.claims) for run in state.analyst_runs if run.succeeded)} total raw analyst claims produced",
+            "Independent analyst diversity preserved through aliasing and frame separation",
+        ],
+        "decisions_made": [
+            "Preserved only successful analyst runs for synthesis context",
+            "Kept analyst disagreement structure explicit for downstream Stage 4 extraction",
+        ],
+        "outcome": "Independent analysis objects available for canonicalization.",
+        "reasoning": "Combined stage summary synthesized from successful analyst runs.",
+    }
+    all_stage_summaries = [
+        tyler_stage1.stage_summary.model_dump(mode="json"),
+        stage_2_result.stage_summary.model_dump(mode="json"),
+        stage_3_summary,
+        stage_4_result.stage_summary.model_dump(mode="json"),
+        stage_5_result.stage_summary.model_dump(mode="json"),
+    ]
+
+    user_clarifications = "\n".join(
+        dispute.resolution_summary
+        for dispute in state.claim_ledger.disputes
+        if dispute.dispute_type in {"preference_conflict", "ambiguity"} and dispute.resolution_summary
+    ) if state.claim_ledger is not None else ""
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "tyler_v1_synthesis.yaml"),
+        original_query=state.question.text,
+        stage_6_user_input=user_clarifications,
+        decision_critical_claims=[claim.model_dump(mode="json") for claim in decision_critical_claims],
+        noncritical_claims=[claim.model_dump(mode="json") for claim in noncritical_claims],
+        assumption_set=[assumption.model_dump(mode="json") for assumption in stage_4_result.assumption_set],
+        dispute_queue=dispute_queue_context,
+        top_sources=top_sources,
+        evidence_gaps=evidence_gaps,
+        all_stage_summaries=all_stage_summaries,
+        response_schema_json=SynthesisReport.model_json_schema(),
+    )
+
+    report, _meta = await acall_llm_structured(
+        get_model("synthesis"),
+        messages,
+        response_model=SynthesisReport,
+        task="synthesis_tyler_v1",
+        trace_id=f"{trace_id}/synthesis_tyler_v1",
+        timeout=get_request_timeout("synthesis"),
+        max_budget=max_budget,
+        fallback_models=get_fallback_models("synthesis"),
+    )
+    return report
+
+
 async def generate_report(
     state: PipelineState,
     trace_id: str,
     max_budget: float = 1.0,
 ) -> FinalReport:
     """Generate the structured FinalReport for grounding validation."""
+    if state.tyler_stage_6_result is not None and state.question is not None:
+        return tyler_synthesis_to_current_report(
+            state.tyler_stage_6_result,
+            original_query=state.question.text,
+        )
+
     from llm_client import acall_llm_structured, render_prompt
 
     assert state.claim_ledger is not None
@@ -281,6 +465,12 @@ async def render_long_report(
     Uses the full pipeline state (all evidence, claims, disputes,
     arbitration results, sources) as context for the synthesis LLM.
     """
+    if state.tyler_stage_6_result is not None and state.question is not None:
+        return render_tyler_synthesis_markdown(
+            state.tyler_stage_6_result,
+            original_query=state.question.text,
+        )
+
     from llm_client import acall_llm, render_prompt
 
     assert state.claim_ledger is not None

@@ -14,37 +14,52 @@ import re
 
 from grounded_research.models import (
     AnalystRun,
+    ArbitrationResult as RuntimeArbitrationResult,
     Claim as RuntimeClaim,
     ClaimLedger,
+    ClaimUpdate as RuntimeClaimUpdate,
     Dispute as RuntimeDispute,
     EvidenceBundle,
+    FinalReport,
     QuestionDecomposition,
     SubQuestion as CurrentSubQuestion,
     _make_id,
 )
 from grounded_research.tyler_v1_models import (
+    AdditionalSource,
     AnalysisObject,
+    ArbitrationAssessment,
     Assumption,
     AssumptionSetEntry,
     ClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus,
+    ClaimStatusUpdate,
     ConfidenceLevel,
+    ConfidenceAssessment,
     CounterArgument,
     DecompositionResult,
+    DisagreementMapEntry,
     DisputeQueueEntry,
     DisputeStatus,
     DisputeType,
+    EvidenceTrailEntry,
     EvidenceLabel,
     EvidencePackage,
     ExtractionStatistics,
     Finding,
     Claim as TylerClaim,
+    KeyAssumption,
     ModelPosition,
+    PreservedAlternative,
+    ResolutionOutcome,
+    SynthesisReport,
     Source,
     StageSummary,
     SubQuestion as TylerSubQuestion,
     SubQuestionEvidence,
+    Tradeoff,
+    VerificationResult,
 )
 
 
@@ -742,3 +757,173 @@ def tyler_stage4_to_current_ledger(
         disputes=current_disputes,
         arbitration_results=[],
     )
+
+
+def _tyler_claim_status_to_current(status: ClaimStatus) -> str:
+    """Project Tyler claim lifecycle states onto the shipped runtime statuses."""
+    return {
+        ClaimStatus.SUPPORTED: "supported",
+        ClaimStatus.VERIFIED: "supported",
+        ClaimStatus.REFUTED: "refuted",
+        ClaimStatus.UNRESOLVED: "inconclusive",
+    }.get(status, "initial")
+
+
+def tyler_assessment_to_current_arbitration(
+    assessment: ArbitrationAssessment,
+    additional_sources: list[AdditionalSource],
+) -> RuntimeArbitrationResult:
+    """Project one Tyler arbitration assessment into the shipped runtime artifact."""
+    verdict = {
+        ResolutionOutcome.CLAIM_SUPPORTED: "supported",
+        ResolutionOutcome.CLAIM_REFUTED: "refuted",
+        ResolutionOutcome.INTERPRETATION_REVISED: "revised",
+        ResolutionOutcome.EVIDENCE_INSUFFICIENT: "inconclusive",
+    }[assessment.resolution]
+
+    source_ids = [source.source_id for source in additional_sources if source.retrieved_for_dispute == assessment.dispute_id]
+    status_map = {
+        ClaimStatus.VERIFIED: "supported",
+        ClaimStatus.REFUTED: "refuted",
+        ClaimStatus.UNRESOLVED: "inconclusive",
+    }
+    return RuntimeArbitrationResult(
+        dispute_id=assessment.dispute_id,
+        verdict=verdict,
+        new_evidence_ids=source_ids,
+        reasoning=assessment.reasoning,
+        claim_updates=[
+            RuntimeClaimUpdate(
+                claim_id=update.claim_id,
+                new_status=status_map.get(update.new_status, "revised"),
+                basis_type="new_evidence",
+                cited_evidence_ids=source_ids,
+                justification=update.remaining_uncertainty or assessment.new_evidence_summary,
+            )
+            for update in assessment.updated_claim_statuses
+        ],
+    )
+
+
+def tyler_stage5_to_current_ledger(
+    verification_result: VerificationResult,
+    prior_ledger: ClaimLedger,
+) -> ClaimLedger:
+    """Project Tyler Stage 5 output into the shipped ClaimLedger contract."""
+    claim_map = {claim.id: claim.model_copy(deep=True) for claim in prior_ledger.claims}
+    for updated_claim in verification_result.updated_claim_ledger:
+        current_claim = claim_map.get(updated_claim.id)
+        if current_claim is None:
+            continue
+        current_claim.status = _tyler_claim_status_to_current(updated_claim.status)
+        current_claim.status_reason = f"Projected from Tyler Stage 5 status {updated_claim.status.value}."
+        claim_map[current_claim.id] = current_claim
+
+    dispute_map = {dispute.id: dispute.model_copy(deep=True) for dispute in prior_ledger.disputes}
+    for updated_dispute in verification_result.updated_dispute_queue:
+        current_dispute = dispute_map.get(updated_dispute.id)
+        if current_dispute is None:
+            continue
+        current_dispute.resolved = updated_dispute.status in {DisputeStatus.RESOLVED, DisputeStatus.DEFERRED_TO_USER}
+        current_dispute.resolution_summary = updated_dispute.decision_critical_rationale
+        dispute_map[current_dispute.id] = current_dispute
+
+    arbitration_results = [
+        tyler_assessment_to_current_arbitration(
+            assessment,
+            verification_result.additional_sources,
+        )
+        for assessment in verification_result.disputes_investigated
+    ]
+
+    return ClaimLedger(
+        claims=list(claim_map.values()),
+        disputes=list(dispute_map.values()),
+        arbitration_results=arbitration_results,
+    )
+
+
+def tyler_synthesis_to_current_report(report: SynthesisReport, original_query: str) -> FinalReport:
+    """Project Tyler Stage 6 output into the shipped structured report surface."""
+    cited_claim_ids = [entry.claim_id for entry in report.claim_ledger_excerpt]
+    disagreement_summary = "\n".join(
+        f"{entry.dispute_id}: {entry.summary} — {entry.resolution}"
+        for entry in report.disagreement_map
+    )
+    alternatives = [
+        f"{alternative.alternative} — {alternative.conditions_for_preference}"
+        for alternative in report.preserved_alternatives
+    ]
+    return FinalReport(
+        title=original_query[:120] or "Grounded research report",
+        question=original_query,
+        recommendation=report.executive_recommendation,
+        alternatives=alternatives,
+        disagreement_summary=disagreement_summary,
+        evidence_gaps=report.evidence_gaps,
+        flip_conditions=report.conditions_of_validity,
+        cited_claim_ids=cited_claim_ids,
+    )
+
+
+def render_tyler_synthesis_markdown(report: SynthesisReport, original_query: str) -> str:
+    """Render Tyler's structured synthesis artifact as the final markdown report."""
+    lines = [
+        f"# {original_query}",
+        "",
+        "## Executive Recommendation",
+        "",
+        report.executive_recommendation,
+        "",
+        "## Conditions Of Validity",
+        "",
+    ]
+    for condition in report.conditions_of_validity:
+        lines.append(f"- {condition}")
+    lines.extend(["", "## Decision-Relevant Tradeoffs", ""])
+    for tradeoff in report.decision_relevant_tradeoffs:
+        lines.append(f"- If optimize for **{tradeoff.if_optimize_for}**: {tradeoff.then_recommend}")
+    lines.extend(["", "## Disagreement Map", ""])
+    for item in report.disagreement_map:
+        lines.append(f"- **{item.dispute_id}** [{item.type.value}] {item.summary}")
+        lines.append(f"  Resolution: {item.resolution}")
+        lines.append(f"  Action taken: {item.action_taken}")
+        if item.chosen_interpretation:
+            lines.append(f"  Chosen interpretation: {item.chosen_interpretation}")
+    lines.extend(["", "## Preserved Alternatives", ""])
+    for alternative in report.preserved_alternatives:
+        lines.append(f"- **{alternative.alternative}**")
+        lines.append(f"  When better: {alternative.conditions_for_preference}")
+        lines.append(f"  Supporting claims: {', '.join(alternative.supporting_claims)}")
+    lines.extend(["", "## Key Assumptions", ""])
+    for assumption in report.key_assumptions:
+        lines.append(f"- **{assumption.assumption_id}** {assumption.statement}")
+        lines.append(f"  If wrong: {assumption.if_wrong}")
+    lines.extend(["", "## Confidence Assessment", ""])
+    for item in report.confidence_assessment:
+        lines.append(f"- **{item.confidence.value.upper()}**: {item.claim_summary}")
+        lines.append(f"  Basis: {item.basis}")
+    lines.extend(["", "## Process Summary", ""])
+    for summary in report.process_summary:
+        lines.append(f"### {summary.stage_name}")
+        lines.append(f"- Goal: {summary.goal}")
+        for finding in summary.key_findings:
+            lines.append(f"- {finding}")
+        for decision in summary.decisions_made:
+            lines.append(f"- Decision: {decision}")
+        lines.append(f"- Outcome: {summary.outcome}")
+    lines.extend(["", "## Claim Ledger Excerpt", ""])
+    for claim in report.claim_ledger_excerpt:
+        lines.append(f"- **{claim.claim_id}** [{claim.final_status.value}] {claim.statement}")
+        lines.append(f"  Resolution path: {claim.resolution_path}")
+    lines.extend(["", "## Evidence Trail", ""])
+    for source in report.evidence_trail:
+        lines.append(f"- **{source.source_id}** ({source.quality_score:.2f}) {source.key_contribution}")
+        lines.append(f"  URL: {source.url}")
+        if source.conflicts_resolved:
+            lines.append(f"  Helped resolve: {', '.join(source.conflicts_resolved)}")
+    lines.extend(["", "## Evidence Gaps", ""])
+    for gap in report.evidence_gaps:
+        lines.append(f"- {gap}")
+    lines.extend(["", "## Synthesis Reasoning", "", report.reasoning, ""])
+    return "\n".join(lines)

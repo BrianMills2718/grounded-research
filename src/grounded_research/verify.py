@@ -25,8 +25,26 @@ from grounded_research.models import (
     Dispute,
     EvidenceBundle,
     EvidenceItem,
+    QuestionDecomposition,
     SourceRecord,
     VerificationQueryBatch,
+)
+from grounded_research.tyler_v1_adapters import (
+    current_bundle_to_tyler_evidence_package,
+    current_decomposition_to_tyler,
+    normalize_tyler_claim_extraction_result,
+    tyler_stage5_to_current_ledger,
+)
+from grounded_research.tyler_v1_models import (
+    AdditionalSource,
+    ArbitrationAssessment,
+    ClaimExtractionResult as TylerClaimExtractionResult,
+    ClaimStatus as TylerClaimStatus,
+    ClaimStatusUpdate,
+    DisputeQueueEntry,
+    DisputeStatus,
+    ResolutionOutcome,
+    VerificationResult,
 )
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -486,6 +504,335 @@ async def _collect_fresh_evidence_for_dispute(
         ))
 
     return disputes_new_sources, disputes_new_evidence, warnings
+
+
+def _build_tyler_verification_queries(
+    dispute: DisputeQueueEntry,
+    claim_statements: list[str],
+    original_query: str,
+) -> list[str]:
+    """Deterministically construct Tyler-style neutral verification queries."""
+    base = dispute.description or original_query
+    first_claim = claim_statements[0] if claim_statements else original_query
+    second_claim = claim_statements[1] if len(claim_statements) > 1 else first_claim
+    year = "2026"
+    return [
+        f"{base} evidence",
+        f"{first_claim} versus {second_claim}",
+        f"{base} official study {year}",
+    ]
+
+
+def _build_additional_sources(
+    *,
+    dispute_id: str,
+    new_sources: list[SourceRecord],
+    new_evidence: list[EvidenceItem],
+) -> list[AdditionalSource]:
+    """Convert freshly fetched evidence into Tyler's Stage 5 source shape."""
+    evidence_by_source: dict[str, list[str]] = {}
+    for item in new_evidence:
+        evidence_by_source.setdefault(item.source_id, []).append(item.content)
+    return [
+        AdditionalSource(
+            source_id=source.id,
+            url=source.url,
+            title=source.title,
+            quality_score={
+                "authoritative": 0.9,
+                "reliable": 0.75,
+                "unknown": 0.5,
+                "unreliable": 0.2,
+            }.get(source.quality_tier, 0.5),
+            key_findings=evidence_by_source.get(source.id, []),
+            retrieved_for_dispute=dispute_id,
+        )
+        for source in new_sources
+    ]
+
+
+async def arbitrate_dispute_tyler_v1(
+    *,
+    original_query: str,
+    dispute: DisputeQueueEntry,
+    claim_ledger_entries: list[object],
+    relevant_original_sources: list[object],
+    new_evidence: list[AdditionalSource],
+    trace_id: str,
+    max_budget: float,
+) -> ArbitrationAssessment:
+    """Run Tyler's literal Stage 5 arbitration prompt for one dispute."""
+    from llm_client import acall_llm_structured, render_prompt
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "tyler_v1_arbitration.yaml"),
+        original_query=original_query,
+        dispute=dispute.model_dump(mode="json"),
+        claim_ledger=[claim.model_dump(mode="json") for claim in claim_ledger_entries],
+        relevant_original_sources=[source.model_dump(mode="json") for source in relevant_original_sources],
+        new_evidence=[source.model_dump(mode="json") for source in new_evidence],
+        response_schema_json=ArbitrationAssessment.model_json_schema(),
+    )
+    model = get_model("arbitration")
+    result, _meta = await acall_llm_structured(
+        model,
+        messages,
+        response_model=ArbitrationAssessment,
+        task="dispute_arbitration_tyler_v1",
+        trace_id=f"{trace_id}/arb/{dispute.id}",
+        timeout=get_request_timeout("arbitration"),
+        max_budget=max_budget,
+        fallback_models=get_fallback_models("arbitration"),
+    )
+    return result
+
+
+def _normalize_tyler_claim_status_updates(
+    *,
+    dispute: DisputeQueueEntry,
+    claim_ids: list[str],
+    assessment: ArbitrationAssessment,
+) -> list[ClaimStatusUpdate]:
+    """Repair arbitration claim-status updates into Tyler's strict post-Stage-5 set."""
+    allowed = {
+        TylerClaimStatus.VERIFIED,
+        TylerClaimStatus.REFUTED,
+        TylerClaimStatus.UNRESOLVED,
+    }
+    normalized: list[ClaimStatusUpdate] = []
+    seen: set[str] = set()
+    default_status = {
+        ResolutionOutcome.CLAIM_SUPPORTED: TylerClaimStatus.VERIFIED,
+        ResolutionOutcome.CLAIM_REFUTED: TylerClaimStatus.REFUTED,
+        ResolutionOutcome.INTERPRETATION_REVISED: TylerClaimStatus.VERIFIED,
+        ResolutionOutcome.EVIDENCE_INSUFFICIENT: TylerClaimStatus.UNRESOLVED,
+    }[assessment.resolution]
+    for update in assessment.updated_claim_statuses:
+        if update.claim_id not in claim_ids or update.claim_id in seen:
+            continue
+        status = update.new_status if update.new_status in allowed else default_status
+        normalized.append(
+            update.model_copy(
+                update={
+                    "new_status": status,
+                    "remaining_uncertainty": update.remaining_uncertainty
+                    or (
+                        assessment.new_evidence_summary
+                        if assessment.resolution is ResolutionOutcome.EVIDENCE_INSUFFICIENT
+                        else None
+                    ),
+                }
+            )
+        )
+        seen.add(update.claim_id)
+
+    if normalized:
+        return normalized
+
+    return [
+        ClaimStatusUpdate(
+            claim_id=claim_id,
+            new_status=default_status,
+            confidence_in_resolution=assessment.updated_claim_statuses[0].confidence_in_resolution
+            if assessment.updated_claim_statuses
+            else "medium",
+            remaining_uncertainty=assessment.new_evidence_summary
+            if default_status is TylerClaimStatus.UNRESOLVED
+            else None,
+        )
+        for claim_id in claim_ids
+    ]
+
+
+async def verify_disputes_tyler_v1(
+    *,
+    stage_4_result: TylerClaimExtractionResult,
+    prior_ledger: ClaimLedger,
+    bundle: EvidenceBundle,
+    decomposition: QuestionDecomposition | None,
+    trace_id: str,
+    max_disputes: int = 5,
+    max_budget: float = 2.0,
+) -> tuple[VerificationResult, ClaimLedger, list[VerificationWarning], int]:
+    """Run Tyler's Stage 5 artifact and project it into the shipped ledger."""
+    original_query = bundle.question.text if bundle.question else ""
+    if decomposition is not None:
+        tyler_stage1 = current_decomposition_to_tyler(
+            decomposition,
+            original_query=original_query,
+        )
+    else:
+        from grounded_research.decompose import decompose_question_tyler_v1
+
+        tyler_stage1 = await decompose_question_tyler_v1(
+            question=original_query,
+            trace_id=f"{trace_id}/stage1_for_verify",
+            max_budget=max_budget * 0.1,
+        )
+    stage_2_result = current_bundle_to_tyler_evidence_package(bundle, tyler_stage1)
+    claim_lookup = {claim.id: claim.model_copy(deep=True) for claim in stage_4_result.claim_ledger}
+    dispute_lookup = {dispute.id: dispute.model_copy(deep=True) for dispute in stage_4_result.dispute_queue}
+    actionable = [
+        dispute
+        for dispute in stage_4_result.dispute_queue
+        if dispute.decision_critical
+        and dispute.resolution_routing in {"stage_5_evidence", "stage_5_arbitration"}
+        and dispute.status is DisputeStatus.UNRESOLVED
+    ][:max_disputes]
+
+    if not actionable:
+        empty = VerificationResult(
+            disputes_investigated=[],
+            additional_sources=[],
+            updated_claim_ledger=stage_4_result.claim_ledger,
+            updated_dispute_queue=stage_4_result.dispute_queue,
+            search_budget={},
+            rounds_used=0,
+            stage_summary={
+                "stage_name": "Stage 5: Targeted Verification & Arbitration",
+                "goal": "Resolve decision-critical empirical and interpretive disputes.",
+                "key_findings": ["No decision-critical Stage 5 disputes required investigation."],
+                "decisions_made": ["Skipped Stage 5 because no actionable disputes remained."],
+                "outcome": "No verification work performed.",
+                "reasoning": "The Stage 4 dispute queue had no unresolved empirical or interpretive decision-critical disputes.",
+            },
+        )
+        return empty, prior_ledger, [], 0
+
+    depth_cfg = get_depth_config()
+    max_rounds = max(1, int(depth_cfg.get("arbitration_max_rounds", 1)))
+    budget_per_dispute = max_budget / len(actionable)
+    llm_calls = 0
+    warnings: list[VerificationWarning] = []
+    all_additional_sources: list[AdditionalSource] = []
+    investigated: list[ArbitrationAssessment] = []
+    search_budget: dict[str, int] = {}
+    rounds_used = 0
+
+    for dispute in actionable:
+        current_dispute = next((item for item in prior_ledger.disputes if item.id == dispute.id), None)
+        if current_dispute is None:
+            continue
+        claim_entries = [claim_lookup[claim_id] for claim_id in dispute.claims_involved if claim_id in claim_lookup]
+        relevant_original_sources = [
+            source
+            for subq in stage_2_result.sub_question_evidence
+            for source in subq.sources
+            if any(source.id in claim.source_references for claim in claim_entries)
+        ]
+        latest_assessment = ArbitrationAssessment(
+            dispute_id=dispute.id,
+            new_evidence_summary="Verification did not run.",
+            reasoning="Verification did not run.",
+            resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+            updated_claim_statuses=[
+                ClaimStatusUpdate(
+                    claim_id=claim.id,
+                    new_status=TylerClaimStatus.UNRESOLVED,
+                    confidence_in_resolution="medium",
+                    remaining_uncertainty="Verification did not run.",
+                )
+                for claim in claim_entries
+            ],
+        )
+
+        for round_idx in range(1, max_rounds + 1):
+            rounds_used = max(rounds_used, round_idx)
+            round_trace_id = f"{trace_id}/verify_tyler/{dispute.id}/round_{round_idx}"
+            round_budget = budget_per_dispute / max_rounds
+            queries = _build_tyler_verification_queries(
+                dispute,
+                [claim.statement for claim in claim_entries],
+                original_query,
+            )
+            search_budget[dispute.id] = search_budget.get(dispute.id, 0) + len(queries)
+
+            new_sources, new_evidence, new_warnings = await _collect_fresh_evidence_for_dispute(
+                dispute=current_dispute,
+                queries=queries,
+                bundle=bundle,
+                trace_id=round_trace_id,
+            )
+            warnings.extend(new_warnings)
+            additional_sources = _build_additional_sources(
+                dispute_id=dispute.id,
+                new_sources=new_sources,
+                new_evidence=new_evidence,
+            )
+            all_additional_sources.extend(additional_sources)
+
+            if not additional_sources:
+                latest_assessment = latest_assessment.model_copy(
+                    update={
+                        "new_evidence_summary": f"No fresh evidence discovered in round {round_idx}.",
+                        "reasoning": f"No fresh evidence discovered in round {round_idx}.",
+                        "resolution": ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+                        "updated_claim_statuses": [
+                            ClaimStatusUpdate(
+                                claim_id=claim.id,
+                                new_status=TylerClaimStatus.UNRESOLVED,
+                                confidence_in_resolution="medium",
+                                remaining_uncertainty=f"No fresh evidence discovered in round {round_idx}.",
+                            )
+                            for claim in claim_entries
+                        ],
+                    }
+                )
+                break
+
+            assessment = await arbitrate_dispute_tyler_v1(
+                original_query=original_query,
+                dispute=dispute,
+                claim_ledger_entries=claim_entries,
+                relevant_original_sources=relevant_original_sources,
+                new_evidence=additional_sources,
+                trace_id=round_trace_id,
+                max_budget=round_budget,
+            )
+            llm_calls += 1
+            normalized_updates = _normalize_tyler_claim_status_updates(
+                dispute=dispute,
+                claim_ids=[claim.id for claim in claim_entries],
+                assessment=assessment,
+            )
+            latest_assessment = assessment.model_copy(update={"updated_claim_statuses": normalized_updates})
+            if assessment.resolution is not ResolutionOutcome.EVIDENCE_INSUFFICIENT:
+                break
+
+        investigated.append(latest_assessment)
+        if latest_assessment.resolution is ResolutionOutcome.EVIDENCE_INSUFFICIENT:
+            dispute_lookup[dispute.id].status = DisputeStatus.UNRESOLVED
+        else:
+            dispute_lookup[dispute.id].status = DisputeStatus.RESOLVED
+        for update in latest_assessment.updated_claim_statuses:
+            if update.claim_id in claim_lookup:
+                claim_lookup[update.claim_id].status = update.new_status
+
+    verification_result = VerificationResult(
+        disputes_investigated=investigated,
+        additional_sources=all_additional_sources,
+        updated_claim_ledger=list(claim_lookup.values()),
+        updated_dispute_queue=list(dispute_lookup.values()),
+        search_budget=search_budget,
+        rounds_used=rounds_used,
+        stage_summary={
+            "stage_name": "Stage 5: Targeted Verification & Arbitration",
+            "goal": "Resolve decision-critical empirical and interpretive disputes with targeted fresh evidence.",
+            "key_findings": [
+                f"{len(investigated)} disputes investigated",
+                f"{len(all_additional_sources)} additional sources gathered",
+                f"{sum(1 for item in investigated if item.resolution is not ResolutionOutcome.EVIDENCE_INSUFFICIENT)} disputes resolved",
+            ],
+            "decisions_made": [
+                "Used deterministic neutral verification queries per dispute",
+                "Updated only claims directly involved in investigated disputes",
+            ],
+            "outcome": f"Stage 5 completed with {rounds_used} round(s) used.",
+            "reasoning": "Literal Tyler Stage 5 arbitration ran against targeted fresh evidence, then the result was normalized into strict post-verification claim statuses.",
+        },
+    )
+    current_ledger = tyler_stage5_to_current_ledger(verification_result, prior_ledger)
+    return verification_result, current_ledger, warnings, llm_calls
 
 
 async def verify_disputes(
