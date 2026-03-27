@@ -12,6 +12,11 @@ from pathlib import Path
 from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import DecompositionValidation, QuestionDecomposition, _make_id
 from grounded_research.runtime_policy import get_request_timeout
+from grounded_research.tyler_v1_adapters import (
+    normalize_tyler_decomposition_ids,
+    tyler_decomposition_to_current,
+)
+from grounded_research.tyler_v1_models import DecompositionResult
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -55,6 +60,53 @@ async def decompose_question(
             sq.id = _make_id("SQ-")
 
     return result
+
+
+async def decompose_question_tyler_v1(
+    question: str,
+    trace_id: str,
+    max_budget: float = 0.5,
+) -> DecompositionResult:
+    """Run Tyler's literal Stage 1 decomposition contract.
+
+    This is the migration entrypoint for literal-parity work. It does not yet
+    replace the shipped runtime surface, but it produces Tyler-native
+    `DecompositionResult` artifacts for the staged refactor.
+    """
+    from llm_client import acall_llm_structured, render_prompt
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "tyler_v1_decompose.yaml"),
+        original_query=question,
+        response_schema_json=DecompositionResult.model_json_schema(),
+    )
+
+    model = get_model("decomposition")
+    result, _meta = await acall_llm_structured(
+        model,
+        messages,
+        response_model=DecompositionResult,
+        task="question_decomposition_tyler_v1",
+        trace_id=f"{trace_id}/decompose_tyler_v1",
+        timeout=get_request_timeout("decomposition"),
+        max_budget=max_budget,
+        fallback_models=get_fallback_models("decomposition"),
+    )
+    return normalize_tyler_decomposition_ids(result)
+
+
+async def decompose_question_with_tyler_adapter(
+    question: str,
+    trace_id: str,
+    max_budget: float = 0.5,
+) -> tuple[DecompositionResult, QuestionDecomposition]:
+    """Produce a Tyler-native decomposition and an adapted current-runtime copy."""
+    tyler_result = await decompose_question_tyler_v1(
+        question=question,
+        trace_id=trace_id,
+        max_budget=max_budget,
+    )
+    return tyler_result, tyler_decomposition_to_current(tyler_result)
 
 
 async def validate_decomposition(
