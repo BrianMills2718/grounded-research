@@ -277,6 +277,11 @@ The default behavior in this repo is:
 Do not create fake pause points. If the next step is already decided in the
 plan, do it.
 
+Benchmark-preservation waves are included in this rule. Do not stop after a
+single rerender, a partial benchmark, or an intermediate comparison file. A
+benchmark wave is only complete when the run, the comparison, the plan status,
+and the roadmap state all agree on the result.
+
 If the change is architectural, update the relevant ADR before continuing.
 
 When implementing against an accepted active plan, continue autonomously until

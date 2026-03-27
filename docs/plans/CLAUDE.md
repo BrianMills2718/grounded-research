@@ -18,6 +18,7 @@
 | [depth_modes.md](depth_modes.md) | Completed | Standard/deep/thorough profiles shipped with deeper extraction, multi-round arbitration, and sectioned synthesis for long thorough-mode reports. Future depth work now requires a new benchmark-triggered plan. |
 | [depth_modes_wave1_execution.md](depth_modes_wave1_execution.md) | Completed | Wave 1 depth continuation shipped: goal-driven evidence extraction in deep/thorough, multi-round arbitration, and a passing live deep collection smoke gate. |
 | [sectioned_synthesis_wave1.md](sectioned_synthesis_wave1.md) | Completed | Benchmark-triggered export wave closed: the single-call `thorough` rerender failed the gate, sectioned synthesis was implemented, and the saved rerender now clears 11k words. |
+| [thorough_benchmark_preservation_wave1.md](thorough_benchmark_preservation_wave1.md) | In Progress | Fresh `thorough` UBI fixture benchmark on current code, fair comparison against cached Perplexity, and only then a decision on whether recent-first ranking needs to become the next repo-local wave. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |
