@@ -91,7 +91,7 @@ def tyler_decomposition_to_current(result: DecompositionResult) -> QuestionDecom
         core_question=result.core_question,
         sub_questions=[
             CurrentSubQuestion(
-                id=_make_id("SQ-"),
+                id=sq.id,
                 text=sq.question,
                 type=type_map.get(sq.type, "scope"),
                 falsification_target=(

@@ -41,6 +41,15 @@ from grounded_research.models import (
     SourceRecord,
 )
 from grounded_research.runtime_policy import get_request_timeout
+from grounded_research.tyler_v1_models import (
+    DecompositionResult as TylerDecompositionResult,
+    EvidenceLabel,
+    EvidencePackage as TylerEvidencePackage,
+    Finding,
+    Source as TylerSource,
+    StageSummary,
+    SubQuestionEvidence,
+)
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -470,6 +479,272 @@ async def generate_search_queries(
     return result.queries, {}
 
 
+async def generate_search_queries_tyler_v1(
+    stage_1_result: TylerDecompositionResult,
+    trace_id: str,
+    max_budget: float = 0.5,
+) -> tuple[list[str], dict[str, str], dict[str, int]]:
+    """Generate Tyler-native Stage 2 query variants per sub-question."""
+    from llm_client import acall_llm_structured, render_prompt
+    from pydantic import BaseModel, Field
+
+    class TylerQueryVariants(BaseModel):
+        """One Tyler Stage 2 query set for a single sub-question."""
+
+        keyword_rewrite: str = Field(description="Keyword-oriented search query.")
+        practitioner_rewrite: str = Field(description="Practitioner-signal search query.")
+        contrarian_rewrite: str = Field(description="Query targeting falsifying or contradictory evidence.")
+        semantic_description: str = Field(description="Semantic description of the ideal document to find.")
+
+    query_to_sq: dict[str, str] = {}
+    queries_per_sq: dict[str, int] = {}
+    all_queries: list[str] = []
+
+    async def _generate_for_sub_question(sub_question) -> tuple[str, list[str]]:
+        messages = render_prompt(
+            str(_PROJECT_ROOT / "prompts" / "tyler_v1_query_diversification.yaml"),
+            sub_question=sub_question.model_dump(mode="json"),
+        )
+        result, _meta = await acall_llm_structured(
+            get_model("analyst"),
+            messages,
+            response_model=TylerQueryVariants,
+            task="query_generation_tyler_v1",
+            trace_id=f"{trace_id}/query_diversification/{sub_question.id}",
+            timeout=get_request_timeout("query_generation"),
+            max_budget=max_budget / max(1, len(stage_1_result.sub_questions)),
+            fallback_models=get_fallback_models("analyst"),
+        )
+        generated = [
+            result.keyword_rewrite.strip(),
+            result.practitioner_rewrite.strip(),
+            result.contrarian_rewrite.strip(),
+            result.semantic_description.strip(),
+        ]
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for query in generated:
+            if query and query not in seen:
+                deduped.append(query)
+                seen.add(query)
+        return sub_question.id, deduped
+
+    results = await asyncio.gather(*[
+        _generate_for_sub_question(sub_question)
+        for sub_question in stage_1_result.sub_questions
+    ])
+
+    for sub_question_id, generated in results:
+        queries_per_sq[sub_question_id] = len(generated)
+        for query in generated:
+            query_to_sq[query] = sub_question_id
+            all_queries.append(query)
+
+    return all_queries, query_to_sq, queries_per_sq
+
+
+def _current_source_type_to_tyler_source_type(source_type: str) -> str:
+    """Project current source taxonomy into Tyler's Stage 2 source_type enum."""
+    mapping = {
+        "government_db": "official_docs",
+        "primary_document": "official_docs",
+        "academic": "academic",
+        "news": "news",
+        "web_search": "practitioner_report",
+        "social_media": "forum",
+        "platform_transparency": "official_docs",
+    }
+    return mapping.get(source_type, "blog")
+
+
+def _current_quality_tier_to_tyler_score(quality_tier: str) -> float:
+    """Project current qualitative source tiers into Tyler's numeric score."""
+    return {
+        "authoritative": 0.9,
+        "reliable": 0.75,
+        "unknown": 0.5,
+        "unreliable": 0.2,
+    }.get(quality_tier, 0.5)
+
+
+def _current_source_to_evidence_label(source_type: str) -> EvidenceLabel:
+    """Approximate Tyler evidence labels from current source metadata."""
+    if source_type in {"government_db", "primary_document", "academic"}:
+        return EvidenceLabel.VENDOR_DOCUMENTED
+    if source_type in {"news", "web_search"}:
+        return EvidenceLabel.EMPIRICALLY_OBSERVED
+    if source_type in {"platform_transparency", "social_media"}:
+        return EvidenceLabel.MODEL_SELF_CHARACTERIZATION
+    return EvidenceLabel.SPECULATIVE_INFERENCE
+
+
+async def build_tyler_evidence_package(
+    bundle: EvidenceBundle,
+    stage_1_result: TylerDecompositionResult,
+    trace_id: str,
+    *,
+    query_counts_by_sub_question: dict[str, int] | None = None,
+    max_budget: float = 0.5,
+) -> TylerEvidencePackage:
+    """Build Tyler's Stage 2 artifact from the collected bundle.
+
+    Retrieval and page persistence remain mechanical. This function is the live
+    semantic Stage 2 surface: it normalizes evidence into Tyler's grouped
+    `EvidencePackage` contract using Tyler's finding-extraction prompt.
+    """
+    from llm_client import acall_llm_structured, render_prompt
+    from pydantic import BaseModel, Field
+
+    class FindingExtractionResult(BaseModel):
+        """LLM-facing Tyler finding extraction payload."""
+
+        findings: list[Finding] = Field(
+            default_factory=list,
+            description="Atomic findings extracted from this source for the given sub-question.",
+        )
+
+    source_by_id = {source.id: source for source in bundle.sources}
+    grouped_items: dict[tuple[str, str], list[EvidenceItem]] = {}
+    for item in bundle.evidence:
+        target_sub_question_ids = item.sub_question_ids or [stage_1_result.sub_questions[0].id]
+        for sub_question_id in target_sub_question_ids:
+            grouped_items.setdefault((sub_question_id, item.source_id), []).append(item)
+
+    sub_question_evidence: list[SubQuestionEvidence] = []
+    query_counts = dict(query_counts_by_sub_question or {})
+
+    for sub_question in stage_1_result.sub_questions:
+        stage_sources: list[TylerSource] = []
+        supporting_source_ids = [
+            source_id
+            for (sub_question_id, source_id) in grouped_items
+            if sub_question_id == sub_question.id and source_id in source_by_id
+        ]
+        for source_id in supporting_source_ids:
+            source = source_by_id[source_id]
+            items = grouped_items[(sub_question.id, source_id)]
+            source_content = "\n\n".join(
+                dict.fromkeys(item.content.strip() for item in items if item.content.strip())
+            )[:12000]
+            messages = render_prompt(
+                str(_PROJECT_ROOT / "prompts" / "tyler_v1_extract_findings.yaml"),
+                original_query=bundle.question.text,
+                sub_question_id=sub_question.id,
+                sub_question_text=sub_question.question,
+                source_title=source.title,
+                source_url=source.url,
+                source_type=_current_source_type_to_tyler_source_type(source.source_type),
+                source_content=source_content,
+                response_schema_json=FindingExtractionResult.model_json_schema(),
+            )
+            result, _meta = await acall_llm_structured(
+                get_model("evidence_extraction"),
+                messages,
+                response_model=FindingExtractionResult,
+                task="finding_extraction_tyler_v1",
+                trace_id=f"{trace_id}/stage2/{sub_question.id}/{source.id}",
+                timeout=get_request_timeout("evidence_extraction"),
+                max_budget=max_budget / max(1, len(grouped_items)),
+                fallback_models=get_fallback_models("evidence_extraction"),
+            )
+            findings = list(result.findings)
+            if not findings:
+                findings = [
+                    Finding(
+                        finding=item.content,
+                        evidence_label=_current_source_to_evidence_label(source.source_type),
+                        original_quote=item.content if item.content_type in {"quotation", "data_point"} else None,
+                    )
+                    for item in items[:3]
+                ]
+            stage_sources.append(
+                TylerSource(
+                    id=source.id,
+                    url=source.url,
+                    title=source.title,
+                    source_type=_current_source_type_to_tyler_source_type(source.source_type),
+                    quality_score=_current_quality_tier_to_tyler_score(source.quality_tier),
+                    publication_date=source.published_at.date().isoformat() if source.published_at else None,
+                    retrieval_date=source.retrieved_at.date().isoformat(),
+                    key_findings=findings,
+                )
+            )
+
+        high_quality_count = sum(1 for source in stage_sources if source.quality_score >= 0.75)
+        meets_sufficiency = high_quality_count >= 2
+        gap_description = None
+        if not meets_sufficiency:
+            gap_description = (
+                f"Only {high_quality_count} high-quality independent source(s) were found "
+                f"for {sub_question.id}."
+            )
+        sub_question_evidence.append(
+            SubQuestionEvidence(
+                sub_question_id=sub_question.id,
+                sources=stage_sources,
+                meets_sufficiency=meets_sufficiency,
+                gap_description=gap_description,
+            )
+        )
+        query_counts.setdefault(sub_question.id, 0)
+
+    return TylerEvidencePackage(
+        sub_question_evidence=sub_question_evidence,
+        total_queries_used=sum(query_counts.values()),
+        queries_per_sub_question=query_counts,
+        stage_summary=StageSummary(
+            stage_name="Stage 2: Broad Retrieval & Evidence Normalization",
+            goal="Retrieve broad evidence and normalize it into Tyler's grouped Stage 2 contract.",
+            key_findings=[
+                f"{len(bundle.sources)} fetched sources were normalized into Tyler Stage 2",
+                f"{len(bundle.evidence)} compatibility evidence items fed Tyler finding extraction",
+                f"{sum(len(sqe.sources) for sqe in sub_question_evidence)} source-group assignments landed in Stage 2",
+            ],
+            decisions_made=[
+                "Used Tyler query diversification output for sub-question search coverage when Stage 1 was Tyler-native",
+                "Built Tyler findings from the collected source evidence while keeping the flat bundle as compatibility substrate",
+            ],
+            outcome=f"{len(sub_question_evidence)} Tyler sub-question evidence groups",
+            reasoning="Stage 2 now treats Tyler's EvidencePackage as the live semantic artifact while preserving the flat EvidenceBundle as the retrieval substrate.",
+        ),
+    )
+
+
+async def collect_evidence_tyler_v1(
+    stage_1_result: TylerDecompositionResult,
+    trace_id: str,
+    *,
+    max_sources: int = 20,
+    max_budget: float = 1.0,
+    time_sensitivity: str = "mixed",
+    scope_notes: str = "",
+    num_queries: int = 10,
+    results_per_query: int = 10,
+) -> tuple[TylerEvidencePackage, EvidenceBundle]:
+    """Run the Stage 2 collection path and return Tyler + compatibility artifacts."""
+    bundle, query_counts = await collect_evidence(
+        stage_1_result.core_question,
+        trace_id,
+        max_sources=max_sources,
+        max_budget=max_budget,
+        time_sensitivity=time_sensitivity,
+        scope_notes=scope_notes,
+        num_queries=num_queries,
+        results_per_query=results_per_query,
+        sub_questions=[sub_question.model_dump(mode="json") for sub_question in stage_1_result.sub_questions],
+        tyler_stage_1_result=stage_1_result,
+        return_query_counts=True,
+    )
+    stage_2_result = await build_tyler_evidence_package(
+        bundle,
+        stage_1_result,
+        trace_id=f"{trace_id}/stage2_build",
+        query_counts_by_sub_question=query_counts,
+        max_budget=max_budget * 0.15,
+    )
+    return stage_2_result, bundle
+
+
 async def collect_evidence(
     question: str,
     trace_id: str,
@@ -480,7 +755,9 @@ async def collect_evidence(
     num_queries: int = 10,
     results_per_query: int = 10,
     sub_questions: list[dict] | None = None,
-) -> EvidenceBundle:
+    tyler_stage_1_result: TylerDecompositionResult | None = None,
+    return_query_counts: bool = False,
+) -> EvidenceBundle | tuple[EvidenceBundle, dict[str, int]]:
     """Collect evidence for a research question from web sources.
 
     If sub_questions are provided (from QuestionDecomposition), generates
@@ -522,13 +799,21 @@ async def collect_evidence(
 
     sq_label = f" across {len(sub_questions)} sub-questions" if sub_questions else ""
     print(f"  Generating search queries{sq_label}...")
-    queries, query_to_sq = await generate_search_queries(
-        question, trace_id,
-        max_budget=max_budget * 0.1,
-        num_queries=num_queries,
-        time_sensitivity=time_sensitivity,
-        sub_questions=sub_questions,
-    )
+    query_counts_by_sub_question: dict[str, int] = {}
+    if tyler_stage_1_result is not None:
+        queries, query_to_sq, query_counts_by_sub_question = await generate_search_queries_tyler_v1(
+            tyler_stage_1_result,
+            trace_id,
+            max_budget=max_budget * 0.1,
+        )
+    else:
+        queries, query_to_sq = await generate_search_queries(
+            question, trace_id,
+            max_budget=max_budget * 0.1,
+            num_queries=num_queries,
+            time_sensitivity=time_sensitivity,
+            sub_questions=sub_questions,
+        )
     print(f"  Generated {len(queries)} queries (freshness: {freshness})")
 
     # Search all queries in parallel, then deduplicate by URL
@@ -894,6 +1179,8 @@ async def collect_evidence(
         tier_counts[s.quality_tier] = tier_counts.get(s.quality_tier, 0) + 1
     print(f"  Source quality: {tier_counts}")
 
+    if return_query_counts:
+        return bundle, query_counts_by_sub_question
     return bundle
 
 

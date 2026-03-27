@@ -29,8 +29,10 @@ async def run_pipeline(
     output_dir: Path,
     decomposition: "QuestionDecomposition | None" = None,
     tyler_stage_1_result: "DecompositionResult | None" = None,
+    tyler_stage_2_result: "EvidencePackage | None" = None,
 ) -> PipelineState:
     """Run the full adjudication pipeline."""
+    from grounded_research.collect import build_tyler_evidence_package
     from grounded_research.ingest import load_manual_bundle, validate_bundle
     from grounded_research.analysts import run_analysts
     from grounded_research.anonymize import scrub_analyst_run
@@ -46,7 +48,7 @@ async def run_pipeline(
         write_outputs,
     )
     from grounded_research.tyler_v1_adapters import current_decomposition_to_tyler
-    from grounded_research.tyler_v1_models import DecompositionResult
+    from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
@@ -83,6 +85,23 @@ async def run_pipeline(
             state.tyler_stage_1_result = current_decomposition_to_tyler(
                 decomposition,
                 original_query=bundle.question.text,
+            )
+        else:
+            from grounded_research.decompose import decompose_question_tyler_v1
+
+            state.tyler_stage_1_result = await decompose_question_tyler_v1(
+                question=bundle.question.text,
+                trace_id=f"{trace_id}/stage1_from_fixture",
+                max_budget=total_budget * 0.05,
+            )
+        if tyler_stage_2_result is not None:
+            state.tyler_stage_2_result = tyler_stage_2_result
+        else:
+            state.tyler_stage_2_result = await build_tyler_evidence_package(
+                bundle,
+                state.tyler_stage_1_result,
+                trace_id=f"{trace_id}/stage2_from_bundle",
+                max_budget=total_budget * 0.05,
             )
 
         state.phase_traces.append(PhaseTrace(
@@ -340,7 +359,7 @@ async def run_pipeline_from_question(
     output_dir: Path,
 ) -> PipelineState:
     """Run the full pipeline starting from a question (collects evidence automatically)."""
-    from grounded_research.collect import collect_evidence
+    from grounded_research.collect import collect_evidence_tyler_v1
     from grounded_research.decompose import decompose_with_validation_tyler_v1
 
     run_id = uuid.uuid4().hex[:12]
@@ -382,10 +401,9 @@ async def run_pipeline_from_question(
     print()
 
     depth = get_depth_config()
-    sub_questions_dicts = [sq.model_dump() for sq in decomposition.sub_questions]
-    bundle = await collect_evidence(
-        decomposition.core_question, trace_id,
-        sub_questions=sub_questions_dicts,
+    tyler_stage_2_result, bundle = await collect_evidence_tyler_v1(
+        tyler_stage_1_result,
+        trace_id,
         num_queries=depth["num_queries"],
         max_sources=depth["max_sources"],
     )
@@ -404,6 +422,9 @@ async def run_pipeline_from_question(
     tyler_decomp_path = output_dir / "tyler_stage_1.json"
     tyler_decomp_path.write_text(tyler_stage_1_result.model_dump_json(indent=2))
     print(f"  Saved Tyler Stage 1: {tyler_decomp_path}")
+    tyler_stage2_path = output_dir / "tyler_stage_2.json"
+    tyler_stage2_path.write_text(tyler_stage_2_result.model_dump_json(indent=2))
+    print(f"  Saved Tyler Stage 2: {tyler_stage2_path}")
     print()
 
     return await run_pipeline(
@@ -411,6 +432,7 @@ async def run_pipeline_from_question(
         output_dir,
         decomposition=decomposition,
         tyler_stage_1_result=tyler_stage_1_result,
+        tyler_stage_2_result=tyler_stage_2_result,
     )
 
 
