@@ -223,11 +223,20 @@ async def generate_tyler_synthesis_report(
         if dispute.decision_critical
         for claim_id in dispute.claims_involved
     }
+    grounded_claim_ids = {
+        claim.id
+        for claim in stage_5_result.updated_claim_ledger
+        if claim.source_references
+    }
     decision_critical_claims = [
-        claim for claim in stage_5_result.updated_claim_ledger if claim.id in decision_critical_claim_ids
+        claim
+        for claim in stage_5_result.updated_claim_ledger
+        if claim.id in decision_critical_claim_ids and claim.id in grounded_claim_ids
     ]
     noncritical_claims = [
-        claim for claim in stage_5_result.updated_claim_ledger if claim.id not in decision_critical_claim_ids
+        claim
+        for claim in stage_5_result.updated_claim_ledger
+        if claim.id not in decision_critical_claim_ids and claim.id in grounded_claim_ids
     ]
 
     assessment_by_dispute = {
@@ -364,10 +373,22 @@ async def generate_report(
 ) -> FinalReport:
     """Generate the structured FinalReport for grounding validation."""
     if state.tyler_stage_6_result is not None and state.question is not None:
-        return tyler_synthesis_to_current_report(
+        report = tyler_synthesis_to_current_report(
             state.tyler_stage_6_result,
             original_query=state.question.text,
         )
+        if state.claim_ledger is not None:
+            grounded_claim_ids = {
+                claim.id
+                for claim in state.claim_ledger.claims
+                if claim.evidence_ids
+            }
+            report.cited_claim_ids = [
+                claim_id
+                for claim_id in report.cited_claim_ids
+                if claim_id in grounded_claim_ids
+            ]
+        return report
 
     from llm_client import acall_llm_structured, render_prompt
 

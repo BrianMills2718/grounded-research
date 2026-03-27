@@ -173,6 +173,20 @@ async def test_generate_report_projects_from_tyler_stage6_when_available() -> No
     state = PipelineState(
         run_id="run-1",
         question=ResearchQuestion(text="What should we do?"),
+        claim_ledger=ClaimLedger(
+            claims=[
+                Claim(
+                    id="C-1",
+                    statement="A grounded claim.",
+                    source_raw_claim_ids=["RC-1"],
+                    analyst_sources=["Alpha"],
+                    evidence_ids=["E-1"],
+                    confidence="high",
+                )
+            ],
+            disputes=[],
+            arbitration_results=[],
+        ),
         tyler_stage_6_result=_tyler_report(),
     )
 
@@ -180,6 +194,34 @@ async def test_generate_report_projects_from_tyler_stage6_when_available() -> No
 
     assert report.cited_claim_ids == ["C-1"]
     assert "D-1" in report.disagreement_summary
+
+
+@pytest.mark.asyncio
+async def test_generate_report_filters_ungrounded_tyler_stage6_claims() -> None:
+    """Tyler Stage 6 projected citations must be filtered to grounded current claims."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What should we do?"),
+        claim_ledger=ClaimLedger(
+            claims=[
+                Claim(
+                    id="C-1",
+                    statement="An ungrounded projected claim.",
+                    source_raw_claim_ids=["RC-1"],
+                    analyst_sources=["Alpha"],
+                    evidence_ids=[],
+                    confidence="medium",
+                )
+            ],
+            disputes=[],
+            arbitration_results=[],
+        ),
+        tyler_stage_6_result=_tyler_report(),
+    )
+
+    report = await generate_report(state, trace_id="trace-1", max_budget=0.5)
+
+    assert report.cited_claim_ids == []
 
 
 @pytest.mark.asyncio
