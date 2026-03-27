@@ -19,6 +19,7 @@
 | [depth_modes_wave1_execution.md](depth_modes_wave1_execution.md) | Completed | Wave 1 depth continuation shipped: goal-driven evidence extraction in deep/thorough, multi-round arbitration, and a passing live deep collection smoke gate. |
 | [sectioned_synthesis_wave1.md](sectioned_synthesis_wave1.md) | Completed | Benchmark-triggered export wave closed: the single-call `thorough` rerender failed the gate, sectioned synthesis was implemented, and the saved rerender now clears 11k words. |
 | [thorough_benchmark_preservation_wave1.md](thorough_benchmark_preservation_wave1.md) | Completed | Fresh `thorough` UBI fixture benchmark completed; it regressed against both cached Perplexity and the prior dense-dedup anchor, but did not justify recent-first ranking, so the wave closed with recorded uncertainty and no new repo-local patch. |
+| [tyler_literal_parity_refactor.md](tyler_literal_parity_refactor.md) | In Progress | Major contract migration to make Tyler's V1 schemas and prompts literal repo-local runtime surfaces rather than adapted references. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

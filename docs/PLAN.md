@@ -615,12 +615,12 @@ Specifically:
 
 1. keep the runtime-safe fixture benchmark path and current UBI artifacts intact
 2. keep the dense-dedup UBI fixture as the canonical benchmark anchor
-3. choose the next expansion gate from an explicit plan only if a completed benchmark justifies one
+3. treat Tyler literal parity as a separate explicit refactor, not as an implicit extension of the benchmark-preservation work
 4. keep shared-infra follow-up in shared libraries rather than rebuilding it here
 
 Current active implementation frontier:
 
-- none; the next repo-local wave must be opened from a new benchmark-triggered plan
+- `docs/plans/tyler_literal_parity_refactor.md`
 
 Recently completed gate:
 
