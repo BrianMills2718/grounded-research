@@ -200,7 +200,9 @@ async def generate_tyler_synthesis_report(
     assert state.evidence_bundle is not None
     assert state.question is not None
 
-    if decomposition is not None:
+    if state.tyler_stage_1_result is not None:
+        tyler_stage1 = state.tyler_stage_1_result
+    elif decomposition is not None:
         tyler_stage1 = current_decomposition_to_tyler(decomposition, original_query=state.question.text)
     else:
         from grounded_research.decompose import decompose_question_tyler_v1
@@ -211,7 +213,7 @@ async def generate_tyler_synthesis_report(
             max_budget=max_budget * 0.15,
         )
 
-    stage_2_result = current_bundle_to_tyler_evidence_package(state.evidence_bundle, tyler_stage1)
+    stage_2_result = state.tyler_stage_2_result or current_bundle_to_tyler_evidence_package(state.evidence_bundle, tyler_stage1)
     stage_4_result = state.tyler_stage_4_result
     stage_5_result = state.tyler_stage_5_result
 

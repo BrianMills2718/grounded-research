@@ -35,11 +35,16 @@ from grounded_research.tyler_v1_models import (
     ClaimExtractionResult as TylerClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus as TylerClaimStatus,
+    DecompositionResult,
     DisputeQueueEntry,
     DisputeStatus,
     DisputeType,
+    EvidencePackage,
     EvidenceLabel,
+    ResearchPlan,
     ResolutionOutcome,
+    StageSummary,
+    SubQuestion,
 )
 
 
@@ -531,3 +536,158 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledg
     assert ledger.arbitration_results[0].verdict == "supported"
     assert llm_calls == 1
     assert warnings == []
+
+
+@pytest.mark.asyncio
+async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 5 should not rebuild Tyler Stage 1/2 when they are already present."""
+    monkeypatch.setattr("grounded_research.verify.get_depth_config", lambda: {"arbitration_max_rounds": 1})
+
+    async def fail_decompose(*args, **kwargs):
+        raise AssertionError("should not re-decompose")
+
+    async def fake_collect(dispute, queries, bundle, trace_id):
+        return [], [], []
+
+    async def fake_arbitrate(**kwargs):
+        from grounded_research.tyler_v1_models import ArbitrationAssessment, ClaimStatusUpdate
+
+        return ArbitrationAssessment(
+            dispute_id="D-1",
+            new_evidence_summary="No decisive new evidence.",
+            reasoning="Reasoning",
+            resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+            updated_claim_statuses=[
+                ClaimStatusUpdate(
+                    claim_id="C-1",
+                    new_status=TylerClaimStatus.UNRESOLVED,
+                    confidence_in_resolution="medium",
+                    remaining_uncertainty="Still open.",
+                )
+            ],
+        )
+
+    monkeypatch.setattr("grounded_research.decompose.decompose_question_tyler_v1", fail_decompose)
+    monkeypatch.setattr("grounded_research.verify._collect_fresh_evidence_for_dispute", fake_collect)
+    monkeypatch.setattr("grounded_research.verify.arbitrate_dispute_tyler_v1", fake_arbitrate)
+
+    stage_1_result = DecompositionResult(
+        core_question="Question",
+        sub_questions=[
+            SubQuestion(
+                id="Q-1",
+                question="Q1",
+                type="empirical",
+                research_priority="high",
+                search_guidance="docs",
+            ),
+            SubQuestion(
+                id="Q-2",
+                question="Q2",
+                type="interpretive",
+                research_priority="medium",
+                search_guidance="critiques",
+            ),
+        ],
+        optimization_axes=["speed vs rigor"],
+        research_plan=ResearchPlan(
+            what_to_verify=["claim"],
+            critical_source_types=["official docs"],
+            falsification_targets=["contradiction"],
+        ),
+        stage_summary=StageSummary(
+            stage_name="Stage 1",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
+    stage_2_result = EvidencePackage(
+        sub_question_evidence=[],
+        total_queries_used=0,
+        queries_per_sub_question={"Q-1": 0, "Q-2": 0},
+        stage_summary=StageSummary(
+            stage_name="Stage 2",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
+    stage_4_result = TylerClaimExtractionResult(
+        claim_ledger=[
+            ClaimLedgerEntry(
+                id="C-1",
+                statement="Claim",
+                source_models=["A"],
+                evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+                source_references=[],
+                status=TylerClaimStatus.CONTESTED,
+                supporting_models=["A"],
+                contesting_models=["B"],
+                related_assumptions=[],
+            )
+        ],
+        assumption_set=[],
+        dispute_queue=[
+            DisputeQueueEntry(
+                id="D-1",
+                type=DisputeType.EMPIRICAL,
+                description="Dispute",
+                claims_involved=["C-1"],
+                model_positions=[],
+                decision_critical=True,
+                decision_critical_rationale="critical",
+                status=DisputeStatus.UNRESOLVED,
+                resolution_routing="stage_5_evidence",
+            )
+        ],
+        statistics={
+            "total_claims": 1,
+            "total_assumptions": 0,
+            "total_disputes": 1,
+            "disputes_by_type": {"empirical": 1},
+            "decision_critical_disputes": 1,
+            "claims_per_model": {"A": 1},
+        },
+        stage_summary={
+            "stage_name": "Stage 4",
+            "goal": "goal",
+            "key_findings": ["k1", "k2", "k3"],
+            "decisions_made": ["d1"],
+            "outcome": "outcome",
+            "reasoning": "reasoning",
+        },
+    )
+    prior_ledger = ClaimLedger(
+        claims=[_make_claim("C-1"), _make_claim("C-2")],
+        disputes=[_make_dispute(["C-1", "C-2"])],
+        arbitration_results=[],
+    )
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="Question"),
+        sources=[],
+        evidence=[],
+        gaps=[],
+    )
+
+    verification_result, _ledger, warnings, llm_calls = await verify_disputes_tyler_v1(
+        stage_4_result=stage_4_result,
+        prior_ledger=prior_ledger,
+        bundle=bundle,
+        decomposition=None,
+        stage_1_result=stage_1_result,
+        stage_2_result=stage_2_result,
+        trace_id="trace-root",
+        max_disputes=1,
+        max_budget=1.0,
+    )
+
+    assert warnings == []
+    assert llm_calls == 0
+    assert verification_result.search_budget == {"D-1": 3}

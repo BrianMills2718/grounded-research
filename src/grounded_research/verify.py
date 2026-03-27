@@ -650,13 +650,17 @@ async def verify_disputes_tyler_v1(
     prior_ledger: ClaimLedger,
     bundle: EvidenceBundle,
     decomposition: QuestionDecomposition | None,
+    stage_1_result: DecompositionResult | None = None,
+    stage_2_result: EvidencePackage | None = None,
     trace_id: str,
     max_disputes: int = 5,
     max_budget: float = 2.0,
 ) -> tuple[VerificationResult, ClaimLedger, list[VerificationWarning], int]:
     """Run Tyler's Stage 5 artifact and project it into the shipped ledger."""
     original_query = bundle.question.text if bundle.question else ""
-    if decomposition is not None:
+    if stage_1_result is not None:
+        tyler_stage1 = stage_1_result
+    elif decomposition is not None:
         tyler_stage1 = current_decomposition_to_tyler(
             decomposition,
             original_query=original_query,
@@ -669,7 +673,8 @@ async def verify_disputes_tyler_v1(
             trace_id=f"{trace_id}/stage1_for_verify",
             max_budget=max_budget * 0.1,
         )
-    stage_2_result = current_bundle_to_tyler_evidence_package(bundle, tyler_stage1)
+    if stage_2_result is None:
+        stage_2_result = current_bundle_to_tyler_evidence_package(bundle, tyler_stage1)
     claim_lookup = {claim.id: claim.model_copy(deep=True) for claim in stage_4_result.claim_ledger}
     dispute_lookup = {dispute.id: dispute.model_copy(deep=True) for dispute in stage_4_result.dispute_queue}
     actionable = [

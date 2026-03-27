@@ -137,7 +137,7 @@ Current open work is intentionally narrow:
   `docs/plans/depth_modes_wave1_execution.md`
 - active Tyler literal-parity remaining wave:
   `docs/plans/tyler_literal_parity_refactor.md`,
-  `docs/plans/tyler_literal_parity_stage123_native.md`
+  `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
 - Tyler V1 reference map and follow-through:
   `docs/TYLER_V1_CURRENT_REPO_MAP.md`,
   `docs/plans/tyler_v1_followthrough.md`

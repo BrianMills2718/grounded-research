@@ -5,10 +5,16 @@ This note answers one narrow question:
 > Is the current `grounded-research` runtime implementing Tyler's
 > `tyler_response_20260326/` prompts and schemas literally?
 
-Answer: **no**.
+Answer: **not fully yet**.
 
-The repo implements many Tyler V1 ideas in adapted form, but it does not
-currently run Tyler's exact prompt text or exact schema contracts end-to-end.
+The repo-local runtime now runs Tyler-native Stage 1 through Stage 6 contracts
+and persists those artifacts in pipeline state, but full Tyler compliance is
+still not complete because:
+
+- the benchmark re-anchor wave is still open
+- current compatibility projections still exist for downstream surfaces
+- provider/model/search assumptions that Tyler specified remain explicit
+  shared-infra gaps outside this repo
 
 ## Scope
 
@@ -26,103 +32,60 @@ good, benchmarked, or methodologically similar.
 
 ## Executive Verdict
 
-Literal parity is absent for four independent reasons:
+Repo-local literal parity is now present in the live runtime for Stage 1
+through Stage 6.
 
-1. current enums and stage-output models are not Tyler's exact schema surface
-2. current prompt files are aligned to Tyler's method but are not Tyler's exact
-   prompt text
-3. Stage 4 and Stage 6 are architecturally different from Tyler's literal
-   artifact design
-4. Tyler's provider/model assumptions are not wired literally in this repo
+Remaining non-literal gaps are now narrower:
+
+1. current compatibility projections still coexist with the Tyler-native
+   runtime artifacts
+2. tracked benchmark re-anchor is not yet closed
+3. Tyler's provider/model/search assumptions are not wired literally in this
+   repo because they belong in shared infrastructure
 
 ## Stage-By-Stage Audit
 
 | Surface | Tyler literal contract | Current repo | Literal parity |
 |---|---|---|---|
-| Shared enums | `EvidenceLabel`, `DisputeType`, `ClaimStatus`, `DisputeStatus`, `ConfidenceLevel`, `ResolutionOutcome` | repo-local `Literal[...]` unions with different values | No |
-| Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | `QuestionDecomposition` with typed `SubQuestion.text`, `falsification_target`, `optimization_axes`, free-text `research_plan`, optional `ambiguous_terms` | No |
-| Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | `EvidenceBundle` made of `SourceRecord` and `EvidenceItem` with `quality_tier`, `recency_score`, and content extracts | No |
-| Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | `AnalystRun` with `analyst_label`, `model`, `frame`, lists of `Recommendation`, `RawClaim`, `Assumption`, `Counterargument`, no Tyler `StageSummary` field | No |
-| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema now run in the live runtime and serialize into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` remains as an explicit downstream projection for unmigrated Stage 5-6 code | Partial |
-| Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 now runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Partial |
-| Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 now runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; current `FinalReport` and markdown report are compatibility projections | Partial |
-| Prompt package | Tyler literal prompts by stage and frame | current prompt texts are adapted and expanded for current contracts | No |
+| Shared enums | `EvidenceLabel`, `DisputeType`, `ClaimStatus`, `DisputeStatus`, `ConfidenceLevel`, `ResolutionOutcome` | Tyler schema enums now live in `tyler_v1_models.py` and drive the Tyler-native runtime stages | Yes |
+| Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | live runtime now produces and persists `PipelineState.tyler_stage_1_result`; current `QuestionDecomposition` is a compatibility projection | Yes (runtime), compatibility projection remains |
+| Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | live runtime now produces and persists `PipelineState.tyler_stage_2_result`; current `EvidenceBundle` remains the retrieval substrate and compatibility surface | Yes (runtime), compatibility substrate remains |
+| Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | live runtime now produces and persists `PipelineState.tyler_stage_3_results`; current `AnalystRun` is an explicit projection | Yes (runtime), compatibility projection remains |
+| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` is an explicit downstream projection | Yes (runtime), compatibility projection remains |
+| Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Yes (runtime), compatibility projection remains |
+| Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; current `FinalReport` and markdown report are compatibility projections | Yes (runtime), compatibility projection remains |
+| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are now active for Stages 1-6; remaining non-literal provider/search assumptions are external | Yes (repo-local prompts), external assumptions remain |
 
 ## Current Prompt Inventory vs Tyler Prompt Inventory
 
 | Tyler prompt surface | Current prompt surface | Status |
 |---|---|---|
-| Stage 1 decomposition | `prompts/decompose.yaml` | Adapted, not literal |
-| Stage 2 finding extraction | `prompts/extract_evidence.yaml` | Adapted, not literal |
-| Stage 2 query diversification | `prompts/query_generation.yaml` | Adapted, not literal |
-| Stage 3 analyst base + 3 frame inserts | `prompts/analyst.yaml` with inline frame branches | Adapted, not literal |
+| Stage 1 decomposition | `prompts/tyler_v1_decompose.yaml` | Literal prompt now active in runtime |
+| Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Literal prompt now active in runtime |
+| Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Literal prompt now active in runtime |
+| Stage 3 analyst base + 3 frame inserts | `prompts/tyler_v1_analyst.yaml` | Literal prompt now active in runtime |
 | Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema now active, but downstream stages still rely on a projected repo-local ledger |
 | Stage 5 verification query generation | `prompts/verification_queries.yaml` | Adapted, not literal |
 | Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Literal prompt active, projected into current compatibility surfaces |
 | Stage 6 synthesis report | `prompts/tyler_v1_synthesis.yaml` | Literal prompt active, projected into current compatibility surfaces |
 
-## Exact Non-Literal Gaps That Matter
+## Exact Remaining Non-Literal Gaps That Matter
 
-### 1. Enum and lifecycle mismatch
+### 1. Compatibility projections still coexist
 
-Tyler's literal contract expects:
+The live runtime is Tyler-native, but the repo still keeps compatibility
+projections for:
 
-- `DisputeType`: `empirical`, `interpretive`, `preference_weighted`,
-  `spec_ambiguity`, `other`
-- `ClaimStatus`: `initial`, `supported`, `contested`, `contradicted`,
-  `insufficient_evidence`, `verified`, `refuted`, `unresolved`
-- `DisputeStatus`: `unresolved`, `resolved`, `deferred_to_user`, `logged_only`
+- `QuestionDecomposition`
+- `EvidenceBundle`
+- `AnalystRun`
+- `ClaimLedger`
+- `FinalReport`
 
-Current repo uses a different surface:
+These no longer define the live Tyler runtime, but they still exist for
+historical traces and downstream compatibility.
 
-- `DisputeType`: `factual_conflict`, `interpretive_conflict`,
-  `preference_conflict`, `ambiguity`
-- `ClaimStatus`: `initial`, `supported`, `revised`, `refuted`,
-  `inconclusive`
-- no Tyler `DisputeStatus` enum
-
-This is not cosmetic. It changes routing, report semantics, and post-stage
-validation.
-
-### 2. Stage 4 is not Tyler's artifact
-
-Tyler's Stage 4 contract expects one canonical `ClaimExtractionResult`
-containing:
-
-- `ClaimLedgerEntry`
-- `AssumptionSetEntry`
-- `DisputeQueueEntry`
-- `ExtractionStatistics`
-
-Current runtime does not have that stage artifact. It splits the work across
-multiple prompts and stores the result in repo-local models. Literal prompt
-porting is impossible without first changing the Stage 4 contract.
-
-### 3. Stage 6 is not Tyler's artifact
-
-Tyler's final model output is a structured `SynthesisReport`.
-
-Current runtime does:
-
-1. structured `FinalReport` for grounding checks
-2. separate long-form markdown synthesis
-
-That means Tyler's literal synthesis prompt cannot be adopted safely without
-replacing the final-stage contract and the report validator.
-
-### 4. Tyler prompt text is not current prompt text
-
-Current prompts preserve major Tyler ideas:
-
-- anti-conformity
-- counterargument requirement
-- claim specificity
-- disagreement emphasis
-
-But the texts are not literal. This matters because the user asked for literal
-implementation, not methodological similarity.
-
-### 5. Provider and model assumptions are not literal
+### 2. Provider and model assumptions are not literal
 
 Tyler V1 assumes:
 
@@ -134,31 +97,24 @@ Current repo intentionally diverged from that for stabilization and shared
 infra boundaries. Literal parity would require changing those assumptions or
 explicitly deciding to leave provider/model parity out of scope.
 
-## What A Literal Refactor Actually Means
+### 3. Benchmark re-anchor is still open
 
-Achieving literal parity is a major refactor.
-
-It would require:
-
-1. introducing Tyler-native schema classes in code
-2. migrating stage outputs to those classes
-3. porting Tyler prompt text literally, stage by stage
-4. rewriting Stage 4 and Stage 6 orchestration around Tyler's artifact shapes
-5. updating validators, tests, and benchmark harnesses to the new contracts
-6. deciding whether Tyler provider/model assumptions are literal requirements
-   or external shared-infra dependencies
+The deterministic parity suite is green, but one live smoke run on the fully
+Tyler-native path stalled in a late provider call before writing a trace. That
+is currently treated as a runtime/shared-infra issue, not a local schema
+migration failure, and the benchmark re-anchor plan remains open.
 
 ## Recommendation
 
-Do not claim literal parity today.
+Do not claim full Tyler closure yet.
 
-If the user wants literal Tyler implementation, the correct next move is a
-dedicated migration plan with phased acceptance gates:
+The correct next move is the benchmark re-anchor wave:
 
-1. exact Tyler schema contract lands in code
-2. Stage 1-3 migrate to Tyler contracts
-3. Stage 4 migrates as the major contract refactor
-4. Stage 5-6 migrate
-5. benchmark and regression harnesses are re-anchored
+1. complete one live trace with Tyler Stage 1-6 fields
+2. rerun the tracked benchmark on the Tyler-native path
+3. record whether literal parity preserves or regresses usefulness
 
-That plan is captured in `docs/plans/tyler_literal_parity_refactor.md`.
+Those steps are captured in:
+
+- `docs/plans/tyler_literal_parity_refactor.md`
+- `docs/plans/tyler_literal_parity_benchmark_reanchor.md`

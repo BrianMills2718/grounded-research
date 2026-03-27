@@ -258,6 +258,8 @@ async def run_pipeline(
             prior_ledger=ledger,
             bundle=bundle,
             decomposition=decomposition,
+            stage_1_result=state.tyler_stage_1_result,
+            stage_2_result=state.tyler_stage_2_result,
             trace_id=trace_id,
             max_disputes=max_disputes,
             max_budget=total_budget * 0.3,

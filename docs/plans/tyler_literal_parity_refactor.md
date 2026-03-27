@@ -104,11 +104,11 @@ Acceptance:
 
 Status:
 
-- In progress.
-- Tyler Stage 1-3 prompt surfaces and adapter scaffolding exist.
-- The remaining work is to make those artifacts the live runtime outputs and
-  persist them in pipeline state instead of generating them only as
-  downstream-facing adapters.
+- Completed for repo-local runtime output and trace state.
+- Tyler Stage 1, Stage 2, and Stage 3 now run as the live runtime artifacts
+  and persist into `PipelineState`.
+- Current `QuestionDecomposition`, `EvidenceBundle`, and `AnalystRun` remain
+  as explicit compatibility projections.
 
 ### Phase 2: Stage 4 Major Contract Migration
 
@@ -185,18 +185,18 @@ Acceptance:
 
 ## Current Remaining Gap
 
-Literal Tyler parity is still not complete end-to-end because Stages 1-3 remain
-adapter-fed rather than native runtime artifacts. The runtime now stores Tyler
-Stage 4/5/6 results, but Stage 1 decomposition, Stage 2 evidence collection,
-and Stage 3 analyst generation still originate in the shipped repo-local
-contracts before being projected into Tyler-native shapes.
+Repo-local stage-contract migration is now complete.
+
+The remaining gap is no longer Stage 1-6 contract wiring. It is:
+
+1. benchmark re-anchor on the fully Tyler-native runtime
+2. explicit handling of shared-infra differences from Tyler's specified
+   provider/model/search stack
 
 ## Immediate Next Step
 
-Execute `docs/plans/tyler_literal_parity_stage123_native.md`:
+Execute `docs/plans/tyler_literal_parity_benchmark_reanchor.md`:
 
-1. add Tyler Stage 1-3 persistence to `PipelineState`
-2. migrate Stage 1 to a Tyler-native runtime output
-3. migrate Stage 2 to a Tyler-native runtime output
-4. migrate Stage 3 to a Tyler-native runtime output
-5. re-anchor Stage 4-6 on the persisted Tyler Stage 1-3 artifacts
+1. complete a live Tyler Stage 1-6 smoke trace
+2. rerun the tracked benchmark on the Tyler-native path
+3. record whether literal parity preserved or regressed usefulness
