@@ -614,14 +614,14 @@ Preserve the completed benchmark gains rather than reopening solved benchmark ga
 Specifically:
 
 1. keep the runtime-safe fixture benchmark path and current UBI artifacts intact
-2. finish the fresh `thorough` preservation wave and close it from completed evidence
-3. choose the next expansion gate from an explicit plan only if that finished wave justifies one
+2. keep the dense-dedup UBI fixture as the canonical benchmark anchor
+3. choose the next expansion gate from an explicit plan only if a completed benchmark justifies one
 4. keep shared-infra follow-up in shared libraries rather than rebuilding it here
 
 Current active implementation frontier:
 
-- `docs/plans/thorough_benchmark_preservation_wave1.md`
+- none; the next repo-local wave must be opened from a new benchmark-triggered plan
 
 Recently completed gate:
 
-- `docs/plans/sectioned_synthesis_wave1.md`
+- `docs/plans/thorough_benchmark_preservation_wave1.md`

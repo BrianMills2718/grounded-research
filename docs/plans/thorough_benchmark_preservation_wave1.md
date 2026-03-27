@@ -1,6 +1,6 @@
 # Thorough Benchmark Preservation Wave 1
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Remove the remaining repo-local uncertainty by running a fresh
 `thorough` UBI fixture benchmark on the current code, comparing it to the
 saved baseline, and only opening recent-first ranking if the completed run
@@ -129,3 +129,43 @@ Acceptance:
 | report regresses despite same bundle | fair comparison loses materially | inspect trace and source recency distribution before choosing a repo-local fix |
 | stale-source dominance is not evident | old authoritative sources are not obviously crowding out newer relevant items | do not patch recent-first ranking speculatively |
 | benchmark preserves the win | comparison still favors the pipeline | close the wave without adding repo-local complexity |
+
+## Result
+
+The wave completed on 2026-03-27 with a real fresh `thorough` fixture rerun:
+
+- output dir: `output/ubi_thorough_preservation_wave1/`
+- bundle: `output/ubi_wave2_prefetch_collection/collected_bundle.json`
+- result: completed end-to-end, `66` canonical claims, `11` disputes, `42`
+  cited claims, `0` grounding warnings, `12,902` report words
+
+Saved comparisons:
+
+- `output/fair_ubi_thorough_preservation_wave1_vs_ubi_perplexity.md`
+- `output/fair_ubi_thorough_preservation_wave1_vs_ubi_dense_dedup_eval.md`
+
+Outcome:
+
+- the fresh `thorough` report lost to cached Perplexity
+- the fresh `thorough` report also lost to the prior pipeline anchor
+  `output/ubi_dense_dedup_eval/report.md`
+- the regression did **not** clearly point to stale-source dominance
+
+Why recent-first was **not** opened:
+
+1. the rerun used the same saved high-quality fixture bundle that already
+   supported the winning dense-dedup anchor
+2. the source pool remains quality-heavy (`30` authoritative) and the judge
+   criticisms focused on decision usefulness, analytical framing, and policy
+   guidance rather than on stale or obsolete evidence
+3. the regression coincided with a much longer report (`12,902` words vs
+   `4,613` in the prior anchor) and more verification warnings (`12` vs `2`),
+   which points more plausibly to depth-mode export/usefulness tradeoffs than
+   to recency ordering
+
+Decision:
+
+- close this wave without opening recent-first ranking
+- record the uncertainty in `docs/TECH_DEBT.md`
+- require a new explicit benchmark-triggered plan before any further
+  repo-local changes

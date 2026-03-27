@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-03-26
+**Last updated:** 2026-03-27
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
@@ -46,6 +46,9 @@ benchmark points to a clear grounded-research-specific bottleneck.
 **Current benchmark anchor:** the 2026-03-26 dense-dedup fixture rerun completed
 with `44 raw -> 36 canonical`, `31` cited claims, `0` grounding warnings, and
 a saved fair comparison favoring the pipeline `24` vs cached Perplexity `22`.
+The fresh 2026-03-27 `thorough` fixture rerun completed cleanly but regressed
+against both cached Perplexity and the prior pipeline anchor, so the
+dense-dedup fixture remains the canonical UBI benchmark anchor.
 
 **Actions:**
 - keep the runtime-safe fixture path as the default benchmark route
@@ -53,7 +56,7 @@ a saved fair comparison favoring the pipeline `24` vs cached Perplexity `22`.
 - preserve the saved UBI dense-dedup artifacts as the current economics benchmark anchor
 
 **Gate:** Future improved-bundle UBI reruns still complete end-to-end and do not
-regress below the current saved result.
+regress below the current saved dense-dedup result.
 
 ### Priority 2: Preserve The Depth-Wave Gain Without Reopening Broad Complexity
 
@@ -76,8 +79,17 @@ retrieval layer.
   export-specific bottleneck
 
 **Gate:** A future deep/thorough benchmark rerun must show either:
-- a regression that requires fixing this wave, or
+- a regression with a clear grounded-research-specific diagnosis, or
 - a clear new export bottleneck before opening the next depth wave
+
+Fresh evidence from 2026-03-27:
+
+- `output/ubi_thorough_preservation_wave1/` completed end-to-end
+- it produced `66` canonical claims, `42` cited claims, and `0` grounding warnings
+- but the fair comparison still favored cached Perplexity and also favored the
+  prior dense-dedup pipeline anchor
+- the completed evidence did **not** clearly implicate stale-source dominance,
+  so recent-first ranking was **not** opened
 
 ### Priority 3: Shared-Infra Follow-Up, Not New Repo-Local Complexity
 
@@ -102,9 +114,10 @@ shows a clear grounded-research-specific bottleneck.
 The next 24 hours of work should be treated as three explicit buckets:
 
 1. `grounded-research`
-   - preserve the saved benchmark anchors
+   - preserve the saved dense-dedup benchmark anchor
    - preserve the completed depth-wave and sectioned-synthesis behavior
-   - only open a new repo-local plan from a completed benchmark trigger
+   - do not open a new repo-local plan until a completed benchmark provides a
+     clear diagnosis
 2. shared runtime
    - land any remaining `llm_client` durability/query follow-through on `main`
    - keep runtime policy and observability improvements shared, not local
@@ -115,7 +128,9 @@ The next 24 hours of work should be treated as three explicit buckets:
 
 ### Priority 4: Choose The Next Benchmark Wave Explicitly
 
-**Candidates:**
+There is currently **no active repo-local implementation wave**.
+
+**Candidates for a future explicit wave:**
 - recent-first evidence ranking
 - another dense, study-heavy benchmark question if the goal is to stress the
   canonicalization/retrieval stack again

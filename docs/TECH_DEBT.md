@@ -10,6 +10,24 @@ pipeline quality behavior and shared-infrastructure follow-up.
 
 ## Pipeline Issues
 
+### Fresh `thorough` benchmark regressed without a clear freshness diagnosis
+The 2026-03-27 fresh `thorough` UBI fixture rerun completed end-to-end and
+cleared structural integrity checks, but it lost both to cached Perplexity and
+to the prior dense-dedup pipeline anchor on fair comparison.
+
+**Files:** `output/ubi_thorough_preservation_wave1/`, `output/fair_ubi_thorough_preservation_wave1_vs_ubi_perplexity.md`, `output/fair_ubi_thorough_preservation_wave1_vs_ubi_dense_dedup_eval.md`
+**Observed:** Same saved fixture bundle as the winning dense-dedup anchor,
+`66` canonical claims, `42` cited claims, `0` grounding warnings, but `12`
+pipeline warnings and a much longer report (`12,902` words vs `4,613` in the
+prior anchor). Judge critiques emphasized decision usefulness, breadth
+organization, and policy framing, not stale evidence.
+**Current decision:** Do **not** open recent-first ranking from this result.
+The evidence does not clearly implicate stale-source dominance because the same
+fixture bundle previously supported the winning anchor.
+**Next move only if reopened by a future plan:** benchmark-driven export or
+depth usefulness calibration, ideally with `prompt_eval`, rather than a
+speculative recency patch.
+
 ### Dedup 0-groups bug (recurring)
 OpenRouter/Gemini sometimes returns 0 groups from valid raw claims. The
 1:1 fallback preserves data but means no dedup happened. Root cause unclear —
