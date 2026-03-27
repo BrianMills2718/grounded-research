@@ -108,5 +108,6 @@ Current benchmark target:
 | late provider stall | live run reaches a long structured call and never returns promptly | record as shared-runtime uncertainty; do not reopen schema migration |
 | schema-valid empty Tyler Stage 4 artifact | Stage 4 returns `claim_ledger=[]` and `assumption_set=[]` despite non-empty Stage 3 analyses | retry with the configured stronger Stage 4 model; fail loud if retry is still empty |
 | near-miss Stage 4 schema failure | primary Stage 4 output contains real claims but misplaces disputes/assumptions or omits required fields | retry with the configured stronger Stage 4 model using the concrete validation failure summary |
+| cheap-model Stage 4 timeout | the primary Stage 4 model never returns inside the configured window on dense fixtures | promote the already-proven stronger Stage 4 model to primary config, keep the cheaper model only as fallback |
 | benchmark regression after literal parity | Tyler-native path loses decision usefulness | record the divergence explicitly and isolate whether it is prompt/provider behavior or local contract logic |
 | silent fallback to current artifacts | smoke trace lacks Tyler stage fields even though tests pass | treat as local bug and reopen runtime wiring |

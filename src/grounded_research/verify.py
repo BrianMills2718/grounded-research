@@ -674,7 +674,11 @@ async def verify_disputes_tyler_v1(
             max_budget=max_budget * 0.1,
         )
     if stage_2_result is None:
-        stage_2_result = current_bundle_to_tyler_evidence_package(bundle, tyler_stage1)
+        stage_2_result = current_bundle_to_tyler_evidence_package(
+            bundle,
+            tyler_stage1,
+            current_decomposition=decomposition,
+        )
     claim_lookup = {claim.id: claim.model_copy(deep=True) for claim in stage_4_result.claim_ledger}
     dispute_lookup = {dispute.id: dispute.model_copy(deep=True) for dispute in stage_4_result.dispute_queue}
     actionable = [

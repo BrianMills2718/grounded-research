@@ -67,6 +67,32 @@ from grounded_research.tyler_v1_models import (
 )
 
 
+def current_to_tyler_sub_question_id_map(
+    current_decomposition: QuestionDecomposition,
+    tyler_decomposition: DecompositionResult,
+) -> dict[str, str]:
+    """Translate current runtime sub-question IDs into Tyler Stage 1 IDs.
+
+    Fixture bundles often preserve the shipped runtime's `SQ-*` sub-question
+    IDs while the Tyler-native Stage 1 decomposition uses canonical `Q-*`
+    IDs. The runtime migration keeps sub-questions in positional lockstep, so
+    position is the correct bridge while both representations coexist.
+    """
+    if len(current_decomposition.sub_questions) != len(tyler_decomposition.sub_questions):
+        raise ValueError(
+            "Current and Tyler decompositions must have the same number of sub-questions "
+            "to translate fixture evidence IDs."
+        )
+    return {
+        current_sub_question.id: tyler_sub_question.id
+        for current_sub_question, tyler_sub_question in zip(
+            current_decomposition.sub_questions,
+            tyler_decomposition.sub_questions,
+            strict=True,
+        )
+    }
+
+
 def normalize_tyler_decomposition_ids(result: DecompositionResult) -> DecompositionResult:
     """Normalize Tyler Stage 1 IDs after LLM generation.
 
@@ -202,6 +228,8 @@ def _current_source_to_evidence_label(source_type: str) -> EvidenceLabel:
 def current_bundle_to_tyler_evidence_package(
     bundle: EvidenceBundle,
     decomposition: DecompositionResult,
+    *,
+    current_decomposition: QuestionDecomposition | None = None,
 ) -> EvidencePackage:
     """Convert the current flat evidence bundle into Tyler's Stage 2 artifact."""
     current_sources = {source.id: source for source in bundle.sources}
@@ -210,6 +238,11 @@ def current_bundle_to_tyler_evidence_package(
     tyler_question_ids = [sq.id for sq in decomposition.sub_questions]
     if not tyler_question_ids:
         raise ValueError("Tyler decomposition must include at least one sub-question.")
+    current_to_tyler_ids = (
+        current_to_tyler_sub_question_id_map(current_decomposition, decomposition)
+        if current_decomposition is not None
+        else {}
+    )
 
     for item in bundle.evidence:
         source = current_sources.get(item.source_id)
@@ -217,7 +250,8 @@ def current_bundle_to_tyler_evidence_package(
             continue
         target_sub_questions = item.sub_question_ids or [tyler_question_ids[0]]
         for sub_question_id in target_sub_questions:
-            findings_by_subq_source[(sub_question_id, source.id)].append(
+            translated_sub_question_id = current_to_tyler_ids.get(sub_question_id, sub_question_id)
+            findings_by_subq_source[(translated_sub_question_id, source.id)].append(
                 Finding(
                     finding=item.content,
                     evidence_label=_current_source_to_evidence_label(source.source_type),

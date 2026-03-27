@@ -7,7 +7,14 @@ from datetime import datetime, timezone
 import pytest
 
 from grounded_research.collect import build_tyler_evidence_package, generate_search_queries_tyler_v1
-from grounded_research.models import EvidenceBundle, EvidenceItem, ResearchQuestion, SourceRecord
+from grounded_research.models import (
+    EvidenceBundle,
+    EvidenceItem,
+    QuestionDecomposition,
+    ResearchQuestion,
+    SourceRecord,
+    SubQuestion as CurrentSubQuestion,
+)
 from grounded_research.tyler_v1_models import DecompositionResult, ResearchPlan, StageSummary, SubQuestion
 
 
@@ -48,6 +55,29 @@ def _tyler_decomposition() -> DecompositionResult:
             falsification_targets=["contradictory RCT result", "N/A"],
         ),
         stage_summary=_stage_summary("Stage 1: Intake & Decomposition"),
+    )
+
+
+def _current_decomposition() -> QuestionDecomposition:
+    return QuestionDecomposition(
+        core_question="What is the current evidence?",
+        sub_questions=[
+            CurrentSubQuestion(
+                id="SQ-alpha",
+                text="What did pilot A show?",
+                type="factual",
+                falsification_target="Contradictory high-quality pilot evidence.",
+            ),
+            CurrentSubQuestion(
+                id="SQ-beta",
+                text="How should we interpret mixed findings?",
+                type="evaluative",
+                falsification_target="A stronger alternative interpretation.",
+            ),
+        ],
+        optimization_axes=["employment vs broader welfare"],
+        research_plan="official reports; academic",
+        ambiguous_terms=[],
     )
 
 
@@ -155,3 +185,77 @@ async def test_build_tyler_evidence_package_uses_tyler_findings(monkeypatch: pyt
     assert q1.meets_sufficiency is True
     assert q1.sources[0].key_findings[0].finding == "Pilot evidence was extracted."
     assert stage_2.queries_per_sub_question["Q-1"] == 4
+
+
+@pytest.mark.asyncio
+async def test_build_tyler_evidence_package_translates_legacy_fixture_sub_question_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="What is the current evidence?"),
+        sources=[
+            SourceRecord(
+                id="S-1",
+                url="https://example.com/a",
+                title="Pilot A",
+                source_type="academic",
+                quality_tier="authoritative",
+                published_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                retrieved_at=datetime(2026, 3, 27, tzinfo=timezone.utc),
+            ),
+            SourceRecord(
+                id="S-2",
+                url="https://example.com/b",
+                title="Pilot B",
+                source_type="academic",
+                quality_tier="authoritative",
+                published_at=datetime(2026, 2, 1, tzinfo=timezone.utc),
+                retrieved_at=datetime(2026, 3, 27, tzinfo=timezone.utc),
+            ),
+        ],
+        evidence=[
+            EvidenceItem(
+                id="E-1",
+                source_id="S-1",
+                content="Pilot A found a 2 percentage point decline in employment.",
+                content_type="quotation",
+                sub_question_ids=["SQ-alpha"],
+            ),
+            EvidenceItem(
+                id="E-2",
+                source_id="S-2",
+                content="Pilot B showed no measurable employment effect.",
+                content_type="quotation",
+                sub_question_ids=["SQ-alpha"],
+            ),
+        ],
+        gaps=[],
+    )
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            findings=[
+                {
+                    "finding": "Legacy fixture evidence was translated.",
+                    "evidence_label": "vendor_documented",
+                    "original_quote": "Legacy fixture evidence was translated.",
+                }
+            ]
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+
+    stage_2 = await build_tyler_evidence_package(
+        bundle,
+        _tyler_decomposition(),
+        trace_id="test/trace",
+        current_decomposition=_current_decomposition(),
+        query_counts_by_sub_question={"Q-1": 4, "Q-2": 4},
+    )
+
+    q1 = next(item for item in stage_2.sub_question_evidence if item.sub_question_id == "Q-1")
+    assert len(q1.sources) == 2
+    assert q1.meets_sufficiency is True
+    assert q1.sources[0].key_findings[0].finding == "Legacy fixture evidence was translated."

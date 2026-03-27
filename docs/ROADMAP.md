@@ -43,6 +43,7 @@ Immediate repo-local goal:
 - ensure live Stage 4 survives cheap-model failure modes:
   - schema-valid empty artifacts
   - schema-invalid near-miss artifacts with real claims but malformed routing
+  - primary-model timeout on dense fixtures
 - rerun one tracked benchmark on that path
 - classify the result as preserved, improved, or regressed usefulness
 

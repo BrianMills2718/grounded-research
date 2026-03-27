@@ -213,7 +213,11 @@ async def generate_tyler_synthesis_report(
             max_budget=max_budget * 0.15,
         )
 
-    stage_2_result = state.tyler_stage_2_result or current_bundle_to_tyler_evidence_package(state.evidence_bundle, tyler_stage1)
+    stage_2_result = state.tyler_stage_2_result or current_bundle_to_tyler_evidence_package(
+        state.evidence_bundle,
+        tyler_stage1,
+        current_decomposition=decomposition,
+    )
     stage_4_result = state.tyler_stage_4_result
     stage_5_result = state.tyler_stage_5_result
 

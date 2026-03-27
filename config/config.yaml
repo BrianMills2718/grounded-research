@@ -10,7 +10,7 @@ models:
   decomposition: "openrouter/google/gemini-2.5-flash"
   analyst: "openrouter/openai/gpt-5-nano"
   evidence_extraction: "openrouter/openai/gpt-5-nano"
-  claim_extraction: "openrouter/openai/gpt-5-nano"
+  claim_extraction: "openrouter/google/gemini-2.5-flash"
   deduplication: "openrouter/openai/gpt-5-nano"
   dispute_classification: "openrouter/google/gemini-2.5-flash"
   arbitration: "openrouter/openai/gpt-5-nano"

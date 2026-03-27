@@ -101,6 +101,7 @@ async def run_pipeline(
                 bundle,
                 state.tyler_stage_1_result,
                 trace_id=f"{trace_id}/stage2_from_bundle",
+                current_decomposition=decomposition,
                 max_budget=total_budget * 0.05,
             )
 
