@@ -300,6 +300,18 @@ behavior is to keep executing the full wave until every pre-made step is done
 or a real blocker is hit. Do not pause merely because the work became slow,
 large, or multi-commit.
 
+For overnight-style benchmark and preservation waves, the expectation is
+stronger:
+
+- keep running until the active wave is either closed or replaced by a new
+  benchmark-triggered plan
+- if uncertainty appears, log it in the active plan and keep executing the
+  remaining non-blocked steps
+- do not stop at a completed run without also saving comparisons and updating
+  the plan/index/roadmap state
+- do not open speculative new work just to stay busy; close the current gate
+  first
+
 ### 13. Documentation Governance Is In Scope
 
 This repo intentionally keeps a documentation-governance layer alongside the

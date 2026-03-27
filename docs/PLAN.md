@@ -614,16 +614,14 @@ Preserve the completed benchmark gains rather than reopening solved benchmark ga
 Specifically:
 
 1. keep the runtime-safe fixture benchmark path and current UBI artifacts intact
-2. choose the next expansion gate from an explicit plan before adding new complexity
-3. keep shared-infra follow-up in shared libraries rather than rebuilding it here
+2. finish the fresh `thorough` preservation wave and close it from completed evidence
+3. choose the next expansion gate from an explicit plan only if that finished wave justifies one
+4. keep shared-infra follow-up in shared libraries rather than rebuilding it here
 
 Current active implementation frontier:
 
-- `docs/plans/wave2_enumeration_grounding.md`
-- `docs/plans/docs_authority_reconciliation.md`
-- `docs/plans/wave2_coverage_breadth.md`
-- `docs/plans/wave2_report_synthesis_calibration.md`
+- `docs/plans/thorough_benchmark_preservation_wave1.md`
 
 Recently completed gate:
 
-- `docs/plans/wave2_runtime_reliability.md`
+- `docs/plans/sectioned_synthesis_wave1.md`

@@ -22,6 +22,27 @@ This wave does **not** cover:
 - prompt-eval/provider studies
 - non-benchmark-driven feature work
 
+## Next 24 Hours
+
+This wave is the full next-24-hour repo-local plan.
+
+Phase order:
+
+1. run the fresh `thorough` fixture benchmark to completion
+2. save fair comparison artifacts against cached Perplexity and the prior
+   pipeline anchor
+3. close the wave immediately from the completed evidence:
+   - preserve/close with no new repo-local code, or
+   - open the next repo-local plan only if stale-source dominance is clearly
+     demonstrated
+
+Default execution rule:
+
+- do not stop after the benchmark run alone
+- do not stop after the comparison alone
+- do not stop after one doc update alone
+- finish the run, the comparison, and the closure state in one continuous wave
+
 ## Why This Wave
 
 The repo-local hardening and depth waves are complete, but one real uncertainty
