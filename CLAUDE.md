@@ -258,6 +258,22 @@ At minimum, the plan must define:
 
 If scope, sequencing, or acceptance criteria change, update `docs/PLAN.md` first.
 
+### 13. Finish The Accepted Wave
+
+Once a plan wave is accepted and its decisions are explicit enough to execute,
+continue through that wave without pausing after each small slice.
+
+Allowed stop conditions are narrow:
+
+- the active wave is fully complete and verified
+- a real blocker invalidates the plan
+- a newly discovered constraint requires a plan update before safe execution
+- the user redirects the work
+
+If uncertainty appears inside an accepted wave, record it in the active plan,
+trace, or tech-debt surface and continue unless it invalidates the current
+implementation path.
+
 ### 13. Continuous Wave Execution
 
 When a repo-local plan has pre-made decisions and acceptance criteria, execute

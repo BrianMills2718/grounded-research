@@ -91,22 +91,24 @@ Acceptance:
 Migrate decomposition, evidence package construction, and analyst outputs to
 Tyler-native artifacts.
 
-Files likely touched:
+Detailed execution plan:
 
-- `models.py` or adapters from current runtime
-- `decompose.py`
-- `collect.py`
-- `analysts.py`
-- `prompts/decompose.yaml`
-- `prompts/extract_evidence.yaml`
-- `prompts/query_generation.yaml`
-- `prompts/analyst.yaml`
+- `docs/plans/tyler_literal_parity_stage123_native.md`
+- `docs/notebooks/15_tyler_literal_parity_stage123_native.ipynb`
 
 Acceptance:
 
 - Stage 1 returns `DecompositionResult`
 - Stage 2 returns `EvidencePackage`
 - Stage 3 returns Tyler `AnalysisObject` artifacts
+
+Status:
+
+- In progress.
+- Tyler Stage 1-3 prompt surfaces and adapter scaffolding exist.
+- The remaining work is to make those artifacts the live runtime outputs and
+  persist them in pipeline state instead of generating them only as
+  downstream-facing adapters.
 
 ### Phase 2: Stage 4 Major Contract Migration
 
@@ -169,6 +171,8 @@ Acceptance:
 
 - end-to-end benchmark traces serialize Tyler-native artifacts
 - no hidden adapter-only success masking broken runtime parity
+- record explicitly if literal Tyler parity and the current benchmark optimum
+  diverge
 
 ## Failure Modes
 
@@ -189,8 +193,10 @@ contracts before being projected into Tyler-native shapes.
 
 ## Immediate Next Step
 
-Implement Phase 0 now:
+Execute `docs/plans/tyler_literal_parity_stage123_native.md`:
 
-1. add Tyler-native schema classes in code
-2. add tests for their literal enum values and basic validation
-3. keep current runtime unchanged until the contract target is real
+1. add Tyler Stage 1-3 persistence to `PipelineState`
+2. migrate Stage 1 to a Tyler-native runtime output
+3. migrate Stage 2 to a Tyler-native runtime output
+4. migrate Stage 3 to a Tyler-native runtime output
+5. re-anchor Stage 4-6 on the persisted Tyler Stage 1-3 artifacts
