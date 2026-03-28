@@ -84,6 +84,18 @@ Use when you need:
 - the boundary where Stage 1/3 projections stopped participating in the live runtime
 - the first `main` state where the engine consumes Tyler Stage 1/2/3 directly
 
+### Isolated compatibility helper deletion
+
+- `f90b718` Delete current-shape Stage 1 runtime entrypoints
+- `32b4433` Delete legacy AnalystRun execution path
+- `926480e` Delete isolated Stage 3 compatibility helpers
+
+Use when you need:
+
+- the boundary where non-live Stage 1/3 compatibility helper code disappeared
+- the last commit range before the remaining current-shape model/helper surfaces
+  became the only compatibility debt left in `main`
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

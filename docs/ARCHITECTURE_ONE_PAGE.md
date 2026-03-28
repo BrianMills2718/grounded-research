@@ -26,8 +26,8 @@ Current runtime note:
 - the live runtime now also persists Tyler-native Stage 1-6 artifacts
 - legacy structured-report and handoff outputs are gone from the live runtime
 - Stage 1/3 projections are also gone from the live runtime path
-- remaining compatibility debt is now isolated helper/test/migration code, not
-  public export surfaces
+- remaining compatibility debt is now limited to current-shape
+  model/helper surfaces under active deletion, not public export surfaces
 
 ## System Boundary
 

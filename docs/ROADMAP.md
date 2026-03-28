@@ -64,9 +64,10 @@ Current implementation frontier:
 - treat `docs/plans/legacy_export_surface_deletion.md` as completed
 - treat `docs/plans/stage45_projection_deletion.md` as completed
 - treat `docs/plans/stage13_runtime_projection_cutover.md` as completed
-- execute `docs/plans/isolated_compatibility_surface_deletion.md` as the
-  current child wave under that cutover
-- remove isolated compatibility/runtime adapter debt aggressively
+- treat `docs/plans/isolated_compatibility_surface_deletion.md` as completed
+- execute `docs/plans/current_shape_model_surface_deletion.md` as the current
+  child wave under that cutover
+- remove the remaining current-shape model/helper debt aggressively
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes
 

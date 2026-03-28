@@ -8,11 +8,10 @@ disagree, models.py wins.
 
 Current runtime note:
 
-- this document indexes the shipped compatibility/public entities in
-  `models.py`
-- Tyler-native literal entities also exist in
-  `src/grounded_research/tyler_v1_models.py` and now persist in
-  `PipelineState`
+- this document indexes the remaining entities in `models.py` while the repo
+  finishes deleting current-shape compatibility surfaces
+- Tyler-native literal entities in `src/grounded_research/tyler_v1_models.py`
+  are the canonical runtime artifacts and now persist in `PipelineState`
 - if you need literal Tyler artifact shapes, consult
   `docs/TYLER_LITERAL_PARITY_AUDIT.md` and `tyler_v1_models.py`
 
@@ -79,7 +78,6 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 
 ## Open Design Questions
 
-- Whether `AnalystRun.succeeded` should require non-empty claims beyond `error is None`
 - When `AssumptionLedger` should be promoted from deferred to current
 
 ## Resolved Direction
@@ -87,5 +85,5 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 - Tyler-literal stage artifacts are the canonical runtime target
 - legacy structured-report and handoff outputs are already removed from the
   live runtime path
-- remaining compatibility projections are temporary migration debt slated for
-  removal, not long-term co-equal APIs
+- remaining current-shape model/helper surfaces are temporary migration debt
+  slated for deletion, not long-term co-equal APIs

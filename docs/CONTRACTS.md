@@ -18,8 +18,8 @@ Current runtime note:
 - Tyler-literal artifacts are the canonical runtime and export contract
 - legacy `FinalReport`, legacy downstream handoff, and Stage 1/3 runtime
   projections are gone from the live path
-- remaining compatibility debt is limited to isolated helper/test/migration
-  APIs, not public outputs
+- remaining compatibility debt is limited to current-shape model/helper
+  surfaces under active deletion, not public outputs
 
 It is the bridge between:
 
@@ -124,8 +124,8 @@ A Tyler Stage 3 attempt counts as successful only if:
 
 Current explicit nuance:
 
-- the older standalone `AnalystRun` validator still exists only for isolated
-  compatibility helpers and tests; it is not the live Stage 3 runtime contract
+- quality gates now belong on Tyler Stage 3 artifacts and attempt traces, not
+  on a second semantic `AnalystRun` runtime contract
 
 ### Routing Contract
 
@@ -297,8 +297,8 @@ agentic loop is wired:
 
 | Field | Value |
 |---|---|
-| Input | `ClaimLedger` + `list[VerificationQueryBatch]` + fresh `EvidenceItem` records |
-| Output | updated `ClaimLedger` + `list[ArbitrationResult]` |
+| Input | Tyler `ClaimExtractionResult` + fresh `EvidencePackage` / `EvidenceItem` records |
+| Output | Tyler `VerificationResult` |
 | Success | every arbitration references new evidence; claim updates consistent with verdict |
 | LLM calls | 1 arbitration call per dispute |
 | Code-owned | applying `claim_updates`, dispute resolution flags, warning emission |
@@ -327,7 +327,7 @@ These are loud export failures, not silent warnings.
 
 ## Remaining Open Contract Questions
 
-- whether the remaining internal `ClaimLedger` projection should be removed
-  entirely or kept briefly as migration scaffolding for Stage 4/5 internals
+- whether current-shape model classes should remain available for archived
+  traces after the active deletion wave lands
 - whether verification query generation should be one batch call or one call
   per dispute in the first live implementation

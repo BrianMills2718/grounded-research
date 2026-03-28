@@ -79,9 +79,10 @@ Second-wave debt:
 
 Current highest-value remaining debt:
 
-- isolated compatibility APIs still exist for Stage 1 current-shape decomposition helpers
-- isolated compatibility APIs still exist for the legacy `AnalystRun`-based analyst path
-- isolated compatibility helpers still exist around current-shape claim extraction / adapter conversions
+- current-shape model/helper surfaces still exist for Stage 1 validation
+- current-shape model/helper surfaces still exist for legacy verification/build helpers
+- current-shape model classes still exist in `models.py` even though the live
+  runtime no longer depends on them
 
 ## Execution Order
 
@@ -194,9 +195,13 @@ Completed since the original write-up:
 - `PipelineState` no longer stores `analyst_runs`; it stores only canonical
   Tyler Stage 3 results plus `stage3_attempts`
 
-Next child wave:
+Completed child waves:
 
 - `docs/plans/isolated_compatibility_surface_deletion.md`
+
+Next child wave:
+
+- `docs/plans/current_shape_model_surface_deletion.md`
 
 ## Next 24 Hours
 

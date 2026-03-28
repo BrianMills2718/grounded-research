@@ -15,7 +15,7 @@ contract wiring. It is benchmark quality and explicit shared-infra boundaries.
 
 Full Tyler closure is still not complete because:
 
-- isolated compatibility APIs still exist outside the live runtime path
+- current-shape model/helper surfaces still exist outside the live runtime path
 - provider/model/search assumptions that Tyler specified remain explicit
   shared-infra gaps outside this repo
 - the Tyler-native path still trails the saved dense-dedup anchor slightly even
@@ -42,7 +42,7 @@ through Stage 6.
 
 Remaining non-literal gaps are now narrower:
 
-1. isolated compatibility APIs still coexist with the Tyler-native runtime
+1. current-shape model/helper surfaces still coexist with the Tyler-native runtime
    artifacts
 2. benchmark-optimal dense-dedup output still differs slightly from the
    Tyler-native path
@@ -57,8 +57,8 @@ Remaining non-literal gaps are now narrower:
 | Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | live runtime now produces and persists `PipelineState.tyler_stage_1_result`; current `QuestionDecomposition` is no longer a live runtime contract | Yes (runtime) |
 | Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | live runtime now produces and persists `PipelineState.tyler_stage_2_result`; current `EvidenceBundle` remains the retrieval substrate and compatibility surface | Yes (runtime), compatibility substrate remains |
 | Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | live runtime now produces and persists `PipelineState.tyler_stage_3_results`; runtime trace stores only `stage3_attempts` for observability and no longer stores projected `AnalystRun` | Yes (runtime) |
-| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` is an explicit downstream projection | Yes (runtime), compatibility projection remains |
-| Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Yes (runtime), compatibility projection remains |
+| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; remaining current-shape debt is limited to model/helper surfaces under active deletion | Yes (runtime) |
+| Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; remaining current-shape debt is limited to helper/model surfaces outside the live path | Yes (runtime) |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; markdown renders directly from Tyler Stage 6 and legacy `FinalReport` export has been removed | Yes (runtime) |
 | Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6; repo-local quality recovery improved the tracked UBI case materially, but a small gap to the dense-dedup anchor remains | Runtime-active, locally recovered, not benchmark-identical |
 
@@ -70,17 +70,17 @@ Remaining non-literal gaps are now narrower:
 | Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Literal prompt now active in runtime |
 | Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Literal prompt now active in runtime |
 | Stage 3 analyst base + 3 frame inserts | `prompts/tyler_v1_analyst.yaml` | Literal prompt now active in runtime |
-| Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema active; remaining debt is only internal Stage 4 `ClaimLedger` projection scaffolding |
+| Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema active; remaining debt is current-shape model/helper deletion, not Stage 4 prompt wiring |
 | Stage 5 verification query generation | `prompts/verification_queries.yaml` | Adapted, not literal |
 | Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Literal prompt active in runtime |
 | Stage 6 synthesis report | `prompts/tyler_v1_synthesis.yaml` | Literal prompt active in runtime and now drives the only live export surface |
 
 ## Exact Remaining Non-Literal Gaps That Matter
 
-### 1. Isolated compatibility APIs still coexist
+### 1. Current-shape model/helper surfaces still coexist
 
-The live runtime is Tyler-native, but the repo still keeps isolated
-compatibility APIs for:
+The live runtime is Tyler-native, but the repo still keeps current-shape
+model/helper surfaces for:
 
 - `QuestionDecomposition`
 - `EvidenceBundle`
@@ -88,7 +88,7 @@ compatibility APIs for:
 - `ClaimLedger`
 
 These no longer define the live Tyler runtime. The remaining active debt is
-isolated helper/test/migration scaffolding, not public export compatibility.
+current-shape helper/test/migration scaffolding, not public export compatibility.
 
 ### 2. Provider and model assumptions are not literal
 

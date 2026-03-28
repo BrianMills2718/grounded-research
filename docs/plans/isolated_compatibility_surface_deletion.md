@@ -1,6 +1,6 @@
 # Isolated Compatibility Surface Deletion
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Delete non-live compatibility APIs so `main` keeps one canonical
 runtime vocabulary instead of a Tyler-native runtime plus a second dormant
 current-shape implementation.
@@ -92,3 +92,20 @@ Files:
 | Deleting compatibility entrypoints breaks still-live tests | targeted decompose/analyst tests fail immediately | delete or rewrite those tests to target the Tyler-native path instead of restoring the runtime path |
 | A supposedly isolated helper is still used by the engine | compile or phase-boundary tests fail | restore only the narrow helper dependency, not the broader legacy path, then open a follow-up child slice |
 | Authority docs still describe mixed runtime contracts | grep still finds `AnalystRun` / `QuestionDecomposition` in active docs | rewrite the doc section immediately; do not defer doc cleanup |
+
+## Result
+
+Completed slices:
+
+- `f90b718` Delete current-shape Stage 1 runtime entrypoints
+- `32b4433` Delete legacy AnalystRun execution path
+- `926480e` Delete isolated Stage 3 compatibility helpers
+
+Verification:
+
+- `./.venv/bin/python -m pytest tests/test_canonicalize.py tests/test_tyler_v1_stage4_adapters.py tests/test_phase_boundaries.py tests/test_prompt_templates.py -q`
+- result: `49 passed`
+
+Next child wave:
+
+- `docs/plans/current_shape_model_surface_deletion.md`

@@ -20,11 +20,11 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 1 | Restate query as precise core question | KEEP | **DONE** | `QuestionDecomposition.core_question` reformulates via LLM. |
-| 2 | Break into 2-6 typed sub-questions | KEEP | **DONE** | `SubQuestion` with type (factual/causal/comparative/evaluative/scope) + falsification target. ADR-0006. |
+| 1 | Restate query as precise core question | KEEP | **DONE** | Tyler Stage 1 `DecompositionResult.core_question` reformulates via LLM. |
+| 2 | Break into 2-6 typed sub-questions | KEEP | **DONE** | Tyler Stage 1 `sub_questions` carry typed `Q-*` entries with research guidance. |
 | 3 | Identify ambiguous terms & assign definitions | CUT | **DONE** | `AmbiguousTerm` schema in decomposition. Passed through to analysts. Originally cut, later implemented. |
-| 4 | Map optimization axes & tradeoffs | KEEP | **DONE** | `QuestionDecomposition.optimization_axes` (2-4 key tradeoffs). Passed to synthesis as organizing framework. |
-| 5 | Build research plan with falsification targets | SIMPLIFY | **DONE** | `QuestionDecomposition.research_plan` + per-sub-question `falsification_target`. Drives counterfactual search queries. |
+| 4 | Map optimization axes & tradeoffs | KEEP | **DONE** | Tyler Stage 1 `optimization_axes` pass through to Stage 6 as organizing structure. |
+| 5 | Build research plan with falsification targets | SIMPLIFY | **DONE** | Tyler Stage 1 `research_plan` carries verification targets and critical source types. |
 | 6 | Assess complexity level | CUT | CUT | — |
 | 7 | Emit stage summary for final report | KEEP | **DONE** | `PhaseTrace` with `output_summary` per phase. |
 
@@ -36,7 +36,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | 9 | Flag directional bias | DEFER | **DONE** | `DecompositionValidation.bias_flags` in validation pass. |
 | 10 | Check granularity | DEFER | **DONE** | `DecompositionValidation.granularity_issues` in validation pass. |
 | 11 | Assess falsification target quality | DEFER | SKIP | Intentionally skipped as low-value meta-validation. |
-| 12 | Issue verdict (proceed/caveats/revise) | DEFER | **DONE** | `decompose_with_validation()` retries once on `revise`. |
+| 12 | Issue verdict (proceed/caveats/revise) | DEFER | **DONE** | Tyler-native decomposition validation retries once on `revise`. |
 
 ## STAGE 2 — BROAD RETRIEVAL & EVIDENCE NORMALIZATION
 
@@ -55,18 +55,18 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts()` with 3 distinct analyst roles + distinct frames. Current primary defaults use the closest available Tyler-role mapping (`gpt-5.4-mini`, `gemini-2.5-flash`, `gpt-5.4-nano`) after DeepSeek was removed for schema instability on the Tyler-native path. |
-| 22 | Require bottom-line recommendation | KEEP | **DONE** | `AnalystRun.recommendations` is a required field in prompt output. |
-| 23 | Require falsifiable claims with evidence references | KEEP | **DONE** | `RawClaim.evidence_ids` required. Hallucinated IDs stripped at extraction. |
-| 24 | Require explicit assumptions | KEEP | **DONE** | `AnalystRun.assumptions` is a schema field. |
-| 25 | Force counter-argument against own recommendation | SIMPLIFY | **DONE** | `AnalystRun.counterarguments` has `min_length=1` — schema enforces at least one counterargument. |
+| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts_tyler_v1()` emits three Tyler `AnalysisObject`s with distinct frames. Current primary defaults use the closest available Tyler-role mapping (`gpt-5.4-mini`, `gemini-2.5-flash`, `gpt-5.4-nano`) after DeepSeek was removed for schema instability on the Tyler-native path. |
+| 22 | Require bottom-line recommendation | KEEP | **DONE** | Tyler Stage 3 `AnalysisObject.recommendation` is required. |
+| 23 | Require falsifiable claims with evidence references | KEEP | **DONE** | Tyler Stage 3 `claims[].source_references` and Stage 4 normalization keep source linkage explicit. |
+| 24 | Require explicit assumptions | KEEP | **DONE** | Tyler Stage 3 `assumptions` is required structured state. |
+| 25 | Force counter-argument against own recommendation | SIMPLIFY | **DONE** | Tyler Stage 3 `counter_argument` is required. |
 | 26 | Anonymize analysts & apply anti-conformity | KEEP | **DONE** | Labels Alpha/Beta/Gamma. Analysts don't see each other's outputs (by construction). |
 
 ## STAGE 4 — CLAIM EXTRACTION & DISPUTE LOCALIZATION
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 27 | Decompose analyses into atomic claims | KEEP | **DONE** | `extract_raw_claims()` pulls claims from analyst runs. |
+| 27 | Decompose analyses into atomic claims | KEEP | **DONE** | Tyler Stage 4 consumes Tyler `AnalysisObject[]` directly and emits canonical `ClaimExtractionResult`. |
 | 28 | Deduplicate claims across models | KEEP | **DONE** | `deduplicate_claims()` via LLM grouping. |
 | 29 | Assign global IDs & carry forward evidence labels | KEEP | **DONE** | C- prefix IDs, evidence_ids propagated through dedup. |
 | 30 | Evidence-label leakage check | DEFER | **DONE** | URL regex scan on analyst outputs emits `PipelineWarning` on leakage. |
