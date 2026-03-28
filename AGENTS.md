@@ -336,6 +336,23 @@ stronger:
 - do not open speculative new work just to stay busy; close the current gate
   first
 
+When the user explicitly asks for a next-24-hour or overnight closure wave, the
+default expectation is strongest:
+
+- determine the full set of remaining local phases first
+- write or update the active plan and notebook before implementation
+- execute every pre-made slice in order without pausing for conversational
+  check-ins
+- if one slice closes and the plan already names the next slice, continue
+  immediately
+- if uncertainty appears, record it in the active plan, roadmap, audit, or
+  tech-debt surface and keep executing the remaining non-blocked slices
+- stop only for a real external blocker, a failed gate that changes the plan,
+  or explicit user redirect
+
+Do not treat "one commit landed" as a stopping condition. Do not treat "the
+benchmark ran once" as a stopping condition. Close the entire accepted wave.
+
 ### 15. Documentation Governance Is In Scope
 
 This repo intentionally keeps a documentation-governance layer alongside the

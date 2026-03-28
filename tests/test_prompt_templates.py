@@ -316,8 +316,12 @@ def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
 
     assert "SUBORDINATION PRINCIPLE" in messages[0]["content"]
     assert "PRIMARY OBLIGATION" in messages[0]["content"]
+    assert "EVIDENCE LAUNDERING" in messages[0]["content"]
+    assert "FALSE CONSENSUS" in messages[0]["content"]
+    assert "CONDITIONS OF VALIDITY" in messages[0]["content"]
     assert "CLAIM LEDGER (decision-critical claims)" in messages[1]["content"]
     assert "KEY EVIDENCE SOURCES" in messages[1]["content"]
+    assert "Original query repeated" in messages[1]["content"]
 
 
 def test_dispute_classify_prompt_renders_with_type_guidance() -> None:
