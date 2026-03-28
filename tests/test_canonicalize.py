@@ -19,7 +19,12 @@ from grounded_research.models import (
     SourceRecord,
     SubQuestion,
 )
+from grounded_research.tyler_v1_adapters import (
+    build_tyler_alias_mapping,
+    current_analyst_run_to_tyler_analysis,
+)
 from grounded_research.tyler_v1_models import (
+    AnalysisObject,
     ClaimExtractionResult,
     DecompositionResult,
     ResearchPlan,
@@ -520,6 +525,23 @@ def _tyler_stage4_stage1_result() -> DecompositionResult:
     )
 
 
+def _tyler_stage4_analysis_objects() -> tuple[list[AnalysisObject], dict[str, str]]:
+    """Build canonical Tyler Stage 3 fixtures from compatibility analyst runs."""
+    bundle = _tyler_stage4_bundle()
+    runs = _tyler_stage4_analyst_runs()
+    alias_mapping = build_tyler_alias_mapping(runs)
+    analyses = [
+        current_analyst_run_to_tyler_analysis(
+            run=run,
+            bundle=bundle,
+            model_alias=alias_mapping[run.analyst_label],
+            reasoning_frame=run.frame,
+        )
+        for run in runs
+    ]
+    return analyses, alias_mapping
+
+
 @pytest.mark.asyncio
 async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
     monkeypatch: pytest.MonkeyPatch,
@@ -596,9 +618,9 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
 
     result = await canonicalize_tyler_v1(
-        _tyler_stage4_analyst_runs(),
         _tyler_stage4_bundle(),
         decomposition=_tyler_stage4_decomposition(),
+        analyst_runs=_tyler_stage4_analyst_runs(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
         trace_id="test-trace",
         max_budget=0.5,
@@ -646,9 +668,9 @@ async def test_canonicalize_tyler_v1_fails_loud_on_persistent_empty_stage4(
 
     with pytest.raises(ValueError, match="empty claim ledger and assumption set after retry"):
         await canonicalize_tyler_v1(
-            _tyler_stage4_analyst_runs(),
             _tyler_stage4_bundle(),
             decomposition=_tyler_stage4_decomposition(),
+            analyst_runs=_tyler_stage4_analyst_runs(),
             tyler_stage_1_result=_tyler_stage4_stage1_result(),
             trace_id="test-trace",
             max_budget=0.5,
@@ -708,9 +730,9 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
 
     result = await canonicalize_tyler_v1(
-        _tyler_stage4_analyst_runs(),
         _tyler_stage4_bundle(),
         decomposition=_tyler_stage4_decomposition(),
+        analyst_runs=_tyler_stage4_analyst_runs(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
         trace_id="test-trace",
         max_budget=0.5,
@@ -721,6 +743,68 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
         "claim_extraction_tyler_v1_retry",
     ]
     assert len(result.claim_ledger) == 1
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_tyler_v1_live_path_requires_only_tyler_stage3_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The live Stage 4 path should work from Tyler Stage 3 artifacts alone."""
+    analyses, alias_mapping = _tyler_stage4_analysis_objects()
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+        assert task == "claim_extraction_tyler_v1"
+        assert timeout == 240
+        return response_model.model_validate(
+            {
+                "claim_ledger": [
+                    {
+                        "id": "C-1",
+                        "statement": "Redis achieved lower p99 latency than PostgreSQL for session reads.",
+                        "source_models": ["A"],
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-1"],
+                        "status": "supported",
+                        "supporting_models": ["A"],
+                        "contesting_models": ["B"],
+                        "related_assumptions": [],
+                    }
+                ],
+                "assumption_set": [],
+                "dispute_queue": [],
+                "statistics": {
+                    "total_claims": 1,
+                    "total_assumptions": 0,
+                    "total_disputes": 0,
+                    "disputes_by_type": {},
+                    "decision_critical_disputes": 0,
+                    "claims_per_model": {"A": 1, "B": 1},
+                },
+                "stage_summary": {
+                    "stage_name": "Stage 4",
+                    "goal": "goal",
+                    "key_findings": ["k1"],
+                    "decisions_made": ["d1"],
+                    "outcome": "outcome",
+                    "reasoning": "reasoning",
+                },
+            }
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+
+    result = await canonicalize_tyler_v1(
+        _tyler_stage4_bundle(),
+        decomposition=_tyler_stage4_decomposition(),
+        tyler_stage_1_result=_tyler_stage4_stage1_result(),
+        tyler_stage_3_results=analyses,
+        tyler_stage_3_alias_mapping=alias_mapping,
+        trace_id="test-trace",
+        max_budget=0.5,
+    )
+
+    assert len(result.claim_ledger) == 1
+    assert result.claim_ledger[0].id == "C-1"
 
 
 @pytest.mark.asyncio
