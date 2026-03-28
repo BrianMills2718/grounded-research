@@ -10,6 +10,7 @@ receiving explicit projected copies where later phases still depend on them.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+import logging
 import re
 
 from grounded_research.models import (
@@ -65,6 +66,8 @@ from grounded_research.tyler_v1_models import (
     Tradeoff,
     VerificationResult,
 )
+
+_LOG = logging.getLogger(__name__)
 
 
 def current_to_tyler_sub_question_id_map(
@@ -898,6 +901,13 @@ def tyler_stage4_to_current_ledger(
 
     current_disputes: list[RuntimeDispute] = []
     for dispute in result.dispute_queue:
+        if len(dispute.claims_involved) < 2:
+            _LOG.warning(
+                "Skipping Tyler Stage 4 dispute %s in current-ledger projection because it references fewer than 2 claims: %s",
+                dispute.id,
+                dispute.claims_involved,
+            )
+            continue
         current_type = {
             DisputeType.EMPIRICAL: "factual_conflict",
             DisputeType.INTERPRETIVE: "interpretive_conflict",

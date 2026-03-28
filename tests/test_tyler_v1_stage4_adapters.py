@@ -248,3 +248,70 @@ def test_tyler_stage4_to_current_ledger_preserves_claim_and_dispute_integrity() 
     assert ledger.disputes[0].id == "D-1"
     assert ledger.disputes[0].claim_ids == ["C-1", "C-2"]
     assert ledger.disputes[0].route == "arbitrate"
+
+
+def test_tyler_stage4_to_current_ledger_skips_single_claim_disputes(caplog) -> None:
+    bundle = _bundle()
+    analyst_runs = _analyst_runs()
+    alias_mapping = build_tyler_alias_mapping(analyst_runs)
+    result = ClaimExtractionResult.model_validate(
+        {
+            "claim_ledger": [
+                {
+                    "id": "C-1",
+                    "statement": "Employment stayed flat in the pilot.",
+                    "source_models": ["A"],
+                    "evidence_label": EvidenceLabel.EMPIRICALLY_OBSERVED.value,
+                    "source_references": ["S-1"],
+                    "status": "supported",
+                    "supporting_models": ["A"],
+                    "contesting_models": [],
+                    "related_assumptions": [],
+                }
+            ],
+            "assumption_set": [],
+            "dispute_queue": [
+                {
+                    "id": "D-1",
+                    "type": "interpretive",
+                    "description": "A single-claim ambiguity that current Dispute cannot represent.",
+                    "claims_involved": ["C-1"],
+                    "model_positions": [
+                        {"model_alias": "A", "position": "This claim is ambiguous in isolation."}
+                    ],
+                    "decision_critical": False,
+                    "decision_critical_rationale": "",
+                    "status": "unresolved",
+                    "resolution_routing": "logged_only",
+                }
+            ],
+            "statistics": {
+                "total_claims": 1,
+                "total_assumptions": 0,
+                "total_disputes": 1,
+                "disputes_by_type": {"interpretive": 1},
+                "decision_critical_disputes": 0,
+                "claims_per_model": {"A": 1},
+            },
+            "stage_summary": {
+                "stage_name": "Stage 4",
+                "goal": "goal",
+                "key_findings": ["k1", "k2", "k3"],
+                "decisions_made": ["d1"],
+                "outcome": "outcome",
+                "reasoning": "reasoning",
+            },
+        }
+    )
+
+    with caplog.at_level("WARNING"):
+        ledger = tyler_stage4_to_current_ledger(
+            result,
+            analyst_runs=analyst_runs,
+            bundle=bundle,
+            alias_mapping=alias_mapping,
+        )
+
+    assert [claim.id for claim in ledger.claims] == ["C-1"]
+    assert ledger.disputes == []
+    assert "references fewer than 2 claims" in caplog.text
