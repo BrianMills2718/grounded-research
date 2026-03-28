@@ -138,6 +138,8 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_canonical_cutover.md`
 - current child wave under that cutover:
   `docs/plans/stage5_internal_protocol_literalization.md`
+- next child wave after that:
+  `docs/plans/stage34_compatibility_protocol_deletion.md`
 - completed child waves under that cutover:
   `docs/plans/legacy_export_surface_deletion.md`,
   `docs/plans/stage45_projection_deletion.md`,

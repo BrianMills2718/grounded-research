@@ -68,6 +68,8 @@ Current implementation frontier:
 - treat `docs/plans/current_shape_model_surface_deletion.md` as completed
 - execute `docs/plans/stage5_internal_protocol_literalization.md` as the
   current child wave under that cutover
+- treat `docs/plans/stage34_compatibility_protocol_deletion.md` as the next
+  child wave once the Stage 5 protocol surface is gone
 - remove the remaining internal current-shape Stage 5 protocol debt aggressively
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes
