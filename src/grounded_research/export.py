@@ -178,11 +178,32 @@ def validate_grounding(
                 if eid not in evidence_ids:
                     errors.append(f"Claim {cid} cites evidence {eid} not in bundle")
 
+    disagreement_summary = report.disagreement_summary or ""
     for d in ledger.unresolved_disputes():
-        if d.id not in report.disagreement_summary:
+        if d.id not in disagreement_summary:
             errors.append(f"Unresolved dispute {d.id} not mentioned in report")
 
     return errors
+
+
+def _ensure_unresolved_disputes_in_report(report: FinalReport, ledger: ClaimLedger) -> FinalReport:
+    """Preserve unresolved disputes in the projected report surface.
+
+    Tyler Stage 6 is now the source of truth for synthesis, but grounding validation
+    still runs against the shipped `FinalReport` contract. If the structured Tyler
+    artifact under-fills its disagreement map, unresolved disputes must still remain
+    visible in the projected report so validation and downstream users do not lose
+    active uncertainty.
+    """
+    summary_lines = [line.strip() for line in (report.disagreement_summary or "").splitlines() if line.strip()]
+    mentioned_ids = {line.split(":", 1)[0].strip() for line in summary_lines if ":" in line}
+    for dispute in ledger.unresolved_disputes():
+        if dispute.id in mentioned_ids:
+            continue
+        dispute_summary = dispute.resolution_summary or dispute.description or "Unresolved disagreement."
+        summary_lines.append(f"{dispute.id}: {dispute_summary} — unresolved")
+    report.disagreement_summary = "\n".join(summary_lines)
+    return report
 
 
 async def generate_tyler_synthesis_report(
@@ -392,6 +413,7 @@ async def generate_report(
                 for claim_id in report.cited_claim_ids
                 if claim_id in grounded_claim_ids
             ]
+            report = _ensure_unresolved_disputes_in_report(report, state.claim_ledger)
         return report
 
     from llm_client import acall_llm_structured, render_prompt

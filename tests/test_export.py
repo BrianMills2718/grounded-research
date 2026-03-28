@@ -197,6 +197,54 @@ async def test_generate_report_projects_from_tyler_stage6_when_available() -> No
 
 
 @pytest.mark.asyncio
+async def test_generate_report_preserves_unresolved_disputes_when_tyler_stage6_omits_map() -> None:
+    """Projected FinalReport must keep unresolved disputes visible for grounding checks."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What should we do?"),
+        claim_ledger=ClaimLedger(
+            claims=[
+                Claim(
+                    id="C-1",
+                    statement="A grounded claim.",
+                    source_raw_claim_ids=["RC-1"],
+                    analyst_sources=["Alpha"],
+                    evidence_ids=["E-1"],
+                    confidence="high",
+                ),
+                Claim(
+                    id="C-2",
+                    statement="A competing grounded claim.",
+                    source_raw_claim_ids=["RC-2"],
+                    analyst_sources=["Beta"],
+                    evidence_ids=["E-1"],
+                    confidence="medium",
+                )
+            ],
+            disputes=[
+                Dispute(
+                    id="D-2",
+                    claim_ids=["C-1", "C-2"],
+                    dispute_type="interpretive_conflict",
+                    route="arbitrate",
+                    description="Interpretation remains unresolved.",
+                    severity="decision_critical",
+                    resolved=False,
+                    resolution_summary="Need to preserve the unresolved interpretation split.",
+                )
+            ],
+            arbitration_results=[],
+        ),
+        tyler_stage_6_result=_tyler_report().model_copy(update={"disagreement_map": []}),
+    )
+
+    report = await generate_report(state, trace_id="trace-1", max_budget=0.5)
+
+    assert "D-2" in (report.disagreement_summary or "")
+    assert "unresolved" in (report.disagreement_summary or "")
+
+
+@pytest.mark.asyncio
 async def test_generate_report_filters_ungrounded_tyler_stage6_claims() -> None:
     """Tyler Stage 6 projected citations must be filtered to grounded current claims."""
     state = PipelineState(
