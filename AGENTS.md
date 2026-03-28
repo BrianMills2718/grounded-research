@@ -281,6 +281,12 @@ If one of those happens, document it explicitly in the plan, notebook, and
 authority docs, then continue with the next unblocked phase instead of leaving
 the repo in a vague intermediate state.
 
+Once the active repo-local wave is actually complete, stop opening new local
+cleanup slices just to stay busy. Freeze `grounded-research` on the canonical
+Tyler path, keep benchmark anchors stable, and move the next frontier into
+`prompt_eval`, `llm_client`, or `open_web_retrieval` unless a new benchmark
+creates a grounded-research-specific diagnosis.
+
 ### 8d. Rollback Safety During Long Waves
 
 When a long cutover or deletion wave is in progress, preserve rollback points
