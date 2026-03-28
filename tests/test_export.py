@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from grounded_research.export import (
+    build_tyler_downstream_handoff,
     generate_report,
     generate_tyler_synthesis_report,
     render_long_report,
@@ -1189,3 +1190,32 @@ def test_write_outputs_prefers_tyler_summary_when_present(tmp_path: Path) -> Non
     summary = paths["summary"].read_text()
     assert "## Executive Recommendation" in summary
     assert "Recommendation based on C-1." in summary
+
+
+def test_build_tyler_downstream_handoff_prefers_canonical_stage_artifacts() -> None:
+    """Canonical handoff should preserve Tyler Stage 2/5/6 directly."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=StageSummary(
+                stage_name="Stage 2",
+                goal="goal",
+                key_findings=["k1", "k2", "k3"],
+                decisions_made=["d1"],
+                outcome="outcome",
+                reasoning="reasoning",
+            ),
+        ),
+        tyler_stage_5_result=_stage5_result_for_report(),
+        tyler_stage_6_result=_tyler_report(),
+    )
+
+    handoff = build_tyler_downstream_handoff(state)
+
+    assert handoff.question.text == "What is the evidence?"
+    assert handoff.stage_5_verification_result.updated_claim_ledger[0].id == "C-1"
+    assert handoff.stage_6_synthesis_report.claim_ledger_excerpt[0].claim_id == "C-1"

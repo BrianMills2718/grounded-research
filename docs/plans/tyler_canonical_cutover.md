@@ -221,6 +221,14 @@ Acceptance:
 - `handoff.json` is Tyler-native when Tyler Stage 5/6 exist
 - export and phase-boundary tests pass
 
+Completed:
+
+- canonical successful runs no longer generate or store `FinalReport`
+- `handoff.json` now prefers a Tyler-native downstream artifact built from
+  Stage 2, Stage 5, and Stage 6
+- `report.md` / `summary.md` / `handoff.json` now derive primarily from
+  Tyler-native export artifacts in the successful path
+
 ### Phase B: Canonical Export Contract Rewrite
 
 Goal:
@@ -237,6 +245,13 @@ Acceptance:
 
 - active docs describe Tyler Stage 6 + Tyler handoff as the canonical output surface
 - primary boundary tests assert Tyler-native artifacts first
+
+Completed:
+
+- README, PLAN, CONTRACTS, ARCHITECTURE, and FEATURE_STATUS now describe the
+  Tyler-native output contract as canonical
+- phase-boundary tests now assert Tyler Stage 5/6 first and explicitly skip
+  legacy traces that predate Tyler-native export persistence
 
 ### Phase C: Stage 5 Compatibility Demotion
 
@@ -257,6 +272,24 @@ Acceptance:
 - no primary export or validation path depends on `ClaimLedger`
 - remaining `ClaimLedger` usage is documented as transitional only
 
+Current concern:
+
+- removing `ClaimLedger` entirely from persisted state would require either
+  a fresh Tyler-native trace fixture or a larger phase-boundary test rewrite
+  to avoid turning broad contract coverage into pure skips
+- that is a real cutover concern, not a reason to restore `ClaimLedger` as a
+  canonical surface
+
+Completed in this wave:
+
+- canonical successful export no longer stores `FinalReport` in the live engine path
+- `handoff.json` now prefers the Tyler-native Stage 2/5/6 handoff artifact
+- phase-boundary tests now load the Tyler-native trace directly and rebuild the
+  Stage 3 analyst boundary view from canonical Tyler artifacts instead of
+  trusting stale projected `analyst_runs`
+- docs now describe `FinalReport`, `DownstreamHandoff`, and projected
+  `ClaimLedger` as compatibility debt rather than co-equal outputs
+
 ### Phase D: State Cleanup And Final Review
 
 Goal:
@@ -274,6 +307,15 @@ Acceptance:
 
 - the repo has one clear canonical runtime path and one clear compatibility-debt story
 - remaining uncertainties are documented explicitly in repo docs, not left implicit
+
+Remaining ordered phases after this commit:
+
+1. isolate remaining compatibility-only export helpers behind explicit legacy
+   boundaries and stop presenting them as normal runtime surfaces
+2. determine whether any non-test consumer still needs `PipelineState.claim_ledger`
+   or `PipelineState.report`; if not, delete those fields in one cutover commit
+3. rerun the Tyler-native canonical benchmark/export path after the state cleanup
+   to prove the canonical path still works without the legacy projections
 
 ### Slice 4: Strict analyst success defaults
 

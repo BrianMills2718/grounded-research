@@ -212,10 +212,11 @@ Input:
 
 Output:
 
-- `FinalReport`
+- Tyler `SynthesisReport`
 - `report.md`
+- `summary.md`
 - `trace.json`
-- ledger handoff artifact for downstream use
+- Tyler-native handoff artifact for downstream use
 
 Purpose:
 
@@ -242,8 +243,8 @@ Rule:
 - `VerificationQueryBatch`
 - `ArbitrationResult`
 - `ClaimLedger`
-- `FinalReport`
-- `DownstreamHandoff`
+- Tyler `SynthesisReport`
+- Tyler-native downstream handoff
 - `PipelineWarning`
 - `PipelineState`
 

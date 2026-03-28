@@ -1,11 +1,14 @@
 """Grounded export and downstream handoff.
 
-Phase 5: Two-step report generation:
-1. Structured FinalReport for grounding validation (fast, cheap)
-2. Long-form markdown report from full pipeline state (the actual deliverable)
+The canonical successful export path is now Tyler-native:
 
-The structured report ensures every claim is grounded. The long-form
-report is what the user reads — a thorough, publication-quality analysis.
+1. Tyler Stage 6 `SynthesisReport` as the structured synthesis artifact
+2. `report.md` rendered directly from Tyler Stage 6
+3. `summary.md` rendered directly from Tyler Stage 6
+4. Tyler-native downstream handoff built from Stage 2, Stage 5, and Stage 6
+
+The older `FinalReport` surface remains only as compatibility debt and testable
+fallback machinery while the cutover finishes.
 """
 
 from __future__ import annotations
@@ -31,6 +34,7 @@ from grounded_research.models import (
     PipelineState,
     PipelineWarning,
     QuestionDecomposition,
+    TylerDownstreamHandoff,
 )
 from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import (
@@ -280,6 +284,20 @@ def _validate_tyler_synthesis_report(
     return errors
 
 
+def build_tyler_downstream_handoff(state: PipelineState) -> TylerDownstreamHandoff:
+    """Build the canonical Tyler-native downstream artifact."""
+    assert state.question is not None
+    assert state.tyler_stage_2_result is not None
+    assert state.tyler_stage_5_result is not None
+    assert state.tyler_stage_6_result is not None
+    return TylerDownstreamHandoff(
+        question=state.question,
+        stage_2_evidence_package=state.tyler_stage_2_result,
+        stage_5_verification_result=state.tyler_stage_5_result,
+        stage_6_synthesis_report=state.tyler_stage_6_result,
+    )
+
+
 async def generate_tyler_synthesis_report(
     state: PipelineState,
     *,
@@ -410,20 +428,21 @@ async def generate_tyler_synthesis_report(
         ]
     ))
 
+    stage_3_results = list(state.tyler_stage_3_results)
     stage_3_summary = {
         "stage_name": "Stage 3: Independent Candidate Generation",
         "goal": "Produce independent recommendations, claims, assumptions, and counterarguments from the evidence package.",
         "key_findings": [
-            f"{len([run for run in state.analyst_runs if run.succeeded])} analysts succeeded",
-            f"{sum(len(run.claims) for run in state.analyst_runs if run.succeeded)} total raw analyst claims produced",
+            f"{len(stage_3_results)} analysts succeeded",
+            f"{sum(len(result.claims) for result in stage_3_results)} total Tyler analyst claims produced",
             "Independent analyst diversity preserved through aliasing and frame separation",
         ],
         "decisions_made": [
-            "Preserved only successful analyst runs for synthesis context",
+            "Preserved only successful Tyler Stage 3 analysis objects for synthesis context",
             "Kept analyst disagreement structure explicit for downstream Stage 4 extraction",
         ],
         "outcome": "Independent analysis objects available for canonicalization.",
-        "reasoning": "Combined stage summary synthesized from successful analyst runs.",
+        "reasoning": "Combined stage summary synthesized from successful Tyler Stage 3 analysis objects.",
     }
     all_stage_summaries = [
         tyler_stage1.stage_summary.model_dump(mode="json"),
@@ -433,11 +452,7 @@ async def generate_tyler_synthesis_report(
         stage_5_result.stage_summary.model_dump(mode="json"),
     ]
 
-    user_clarifications = "\n".join(
-        dispute.resolution_summary
-        for dispute in state.claim_ledger.disputes
-        if dispute.dispute_type in {"preference_conflict", "ambiguity"} and dispute.resolution_summary
-    ) if state.claim_ledger is not None else ""
+    user_clarifications = "\n".join(state.user_guidance_notes)
 
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_synthesis.yaml"),
@@ -845,7 +860,21 @@ def write_outputs(
         paths["summary"] = summary_path
 
     # handoff.json — downstream artifact for onto-canon
-    if state.claim_ledger and state.evidence_bundle and state.question:
+    if state.tyler_handoff is not None:
+        handoff_path = output_dir / "handoff.json"
+        handoff_path.write_text(state.tyler_handoff.model_dump_json(indent=2))
+        paths["handoff"] = handoff_path
+    elif (
+        state.tyler_stage_2_result is not None
+        and state.tyler_stage_5_result is not None
+        and state.tyler_stage_6_result is not None
+        and state.question is not None
+    ):
+        handoff = build_tyler_downstream_handoff(state)
+        handoff_path = output_dir / "handoff.json"
+        handoff_path.write_text(handoff.model_dump_json(indent=2))
+        paths["handoff"] = handoff_path
+    elif state.claim_ledger and state.evidence_bundle and state.question:
         handoff = DownstreamHandoff(
             question=state.question,
             claim_ledger=state.claim_ledger,

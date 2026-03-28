@@ -41,7 +41,7 @@ async def run_pipeline(
     )
     from grounded_research.verify import verify_disputes_tyler_v1
     from grounded_research.export import (
-        generate_report,
+        build_tyler_downstream_handoff,
         generate_tyler_synthesis_report,
         render_long_report,
         validate_tyler_grounding,
@@ -203,7 +203,6 @@ async def run_pipeline(
             max_budget=total_budget * 0.2,
         )
         state.tyler_stage_4_result = tyler_stage_4_result
-        state.claim_ledger = ledger
 
         state.phase_traces.append(PhaseTrace(
             phase="canonicalize",
@@ -239,6 +238,7 @@ async def run_pipeline(
                     if answer:
                         d.resolution_summary = f"User guidance: {answer}"
                         d.resolved = True
+                        state.user_guidance_notes.append(f"{d.id}: {answer}")
                         print(f"  → Recorded.")
                 except (EOFError, KeyboardInterrupt):
                     print(f"  → Skipped.")
@@ -262,7 +262,6 @@ async def run_pipeline(
         )
         state.tyler_stage_5_result = tyler_stage_5_result
         arb_results = ledger.arbitration_results
-        state.claim_ledger = ledger
         for warning in adjudication_warnings:
             state.add_warning(
                 "adjudicate",
@@ -294,9 +293,7 @@ async def run_pipeline(
             max_budget=total_budget * 0.2,
         )
         state.tyler_stage_6_result = tyler_stage_6_result
-
-        report = await generate_report(state, trace_id, max_budget=total_budget * 0.1)
-        state.report = report
+        state.tyler_handoff = build_tyler_downstream_handoff(state)
 
         # Grounding validation now treats the Tyler Stage 6 artifact as primary.
         grounding_errors = validate_tyler_grounding(
@@ -322,7 +319,7 @@ async def run_pipeline(
             started_at=phase_start,
             completed_at=datetime.now(timezone.utc),
             succeeded=True,
-            llm_calls=2,
+            llm_calls=1,
             output_summary=(
                 f"Tyler Stage 6: {len(tyler_stage_6_result.claim_ledger_excerpt)} cited claims, "
                 f"{len(grounding_errors)} grounding warnings. "

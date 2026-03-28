@@ -55,9 +55,9 @@ python engine.py "Your question" --output-dir output/my_run
 
 Each run produces:
 - `report.md` — long-form research report (5K-15K words depending on depth)
-- `summary.md` — structured summary with cited claims
+- `summary.md` — Tyler-native structured summary
 - `trace.json` — full pipeline state with provenance
-- `handoff.json` — structured artifact for downstream systems
+- `handoff.json` — Tyler-native downstream handoff artifact
 - `decomposition.json` — sub-questions, optimization axes, research plan
 - `collected_bundle.json` — raw evidence bundle (reusable)
 

@@ -707,11 +707,11 @@ class VerificationQueryBatch(BaseModel):
 
 
 class DownstreamHandoff(BaseModel):
-    """The structured artifact passed to downstream systems such as onto-canon.
+    """Compatibility handoff artifact for legacy downstream consumers.
 
-    This keeps the handoff format explicit instead of leaving it as an ad hoc
-    JSON blob. It includes enough context to reconstruct claim provenance
-    without re-reading the full pipeline trace.
+    The canonical successful path now emits `TylerDownstreamHandoff`. This
+    legacy handoff remains only to keep old tests and archived comparison
+    surfaces readable during the cutover.
     """
 
     downstream_target: str = Field(
@@ -725,16 +725,34 @@ class DownstreamHandoff(BaseModel):
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class TylerDownstreamHandoff(BaseModel):
+    """Canonical downstream artifact for the Tyler-native runtime.
+
+    This handoff preserves the adjudicated Tyler artifacts directly instead of
+    flattening them back into compatibility-era `ClaimLedger` structures.
+    """
+
+    downstream_target: str = Field(
+        default="onto-canon",
+        description="Intended downstream consumer of this artifact.",
+    )
+    question: ResearchQuestion
+    stage_2_evidence_package: TylerEvidencePackage
+    stage_5_verification_result: TylerVerificationResult
+    stage_6_synthesis_report: TylerSynthesisReport
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 # ---------------------------------------------------------------------------
 # Export layer
 # ---------------------------------------------------------------------------
 
 class FinalReport(BaseModel):
-    """The rendered output of the pipeline, grounded in the claim ledger.
+    """Compatibility structured report surface.
 
-    Synthesis must not invent structure absent from the ledger. Every
-    recommendation must cite claim IDs; every cited claim must trace back
-    to evidence.
+    The canonical successful path now uses Tyler Stage 6 `SynthesisReport`.
+    `FinalReport` remains as compatibility debt for legacy render/eval surfaces
+    while the canonical cutover finishes.
     """
 
     title: str
@@ -847,18 +865,24 @@ class PipelineState(BaseModel):
     # --- Intermediate artifacts ---
     tyler_stage_1_result: TylerDecompositionResult | None = None
     tyler_stage_2_result: TylerEvidencePackage | None = None
+    # Compatibility projection of Tyler Stage 3. Canonical runtime should prefer
+    # `tyler_stage_3_results` plus alias mapping instead of this view.
     analyst_runs: list[AnalystRun] = Field(default_factory=list)
     tyler_stage_3_alias_mapping: dict[str, str] = Field(default_factory=dict)
     tyler_stage_3_results: list[TylerAnalysisObject] = Field(default_factory=list)
     tyler_stage_4_result: TylerClaimExtractionResult | None = None
+    # Compatibility projection of Tyler Stage 4/5 used only by legacy surfaces.
     claim_ledger: ClaimLedger | None = None
     tyler_stage_5_result: TylerVerificationResult | None = None
 
     # --- Outputs ---
     tyler_stage_6_result: TylerSynthesisReport | None = None
+    tyler_handoff: TylerDownstreamHandoff | None = None
+    # Compatibility projection of Tyler Stage 6 used only by legacy surfaces.
     report: FinalReport | None = None
 
     # --- Observability ---
+    user_guidance_notes: list[str] = Field(default_factory=list)
     phase_traces: list[PhaseTrace] = Field(default_factory=list)
     warnings: list[PipelineWarning] = Field(default_factory=list)
 

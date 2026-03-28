@@ -99,9 +99,9 @@ DONE here may only partially satisfy the richer V1 contract.
 | 42 | Context compaction | SIMPLIFY | **DONE** | `compress.py` reduces evidence to threshold. Evidence truncated to 400 chars in long_report prompt. |
 | 43 | Self-preference bias guard | DEFER | SKIP | Tested with two judge models (Gemini + GPT-5-nano); no self-preference detected. |
 | 44 | Adapt synthesis by dispute resolution type | KEEP | **DONE** | `synthesis_mode` config: "analytical" (inferences beyond sources, marked) vs "grounded" (ledger-only). Disputes handled differently by mode. |
-| 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | `FinalReport.recommendation` + `alternatives`. Long report has verdict + alternatives sections. |
-| 46 | Tier B: Disagreement map, alternatives, confidence | KEEP | **DONE** | `FinalReport.disagreement_summary`, `alternatives`, confidence as enum. |
-| 47 | Tier C: Claim ledger, evidence trail, gaps | KEEP | **DONE** | `summary.md` includes full cited claims. `trace.json` has complete ledger. |
+| 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | Tyler `SynthesisReport.executive_recommendation` + `decision_relevant_tradeoffs`. Long report has verdict + alternatives sections. |
+| 46 | Tier B: Disagreement map, alternatives, confidence | KEEP | **DONE** | Tyler `SynthesisReport.disagreement_map`, `preserved_alternatives`, `confidence_assessment`. |
+| 47 | Tier C: Claim ledger, evidence trail, gaps | KEEP | **DONE** | Tyler `summary.md` includes claim excerpt and evidence trail. `trace.json` carries full Tyler ledger and verification artifacts. |
 | 48 | Anti-pattern validation checks | SIMPLIFY | **DONE** | `validate_grounding()` checks claim ID resolution and evidence linkage. Hallucinated IDs stripped. |
 | 49 | Generate trace file with full observability | KEEP | **DONE** | `trace.json` = full `PipelineState`. |
 

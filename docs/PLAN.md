@@ -57,9 +57,9 @@ detect_disputes() → severity classification → DISPUTE_ROUTING
     ↓ (user steering: preference/ambiguity disputes, TTY only)
 verify_disputes() → fresh evidence search → arbitration (decision-critical only)
     ↓ (position shuffling, ADR-0004 invariant: fresh evidence required)
-generate_report() → FinalReport (structured, grounded)
+generate_tyler_synthesis_report() → Tyler SynthesisReport (canonical structured export)
     ↓
-render_long_report() → markdown (analytical or grounded mode per config)
+render_long_report() → markdown from Tyler Stage 6
     ↓
 write_outputs() → report.md, summary.md, trace.json, handoff.json
 ```
@@ -90,6 +90,8 @@ Current operational notes:
   plus shared-infra/provider-model differences outside this repo
 - current local implementation frontier is canonical Tyler cutover: delete
   compatibility/runtime adapter debt and keep one canonical runtime path
+- canonical successful exports now center Tyler Stage 6 plus Tyler-native
+  downstream handoff artifacts; `FinalReport` is compatibility-only debt
 
 ## Governance Surfaces
 
@@ -527,15 +529,15 @@ Goal:
 
 Build:
 
-- LLM-based report synthesis from ledger state
+- Tyler-native synthesis from Stage 5 state
 - grounding validation (code-owned, see `docs/CONTRACTS.md` Phase 5 rules)
 - evidence-gap surfacing
-- export of `report.md`, `trace.json`, and `DownstreamHandoff` artifact
+- export of `report.md`, `summary.md`, `trace.json`, and Tyler-native handoff artifact
 
 Pass if:
 
-- every material recommendation cites claim IDs
-- every cited claim maps to evidence IDs and source records
+- every material recommendation cites Tyler claim excerpts
+- every cited claim maps to source references and source records
 - unresolved disputes remain visible
 - evidence gaps remain explicit
 - downstream handoff artifact preserves IDs and provenance
@@ -596,7 +598,8 @@ Each prompt is a YAML/Jinja2 template in `prompts/`, loaded via
 | `dedup.yaml` | 3b | `raw_claims: list[RawClaim]` | equivalence class grouping → `list[Claim]` |
 | `dispute_classify.yaml` | 3c | `claims: list[Claim]` | dispute list with `DisputeType` per conflict |
 | `arbitration.yaml` | 4 | `dispute: Dispute`, `claims: list[Claim]`, `evidence: list[EvidenceItem]`, `new_evidence: list[EvidenceItem]` | `ArbitrationResult` |
-| `synthesis.yaml` | 5 | `question: ResearchQuestion`, `ledger: ClaimLedger`, `evidence_gaps: list[str]` | `FinalReport` (structured output) |
+| `tyler_v1_synthesis.yaml` | 5 | Tyler Stage 1/2/4/5 structured state | `SynthesisReport` (canonical structured output) |
+| `synthesis.yaml` | 5 | `question: ResearchQuestion`, `ledger: ClaimLedger`, `evidence_gaps: list[str]` | `FinalReport` (compatibility-only structured output) |
 
 Phase 3a (claim extraction) likely does not need a prompt — it gathers
 `AnalystRun.claims` directly. A normalization prompt may be added if

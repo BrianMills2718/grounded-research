@@ -91,14 +91,14 @@ in:  list[Dispute]
 out: list[VerificationQueryBatch]
         │
         ▼
-Phase 4b Arbitration + Ledger Update
-in:  ClaimLedger + list[VerificationQueryBatch] + fresh evidence
-out: ClaimLedger + list[ArbitrationResult]
+Phase 4b Tyler Verification
+in:  Tyler Stage 4 artifact + fresh evidence
+out: Tyler `VerificationResult`
         │
         ▼
 Phase 5 Export
 in:  PipelineState
-out: FinalReport + report.md + trace.json + DownstreamHandoff
+out: Tyler `SynthesisReport` + report.md + summary.md + trace.json + Tyler-native handoff
 ```
 
 ## Cross-Cutting Rules
@@ -112,8 +112,8 @@ Minimum trace expectations:
 - original normalized question if available
 - imported evidence bundle if available
 - analyst runs, including failed runs where possible
-- claim ledger if canonicalization succeeded
-- final report if export succeeded
+- Tyler Stage 4/5/6 artifacts if canonicalization, verification, and export succeeded
+- compatibility artifacts only when explicitly produced during cutover
 - warnings
 - per-phase trace entries
 
@@ -138,18 +138,20 @@ Examples:
 
 ### Analyst Success Contract
 
-An `AnalystRun` currently counts as successful if:
+An `AnalystRun` counts as successful only if:
 
 - `error is None`
+- it includes at least one recommendation
+- it includes at least one counterargument
+- it includes at least one claim, with depth-specific minimums from config
+- claims have non-empty evidence IDs
+- counterarguments have non-empty evidence IDs
 
-Current tightening already in code:
+Current explicit nuance:
 
-- successful analyst outputs must include at least one counterargument
-
-Still-open policy choice:
-
-- whether success should also require non-empty claims and recommendations
-- whether evidence references must resolve before the run counts as successful
+- full evidence-reference resolution against the active `EvidenceBundle` is
+  still enforced at the stage boundary and Tyler-native runtime path, not in
+  the standalone `AnalystRun` model validator
 
 ### Routing Contract
 
@@ -371,9 +373,9 @@ agentic loop is wired:
 | Field | Value |
 |---|---|
 | Input | `PipelineState` |
-| Output | `FinalReport` + `report.md` + `trace.json` + `DownstreamHandoff` |
-| Success | cited claim IDs resolve; cited claims resolve to evidence; unresolved disputes remain visible; gaps remain visible |
-| Failure | nonexistent cited claim IDs; evidence-free cited claims; omitted unresolved disputes |
+| Output | Tyler `SynthesisReport` + `report.md` + `summary.md` + `trace.json` + Tyler-native handoff |
+| Success | claim excerpts resolve in Tyler Stage 5; claim excerpts resolve to source references; unresolved disputes remain visible in `disagreement_map`; gaps remain visible |
+| Failure | nonexistent cited claim IDs; source-free cited claims; omitted unresolved disputes |
 | LLM calls | 1 synthesis call from structured state |
 | Code-owned | grounding validation, trace serialization, handoff serialization |
 
@@ -381,17 +383,18 @@ agentic loop is wired:
 
 Before export, code checks:
 
-1. every `claim_id` in `FinalReport.cited_claim_ids` resolves in `ClaimLedger`
-2. every cited claim has `evidence_ids`
-3. every `evidence_id` on a cited claim resolves in `EvidenceBundle`
-4. unresolved disputes are reflected in the report
+1. every `claim_id` in `SynthesisReport.claim_ledger_excerpt` resolves in Tyler Stage 5
+2. every cited Tyler claim has `source_references`
+3. every source reference on a cited Tyler claim resolves in Stage 2 or Stage 5 source inventory
+4. unresolved disputes are reflected in `SynthesisReport.disagreement_map`
 
 These are loud export failures, not silent warnings.
 
 ## Remaining Open Contract Questions
 
-- whether analyst success should be tightened now or after the first live slice
-- whether `DownstreamHandoff` should carry a flattened evidence index in addition
-  to the raw bundle data
+- whether the compatibility `ClaimLedger` should be removed entirely or kept as
+  a short-lived transitional projection while downstream consumers migrate
+- whether the compatibility `FinalReport` should be removed entirely or kept as
+  a short-lived explicit fallback surface
 - whether verification query generation should be one batch call or one call per
   dispute in the first live implementation
