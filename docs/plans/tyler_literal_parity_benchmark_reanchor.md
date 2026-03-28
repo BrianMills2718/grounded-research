@@ -59,6 +59,13 @@ This wave is complete only if:
 
 Completed on `2026-03-27`.
 
+Current reading note:
+
+- this plan records the first benchmark re-anchor result, which regressed
+- later repo-local recovery work is recorded separately in
+  `docs/plans/tyler_literal_prompt_quality_recovery.md`
+- do not read this file alone as the final Tyler-native quality state
+
 Outcome:
 
 - literal Tyler runtime is now mechanically stable end-to-end on both smoke and

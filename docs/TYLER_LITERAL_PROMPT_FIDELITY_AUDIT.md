@@ -33,13 +33,13 @@ One additional explicit concern remains local and should not be hidden inside
 
 | Stage | Active file | Initial classification | Why |
 |---|---|---|---|
-| Stage 1 decomposition | `prompts/tyler_v1_decompose.yaml` | Needs audit | likely close, but not yet line-checked against Tyler source |
-| Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Needs audit | likely close, but not yet line-checked |
-| Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Needs audit | likely close, but not yet line-checked |
+| Stage 1 decomposition | `prompts/tyler_v1_decompose.yaml` | Not re-audited line by line; no benchmark evidence of a local defect | desired literalness is still an assumption, but there is no current grounded-research-specific failure signal here |
+| Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Not re-audited line by line; no benchmark evidence of a local defect | current uncertainty is explicit rather than hidden |
+| Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Not re-audited line by line; no benchmark evidence of a local defect | current uncertainty is explicit rather than hidden |
 | Stage 3 analyst | `prompts/tyler_v1_analyst.yaml` | Literal enough locally; model-role recovery completed | v7 recovered analyst density to `9/20/6` and v8 stayed healthy at `8/17/7` |
 | Stage 4 claim extraction | `prompts/tyler_v1_stage4.yaml` | Literal enough locally | later recovery runs reached `28` and then `38` Tyler claims |
 | Stage 5 verification queries | `prompts/verification_queries.yaml` | Adapted, not literal | already known from Tyler parity audit; this remains a real divergence |
-| Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Needs audit | contract is Tyler-native, but prompt literalness still needs explicit review |
+| Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Not re-audited line by line; contract is Tyler-native and no current benchmark defect is isolated here | literalness uncertainty remains explicit |
 | Stage 6 synthesis | `prompts/tyler_v1_synthesis.yaml` | Literal enough locally with repair loop | v8 produced `3` tradeoffs, `2` preserved alternatives, and `6` cited claims |
 
 ## Recovery Progression

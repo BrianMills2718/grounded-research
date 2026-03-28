@@ -1,7 +1,7 @@
 # Feature Status: v1 Scorecard vs Current Implementation
 
 **Source:** `v1_Pruning_Scorecard.xlsx`
-**Assessed:** 2026-03-26
+**Assessed:** 2026-03-28
 
 **Scope note:** This tracks the original pruning scorecard (52 features).
 Tyler's V1 spec has additional requirements not in the scorecard — see
@@ -42,7 +42,7 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | `generate_search_queries()` creates 15 diverse queries via LLM. Not per-sub-question (no sub-questions exist yet) but per-question with diversity prompting. |
+| 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | `generate_search_queries()` now generates focused queries per sub-question when decomposition is available, and the Tyler-native path uses `generate_search_queries_tyler_v1()` for explicit per-sub-question query diversification. |
 | 14 | Optional Grok/Reddit real-time scan | DEFER | SKIP | Separate search-provider integration, not treated as a core pipeline feature. |
 | 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py`: LLM batch scoring (authoritative/reliable/unknown/unreliable). Per Brian's critique: LLM, not URL lookup. |
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
@@ -55,7 +55,7 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts()` with cross-family models + distinct frames. Async parallel. |
+| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts()` with 3 distinct analyst roles + distinct frames. Current primary defaults use the closest available Tyler-role mapping (`gpt-5.4-mini`, `gemini-2.5-flash`, `gpt-5.4-nano`) after DeepSeek was removed for schema instability on the Tyler-native path. |
 | 22 | Require bottom-line recommendation | KEEP | **DONE** | `AnalystRun.recommendations` is a required field in prompt output. |
 | 23 | Require falsifiable claims with evidence references | KEEP | **DONE** | `RawClaim.evidence_ids` required. Hallucinated IDs stripped at extraction. |
 | 24 | Require explicit assumptions | KEEP | **DONE** | `AnalystRun.assumptions` is a schema field. |
@@ -71,7 +71,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | 29 | Assign global IDs & carry forward evidence labels | KEEP | **DONE** | C- prefix IDs, evidence_ids propagated through dedup. |
 | 30 | Evidence-label leakage check | DEFER | **DONE** | URL regex scan on analyst outputs emits `PipelineWarning` on leakage. |
 | 31 | Identify cross-model conflicts & classify dispute type | KEEP | **DONE** | `detect_disputes()` with 4 dispute types. |
-| 32 | Assess decision-criticality per dispute | KEEP | **DONE** | Severity classification with schema-level guidance. Fixed in this session — was defaulting to "notable" for everything. |
+| 32 | Assess decision-criticality per dispute | KEEP | **DONE** | Severity classification with schema-level guidance. Current shipped runtime distinguishes `decision_critical`, `notable`, and `minor` and uses that classification for routing/escalation. |
 | 33 | Compute resolution routing deterministically | KEEP | **DONE** | `DISPUTE_ROUTING` code-owned table. |
 
 ## STAGE 5 — TARGETED VERIFICATION & ARBITRATION
@@ -125,7 +125,7 @@ DONE here may only partially satisfy the richer V1 contract.
 
 **47/52 features implemented. 4 intentionally skipped. 1 cut.**
 
-*Updated 2026-03-24 from the current spreadsheet, not from stale prose notes.*
+*Updated 2026-03-28 from the current spreadsheet and current shipped runtime, not from stale prose notes.*
 
 ## Intentionally Skipped Features
 

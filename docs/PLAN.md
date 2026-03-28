@@ -24,7 +24,7 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status (2026-03-27)
+## Current Status (2026-03-28)
 
 **v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational.**
 
@@ -32,7 +32,7 @@ See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
 See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
 
-### Current Execution Topology (2026-03-26)
+### Current Execution Topology (2026-03-28)
 
 When invoked with a question (`python engine.py "question"`):
 
@@ -47,7 +47,7 @@ Evidence sufficiency check per sub-question → gaps added
     ↓
 compress_evidence() if > threshold → reduced bundle
     ↓
-run_analysts() → 3 cross-family models × 3 frames (parallel)
+run_analysts() → 3 independent analyst roles × 3 frames (parallel)
     ↓ (evidence leakage check)
 extract_raw_claims() → strip hallucinated evidence IDs
     ↓
@@ -85,8 +85,9 @@ Current operational notes:
   explicit finite request timeouts for long runs
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
-- active repo-local frontier is Tyler-native quality recovery after the literal
-  parity benchmark re-anchor completed with regressed usefulness
+- repo-local Tyler runtime migration and prompt-quality recovery are complete;
+  the remaining explicit gap is a slight divergence from the dense-dedup anchor
+  plus shared-infra/provider-model differences outside this repo
 
 ## Governance Surfaces
 
@@ -615,27 +616,20 @@ disagreement is useful, so the first test should use cross-family models.
 
 ## Immediate Next Step
 
-Preserve the completed benchmark gains rather than reopening solved benchmark gaps.
+There is no open repo-local hardening wave at the moment.
 
-Specifically:
+Current stop line:
 
-1. keep the runtime-safe fixture benchmark path and current UBI artifacts intact
-2. keep the dense-dedup UBI fixture as the canonical benchmark anchor
-3. treat Tyler literal parity as a separate explicit refactor, not as an implicit extension of the benchmark-preservation work
-4. keep shared-infra follow-up in shared libraries rather than rebuilding it here
+1. preserve the runtime-safe fixture benchmark path and saved benchmark anchors
+2. do not reopen solved repo-local Tyler contract or prompt-recovery work
+   without a new benchmark-triggered diagnosis
+3. treat remaining provider/model/search-stack parity gaps as shared-infra work
+4. use `prompt_eval` for future prompt/model/export comparisons before opening
+   another local refactor wave
 
-Current active implementation frontier:
+Current reference surfaces:
 
 - `docs/plans/tyler_literal_parity_refactor.md`
-
-Current literal-parity state:
-
-- Stage 0 exact Tyler schema contract: completed
-- Stage 1-3 Tyler-native prompt and adapter surfaces: completed
-- Stage 4 Tyler-native runtime artifact: completed
-- Stage 5-6 Tyler-native runtime migration: completed
-- Remaining full-parity gap: Stage 1-3 are still adapter-fed inputs, not native runtime artifacts
-
-Recently completed gate:
-
+- `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
+- `docs/plans/tyler_literal_prompt_quality_recovery.md`
 - `docs/plans/thorough_benchmark_preservation_wave1.md`

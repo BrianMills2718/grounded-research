@@ -11,6 +11,17 @@ Current repo support includes two entry modes:
 The contracts below begin once the pipeline has a normalized question and
 evidence bundle.
 
+Current runtime note:
+
+- the live runtime now also persists Tyler-native Stage 1-6 artifacts in
+  `PipelineState`
+- the legacy `QuestionDecomposition`, `EvidenceBundle`, `AnalystRun`,
+  `ClaimLedger`, and `FinalReport` surfaces still exist as compatibility or
+  public-output projections
+- where this document and `tyler_v1_models.py` differ, the runtime currently
+  supports both surfaces and the compatibility/public surface remains the safer
+  external contract unless a plan says otherwise
+
 It is the bridge between:
 
 - [PLAN.md](/home/brian/projects/grounded-research/docs/PLAN.md)
@@ -131,14 +142,14 @@ An `AnalystRun` currently counts as successful if:
 
 - `error is None`
 
-Later tightening may require:
+Current tightening already in code:
 
-- at least one claim
-- at least one recommendation
-- evidence references that resolve
+- successful analyst outputs must include at least one counterargument
 
-The current draft keeps success permissive so the schema layer can be reviewed
-before policy is hardened.
+Still-open policy choice:
+
+- whether success should also require non-empty claims and recommendations
+- whether evidence references must resolve before the run counts as successful
 
 ### Routing Contract
 

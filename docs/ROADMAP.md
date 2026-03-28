@@ -14,7 +14,7 @@ configurable depth modes (standard/deep/thorough).
 **Architecture complete:**
 - Question decomposition with validation and retry
 - Sub-question-driven search (50 sources, parallel fetch)
-- 3 cross-family analysts with distinct reasoning frames
+- 3 independent analyst roles with distinct reasoning frames
 - Claim extraction, dedup, dispute detection with severity calibration
 - Fresh evidence arbitration for decision-critical disputes
 - Analytical + grounded synthesis modes (configurable)
@@ -32,22 +32,14 @@ configurable depth modes (standard/deep/thorough).
 - 1 feature remains cut (#6 complexity assessment; #3 ambiguity and #38
   shuffling were later un-cut and implemented)
 
-## Next: Tyler-Native Prompt Quality Recovery
+## Tyler-Native Status
 
-The contract migration wave and benchmark re-anchor are complete. The Tyler
-runtime is now mechanically stable end-to-end, and the prompt-quality recovery
-wave has materially improved the tracked Tyler-native UBI path.
+The contract migration wave, benchmark re-anchor, and repo-local prompt-quality
+recovery wave are complete. The Tyler runtime is mechanically stable end-to-end,
+now beats cached Perplexity on the tracked UBI case, and still trails the saved
+dense-dedup anchor slightly.
 
-Immediate repo-local goal:
-
-- audit active Tyler prompt files stage by stage against Tyler's prompt spec
-- identify which Tyler-native stages are too thin on the tracked UBI rerun
-- repair local prompt/runtime quality bottlenecks without reopening contract
-  migration
-- rerun the same tracked benchmark gate
-- classify the result honestly as recovered or still divergent
-
-Current state after the recovery wave:
+Current state after the completed recovery wave:
 
 - `output/tyler_literal_parity_ubi_reanchor_v8/` beats cached Perplexity on the
   tracked UBI comparison
@@ -58,6 +50,13 @@ Current state after the recovery wave:
 If the remaining blocker is only provider/runtime behavior or frontier-model
 availability after this recovery, record it as a shared-infra issue instead of
 reopening local contract work.
+
+Current stop line:
+
+- do not reopen repo-local Tyler contract work without a new benchmark-triggered
+  grounded-research-specific diagnosis
+- treat remaining provider/model/search-stack differences as shared-infra work
+  in `llm_client`, `prompt_eval`, or `open_web_retrieval`
 
 See:
 
@@ -211,7 +210,7 @@ grounded-research's role is producing the claim ledger that feeds the chain.
 
 | Phase | What | Status |
 |-------|------|--------|
-| -1 | Thesis validation | Done — cross-family models, severity calibration |
+| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; current primary runtime defaults are the closest available Tyler-role mapping |
 | 0 | Domain model, contracts, trace | Done |
 | 1 | Evidence ingest | Done — Brave + Jina fallback, parallel fetch |
 | 2 | Independent analysts | Done — 3 models × 3 frames |

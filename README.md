@@ -1,6 +1,6 @@
 # grounded-research
 
-Multi-analyst research platform that currently beats cached Perplexity Deep Research on the tracked 6-question benchmark set. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
+Multi-analyst research platform that beats cached Perplexity Deep Research on the tracked 6-question benchmark set in the shipped calibrated path, and whose Tyler-native path now also beats cached Perplexity on the tracked UBI case. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
 
 ## Results
 
@@ -64,7 +64,8 @@ Each run produces:
 ## Key features
 
 - **Question decomposition** with typed sub-questions, falsification targets, and validation with retry
-- **Cross-family analysts**: Gemini, GPT-5-nano, DeepSeek — genuine disagreement, not temperature noise
+- **Distinct analyst roles**: currently configured to the closest available Tyler role mapping
+  (`gpt-5.4-mini`, `gemini-2.5-flash`, `gpt-5.4-nano`) with three reasoning frames
 - **3 reasoning frames**: verification-first, structured decomposition, step-back abstraction
 - **LLM source quality scoring**: authoritative / reliable / unknown / unreliable
 - **Dispute detection** with severity classification and deterministic routing
@@ -86,10 +87,10 @@ All operational policy in `config/config.yaml`:
 
 ## Architecture
 
-- 9 YAML prompt templates in `prompts/`
+- 20 YAML prompt templates in `prompts/`
 - All LLM calls via [llm_client](https://github.com/BrianMills2718/llm_client)
 - Web search via [open_web_retrieval](https://github.com/BrianMills2718/open_web_retrieval)
-- 30 integration tests verifying phase-boundary contracts
+- 23 test modules covering phase-boundary contracts and Tyler-native runtime slices
 - 7 ADRs documenting architectural decisions
 
 ## Setup
@@ -104,7 +105,7 @@ pip install -e path/to/llm_client
 pip install -e path/to/open_web_retrieval
 ```
 
-Requires API keys for: Gemini, OpenRouter (routes to GPT-5-nano + DeepSeek), Brave Search. Optionally: Perplexity (for comparison scripts).
+Requires API keys for: Gemini, OpenRouter (routes to current configured OpenAI/Gemini models), Brave Search. Optionally: Perplexity (for comparison scripts).
 
 ## Documentation
 

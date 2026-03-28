@@ -21,6 +21,15 @@ The hypothesis is:
 
 The product is the claim ledger. The report is a rendering of the ledger.
 
+Current runtime note:
+
+- the live runtime now also persists Tyler-native Stage 1-6 artifacts
+- shipped `EvidenceBundle`, `AnalystRun`, `ClaimLedger`, and `FinalReport`
+  remain compatibility or public-output surfaces
+- that dual-surface state is intentional for now, but it is also a real source
+  of documentation ambiguity and should be treated as explicit technical debt,
+  not as an invisible default
+
 ## System Boundary
 
 ### This Project Owns

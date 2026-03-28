@@ -46,3 +46,31 @@ the thesis was "proven" under conditions that could not falsify it.
 
 - Cost per pipeline run increases slightly (~$1-2 vs ~$0.50 with flash-lite × 3)
   but remains well within the $5 budget.
+
+## Current Status Note (2026-03-28)
+
+The thesis of this ADR still stands: meaningful disagreement requires distinct
+analytical frames, and thesis-validation experiments should prefer
+multi-family runs when the available model registry supports them.
+
+However, the current primary runtime defaults no longer match the original
+Gemini/OpenAI/DeepSeek trio exactly. The Tyler-native recovery wave moved the
+live path to the closest available role-safe mapping:
+
+- `openrouter/openai/gpt-5.4-mini`
+- `gemini/gemini-2.5-flash`
+- `openrouter/openai/gpt-5.4-nano`
+
+Reason:
+
+- DeepSeek proved unstable on the Tyler-native `AnalysisObject` schema in live
+  tracked runs
+- schema reliability on the shipped path took precedence over preserving
+  cross-family purity at all costs
+
+That means there is a real, explicit tradeoff:
+
+- thesis-validation and future production diversity still prefer multi-family
+  runs
+- current shipped defaults prioritize Tyler-native schema reliability until a
+  better third-family option is available in shared infrastructure

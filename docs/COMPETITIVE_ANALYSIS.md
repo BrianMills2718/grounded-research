@@ -3,6 +3,10 @@
 **Date:** 2026-03-23
 **Question tested:** EU sanctions on Russia (effectiveness on oil/gas revenue)
 
+This is a historical benchmark snapshot for the older v4 calibrated path. It
+is not the canonical description of the current primary analyst defaults or the
+current Tyler-native runtime.
+
 ## Tools Compared
 
 | Tool | Approach | Sources | Words | Cost | Time |

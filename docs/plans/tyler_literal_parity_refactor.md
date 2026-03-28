@@ -1,6 +1,6 @@
 # Tyler Literal Parity Refactor
 
-**Status:** In Progress
+**Status:** Completed for repo-local runtime parity; remaining differences are explicit shared-infra or benchmark-divergence concerns
 **Purpose:** Replace the current adapted Tyler-alignment layer with literal
 implementation of Tyler's `V1_SCHEMAS` and `V1_PROMPTS` contracts where that is
 repo-local work, and make any remaining non-literal gaps explicit shared-infra
@@ -132,8 +132,8 @@ Status:
 - Completed for Stage 4 runtime output and trace serialization.
 - Current `engine.py` now runs Tyler's literal Stage 4 prompt/schema and stores
   the `tyler_stage_4_result` artifact in pipeline state.
-- The shipped `ClaimLedger` remains as an explicit projection from the Tyler
-  artifact so Stage 5-6 can keep running until their migrations land.
+- The shipped `ClaimLedger` remains as an explicit compatibility/public
+  projection from the Tyler artifact.
 
 ### Phase 3: Stage 5-6 Major Contract Migration
 
@@ -185,19 +185,20 @@ Acceptance:
 
 ## Current Remaining Gap
 
-Repo-local stage-contract migration is now complete.
+Repo-local stage-contract migration is complete, and the follow-on prompt
+quality recovery wave is also complete.
 
-The remaining gap is no longer Stage 1-6 contract wiring. It is:
+The remaining differences are now:
 
-1. prompt-quality recovery on the fully Tyler-native runtime after benchmark
-   re-anchor completed with regressed usefulness
-2. explicit handling of shared-infra differences from Tyler's specified
-   provider/model/search stack
+1. explicit shared-infra differences from Tyler's specified provider/model/search stack
+2. a small, evidence-backed benchmark divergence between the Tyler-native path
+   and the saved dense-dedup benchmark-optimal path
 
-## Immediate Next Step
+## Current Stop Line
 
-Execute the next Tyler-native quality wave:
+This plan is complete enough for repo-local implementation.
 
-1. audit live Tyler prompt fidelity stage by stage
-2. isolate which Tyler-native stages are still adapted in quality, not contract
-3. improve the weakest Tyler-native stages and rerun the tracked benchmark
+Do not reopen this refactor unless:
+
+1. a new benchmark identifies a grounded-research-specific regression, or
+2. shared-infra work lands that enables closer literal Tyler provider/model parity

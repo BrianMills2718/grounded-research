@@ -5,8 +5,9 @@ This note answers one narrow question:
 > Is the current `grounded-research` runtime implementing Tyler's
 > `tyler_response_20260326/` prompts and schemas literally?
 
-Answer: **repo-local runtime parity is implemented, but quality parity is not
-yet proven**.
+Answer: **repo-local runtime parity is implemented, and repo-local quality
+recovery is materially successful, but full Tyler closure is still not
+complete**.
 
 The repo-local runtime now runs Tyler-native Stage 1 through Stage 6 contracts
 and persists those artifacts in pipeline state. The remaining gap is not stage
@@ -43,7 +44,8 @@ Remaining non-literal gaps are now narrower:
 
 1. current compatibility projections still coexist with the Tyler-native
    runtime artifacts
-2. tracked benchmark re-anchor closed with regressed usefulness
+2. benchmark-optimal dense-dedup output still differs slightly from the
+   Tyler-native path
 3. Tyler's provider/model/search assumptions are not wired literally in this
    repo because they belong in shared infrastructure
 
@@ -58,7 +60,7 @@ Remaining non-literal gaps are now narrower:
 | Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` is an explicit downstream projection | Yes (runtime), compatibility projection remains |
 | Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Yes (runtime), compatibility projection remains |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; current `FinalReport` and markdown report are compatibility projections | Yes (runtime), compatibility projection remains |
-| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6, but the tracked UBI rerun still regressed in usefulness, so literal prompt fidelity must now be audited stage by stage | Runtime-active, quality still under audit |
+| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6; repo-local quality recovery improved the tracked UBI case materially, but a small gap to the dense-dedup anchor remains | Runtime-active, locally recovered, not benchmark-identical |
 
 ## Current Prompt Inventory vs Tyler Prompt Inventory
 
@@ -128,13 +130,16 @@ benchmark-optimal dense-dedup path.
 
 Do not claim full Tyler closure yet.
 
-The correct next move is the prompt-quality recovery wave:
+The correct current classification is:
 
-1. audit literal prompt fidelity stage by stage
-2. identify the weakest Tyler-native stages on the tracked UBI rerun
-3. rerun the same benchmark after local quality recovery
+1. repo-local Tyler runtime parity is implemented
+2. repo-local Tyler quality recovery is complete enough to beat cached
+   Perplexity on the tracked UBI benchmark
+3. the remaining gap is explicit:
+   - slight divergence from the dense-dedup benchmark-optimal path
+   - shared-infra/model-availability differences from Tyler's specified stack
 
-Those steps are captured in:
+Relevant references:
 
 - `docs/plans/tyler_literal_parity_refactor.md`
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`

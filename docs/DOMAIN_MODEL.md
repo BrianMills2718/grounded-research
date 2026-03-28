@@ -6,6 +6,16 @@ file has field-level types, docstrings, and validation rules for every entity.
 This document provides a quick-reference index. When models.py and this file
 disagree, models.py wins.
 
+Current runtime note:
+
+- this document indexes the shipped compatibility/public entities in
+  `models.py`
+- Tyler-native literal entities also exist in
+  `src/grounded_research/tyler_v1_models.py` and now persist in
+  `PipelineState`
+- if you need literal Tyler artifact shapes, consult
+  `docs/TYLER_LITERAL_PARITY_AUDIT.md` and `tyler_v1_models.py`
+
 ## ID Conventions
 
 | Prefix | Entity |
@@ -72,3 +82,5 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 - Whether `AnalystRun.succeeded` should require non-empty claims beyond `error is None`
 - Whether `FinalReport` should split into typed sections or stay compact in v1
 - When `AssumptionLedger` should be promoted from deferred to current
+- Whether the compatibility/public surfaces should remain first-class long-term
+  APIs once the Tyler-native runtime is stable enough to stand alone
