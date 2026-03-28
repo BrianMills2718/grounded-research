@@ -281,6 +281,19 @@ If one of those happens, document it explicitly in the plan, notebook, and
 authority docs, then continue with the next unblocked phase instead of leaving
 the repo in a vague intermediate state.
 
+### 8d. Rollback Safety During Long Waves
+
+When a long cutover or deletion wave is in progress, preserve rollback points
+aggressively:
+
+- every verified slice gets its own commit immediately
+- commit before switching phases
+- do not accumulate multiple verified deletions in one uncommitted batch
+- if a cutover changes contracts, update the active plan before the next commit
+
+The repo should always be recoverable to the last verified boundary by commit,
+not by reconstructing partial work from conversation history.
+
 ### 9. Prove The Thesis With The Smallest Useful Slice
 
 Do not build the full cathedral first.
