@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import pytest
 
 from grounded_research.analysts import run_analysts_tyler_v1
+from grounded_research.config import load_config
 from grounded_research.models import EvidenceBundle, EvidenceItem, ResearchQuestion, SourceRecord
 from grounded_research.tyler_v1_models import (
     AnalysisObject,
@@ -177,3 +178,19 @@ async def test_run_analysts_tyler_v1_returns_tyler_and_compatibility_outputs(mon
     assert len(runs) == 3
     assert runs[0].succeeded
     assert runs[0].claims[0].evidence_ids == ["E-1"]
+
+
+def test_tyler_stage3_primary_config_matches_recovery_contract() -> None:
+    """The primary Stage 3 config should stay aligned with the recovery plan."""
+    cfg = load_config()
+
+    assert cfg["analyst_models"] == [
+        "openrouter/openai/gpt-5.4-mini",
+        "gemini/gemini-2.5-flash",
+        "openrouter/openai/gpt-5.4-nano",
+    ]
+    assert cfg["analyst_frames"] == [
+        "step_back_abstraction",
+        "structured_decomposition",
+        "verification_first",
+    ]

@@ -138,7 +138,8 @@ Current open work is intentionally narrow:
 - active Tyler literal-parity remaining wave:
   `docs/plans/tyler_literal_parity_refactor.md`,
   `docs/plans/tyler_literal_parity_benchmark_reanchor.md`,
-  `docs/plans/tyler_literal_prompt_quality_recovery.md`
+  `docs/plans/tyler_literal_prompt_quality_recovery.md`,
+  `docs/plans/tyler_stage3_model_role_recovery.md`
 - Tyler V1 reference map and follow-through:
   `docs/TYLER_V1_CURRENT_REPO_MAP.md`,
   `docs/plans/tyler_v1_followthrough.md`
