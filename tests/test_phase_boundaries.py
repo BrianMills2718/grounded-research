@@ -56,11 +56,10 @@ class BoundaryAnalystRun:
 def state() -> PipelineState:
     """Load the Tyler-native pipeline trace as a PipelineState.
 
-    The canonical saved trace persists Tyler Stage 3 artifacts alongside an older
-    projected `analyst_runs` list. Strict quality-first AnalystRun validation is
-    now stronger than that historical projection. For boundary tests, rebuild the
-    compatibility analyst view from Tyler Stage 3 before validating the trace so
-    the fixture reflects canonical Stage 3 truth instead of stale projections.
+    The canonical saved trace persists Tyler Stage 3 artifacts plus an execution
+    trace. Older historical traces may still carry projected `analyst_runs`, but
+    boundary checks rebuild their minimal analyst view from Tyler Stage 3 instead
+    of treating that projection as canonical truth.
     """
     if not TYLER_TRACE.exists():
         pytest.skip("Tyler-native trace not found — run pipeline first")
@@ -86,16 +85,28 @@ def _rebuild_boundary_analyst_runs(
         source_to_evidence_ids.setdefault(item.source_id, []).append(item.id)
 
     alias_mapping = raw_trace.get("tyler_stage_3_alias_mapping", {})
-    alias_to_run = {
-        alias_mapping.get(run["analyst_label"], run["analyst_label"]): run
-        for run in raw_trace.get("analyst_runs", [])
-    }
+    raw_attempts = raw_trace.get("stage3_attempts", [])
+    if raw_attempts:
+        alias_to_attempt = {
+            attempt["model_alias"]: attempt
+            for attempt in raw_attempts
+        }
+    else:
+        alias_to_attempt = {
+            alias_mapping.get(run["analyst_label"], run["analyst_label"]): {
+                "analyst_label": run["analyst_label"],
+                "model": run["model"],
+                "frame": run.get("frame"),
+                "error": run.get("error"),
+            }
+            for run in raw_trace.get("analyst_runs", [])
+        }
 
     rebuilt: list[BoundaryAnalystRun] = []
     for result_data in raw_trace.get("tyler_stage_3_results", []):
         analysis = AnalysisObject.model_validate(result_data)
-        original_run = alias_to_run.get(analysis.model_alias)
-        if original_run is None:
+        attempt = alias_to_attempt.get(analysis.model_alias)
+        if attempt is None:
             continue
         claims = []
         for idx, claim in enumerate(analysis.claims, start=1):
@@ -111,11 +122,11 @@ def _rebuild_boundary_analyst_runs(
             )
         rebuilt.append(
             BoundaryAnalystRun(
-                analyst_label=original_run["analyst_label"],
-                model=original_run["model"],
+                analyst_label=attempt["analyst_label"],
+                model=attempt["model"],
                 frame=analysis.reasoning_frame,
                 claims=claims,
-                error=original_run.get("error"),
+                error=attempt.get("error"),
             )
         )
     return rebuilt
@@ -176,32 +187,32 @@ class TestPhase1ToPhase2:
 
 
 class TestPhase2ToPhase3:
-    """Contract: list[AnalystRun] → RawClaim extraction."""
+    """Contract: rebuilt Stage 3 analyst views → Tyler Stage 4 extraction."""
 
-    def test_minimum_successful_analysts(self, analyst_runs: list[AnalystRun]) -> None:
+    def test_minimum_successful_analysts(self, analyst_runs: list[BoundaryAnalystRun]) -> None:
         """At least 2 analysts must succeed (config: analyst_min_successful)."""
         succeeded = [r for r in analyst_runs if r.succeeded]
         assert len(succeeded) >= 2, f"Only {len(succeeded)} analysts succeeded"
 
-    def test_analysts_are_blind(self, analyst_runs: list[AnalystRun]) -> None:
+    def test_analysts_are_blind(self, analyst_runs: list[BoundaryAnalystRun]) -> None:
         """Each analyst has a unique label — blindness is by construction."""
         labels = [r.analyst_label for r in analyst_runs]
         assert len(labels) == len(set(labels)), f"Duplicate labels: {labels}"
 
-    def test_analysts_use_different_models(self, analyst_runs: list[AnalystRun]) -> None:
+    def test_analysts_use_different_models(self, analyst_runs: list[BoundaryAnalystRun]) -> None:
         """Cross-family models required per ADR-0005."""
         succeeded = [r for r in analyst_runs if r.succeeded]
         models = {r.model for r in succeeded}
         assert len(models) >= 2, f"Only {len(models)} unique model(s): {models}"
 
-    def test_analysts_use_different_frames(self, analyst_runs: list[AnalystRun]) -> None:
+    def test_analysts_use_different_frames(self, analyst_runs: list[BoundaryAnalystRun]) -> None:
         """Distinct reasoning frames required per ADR-0005."""
         succeeded = [r for r in analyst_runs if r.succeeded]
         frames = {r.frame for r in succeeded}
         assert len(frames) >= 2, f"Only {len(frames)} unique frame(s): {frames}"
 
     def test_claims_cite_evidence_ids(
-        self, analyst_runs: list[AnalystRun], bundle: EvidenceBundle
+        self, analyst_runs: list[BoundaryAnalystRun], bundle: EvidenceBundle
     ) -> None:
         """Claims should reference evidence IDs from the bundle."""
         evidence_ids = {e.id for e in bundle.evidence}

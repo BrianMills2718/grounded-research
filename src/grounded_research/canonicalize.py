@@ -94,10 +94,10 @@ async def _get_tyler_stage1_result(
 
 
 async def canonicalize_tyler_v1(
-    analyst_runs: list[AnalystRun],
     bundle: EvidenceBundle,
     *,
     decomposition: QuestionDecomposition | None,
+    analyst_runs: list[AnalystRun] | None = None,
     tyler_stage_1_result: TylerDecompositionResult | None = None,
     tyler_stage_3_results: list["AnalysisObject"] | None = None,
     tyler_stage_3_alias_mapping: dict[str, str] | None = None,
@@ -107,7 +107,7 @@ async def canonicalize_tyler_v1(
     """Run Tyler's literal Stage 4 contract and return only the canonical artifact."""
     from llm_client import acall_llm_structured, render_prompt
 
-    successful_runs = [run for run in analyst_runs if run.succeeded]
+    successful_runs = [run for run in (analyst_runs or []) if run.succeeded]
 
     original_query = bundle.question.text if bundle.question else ""
     tyler_stage1 = tyler_stage_1_result or await _get_tyler_stage1_result(
@@ -117,7 +117,10 @@ async def canonicalize_tyler_v1(
     )
     if tyler_stage_3_results is None:
         if len(successful_runs) < 2:
-            raise ValueError("Tyler Stage 4 requires at least 2 successful analyst runs.")
+            raise ValueError(
+                "Tyler Stage 4 requires canonical Tyler Stage 3 analysis objects in the live path. "
+                "Compatibility-mode current AnalystRun inputs must contain at least 2 successful runs."
+            )
         alias_mapping = build_tyler_alias_mapping(successful_runs)
         tyler_stage3_results = [
             current_analyst_run_to_tyler_analysis(

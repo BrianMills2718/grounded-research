@@ -124,7 +124,7 @@ def _bundle() -> EvidenceBundle:
 
 
 @pytest.mark.asyncio
-async def test_run_analysts_tyler_v1_returns_tyler_and_compatibility_outputs(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_run_analysts_tyler_v1_returns_tyler_outputs_and_attempt_traces(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
@@ -162,7 +162,7 @@ async def test_run_analysts_tyler_v1_returns_tyler_and_compatibility_outputs(mon
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
     monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
 
-    analyses, alias_mapping, runs = await run_analysts_tyler_v1(
+    analyses, alias_mapping, attempts = await run_analysts_tyler_v1(
         bundle=_bundle(),
         stage_1_result=_stage_1(),
         stage_2_result=_stage_2(),
@@ -175,9 +175,10 @@ async def test_run_analysts_tyler_v1_returns_tyler_and_compatibility_outputs(mon
     assert alias_mapping == {"Alpha": "A", "Beta": "B", "Gamma": "C"}
     assert analyses[0].model_alias == "A"
     assert analyses[0].claims[0].id == "C-1"
-    assert len(runs) == 3
-    assert runs[0].succeeded
-    assert runs[0].claims[0].evidence_ids == ["E-1"]
+    assert len(attempts) == 3
+    assert attempts[0].succeeded
+    assert attempts[0].model_alias == "A"
+    assert attempts[0].claim_count == 1
 
 
 def test_tyler_stage3_primary_config_matches_recovery_contract() -> None:

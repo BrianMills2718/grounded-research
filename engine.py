@@ -73,7 +73,7 @@ async def run_pipeline(
     from grounded_research.collect import build_tyler_evidence_package
     from grounded_research.ingest import load_manual_bundle, validate_bundle
     from grounded_research.analysts import run_analysts_tyler_v1
-    from grounded_research.anonymize import scrub_analyst_run
+    from grounded_research.anonymize import scrub_tyler_analysis_object
     from grounded_research.canonicalize import (
         canonicalize_tyler_v1,
     )
@@ -173,7 +173,7 @@ async def run_pipeline(
         state.current_phase = "analyze"
         print("\n[Phase 2] Running 3 independent analysts...")
 
-        tyler_stage_3_results, tyler_stage_3_alias_mapping, analyst_runs = await run_analysts_tyler_v1(
+        tyler_stage_3_results, tyler_stage_3_alias_mapping, stage3_attempts = await run_analysts_tyler_v1(
             bundle=bundle,
             stage_1_result=state.tyler_stage_1_result,
             stage_2_result=state.tyler_stage_2_result,
@@ -181,35 +181,35 @@ async def run_pipeline(
         )
         state.tyler_stage_3_results = tyler_stage_3_results
         state.tyler_stage_3_alias_mapping = tyler_stage_3_alias_mapping
-        state.analyst_runs = analyst_runs
+        state.stage3_attempts = stage3_attempts
 
-        succeeded = [r for r in analyst_runs if r.succeeded]
+        succeeded_attempts = [attempt for attempt in stage3_attempts if attempt.succeeded]
 
         # Evidence-label leakage check (#30)
         import re
         url_pattern = re.compile(r'https?://\S+')
-        for run in succeeded:
-            redactions = scrub_analyst_run(run)
+        for analysis in tyler_stage_3_results:
+            redactions = scrub_tyler_analysis_object(analysis)
             if redactions:
                 state.add_warning(
                     "analyze",
                     "identity_leakage_scrubbed",
-                    f"Scrubbed {len(redactions)} self-identification field(s) from analyst {run.analyst_label}.",
-                    analyst_label=run.analyst_label,
+                    f"Scrubbed {len(redactions)} self-identification field(s) from analyst {analysis.model_alias}.",
+                    analyst_label=analysis.model_alias,
                     redacted_fields=redactions,
                 )
-            for claim in run.claims:
+            for claim in analysis.claims:
                 urls_in_claim = url_pattern.findall(claim.statement)
                 if urls_in_claim:
                     state.add_warning(
                         "analyze", "evidence_leakage",
-                        f"Analyst {run.analyst_label} claim {claim.id} contains URL(s): {urls_in_claim[:2]}"
+                        f"Analyst {analysis.model_alias} claim {claim.id} contains URL(s): {urls_in_claim[:2]}"
                     )
-            urls_in_summary = url_pattern.findall(run.summary)
+            urls_in_summary = url_pattern.findall(analysis.reasoning)
             if urls_in_summary:
                 state.add_warning(
                     "analyze", "evidence_leakage",
-                    f"Analyst {run.analyst_label} summary contains URL(s): {urls_in_summary[:2]}"
+                    f"Analyst {analysis.model_alias} reasoning contains URL(s): {urls_in_summary[:2]}"
                 )
 
         state.phase_traces.append(PhaseTrace(
@@ -217,12 +217,16 @@ async def run_pipeline(
             started_at=phase_start,
             completed_at=datetime.now(timezone.utc),
             succeeded=True,
-            llm_calls=len(analyst_runs),
-            output_summary=f"{len(succeeded)}/{len(analyst_runs)} analysts succeeded, {sum(len(r.claims) for r in succeeded)} total claims",
+            llm_calls=len(stage3_attempts),
+            output_summary=(
+                f"{len(succeeded_attempts)}/{len(stage3_attempts)} analysts succeeded, "
+                f"{sum(attempt.claim_count for attempt in succeeded_attempts)} total claims"
+            ),
         ))
-        for r in analyst_runs:
-            status = f"OK ({len(r.claims)} claims)" if r.succeeded else f"FAILED: {r.error}"
-            print(f"  {r.analyst_label} ({r.model}): {status}")
+        for attempt in stage3_attempts:
+            status = f"OK ({attempt.claim_count} claims)" if attempt.succeeded else f"FAILED: {attempt.error}"
+            alias_note = f", alias {attempt.model_alias}" if attempt.model_alias else ""
+            print(f"  {attempt.analyst_label} ({attempt.model}{alias_note}): {status}")
 
         # --- Phase 3: Tyler Stage 4 claim extraction & dispute localization ---
         phase_start = datetime.now(timezone.utc)
@@ -230,7 +234,6 @@ async def run_pipeline(
         print("\n[Phase 3] Running Tyler Stage 4 claim extraction...")
 
         tyler_stage_4_result = await canonicalize_tyler_v1(
-            analyst_runs,
             bundle,
             decomposition=decomposition,
             tyler_stage_1_result=state.tyler_stage_1_result,

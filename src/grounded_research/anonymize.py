@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 
 from grounded_research.models import AnalystRun
+from grounded_research.tyler_v1_models import AnalysisObject
 
 
 _SELF_IDENTIFICATION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
@@ -96,4 +97,43 @@ def scrub_analyst_run(run: AnalystRun) -> list[str]:
         _scrub_field(counterargument, "argument", f"counterargument:{idx}:argument")
 
     _scrub_field(run, "summary", "summary")
+    return redactions
+
+
+def scrub_tyler_analysis_object(analysis: AnalysisObject) -> list[str]:
+    """Scrub self-identification from Tyler Stage 3 fields reused downstream."""
+    redactions: list[str] = []
+
+    def _scrub_field(obj: object, field_name: str, path: str) -> None:
+        value = getattr(obj, field_name)
+        if not isinstance(value, str) or not value:
+            return
+        cleaned, changed = scrub_identity_markers(value)
+        if changed:
+            setattr(obj, field_name, cleaned)
+            redactions.append(path)
+
+    _scrub_field(analysis, "recommendation", "recommendation")
+    _scrub_field(analysis, "reasoning", "reasoning")
+
+    for claim in analysis.claims:
+        _scrub_field(claim, "statement", f"claim:{claim.id}:statement")
+
+    for assumption in analysis.assumptions:
+        _scrub_field(assumption, "statement", f"assumption:{assumption.id}:statement")
+        _scrub_field(assumption, "if_wrong_impact", f"assumption:{assumption.id}:if_wrong_impact")
+
+    _scrub_field(analysis.counter_argument, "argument", "counter_argument:argument")
+    _scrub_field(
+        analysis.counter_argument,
+        "strongest_evidence_against",
+        "counter_argument:strongest_evidence_against",
+    )
+
+    for idx, condition in enumerate(analysis.falsification_conditions):
+        cleaned, changed = scrub_identity_markers(condition)
+        if changed:
+            analysis.falsification_conditions[idx] = cleaned
+            redactions.append(f"falsification_conditions:{idx}")
+
     return redactions

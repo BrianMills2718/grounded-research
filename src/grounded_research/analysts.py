@@ -1,8 +1,8 @@
 """Independent analyst execution.
 
-Runs LLM analysts over shared evidence bundles. Each analyst produces
-a structured AnalystRun with claims, assumptions, recommendations, and
-counterarguments. Analysts never see each other's outputs.
+Legacy analyst mode still returns `AnalystRun`, but the live Tyler-native Stage
+3 path emits canonical `AnalysisObject`s plus narrow execution traces. Analysts
+never see each other's outputs.
 """
 
 from __future__ import annotations
@@ -20,9 +20,9 @@ from grounded_research.config import (
     get_model,
     load_config,
 )
-from grounded_research.models import AnalystRun, EvidenceBundle
+from grounded_research.models import AnalystRun, EvidenceBundle, Stage3AttemptTrace
 from grounded_research.runtime_policy import get_request_timeout
-from grounded_research.tyler_v1_adapters import normalize_tyler_analysis_object, tyler_analysis_to_current_analyst_run
+from grounded_research.tyler_v1_adapters import normalize_tyler_analysis_object
 from grounded_research.tyler_v1_models import AnalysisObject, DecompositionResult as TylerDecompositionResult, EvidencePackage as TylerEvidencePackage
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -271,8 +271,8 @@ async def _call_tyler_analyst_once(
     trace_id: str,
     max_budget: float,
     bundle: EvidenceBundle,
-) -> tuple[AnalysisObject, AnalystRun]:
-    """Execute one Tyler-native Stage 3 analyst and project a compatibility run."""
+) -> tuple[AnalysisObject, Stage3AttemptTrace]:
+    """Execute one Tyler-native Stage 3 analyst and return a narrow attempt trace."""
     from llm_client import acall_llm_structured
     from grounded_research.config import get_fallback_models
 
@@ -298,14 +298,15 @@ async def _call_tyler_analyst_once(
         model_alias=model_alias,
         reasoning_frame=reasoning_frame,
     )
-    projected = tyler_analysis_to_current_analyst_run(
-        normalized,
-        bundle,
+    return normalized, Stage3AttemptTrace(
         analyst_label=analyst_label,
-        model_name=model,
+        model_alias=model_alias,
+        model=model,
+        frame=reasoning_frame,
+        succeeded=True,
+        claim_count=len(normalized.claims),
+        completed_at=datetime.now(timezone.utc),
     )
-    projected.completed_at = datetime.now(timezone.utc)
-    return normalized, projected
 
 
 async def run_analysts_tyler_v1(
@@ -316,8 +317,8 @@ async def run_analysts_tyler_v1(
     trace_id: str,
     models: list[str] | None = None,
     frames: list[str] | None = None,
-) -> tuple[list[AnalysisObject], dict[str, str], list[AnalystRun]]:
-    """Run the live Tyler Stage 3 path and project AnalystRuns for compatibility."""
+) -> tuple[list[AnalysisObject], dict[str, str], list[Stage3AttemptTrace]]:
+    """Run the live Tyler Stage 3 path and return canonical outputs plus attempt traces."""
     config = load_config()
     if models is None:
         default_model = get_model("analyst")
@@ -331,9 +332,9 @@ async def run_analysts_tyler_v1(
     budget_per = get_budget("pipeline_max_budget_usd") / len(models)
     alias_mapping = {label: alias for label, alias in zip(labels, aliases)}
 
-    async def _run_one(model: str, label: str, alias: str, frame: str) -> tuple[AnalysisObject | None, AnalystRun]:
+    async def _run_one(model: str, label: str, alias: str, frame: str) -> tuple[AnalysisObject | None, Stage3AttemptTrace]:
         try:
-            analysis, projected = await _call_tyler_analyst_once(
+            analysis, attempt_trace = await _call_tyler_analyst_once(
                 model=model,
                 analyst_label=label,
                 model_alias=alias,
@@ -344,12 +345,14 @@ async def run_analysts_tyler_v1(
                 max_budget=budget_per,
                 bundle=bundle,
             )
-            return analysis, projected
+            return analysis, attempt_trace
         except Exception as exc:
-            return None, AnalystRun(
+            return None, Stage3AttemptTrace(
                 analyst_label=label,
+                model_alias=alias,
                 model=model,
                 frame=frame,
+                succeeded=False,
                 error=str(exc),
                 completed_at=datetime.now(timezone.utc),
             )
@@ -358,16 +361,16 @@ async def run_analysts_tyler_v1(
         _run_one(model, label, alias, frame)
         for model, label, alias, frame in zip(models, labels, aliases, frames)
     ])
-    analyses = [analysis for analysis, projected in results if analysis is not None]
-    projected_runs = [projected for _, projected in results]
+    analyses = [analysis for analysis, attempt_trace in results if analysis is not None]
+    attempt_traces = [attempt_trace for _, attempt_trace in results]
 
-    succeeded = [run for run in projected_runs if run.succeeded]
+    succeeded = [run for run in attempt_traces if run.succeeded]
     if len(succeeded) < min_successful:
-        failed = [r for r in projected_runs if not r.succeeded]
+        failed = [r for r in attempt_traces if not r.succeeded]
         errors = "; ".join(f"{r.analyst_label}: {r.error}" for r in failed)
         raise RuntimeError(
-            f"Only {len(succeeded)}/{len(projected_runs)} analysts succeeded "
+            f"Only {len(succeeded)}/{len(attempt_traces)} analysts succeeded "
             f"(minimum {min_successful}). Errors: {errors}"
         )
 
-    return analyses, alias_mapping, projected_runs
+    return analyses, alias_mapping, attempt_traces

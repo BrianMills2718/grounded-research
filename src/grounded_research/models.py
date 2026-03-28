@@ -765,6 +765,25 @@ class PhaseTrace(BaseModel):
     )
 
 
+class Stage3AttemptTrace(BaseModel):
+    """Non-semantic observability record for one Tyler Stage 3 analyst attempt.
+
+    This exists to preserve human-readable execution visibility after removing
+    projected `AnalystRun` from canonical pipeline state. It is intentionally
+    narrow: enough to inspect success/failure and output density, but not a
+    second semantic Stage 3 contract.
+    """
+
+    analyst_label: str = Field(description="Human-readable analyst label, e.g. Alpha/Beta/Gamma.")
+    model_alias: str = Field(description="Tyler Stage 3 anonymized alias, e.g. A/B/C.")
+    model: str = Field(description="Concrete model used for the attempt.")
+    frame: str = Field(description="Assigned reasoning frame for the attempt.")
+    succeeded: bool = Field(description="Whether the Stage 3 attempt produced a valid AnalysisObject.")
+    claim_count: int = Field(default=0, ge=0, description="Number of Tyler Stage 3 claims emitted.")
+    error: str | None = Field(default=None, description="Error message for failed attempts.")
+    completed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class PipelineState(BaseModel):
     """Top-level pipeline state — the trace artifact.
 
@@ -790,9 +809,9 @@ class PipelineState(BaseModel):
     # --- Intermediate artifacts ---
     tyler_stage_1_result: TylerDecompositionResult | None = None
     tyler_stage_2_result: TylerEvidencePackage | None = None
-    # Compatibility projection of Tyler Stage 3. Canonical runtime should prefer
-    # `tyler_stage_3_results` plus alias mapping instead of this view.
-    analyst_runs: list[AnalystRun] = Field(default_factory=list)
+    # Narrow observability-only trace for Stage 3 attempts. The semantic Stage 3
+    # artifact is `tyler_stage_3_results`; this is only for debugging/summaries.
+    stage3_attempts: list[Stage3AttemptTrace] = Field(default_factory=list)
     tyler_stage_3_alias_mapping: dict[str, str] = Field(default_factory=dict)
     tyler_stage_3_results: list[TylerAnalysisObject] = Field(default_factory=list)
     tyler_stage_4_result: TylerClaimExtractionResult | None = None
