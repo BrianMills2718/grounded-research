@@ -5,7 +5,6 @@ from __future__ import annotations
 from grounded_research.tyler_v1_models import (
     AnalysisObject,
     ArbitrationAssessment,
-    Claim,
     ClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus,

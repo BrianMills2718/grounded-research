@@ -61,27 +61,6 @@ SourceType = Literal[
 
 QualityTier = Literal["authoritative", "reliable", "unknown", "unreliable"]
 
-ClaimStatus = Literal[
-    "initial",
-    "supported",
-    "revised",
-    "refuted",
-    "inconclusive",
-]
-
-DisputeType = Literal[
-    "factual_conflict",
-    "interpretive_conflict",
-    "preference_conflict",
-    "ambiguity",
-]
-
-DisputeRoute = Literal[
-    "verify",       # factual — re-search and check
-    "arbitrate",    # interpretive — LLM arbitration with evidence
-    "surface",      # preference/ambiguity — surface to user, no auto-resolution in v1
-]
-
 DecompositionVerdict = Literal["proceed", "revise"]
 
 
@@ -108,6 +87,8 @@ class DecompositionValidation(BaseModel):
         default="",
         description="If verdict is revise, specific guidance on what to fix.",
     )
+
+
 PipelinePhase = Literal[
     "init",
     "ingest",
@@ -260,147 +241,6 @@ class ResearchQuestion(BaseModel):
     )
 
 
-# ---------------------------------------------------------------------------
-# Analyst layer
-# ---------------------------------------------------------------------------
-
-class RawClaim(BaseModel):
-    """A claim as extracted from a single analyst's output.
-
-    This is the pre-deduplication form. Multiple RawClaims from different
-    analysts may refer to the same underlying assertion — the Canonicalize
-    phase merges them into canonical Claims.
-    """
-
-    id: str = Field(default_factory=lambda: _make_id("RC-"))
-    statement: str = Field(
-        description=(
-            "The claim text. MUST include specific quantitative detail where "
-            "available: numbers, percentages, sample sizes (N=), effect sizes, "
-            "durations, study names. 'Weight loss of 3-8% over 8-12 weeks (N=150)' "
-            "not 'weight loss was observed.'"
-        ),
-    )
-    evidence_ids: list[str] = Field(
-        default_factory=list,
-        description="Evidence items the analyst cited for this claim.",
-    )
-    confidence: Literal["high", "medium", "low"] = "medium"
-    reasoning: str = Field(
-        default="",
-        description="The analyst's reasoning chain supporting this claim.",
-    )
-
-
-class Assumption(BaseModel):
-    """An assumption surfaced by an analyst during reasoning.
-
-    Assumptions are first-class objects so they can be tracked, challenged,
-    and referenced in the final report. They are distinct from claims: a claim
-    asserts something about the evidence; an assumption asserts something the
-    analyst took as given.
-    """
-
-    id: str = Field(default_factory=lambda: _make_id("A-"))
-    statement: str = Field(description="What the analyst assumed.")
-    basis: str = Field(
-        default="",
-        description="Why the analyst considered this assumption reasonable.",
-    )
-    challenged: bool = Field(
-        default=False,
-        description="Whether another analyst or the arbitration phase challenged this.",
-    )
-
-
-class Recommendation(BaseModel):
-    """A recommendation made by an analyst, grounded in their claims.
-
-    Separated from claims because recommendations are prescriptive ('you should
-    do X') while claims are descriptive ('the evidence shows Y').
-    """
-
-    statement: str = Field(description="The recommendation text.")
-    supporting_claim_ids: list[str] = Field(
-        default_factory=list,
-        description="RawClaim IDs that support this recommendation.",
-    )
-    conditions: str = Field(
-        default="",
-        description="Conditions under which this recommendation holds.",
-    )
-
-
-class Counterargument(BaseModel):
-    """A counterargument raised by an analyst against a potential conclusion.
-
-    These help surface the strongest objections and prevent premature consensus.
-    """
-
-    target: str = Field(description="What this counterargument is directed against.")
-    argument: str = Field(description="The counterargument itself.")
-    evidence_ids: list[str] = Field(
-        default_factory=list,
-        description="Evidence items supporting the counterargument.",
-    )
-
-
-class Claim(BaseModel):
-    """A canonical claim in the claim ledger.
-
-    This is the post-deduplication form. Each Claim may have been derived from
-    one or more RawClaims across analysts. It carries merged provenance and a
-    mutable status that the Adjudicate phase can update.
-    """
-
-    id: str = Field(default_factory=lambda: _make_id("C-"))
-    statement: str = Field(description="The canonical claim text after deduplication.")
-    status: ClaimStatus = "initial"
-    source_raw_claim_ids: list[str] = Field(
-        description="RawClaim IDs that were merged into this canonical claim.",
-    )
-    analyst_sources: list[str] = Field(
-        description="Analyst labels that produced raw claims merged into this one.",
-    )
-    evidence_ids: list[str] = Field(
-        default_factory=list,
-        description="All evidence items supporting this claim (merged across analysts).",
-    )
-    confidence: Literal["high", "medium", "low"] = "medium"
-    status_reason: str = Field(
-        default="",
-        description="Why the claim has its current status (set during arbitration).",
-    )
-
-
-class Dispute(BaseModel):
-    """A conflict between claims from different analysts.
-
-    Disputes are the core signal of the adjudication layer. Each dispute
-    links two or more claims that are in tension and carries a type that
-    determines its routing.
-    """
-
-    id: str = Field(default_factory=lambda: _make_id("D-"))
-    dispute_type: DisputeType
-    route: DisputeRoute = Field(
-        description="Deterministic routing assignment based on dispute_type.",
-    )
-    claim_ids: list[str] = Field(
-        description="Canonical Claim IDs that are in conflict.",
-        min_length=2,
-    )
-    description: str = Field(
-        description="Human-readable description of the conflict.",
-    )
-    severity: Literal["decision_critical", "notable", "minor"] = "notable"
-    resolved: bool = False
-    resolution_summary: str = Field(
-        default="",
-        description="Summary of how this dispute was resolved (empty if unresolved).",
-    )
-
-
 class TylerDownstreamHandoff(BaseModel):
     """Canonical downstream artifact for the Tyler-native runtime.
 
@@ -526,24 +366,6 @@ class PipelineState(BaseModel):
         self.warnings.append(
             PipelineWarning(phase=phase, code=code, message=message, context=context)
         )
-
-
-# ---------------------------------------------------------------------------
-# Dispute routing table
-# ---------------------------------------------------------------------------
-
-DISPUTE_ROUTING: dict[DisputeType, DisputeRoute] = {
-    "factual_conflict": "verify",
-    "interpretive_conflict": "arbitrate",
-    "preference_conflict": "surface",
-    "ambiguity": "surface",
-}
-"""Deterministic mapping from dispute type to resolution route.
-
-This is code-owned, not LLM-owned. The LLM classifies the dispute type;
-the routing table determines what happens next. In v1, 'surface' routes
-are included in the report but not auto-resolved.
-"""
 
 
 # ---------------------------------------------------------------------------
