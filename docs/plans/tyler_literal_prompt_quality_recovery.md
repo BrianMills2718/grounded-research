@@ -34,6 +34,11 @@ This wave covers repo-local work only:
 3. prompt/runtime fixes for those local bottlenecks
 4. rerun of the same tracked benchmark gate
 
+It also records one explicit local concern that may need a deliberate decision:
+
+- current stage-model assignments still differ materially from Tyler's preferred
+  frontier-model stack, even though the runtime contracts are Tyler-native
+
 This wave does **not** pull shared-infra work back into the repo:
 
 - Tavily/Exa parity stays in `open_web_retrieval`
@@ -52,6 +57,9 @@ This wave does **not** pull shared-infra work back into the repo:
    - Stage 6 synthesis usefulness
 5. Do not reopen Stage 1-6 contract migration unless the audit finds a
    contract-level mismatch disguised as a prompt issue.
+6. Do not silently treat cheap dev-model assignments as "close enough" to
+   Tyler's specified quality bar; either justify them with benchmark evidence or
+   record model-parity as an open concern.
 
 ## Acceptance Criteria
 
@@ -110,6 +118,8 @@ Pass if:
   - `prompts/tyler_v1_analyst.yaml`
   - `prompts/tyler_v1_stage4.yaml`
   - `prompts/tyler_v1_synthesis.yaml`
+  - `config/config.yaml` if the audit shows that current stage-model
+    assignments are themselves a local parity blocker
   - stage-local runtime wiring if the prompt audit proves a local assembly bug
 
 Pass if:
@@ -138,4 +148,5 @@ Pass if:
 | Stage 3 remains too sparse | analysts produce too few claims even with rich Stage 2 inputs | tighten Stage 3 prompt fidelity first |
 | Stage 4 over-compresses | Stage 3 has reasonable density but Stage 4 collapses too aggressively | tighten Stage 4 prompt fidelity and dispute-localization instructions |
 | Stage 6 under-cites | upstream stages look reasonable but final report cites too few claims | tighten Stage 6 prompt fidelity and projection rules |
+| prompt fidelity is fine but outputs remain weak | Tyler-native prompts are already literal enough, but cheap stage-model assignments still underperform | record model-parity as a local open concern and decide explicitly whether to pay for Tyler-like frontier assignments |
 | benchmark still loses after local fixes | Tyler-native path remains worse than prior calibrated runtime | record that literal Tyler parity and benchmark optimum diverge, then stop pretending the gap is unclassified |

@@ -21,6 +21,12 @@ This is now the leading local explanation for why the Tyler-native UBI rerun at
 `output/tyler_literal_parity_ubi_reanchor_v5/` was mechanically stable but
 still weak in decision usefulness.
 
+One additional explicit concern remains local and should not be hidden inside
+"prompt quality":
+
+- current stage-model assignments still use cheaper dev models in places where
+  Tyler's spec assumed stronger frontier models
+
 ## Stage Classification
 
 | Stage | Active file | Initial classification | Why |
@@ -65,5 +71,6 @@ Specifically:
 
 1. line-check Stage 3, Stage 4, and Stage 6 against Tyler's prompt spec
 2. identify missing or compressed instruction blocks
-3. repair the prompt files
+3. decide explicitly whether any remaining weakness is prompt-local, model-local,
+   or shared-infra
 4. rerun the tracked UBI benchmark gate
