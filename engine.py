@@ -47,7 +47,6 @@ async def run_pipeline(
         validate_grounding,
         write_outputs,
     )
-    from grounded_research.tyler_v1_adapters import current_decomposition_to_tyler
     from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
 
     run_id = uuid.uuid4().hex[:12]
@@ -81,11 +80,6 @@ async def run_pipeline(
         state.evidence_bundle = bundle
         if tyler_stage_1_result is not None:
             state.tyler_stage_1_result = tyler_stage_1_result
-        elif decomposition is not None:
-            state.tyler_stage_1_result = current_decomposition_to_tyler(
-                decomposition,
-                original_query=bundle.question.text,
-            )
         else:
             from grounded_research.decompose import decompose_question_tyler_v1
 

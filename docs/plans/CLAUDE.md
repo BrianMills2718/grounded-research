@@ -25,6 +25,7 @@
 | [tyler_literal_prompt_quality_recovery.md](tyler_literal_prompt_quality_recovery.md) | Completed | Repo-local Tyler-native prompt-quality recovery closed: Stage 3 role recovery and Stage 6 decision-field repair now beat cached Perplexity on the tracked UBI case and leave only a small, explicit gap to the dense-dedup anchor. |
 | [tyler_stage3_model_role_recovery.md](tyler_stage3_model_role_recovery.md) | Completed | Gate-time execution slice under Tyler prompt-quality recovery: closest-available Stage 3 role parity removed DeepSeek from the primary path and recovered analyst density on the tracked UBI fixture. |
 | [tyler_stage6_decision_guidance_recovery.md](tyler_stage6_decision_guidance_recovery.md) | Completed | Follow-up Stage 6 slice: underfilled decision fields now trigger a repair loop; the tracked UBI rerun fills tradeoffs and alternatives and remains slightly behind only the dense-dedup anchor. |
+| [tyler_canonical_cutover.md](tyler_canonical_cutover.md) | In Progress | Delete-first cutover plan to make the Tyler-literal path the only canonical runtime, preserve older variants by commit/eval references, and remove compatibility adapter debt aggressively. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

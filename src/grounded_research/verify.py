@@ -31,7 +31,6 @@ from grounded_research.models import (
 )
 from grounded_research.tyler_v1_adapters import (
     current_bundle_to_tyler_evidence_package,
-    current_decomposition_to_tyler,
     normalize_tyler_claim_extraction_result,
     tyler_stage5_to_current_ledger,
 )
@@ -660,11 +659,6 @@ async def verify_disputes_tyler_v1(
     original_query = bundle.question.text if bundle.question else ""
     if stage_1_result is not None:
         tyler_stage1 = stage_1_result
-    elif decomposition is not None:
-        tyler_stage1 = current_decomposition_to_tyler(
-            decomposition,
-            original_query=original_query,
-        )
     else:
         from grounded_research.decompose import decompose_question_tyler_v1
 

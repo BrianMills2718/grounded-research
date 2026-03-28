@@ -18,9 +18,9 @@ Current runtime note:
 - the legacy `QuestionDecomposition`, `EvidenceBundle`, `AnalystRun`,
   `ClaimLedger`, and `FinalReport` surfaces still exist as compatibility or
   public-output projections
-- where this document and `tyler_v1_models.py` differ, the runtime currently
-  supports both surfaces and the compatibility/public surface remains the safer
-  external contract unless a plan says otherwise
+- Tyler-literal artifacts are the target canonical contract
+- the compatibility/public surfaces are temporary migration debt, not the
+  desired long-term truth
 
 It is the bridge between:
 

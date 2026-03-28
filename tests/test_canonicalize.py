@@ -19,7 +19,13 @@ from grounded_research.models import (
     SourceRecord,
     SubQuestion,
 )
-from grounded_research.tyler_v1_models import ClaimExtractionResult
+from grounded_research.tyler_v1_models import (
+    ClaimExtractionResult,
+    DecompositionResult,
+    ResearchPlan,
+    StageSummary,
+    SubQuestion as TylerSubQuestion,
+)
 
 
 @pytest.mark.asyncio
@@ -474,6 +480,46 @@ def _tyler_stage4_decomposition() -> QuestionDecomposition:
     )
 
 
+def _tyler_stage4_stage1_result() -> DecompositionResult:
+    """Fixture Tyler Stage 1 artifact for Stage 4 runtime tests."""
+    return DecompositionResult(
+        core_question="Should teams use Redis or PostgreSQL for session storage?",
+        sub_questions=[
+            TylerSubQuestion(
+                id="Q-1",
+                question="What are the latency and throughput differences?",
+                type="interpretive",
+                research_priority="high",
+                search_guidance="benchmarks and performance evaluations",
+            ),
+            TylerSubQuestion(
+                id="Q-2",
+                question="What durability tradeoffs matter for session storage?",
+                type="interpretive",
+                research_priority="medium",
+                search_guidance="crash recovery and durability evidence",
+            ),
+        ],
+        optimization_axes=["latency vs durability"],
+        research_plan=ResearchPlan(
+            what_to_verify=["latency tradeoffs", "durability tradeoffs"],
+            critical_source_types=["benchmarks", "vendor docs"],
+            falsification_targets=[
+                "PostgreSQL matches Redis on latency.",
+                "Redis matches PostgreSQL on durability.",
+            ],
+        ),
+        stage_summary=StageSummary(
+            stage_name="Stage 1",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
+
+
 @pytest.mark.asyncio
 async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
     monkeypatch: pytest.MonkeyPatch,
@@ -553,6 +599,7 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
         _tyler_stage4_analyst_runs(),
         _tyler_stage4_bundle(),
         decomposition=_tyler_stage4_decomposition(),
+        tyler_stage_1_result=_tyler_stage4_stage1_result(),
         trace_id="test-trace",
         max_budget=0.5,
     )
@@ -603,6 +650,7 @@ async def test_canonicalize_tyler_v1_fails_loud_on_persistent_empty_stage4(
             _tyler_stage4_analyst_runs(),
             _tyler_stage4_bundle(),
             decomposition=_tyler_stage4_decomposition(),
+            tyler_stage_1_result=_tyler_stage4_stage1_result(),
             trace_id="test-trace",
             max_budget=0.5,
         )
@@ -664,6 +712,7 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
         _tyler_stage4_analyst_runs(),
         _tyler_stage4_bundle(),
         decomposition=_tyler_stage4_decomposition(),
+        tyler_stage_1_result=_tyler_stage4_stage1_result(),
         trace_id="test-trace",
         max_budget=0.5,
     )

@@ -33,7 +33,6 @@ from grounded_research.models import (
 from grounded_research.tyler_v1_adapters import (
     build_tyler_alias_mapping,
     current_analyst_run_to_tyler_analysis,
-    current_decomposition_to_tyler,
     normalize_tyler_claim_extraction_result,
     tyler_stage4_to_current_ledger,
 )
@@ -75,14 +74,16 @@ def _summarize_stage4_exception(exc: Exception) -> str:
 
 async def _get_tyler_stage1_result(
     *,
-    decomposition: QuestionDecomposition | None,
     original_query: str,
     trace_id: str,
     max_budget: float,
 ) -> TylerDecompositionResult:
-    """Produce a Tyler-native Stage 1 artifact for Stage 4 prompt rendering."""
-    if decomposition is not None:
-        return current_decomposition_to_tyler(decomposition, original_query=original_query)
+    """Produce a Tyler-native Stage 1 artifact for Stage 4 prompt rendering.
+
+    Canonical Stage 4 should depend on Tyler Stage 1 directly. If the persisted
+    Tyler artifact is missing, regenerate it from the original question instead
+    of rebuilding it from the legacy `QuestionDecomposition` projection.
+    """
 
     from grounded_research.decompose import decompose_question_tyler_v1
 
@@ -118,7 +119,6 @@ async def canonicalize_tyler_v1(
 
     original_query = bundle.question.text if bundle.question else ""
     tyler_stage1 = tyler_stage_1_result or await _get_tyler_stage1_result(
-        decomposition=decomposition,
         original_query=original_query,
         trace_id=f"{trace_id}/stage1_adapter",
         max_budget=max_budget * 0.15,

@@ -58,6 +58,13 @@ Current stop line:
 - treat remaining provider/model/search-stack differences as shared-infra work
   in `llm_client`, `prompt_eval`, or `open_web_retrieval`
 
+Current implementation frontier:
+
+- execute `docs/plans/tyler_canonical_cutover.md`
+- remove compatibility/runtime adapter debt aggressively
+- preserve older tuned variants by commit references and eval-time comparison,
+  not as co-equal runtime modes
+
 See:
 
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`

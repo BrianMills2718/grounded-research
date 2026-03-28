@@ -35,7 +35,6 @@ from grounded_research.models import (
 from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import (
     current_bundle_to_tyler_evidence_package,
-    current_decomposition_to_tyler,
     render_tyler_synthesis_markdown,
     tyler_synthesis_to_current_report,
 )
@@ -251,8 +250,6 @@ async def generate_tyler_synthesis_report(
 
     if state.tyler_stage_1_result is not None:
         tyler_stage1 = state.tyler_stage_1_result
-    elif decomposition is not None:
-        tyler_stage1 = current_decomposition_to_tyler(decomposition, original_query=state.question.text)
     else:
         from grounded_research.decompose import decompose_question_tyler_v1
 

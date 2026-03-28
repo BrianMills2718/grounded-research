@@ -88,6 +88,8 @@ Current operational notes:
 - repo-local Tyler runtime migration and prompt-quality recovery are complete;
   the remaining explicit gap is a slight divergence from the dense-dedup anchor
   plus shared-infra/provider-model differences outside this repo
+- current local implementation frontier is canonical Tyler cutover: delete
+  compatibility/runtime adapter debt and keep one canonical runtime path
 
 ## Governance Surfaces
 
@@ -133,6 +135,8 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 Current open work is intentionally narrow:
 
+- canonical Tyler-literal cutover:
+  `docs/plans/tyler_canonical_cutover.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

@@ -884,6 +884,131 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
     )
 
 
+@pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_redecomposes_from_question_not_projection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 6 should regenerate Tyler Stage 1 from the question when missing.
+
+    The canonical runtime must not rebuild Tyler Stage 1 from the legacy
+    `QuestionDecomposition` projection.
+    """
+
+    def stage_summary(stage_name: str) -> StageSummary:
+        return StageSummary(
+            stage_name=stage_name,
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        )
+
+    calls: dict[str, int] = {"decompose": 0}
+
+    async def fake_decompose_question_tyler_v1(question: str, trace_id: str, max_budget: float = 0.5):
+        calls["decompose"] += 1
+        assert question == "What is the evidence?"
+        return DecompositionResult(
+            core_question=question,
+            sub_questions=[
+                TylerSubQuestion(id="Q-1", question="Q1", type="empirical", research_priority="high", search_guidance="docs"),
+                TylerSubQuestion(id="Q-2", question="Q2", type="interpretive", research_priority="medium", search_guidance="critiques"),
+            ],
+            optimization_axes=["speed vs rigor"],
+            research_plan=ResearchPlan(
+                what_to_verify=["claim"],
+                critical_source_types=["official docs"],
+                falsification_targets=["contradiction"],
+            ),
+            stage_summary=stage_summary("Stage 1"),
+        )
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            executive_recommendation="Recommendation.",
+            conditions_of_validity=["Condition."],
+            decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
+            disagreement_map=[],
+            preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
+            key_assumptions=[],
+            confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
+            process_summary=[stage_summary("Stage 6").model_dump(mode="json")],
+            claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
+            evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
+            evidence_gaps=[],
+            reasoning="Reasoning",
+            stage_summary=stage_summary("Stage 6").model_dump(mode="json"),
+        ), {}
+
+    monkeypatch.setattr("grounded_research.decompose.decompose_question_tyler_v1", fake_decompose_question_tyler_v1)
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+    monkeypatch.setattr("grounded_research.export.get_model", lambda task: "test-model")
+    monkeypatch.setattr("grounded_research.export.get_fallback_models", lambda task: None)
+
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[SourceRecord(id="S-1", url="https://example.com", title="Source", quality_tier="authoritative")],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=TylerClaimExtractionResult(
+            claim_ledger=[],
+            assumption_set=[],
+            dispute_queue=[],
+            statistics={
+                "total_claims": 0,
+                "total_assumptions": 0,
+                "total_disputes": 0,
+                "disputes_by_type": {},
+                "decision_critical_disputes": 0,
+                "claims_per_model": {},
+            },
+            stage_summary=stage_summary("Stage 4"),
+        ),
+        tyler_stage_5_result=VerificationResult(
+            disputes_investigated=[],
+            additional_sources=[],
+            updated_claim_ledger=[],
+            updated_dispute_queue=[],
+            search_budget={},
+            rounds_used=1,
+            stage_summary=stage_summary("Stage 5"),
+        ),
+    )
+
+    decomposition = QuestionDecomposition(
+        core_question="Legacy projection",
+        sub_questions=[
+            SubQuestion(text="Legacy Q1", type="factual", falsification_target="counter"),
+            SubQuestion(text="Legacy Q2", type="evaluative", falsification_target="counter"),
+        ],
+        optimization_axes=["legacy axis"],
+        research_plan="legacy plan",
+        ambiguous_terms=[],
+    )
+
+    result = await generate_tyler_synthesis_report(
+        state,
+        decomposition=decomposition,
+        trace_id="trace-root",
+    )
+
+    assert calls["decompose"] == 1
+    assert result.executive_recommendation == "Recommendation."
+
+
 def test_successful_analyst_run_requires_counterarguments() -> None:
     """Successful analyst outputs must carry at least one counterargument."""
     with pytest.raises(ValueError):

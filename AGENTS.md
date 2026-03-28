@@ -205,6 +205,31 @@ Do not embed prompts as Python f-strings.
 
 Do not add few-shot examples without explicit review.
 
+### 8a. One Canonical Runtime
+
+This repo should converge toward:
+
+- one canonical contract
+- one canonical runtime path
+- one default prompt family
+- one default quality-first model policy
+
+Do not keep co-equal "legacy" and "new" runtimes alive inside the main
+execution path.
+
+If historical tuned prompts or older behavior need to be preserved, keep them
+as:
+
+- archived commits documented in repo docs
+- evaluation-only comparison conditions in `prompt_eval`
+
+Do not turn them into long-lived alternate runtime modes unless the difference
+is genuinely a narrow prompt/model policy knob and not a different contract or
+control-flow path.
+
+Compatibility adapters are temporary migration tools only. Remove them
+aggressively once the Tyler-literal path is verified.
+
 ### 9. Prove The Thesis With The Smallest Useful Slice
 
 Do not build the full cathedral first.

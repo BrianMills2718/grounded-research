@@ -82,5 +82,9 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 - Whether `AnalystRun.succeeded` should require non-empty claims beyond `error is None`
 - Whether `FinalReport` should split into typed sections or stay compact in v1
 - When `AssumptionLedger` should be promoted from deferred to current
-- Whether the compatibility/public surfaces should remain first-class long-term
-  APIs once the Tyler-native runtime is stable enough to stand alone
+
+## Resolved Direction
+
+- Tyler-literal stage artifacts are the canonical runtime target
+- compatibility/public surfaces are temporary migration debt slated for removal,
+  not long-term co-equal APIs
