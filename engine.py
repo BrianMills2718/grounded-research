@@ -24,6 +24,44 @@ from grounded_research.models import PipelineState, PhaseTrace
 from grounded_research.runtime_policy import configure_run_runtime
 
 
+def _load_fixture_sidecars(
+    fixture_path: Path,
+    *,
+    decomposition_path: Path | None = None,
+) -> tuple["QuestionDecomposition | None", "DecompositionResult | None", "EvidencePackage | None"]:
+    """Load explicit and auto-detected fixture sidecars.
+
+    Auto-detection is Tyler-native only. Legacy `decomposition.json` remains
+    loadable only through the explicit CLI path so old fixtures do not silently
+    masquerade as the canonical live contract.
+    """
+    from grounded_research.models import QuestionDecomposition
+    from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
+
+    legacy_decomposition = None
+    tyler_stage_1_result = None
+    tyler_stage_2_result = None
+
+    if decomposition_path is not None and decomposition_path.exists():
+        legacy_decomposition = QuestionDecomposition.model_validate_json(
+            decomposition_path.read_text()
+        )
+
+    tyler_stage_1_path = fixture_path.parent / "tyler_stage_1.json"
+    if tyler_stage_1_path.exists():
+        tyler_stage_1_result = DecompositionResult.model_validate_json(
+            tyler_stage_1_path.read_text()
+        )
+
+    tyler_stage_2_path = fixture_path.parent / "tyler_stage_2.json"
+    if tyler_stage_2_path.exists():
+        tyler_stage_2_result = EvidencePackage.model_validate_json(
+            tyler_stage_2_path.read_text()
+        )
+
+    return legacy_decomposition, tyler_stage_1_result, tyler_stage_2_result
+
+
 async def run_pipeline(
     fixture_path: Path,
     output_dir: Path,
@@ -422,11 +460,6 @@ async def run_pipeline_from_question(
     bundle_path.write_text(bundle.model_dump_json(indent=2))
     print(f"  Saved bundle: {bundle_path}")
 
-    # Save decomposition for pipeline use
-    import json
-    decomp_path = output_dir / "decomposition.json"
-    decomp_path.write_text(decomposition.model_dump_json(indent=2))
-    print(f"  Saved decomposition: {decomp_path}")
     tyler_decomp_path = output_dir / "tyler_stage_1.json"
     tyler_decomp_path.write_text(tyler_stage_1_result.model_dump_json(indent=2))
     print(f"  Saved Tyler Stage 1: {tyler_decomp_path}")
@@ -471,7 +504,7 @@ def main() -> None:
         "--decomposition",
         type=Path,
         default=None,
-        help="Path to decomposition JSON (pairs with --fixture)",
+        help="Path to legacy decomposition JSON (explicit-only migration aid with --fixture)",
     )
     parser.add_argument(
         "--depth",
@@ -493,31 +526,10 @@ def main() -> None:
         asyncio.run(run_pipeline_from_question(args.question, out_dir))
     elif args.fixture:
         out_dir = args.output_dir or (PROJECT_ROOT / "output" / "pipeline")
-        # Load decomposition if provided alongside fixture
-        decomp = None
-        tyler_stage_1_result = None
-        tyler_stage_2_result = None
-        if args.decomposition and args.decomposition.exists():
-            from grounded_research.models import QuestionDecomposition
-            decomp = QuestionDecomposition.model_validate_json(args.decomposition.read_text())
-        elif args.fixture.parent.joinpath("decomposition.json").exists():
-            # Auto-detect decomposition in same directory as fixture
-            from grounded_research.models import QuestionDecomposition
-            decomp = QuestionDecomposition.model_validate_json(
-                args.fixture.parent.joinpath("decomposition.json").read_text()
-            )
-        if args.fixture.parent.joinpath("tyler_stage_1.json").exists():
-            from grounded_research.tyler_v1_models import DecompositionResult
-
-            tyler_stage_1_result = DecompositionResult.model_validate_json(
-                args.fixture.parent.joinpath("tyler_stage_1.json").read_text()
-            )
-        if args.fixture.parent.joinpath("tyler_stage_2.json").exists():
-            from grounded_research.tyler_v1_models import EvidencePackage
-
-            tyler_stage_2_result = EvidencePackage.model_validate_json(
-                args.fixture.parent.joinpath("tyler_stage_2.json").read_text()
-            )
+        decomp, tyler_stage_1_result, tyler_stage_2_result = _load_fixture_sidecars(
+            args.fixture,
+            decomposition_path=args.decomposition,
+        )
         asyncio.run(
             run_pipeline(
                 args.fixture,
