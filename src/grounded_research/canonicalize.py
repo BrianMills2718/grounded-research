@@ -101,6 +101,7 @@ async def canonicalize_tyler_v1(
     decomposition: QuestionDecomposition | None,
     tyler_stage_1_result: TylerDecompositionResult | None = None,
     tyler_stage_3_results: list["AnalysisObject"] | None = None,
+    tyler_stage_3_alias_mapping: dict[str, str] | None = None,
     trace_id: str,
     max_budget: float = 1.0,
 ) -> tuple[TylerClaimExtractionResult, ClaimLedger]:
@@ -114,8 +115,6 @@ async def canonicalize_tyler_v1(
     from llm_client import acall_llm_structured, render_prompt
 
     successful_runs = [run for run in analyst_runs if run.succeeded]
-    if len(successful_runs) < 2:
-        raise ValueError("Tyler Stage 4 requires at least 2 successful analyst runs.")
 
     original_query = bundle.question.text if bundle.question else ""
     tyler_stage1 = tyler_stage_1_result or await _get_tyler_stage1_result(
@@ -123,8 +122,10 @@ async def canonicalize_tyler_v1(
         trace_id=f"{trace_id}/stage1_adapter",
         max_budget=max_budget * 0.15,
     )
-    alias_mapping = build_tyler_alias_mapping(successful_runs)
     if tyler_stage_3_results is None:
+        if len(successful_runs) < 2:
+            raise ValueError("Tyler Stage 4 requires at least 2 successful analyst runs.")
+        alias_mapping = build_tyler_alias_mapping(successful_runs)
         tyler_stage3_results = [
             current_analyst_run_to_tyler_analysis(
                 run=run,
@@ -136,6 +137,12 @@ async def canonicalize_tyler_v1(
         ]
     else:
         tyler_stage3_results = list(tyler_stage_3_results)
+        if len(tyler_stage3_results) < 2:
+            raise ValueError("Tyler Stage 4 requires at least 2 Tyler Stage 3 analysis objects.")
+        if tyler_stage_3_alias_mapping is not None:
+            alias_mapping = dict(tyler_stage_3_alias_mapping)
+        else:
+            alias_mapping = {run.analyst_label: analysis.model_alias for run, analysis in zip(successful_runs, tyler_stage3_results)}
     stage4_input_assertions = _tyler_stage4_assertion_count(tyler_stage3_results)
 
     messages = render_prompt(
@@ -222,7 +229,7 @@ async def canonicalize_tyler_v1(
             )
     ledger = tyler_stage4_to_current_ledger(
         normalized,
-        analyst_runs=successful_runs,
+        stage_3_results=tyler_stage3_results,
         bundle=bundle,
         alias_mapping=alias_mapping,
     )

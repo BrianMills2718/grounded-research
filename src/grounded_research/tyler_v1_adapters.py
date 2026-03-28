@@ -820,7 +820,7 @@ def normalize_tyler_claim_extraction_result(
 
 def tyler_stage4_to_current_ledger(
     result: ClaimExtractionResult,
-    analyst_runs: list[AnalystRun],
+    stage_3_results: list[AnalysisObject],
     bundle: EvidenceBundle,
     alias_mapping: dict[str, str],
 ) -> ClaimLedger:
@@ -831,18 +831,14 @@ def tyler_stage4_to_current_ledger(
         source_to_evidence_ids[item.source_id].append(item.id)
 
     raw_claim_records: list[tuple[str, str, str, set[str], set[str]]] = []
-    for run in analyst_runs:
-        alias = alias_mapping.get(run.analyst_label)
-        if alias is None or not run.succeeded:
-            continue
-        for claim in run.claims:
-            source_refs = {
-                item.source_id
-                for item in bundle.evidence
-                if item.id in claim.evidence_ids
-            }
+    for analysis in stage_3_results:
+        alias = analysis.model_alias
+        for claim in analysis.claims:
+            source_refs = set(claim.source_references)
             tokens = set(_normalize_statement_key(claim.statement).split())
-            raw_claim_records.append((claim.id, alias, claim.statement, source_refs, tokens))
+            raw_claim_records.append(
+                (f"{alias}:{claim.id}", alias, claim.statement, source_refs, tokens)
+            )
 
     def _match_raw_claim_ids(entry: ClaimLedgerEntry) -> list[str]:
         entry_tokens = set(_normalize_statement_key(entry.statement).split())

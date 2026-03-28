@@ -198,6 +198,7 @@ async def run_pipeline(
             decomposition=decomposition,
             tyler_stage_1_result=state.tyler_stage_1_result,
             tyler_stage_3_results=state.tyler_stage_3_results,
+            tyler_stage_3_alias_mapping=state.tyler_stage_3_alias_mapping,
             trace_id=trace_id,
             max_budget=total_budget * 0.2,
         )

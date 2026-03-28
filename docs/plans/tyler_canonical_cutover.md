@@ -178,6 +178,21 @@ Acceptance:
   `FinalReport` as primary truth
 - deleted code exceeds added code
 
+Completed so far:
+
+- canonical Stage 4 now prefers persisted Tyler Stage 3 `AnalysisObject`s plus
+  the Tyler alias mapping instead of rebuilding its primary input from projected
+  `AnalystRun`s
+- the Stage 4 compatibility ledger projection now derives raw-claim provenance
+  from Tyler Stage 3 claims rather than from projected `AnalystRun` claims
+
+Still remaining in this slice:
+
+- Stage 5 still projects `VerificationResult` into `ClaimLedger`
+- Stage 6 still projects `SynthesisReport` into `FinalReport`
+- `PipelineState` still stores compatibility artifacts as first-class siblings
+  of the Tyler-native outputs
+
 ### Slice 4: Strict analyst success defaults
 
 Files:

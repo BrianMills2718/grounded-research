@@ -18,11 +18,12 @@ from grounded_research.models import (
 )
 from grounded_research.tyler_v1_adapters import (
     build_tyler_alias_mapping,
+    current_analyst_run_to_tyler_analysis,
     current_decomposition_to_tyler,
     normalize_tyler_claim_extraction_result,
     tyler_stage4_to_current_ledger,
 )
-from grounded_research.tyler_v1_models import ClaimExtractionResult, ClaimStatus, EvidenceLabel
+from grounded_research.tyler_v1_models import AnalysisObject, ClaimExtractionResult, ClaimStatus, EvidenceLabel
 
 
 def _bundle() -> EvidenceBundle:
@@ -76,6 +77,19 @@ def _analyst_runs() -> list[AnalystRun]:
             counterarguments=[Counterargument(target="pilot", argument="Labor effects remain uncertain.", evidence_ids=["E-1"])],
             summary="Beta summary",
         ),
+    ]
+
+
+def _stage_3_results(analyst_runs: list[AnalystRun], bundle: EvidenceBundle) -> list[AnalysisObject]:
+    alias_mapping = build_tyler_alias_mapping(analyst_runs)
+    return [
+        current_analyst_run_to_tyler_analysis(
+            run=run,
+            bundle=bundle,
+            model_alias=alias_mapping[run.analyst_label],
+            reasoning_frame=run.frame,
+        )
+        for run in analyst_runs
     ]
 
 
@@ -173,6 +187,7 @@ def test_tyler_stage4_to_current_ledger_preserves_claim_and_dispute_integrity() 
     bundle = _bundle()
     analyst_runs = _analyst_runs()
     alias_mapping = build_tyler_alias_mapping(analyst_runs)
+    stage_3_results = _stage_3_results(analyst_runs, bundle)
     result = ClaimExtractionResult.model_validate(
         {
             "claim_ledger": [
@@ -237,7 +252,7 @@ def test_tyler_stage4_to_current_ledger_preserves_claim_and_dispute_integrity() 
 
     ledger = tyler_stage4_to_current_ledger(
         result,
-        analyst_runs=analyst_runs,
+        stage_3_results=stage_3_results,
         bundle=bundle,
         alias_mapping=alias_mapping,
     )
@@ -254,6 +269,7 @@ def test_tyler_stage4_to_current_ledger_skips_single_claim_disputes(caplog) -> N
     bundle = _bundle()
     analyst_runs = _analyst_runs()
     alias_mapping = build_tyler_alias_mapping(analyst_runs)
+    stage_3_results = _stage_3_results(analyst_runs, bundle)
     result = ClaimExtractionResult.model_validate(
         {
             "claim_ledger": [
@@ -307,7 +323,7 @@ def test_tyler_stage4_to_current_ledger_skips_single_claim_disputes(caplog) -> N
     with caplog.at_level("WARNING"):
         ledger = tyler_stage4_to_current_ledger(
             result,
-            analyst_runs=analyst_runs,
+            stage_3_results=stage_3_results,
             bundle=bundle,
             alias_mapping=alias_mapping,
         )
