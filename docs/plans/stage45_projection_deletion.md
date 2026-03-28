@@ -57,6 +57,8 @@ Completed result:
 
 - `cda75c7` removed the live legacy export/runtime path
 - `ac78c5c` removed the remaining legacy export adapter debt
+- `9a79a5f` removed the ignored Stage 4 compatibility return and the dead
+  Stage 5 current-ledger adapter
 - this wave removed the ignored Stage 4 compatibility ledger return and the
   dead Stage 5 current-ledger adapter
 - targeted suites passed after the cut:

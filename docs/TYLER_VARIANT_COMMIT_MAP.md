@@ -62,11 +62,13 @@ Use when you need:
 ### Stage 4/5 projection deletion
 
 - `d42f5f5` Record canonical export contract and next cutover wave
+- `9a79a5f` Delete Stage 4/5 compatibility ledger projections
 
 Use when you need:
 
 - the documented boundary where export deletion closed and the next child wave opened
-- the starting point for removing internal `ClaimLedger` projection debt
+- the commit boundary where the ignored Stage 4 compatibility return and dead
+  Stage 5 current-ledger adapter were removed
 
 ## Policy
 
