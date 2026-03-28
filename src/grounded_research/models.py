@@ -95,71 +95,11 @@ ClaimUpdateBasis = Literal[
     "resolved_contradiction",
 ]
 
-SubQuestionType = Literal["factual", "causal", "comparative", "evaluative", "scope"]
-
-
-class AmbiguousTerm(BaseModel):
-    """A term in the research question that could be interpreted multiple ways."""
-
-    term: str = Field(description="The ambiguous term or phrase.")
-    chosen_interpretation: str = Field(description="How this term is interpreted in the decomposition.")
-    alternative: str = Field(description="An alternative interpretation that was NOT chosen.")
-
-
-class SubQuestion(BaseModel):
-    """One dimension of a research question, typed for focused search and analysis."""
-
-    id: str = Field(default_factory=lambda: _make_id("SQ-"))
-    text: str = Field(description="The sub-question, phrased as a searchable question.")
-    type: SubQuestionType = Field(
-        description=(
-            "What kind of question this is. Factual: what happened/exists. "
-            "Causal: why/how something happened. Comparative: X vs Y. "
-            "Evaluative: how good/effective. Scope: what's the boundary."
-        ),
-    )
-    falsification_target: str = Field(
-        description="What evidence would disprove or weaken the expected answer to this sub-question.",
-    )
-
-
-class QuestionDecomposition(BaseModel):
-    """Structured decomposition of a research question into searchable sub-questions.
-
-    Produced by the decomposition step before search and analysis.
-    Drives per-sub-question search queries, analyst context, and synthesis structure.
-    """
-
-    core_question: str = Field(
-        description="Precise reformulation of the user's raw question. Unambiguous and searchable.",
-    )
-    sub_questions: list[SubQuestion] = Field(
-        description="2-6 typed sub-questions that collectively cover the full question.",
-        min_length=2,
-        max_length=6,
-    )
-    optimization_axes: list[str] = Field(
-        description=(
-            "2-4 key tradeoffs or dimensions a reader needs to evaluate. "
-            "E.g., 'short-term revenue impact vs long-term structural change'."
-        ),
-        min_length=1,
-        max_length=4,
-    )
-    research_plan: str = Field(
-        description="Brief plan: what to search for, which source types matter most, what critical evidence to prioritize.",
-    )
-    ambiguous_terms: list[AmbiguousTerm] = Field(
-        default_factory=list,
-        description="Terms in the question that could be interpreted multiple ways. State which interpretation is used.",
-    )
-
-
 DecompositionVerdict = Literal["proceed", "revise"]
 
 
 class DecompositionValidation(BaseModel):
-    """Validation of a QuestionDecomposition — checks coverage, bias, and granularity."""
+    """Validation of Tyler Stage 1 decomposition quality and coverage."""
 
     coverage_ok: bool = Field(description="Do the sub-questions collectively cover the full research question?")
     coverage_gaps: list[str] = Field(
@@ -181,15 +121,6 @@ class DecompositionValidation(BaseModel):
         default="",
         description="If verdict is revise, specific guidance on what to fix.",
     )
-
-
-AnalystFrame = Literal[
-    "verification_first",
-    "structured_decomposition",
-    "step_back_abstraction",
-    "general",  # used in early slices before named frames are locked in
-]
-
 PipelinePhase = Literal[
     "init",
     "ingest",
@@ -427,86 +358,6 @@ class Counterargument(BaseModel):
     )
 
 
-class AnalystRun(BaseModel):
-    """The structured output from a single independent analyst pass.
-
-    Each analyst receives the same ResearchQuestion + EvidenceBundle but uses
-    a different reasoning frame. Analysts never see each other's outputs.
-    """
-
-    id: str = Field(default_factory=lambda: _make_id("AN-"))
-    analyst_label: str = Field(description="Human-readable label (e.g., 'Alpha', 'Beta', 'Gamma').")
-    frame: AnalystFrame = "general"
-    model: str = Field(description="The LLM model used for this analyst run.")
-    claims: list[RawClaim] = Field(default_factory=list)
-    assumptions: list[Assumption] = Field(default_factory=list)
-    recommendations: list[Recommendation] = Field(default_factory=list)
-    counterarguments: list[Counterargument] = Field(
-        default_factory=list,
-        description="At least one counterargument against the analyst's own recommendation. Required.",
-    )
-    summary: str = Field(
-        default="",
-        description="The analyst's overall synthesis of the evidence.",
-    )
-    completed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    error: str | None = Field(
-        default=None,
-        description="Non-None if the analyst run failed. Preserved for trace.",
-    )
-
-    @property
-    def succeeded(self) -> bool:
-        """Whether this analyst run completed without error."""
-        return self.error is None
-
-    @model_validator(mode="after")
-    def _validate_success_requirements(self) -> "AnalystRun":
-        """Require quality-minimum structure for successful analyst outputs."""
-        if self.error is not None:
-            return self
-
-        from grounded_research.config import get_analyst_success_config, load_config
-
-        policy = get_analyst_success_config()
-        depth_name = str(load_config().get("depth", "standard"))
-        min_claims_by_depth = policy.get("min_claims_by_depth", {})
-        min_claims = int(min_claims_by_depth.get(depth_name, min_claims_by_depth.get("standard", 1)))
-
-        if bool(policy.get("require_claim", True)) and len(self.claims) < min_claims:
-            raise ValueError(
-                f"Successful AnalystRun outputs must include at least {min_claims} claim(s) at depth `{depth_name}`."
-            )
-        if bool(policy.get("require_recommendation", True)) and not self.recommendations:
-            raise ValueError(
-                "Successful AnalystRun outputs must include at least one recommendation."
-            )
-        if bool(policy.get("require_counterargument", True)) and not self.counterarguments:
-            raise ValueError(
-                "Successful AnalystRun outputs must include at least one counterargument."
-            )
-        if bool(policy.get("require_claim_evidence_ids", True)):
-            claim_without_evidence = next((claim.id for claim in self.claims if not claim.evidence_ids), None)
-            if claim_without_evidence is not None:
-                raise ValueError(
-                    f"Successful AnalystRun claim {claim_without_evidence} must cite at least one evidence ID."
-                )
-        if bool(policy.get("require_counterargument_evidence_ids", True)):
-            counter_without_evidence = next(
-                (counter.target for counter in self.counterarguments if not counter.evidence_ids),
-                None,
-            )
-            if counter_without_evidence is not None:
-                raise ValueError(
-                    "Successful AnalystRun counterarguments must cite at least one evidence ID."
-                )
-        return self
-
-
-# ---------------------------------------------------------------------------
-# Claim ledger
-# ---------------------------------------------------------------------------
-
 class Claim(BaseModel):
     """A canonical claim in the claim ledger.
 
@@ -653,39 +504,6 @@ class ClaimUpdate(BaseModel):
     )
 
 
-class ClaimLedger(BaseModel):
-    """The canonical artifact of the grounded-research system.
-
-    The claim ledger is the product. The report is a rendering of this state.
-    It holds all canonical claims, disputes, and arbitration results, with
-    full provenance back to analyst runs and evidence items.
-    """
-
-    claims: list[Claim] = Field(default_factory=list)
-    disputes: list[Dispute] = Field(default_factory=list)
-    arbitration_results: list[ArbitrationResult] = Field(default_factory=list)
-
-    def claim_by_id(self, claim_id: str) -> Claim | None:
-        """Look up a claim by ID."""
-        return next((c for c in self.claims if c.id == claim_id), None)
-
-    def disputes_for_claim(self, claim_id: str) -> list[Dispute]:
-        """Return all disputes involving a given claim."""
-        return [d for d in self.disputes if claim_id in d.claim_ids]
-
-    def unresolved_disputes(self) -> list[Dispute]:
-        """Return disputes that have not been resolved."""
-        return [d for d in self.disputes if not d.resolved]
-
-    def decision_critical_disputes(self) -> list[Dispute]:
-        """Return unresolved disputes marked as decision-critical."""
-        return [d for d in self.unresolved_disputes() if d.severity == "decision_critical"]
-
-
-# ---------------------------------------------------------------------------
-# Verification and handoff artifacts
-# ---------------------------------------------------------------------------
-
 class VerificationQueryBatch(BaseModel):
     """Search queries generated to investigate a single dispute.
 
@@ -709,8 +527,8 @@ class VerificationQueryBatch(BaseModel):
 class TylerDownstreamHandoff(BaseModel):
     """Canonical downstream artifact for the Tyler-native runtime.
 
-    This handoff preserves the adjudicated Tyler artifacts directly instead of
-    flattening them back into compatibility-era `ClaimLedger` structures.
+    This handoff preserves adjudicated Tyler artifacts directly as the only
+    shipped downstream export contract.
     """
 
     downstream_target: str = Field(
@@ -769,7 +587,7 @@ class Stage3AttemptTrace(BaseModel):
     """Non-semantic observability record for one Tyler Stage 3 analyst attempt.
 
     This exists to preserve human-readable execution visibility after removing
-    projected `AnalystRun` from canonical pipeline state. It is intentionally
+    legacy analyst compatibility objects from canonical pipeline state. It is intentionally
     narrow: enough to inspect success/failure and output density, but not a
     second semantic Stage 3 contract.
     """

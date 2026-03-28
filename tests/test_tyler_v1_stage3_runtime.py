@@ -181,6 +181,45 @@ async def test_run_analysts_tyler_v1_returns_tyler_outputs_and_attempt_traces(mo
     assert attempts[0].claim_count == 1
 
 
+@pytest.mark.asyncio
+async def test_run_analysts_tyler_v1_enforces_quality_floor_on_canonical_outputs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 3 should reject schema-valid outputs that fail the quality floor."""
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            model_alias="bad",
+            reasoning_frame="general",
+            recommendation="",
+            claims=[],
+            assumptions=[],
+            evidence_used=["S-1"],
+            counter_argument={
+                "argument": "",
+                "strongest_evidence_against": "",
+                "counter_confidence": "medium",
+            },
+            falsification_conditions=["Production evidence contradicts the benchmark."],
+            reasoning="Thin answer.",
+            stage_summary=_stage_summary("Stage 3: Independent Candidate Generation").model_dump(mode="json"),
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+
+    with pytest.raises(RuntimeError, match="Only 0/3 analysts succeeded"):
+        await run_analysts_tyler_v1(
+            bundle=_bundle(),
+            stage_1_result=_stage_1(),
+            stage_2_result=_stage_2(),
+            trace_id="test/trace",
+            models=["model-a", "model-b", "model-c"],
+            frames=["verification_first", "structured_decomposition", "step_back_abstraction"],
+        )
+
+
 def test_tyler_stage3_primary_config_matches_recovery_contract() -> None:
     """The primary Stage 3 config should stay aligned with the recovery plan."""
     cfg = load_config()

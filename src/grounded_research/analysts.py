@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from grounded_research.config import (
+    get_analyst_success_config,
     get_budget,
     get_model,
     load_config,
@@ -22,6 +23,34 @@ from grounded_research.tyler_v1_adapters import normalize_tyler_analysis_object
 from grounded_research.tyler_v1_models import AnalysisObject, DecompositionResult as TylerDecompositionResult, EvidencePackage as TylerEvidencePackage
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def _validate_tyler_analysis_quality(result: AnalysisObject) -> AnalysisObject:
+    """Enforce configurable quality-floor requirements on canonical Stage 3 output."""
+    policy = get_analyst_success_config()
+    depth_name = str(load_config().get("depth", "standard"))
+    min_claims_by_depth = policy.get("min_claims_by_depth", {})
+    min_claims = int(min_claims_by_depth.get(depth_name, min_claims_by_depth.get("standard", 1)))
+
+    if bool(policy.get("require_claim", True)) and len(result.claims) < min_claims:
+        raise ValueError(
+            f"Successful Tyler Stage 3 outputs must include at least {min_claims} claim(s) at depth `{depth_name}`."
+        )
+    if bool(policy.get("require_recommendation", True)) and not result.recommendation.strip():
+        raise ValueError("Successful Tyler Stage 3 outputs must include a recommendation.")
+    if bool(policy.get("require_counterargument", True)) and not result.counter_argument.argument.strip():
+        raise ValueError("Successful Tyler Stage 3 outputs must include a counterargument.")
+    if bool(policy.get("require_claim_evidence_ids", True)):
+        claim_without_sources = next((claim.id for claim in result.claims if not claim.source_references), None)
+        if claim_without_sources is not None:
+            raise ValueError(
+                f"Successful Tyler Stage 3 claim {claim_without_sources} must cite at least one source reference."
+            )
+    if bool(policy.get("require_counterargument_evidence_ids", True)) and not result.counter_argument.strongest_evidence_against.strip():
+        raise ValueError(
+            "Successful Tyler Stage 3 counterarguments must include strongest_evidence_against support."
+        )
+    return result
 
 
 def _render_tyler_analyst_prompt(
@@ -83,13 +112,14 @@ async def _call_tyler_analyst_once(
         model_alias=model_alias,
         reasoning_frame=reasoning_frame,
     )
-    return normalized, Stage3AttemptTrace(
+    validated = _validate_tyler_analysis_quality(normalized)
+    return validated, Stage3AttemptTrace(
         analyst_label=analyst_label,
         model_alias=model_alias,
         model=model,
         frame=reasoning_frame,
         succeeded=True,
-        claim_count=len(normalized.claims),
+        claim_count=len(validated.claims),
         completed_at=datetime.now(timezone.utc),
     )
 

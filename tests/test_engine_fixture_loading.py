@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from engine import _load_fixture_sidecars
-from grounded_research.models import QuestionDecomposition, SubQuestion
 from grounded_research.tyler_v1_models import (
     DecompositionResult,
     EvidencePackage,
@@ -73,27 +72,30 @@ def _write_tyler_stage2(tmp_path: Path) -> None:
 
 
 def _write_legacy_decomposition(path: Path) -> None:
-    result = QuestionDecomposition(
-        core_question="What is the evidence?",
-        sub_questions=[
-            SubQuestion(
-                id="SQ-1",
-                text="What happened?",
-                type="factual",
-                falsification_target="contradiction",
-            ),
-            SubQuestion(
-                id="SQ-2",
-                text="How should we interpret it?",
-                type="evaluative",
-                falsification_target="counter",
-            ),
-        ],
-        optimization_axes=["axis"],
-        research_plan="plan",
-        ambiguous_terms=[],
+    path.write_text(
+        """
+{
+  "core_question": "What is the evidence?",
+  "sub_questions": [
+    {
+      "id": "SQ-1",
+      "text": "What happened?",
+      "type": "factual",
+      "falsification_target": "contradiction"
+    },
+    {
+      "id": "SQ-2",
+      "text": "How should we interpret it?",
+      "type": "evaluative",
+      "falsification_target": "counter"
+    }
+  ],
+  "optimization_axes": ["axis"],
+  "research_plan": "plan",
+  "ambiguous_terms": []
+}
+""".strip()
     )
-    path.write_text(result.model_dump_json(indent=2))
 
 
 def test_fixture_sidecars_auto_detect_tyler_only(tmp_path: Path) -> None:

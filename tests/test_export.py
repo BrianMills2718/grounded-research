@@ -15,7 +15,6 @@ from grounded_research.export import (
     write_outputs,
 )
 from grounded_research.models import (
-    AnalystRun,
     EvidenceBundle,
     EvidenceItem,
     PipelineState,
@@ -552,31 +551,6 @@ async def test_generate_tyler_synthesis_report_requires_canonical_stage2() -> No
             state,
             trace_id="trace-root",
         )
-
-
-def test_successful_analyst_run_requires_quality_minimums() -> None:
-    """Successful analyst outputs must meet the configured structural floor."""
-    with pytest.raises(ValueError):
-        AnalystRun(
-            analyst_label="Alpha",
-            model="openrouter/openai/gpt-5-nano",
-            frame="verification_first",
-            summary="A successful run without counterarguments should fail validation.",
-        )
-
-
-def test_failed_analyst_run_allows_empty_counterarguments() -> None:
-    """Failed analyst trace artifacts should not require semantic counterarguments."""
-    result = AnalystRun(
-        analyst_label="Alpha",
-        model="openrouter/openai/gpt-5-nano",
-        frame="verification_first",
-        error="rate limit",
-    )
-
-    assert result.counterarguments == []
-    assert not result.succeeded
-
 
 def test_validate_tyler_grounding_checks_stage5_claims_and_sources() -> None:
     """Tyler-native grounding should validate against Stage 5 and known sources."""
