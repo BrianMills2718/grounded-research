@@ -24,7 +24,6 @@ from grounded_research.config import (
 from grounded_research.models import (
     EvidenceBundle,
     PipelineState,
-    QuestionDecomposition,
     TylerDownstreamHandoff,
 )
 from grounded_research.runtime_policy import get_request_timeout
@@ -124,7 +123,6 @@ def build_tyler_downstream_handoff(state: PipelineState) -> TylerDownstreamHando
 async def generate_tyler_synthesis_report(
     state: PipelineState,
     *,
-    decomposition: QuestionDecomposition | None,
     trace_id: str,
     max_budget: float = 1.0,
 ) -> SynthesisReport:
@@ -403,10 +401,9 @@ async def render_long_report(
     state: PipelineState,
     trace_id: str,
     max_budget: float = 2.0,
-    decomposition: QuestionDecomposition | None = None,
 ) -> str:
     """Render the canonical long-form report directly from Tyler Stage 6."""
-    del trace_id, max_budget, decomposition
+    del trace_id, max_budget
     if state.tyler_stage_6_result is None or state.question is None:
         raise ValueError(
             "Canonical long-report rendering requires `state.tyler_stage_6_result` and "

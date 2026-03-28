@@ -19,10 +19,8 @@ from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
     PipelineState,
-    QuestionDecomposition,
     ResearchQuestion,
     SourceRecord,
-    SubQuestion,
 )
 from grounded_research.tyler_v1_models import (
     ClaimExtractionResult as TylerClaimExtractionResult,
@@ -297,7 +295,7 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
         tyler_stage_5_result=_stage5_result_for_report(),
     )
 
-    result = await generate_tyler_synthesis_report(state, decomposition=None, trace_id="trace-root")
+    result = await generate_tyler_synthesis_report(state, trace_id="trace-root")
 
     assert result.executive_recommendation == "Recommendation."
 
@@ -391,7 +389,7 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
         ),
     )
 
-    result = await generate_tyler_synthesis_report(state, decomposition=None, trace_id="trace-root")
+    result = await generate_tyler_synthesis_report(state, trace_id="trace-root")
 
     assert calls["count"] == 2
     assert len(result.decision_relevant_tradeoffs) >= int(get_tyler_literal_parity_config()["stage6_min_tradeoffs"])
@@ -489,20 +487,8 @@ async def test_generate_tyler_synthesis_report_redecomposes_from_question_when_m
         ),
     )
 
-    decomposition = QuestionDecomposition(
-        core_question="Legacy projection",
-        sub_questions=[
-            SubQuestion(text="Legacy Q1", type="factual", falsification_target="counter"),
-            SubQuestion(text="Legacy Q2", type="evaluative", falsification_target="counter"),
-        ],
-        optimization_axes=["legacy axis"],
-        research_plan="legacy plan",
-        ambiguous_terms=[],
-    )
-
     result = await generate_tyler_synthesis_report(
         state,
-        decomposition=decomposition,
         trace_id="trace-root",
     )
 
@@ -564,7 +550,6 @@ async def test_generate_tyler_synthesis_report_requires_canonical_stage2() -> No
     with pytest.raises(ValueError, match="Tyler Stage 6 requires a canonical Tyler Stage 2 EvidencePackage"):
         await generate_tyler_synthesis_report(
             state,
-            decomposition=None,
             trace_id="trace-root",
         )
 

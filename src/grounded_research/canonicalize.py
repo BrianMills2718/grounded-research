@@ -26,7 +26,6 @@ from grounded_research.models import (
     Claim,
     ClaimLedger,
     Dispute,
-    QuestionDecomposition,
     RawClaim,
     DISPUTE_ROUTING,
 )
@@ -96,7 +95,6 @@ async def _get_tyler_stage1_result(
 async def canonicalize_tyler_v1(
     bundle: EvidenceBundle,
     *,
-    decomposition: QuestionDecomposition | None,
     analyst_runs: list[AnalystRun] | None = None,
     tyler_stage_1_result: TylerDecompositionResult | None = None,
     tyler_stage_3_results: list["AnalysisObject"] | None = None,

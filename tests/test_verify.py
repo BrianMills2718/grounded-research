@@ -532,7 +532,6 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_without_compat_l
     verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
         bundle=bundle,
-        decomposition=None,
         stage_2_result=stage_2_result,
         trace_id="trace-1",
         max_disputes=1,
@@ -681,7 +680,6 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
     verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
         bundle=bundle,
-        decomposition=None,
         stage_1_result=stage_1_result,
         stage_2_result=stage_2_result,
         trace_id="trace-root",
@@ -729,7 +727,6 @@ async def test_verify_disputes_tyler_v1_requires_canonical_stage2() -> None:
         await verify_disputes_tyler_v1(
             stage_4_result=stage_4_result,
             bundle=bundle,
-            decomposition=None,
             trace_id="trace-root",
             max_disputes=1,
             max_budget=1.0,

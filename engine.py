@@ -28,23 +28,21 @@ def _load_fixture_sidecars(
     fixture_path: Path,
     *,
     decomposition_path: Path | None = None,
-) -> tuple["QuestionDecomposition | None", "DecompositionResult | None", "EvidencePackage | None"]:
+) -> tuple["DecompositionResult | None", "EvidencePackage | None"]:
     """Load explicit and auto-detected fixture sidecars.
 
     Auto-detection is Tyler-native only. Legacy `decomposition.json` remains
-    loadable only through the explicit CLI path so old fixtures do not silently
-    masquerade as the canonical live contract.
+    a fail-loud migration input rather than a live runtime contract.
     """
-    from grounded_research.models import QuestionDecomposition
     from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
 
-    legacy_decomposition = None
     tyler_stage_1_result = None
     tyler_stage_2_result = None
 
     if decomposition_path is not None and decomposition_path.exists():
-        legacy_decomposition = QuestionDecomposition.model_validate_json(
-            decomposition_path.read_text()
+        raise ValueError(
+            "Legacy decomposition.json is no longer a live runtime input. "
+            "Migrate it to tyler_stage_1.json before using --fixture."
         )
 
     tyler_stage_1_path = fixture_path.parent / "tyler_stage_1.json"
@@ -59,13 +57,12 @@ def _load_fixture_sidecars(
             tyler_stage_2_path.read_text()
         )
 
-    return legacy_decomposition, tyler_stage_1_result, tyler_stage_2_result
+    return tyler_stage_1_result, tyler_stage_2_result
 
 
 async def run_pipeline(
     fixture_path: Path,
     output_dir: Path,
-    decomposition: "QuestionDecomposition | None" = None,
     tyler_stage_1_result: "DecompositionResult | None" = None,
     tyler_stage_2_result: "EvidencePackage | None" = None,
 ) -> PipelineState:
@@ -145,21 +142,16 @@ async def run_pipeline(
         ))
         print(f"  Sources: {len(bundle.sources)}, Evidence: {len(bundle.evidence)}, Gaps: {len(bundle.gaps)}")
 
-        # --- Evidence sufficiency check (if decomposition available) ---
-        if decomposition is not None:
-            from collections import Counter
-            sq_coverage = Counter(
-                sq_id
-                for evidence_item in bundle.evidence
-                for sq_id in evidence_item.sub_question_ids
+        # --- Evidence sufficiency check (Tyler Stage 2 is canonical) ---
+        for subq in state.tyler_stage_2_result.sub_question_evidence:
+            if subq.meets_sufficiency:
+                continue
+            gap_msg = subq.gap_description or (
+                f"Sub-question {subq.sub_question_id} did not meet sufficiency."
             )
-            for sq in decomposition.sub_questions:
-                count = sq_coverage.get(sq.id, 0)
-                if count < 2:
-                    gap_msg = f"Sub-question '{sq.text[:60]}...' has only {count} evidence items (minimum 2)"
-                    bundle.gaps.append(gap_msg)
-                    state.add_warning("ingest", "evidence_sufficiency", gap_msg)
-                    print(f"  GAP: {gap_msg}")
+            bundle.gaps.append(gap_msg)
+            state.add_warning("ingest", "evidence_sufficiency", gap_msg, sub_question_id=subq.sub_question_id)
+            print(f"  GAP: {gap_msg}")
 
         # --- Evidence compression (if over threshold) ---
         from grounded_research.compress import compress_evidence
@@ -235,7 +227,6 @@ async def run_pipeline(
 
         tyler_stage_4_result = await canonicalize_tyler_v1(
             bundle,
-            decomposition=decomposition,
             tyler_stage_1_result=state.tyler_stage_1_result,
             tyler_stage_3_results=state.tyler_stage_3_results,
             tyler_stage_3_alias_mapping=state.tyler_stage_3_alias_mapping,
@@ -292,7 +283,6 @@ async def run_pipeline(
         tyler_stage_5_result, adjudication_warnings, phase4_llm_calls = await verify_disputes_tyler_v1(
             stage_4_result=state.tyler_stage_4_result,
             bundle=bundle,
-            decomposition=decomposition,
             stage_1_result=state.tyler_stage_1_result,
             stage_2_result=state.tyler_stage_2_result,
             trace_id=trace_id,
@@ -329,7 +319,6 @@ async def run_pipeline(
 
         tyler_stage_6_result = await generate_tyler_synthesis_report(
             state,
-            decomposition=decomposition,
             trace_id=trace_id,
             max_budget=total_budget * 0.2,
         )
@@ -351,7 +340,6 @@ async def run_pipeline(
         print("  Rendering final report from Tyler Stage 6 synthesis...")
         long_report_md = await render_long_report(
             state, trace_id, max_budget=total_budget * 0.2,
-            decomposition=decomposition,
         )
         print(f"  Long report: {len(long_report_md)} chars, ~{len(long_report_md.split())} words")
 
@@ -422,18 +410,14 @@ async def run_pipeline_from_question(
         print(f"Observability DB: {runtime_policy['db_path']}")
     print()
 
-    tyler_stage_1_result, decomposition, validation = await decompose_with_validation_tyler_v1(
+    tyler_stage_1_result, _legacy_decomposition, validation = await decompose_with_validation_tyler_v1(
         question, trace_id,
     )
-    print(f"  Core question: {decomposition.core_question[:80]}...")
-    print(f"  Sub-questions: {len(decomposition.sub_questions)}")
-    for sq in decomposition.sub_questions:
-        print(f"    [{sq.type}] {sq.text[:70]}...")
-    print(f"  Optimization axes: {decomposition.optimization_axes}")
-    if decomposition.ambiguous_terms:
-        print(f"  Ambiguous terms: {len(decomposition.ambiguous_terms)}")
-        for at in decomposition.ambiguous_terms:
-            print(f"    '{at.term}' → {at.chosen_interpretation} (not: {at.alternative})")
+    print(f"  Core question: {tyler_stage_1_result.core_question[:80]}...")
+    print(f"  Sub-questions: {len(tyler_stage_1_result.sub_questions)}")
+    for sq in tyler_stage_1_result.sub_questions:
+        print(f"    [{sq.type}] {sq.question[:70]}...")
+    print(f"  Optimization axes: {tyler_stage_1_result.optimization_axes}")
     if validation:
         print(f"  Validation: {validation.verdict}")
         if validation.coverage_gaps:
@@ -446,7 +430,7 @@ async def run_pipeline_from_question(
 
     # --- Collect evidence with sub-question-driven search ---
     print(f"=== Evidence Collection ===")
-    print(f"Question: {decomposition.core_question}")
+    print(f"Question: {tyler_stage_1_result.core_question}")
     print()
 
     depth = get_depth_config()
@@ -474,7 +458,6 @@ async def run_pipeline_from_question(
     return await run_pipeline(
         bundle_path,
         output_dir,
-        decomposition=decomposition,
         tyler_stage_1_result=tyler_stage_1_result,
         tyler_stage_2_result=tyler_stage_2_result,
     )
@@ -507,7 +490,7 @@ def main() -> None:
         "--decomposition",
         type=Path,
         default=None,
-        help="Path to legacy decomposition JSON (explicit-only migration aid with --fixture)",
+        help="Path to legacy decomposition JSON (fails loud; migrate it to tyler_stage_1.json before using --fixture)",
     )
     parser.add_argument(
         "--depth",
@@ -529,7 +512,7 @@ def main() -> None:
         asyncio.run(run_pipeline_from_question(args.question, out_dir))
     elif args.fixture:
         out_dir = args.output_dir or (PROJECT_ROOT / "output" / "pipeline")
-        decomp, tyler_stage_1_result, tyler_stage_2_result = _load_fixture_sidecars(
+        tyler_stage_1_result, tyler_stage_2_result = _load_fixture_sidecars(
             args.fixture,
             decomposition_path=args.decomposition,
         )
@@ -537,7 +520,6 @@ def main() -> None:
             run_pipeline(
                 args.fixture,
                 out_dir,
-                decomposition=decomp,
                 tyler_stage_1_result=tyler_stage_1_result,
                 tyler_stage_2_result=tyler_stage_2_result,
             )

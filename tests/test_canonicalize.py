@@ -12,12 +12,10 @@ from grounded_research.models import (
     Counterargument,
     EvidenceBundle,
     EvidenceItem,
-    QuestionDecomposition,
     RawClaim,
     Recommendation,
     ResearchQuestion,
     SourceRecord,
-    SubQuestion,
 )
 from grounded_research.tyler_v1_adapters import (
     build_tyler_alias_mapping,
@@ -462,29 +460,6 @@ def _tyler_stage4_analyst_runs() -> list[AnalystRun]:
     ]
 
 
-def _tyler_stage4_decomposition() -> QuestionDecomposition:
-    """Fixture decomposition for Tyler Stage 4 runtime retry tests."""
-    return QuestionDecomposition(
-        core_question="Should teams use Redis or PostgreSQL for session storage?",
-        sub_questions=[
-            SubQuestion(
-                id="SQ-1",
-                text="What are the latency and throughput differences?",
-                type="comparative",
-                falsification_target="PostgreSQL matches Redis on p99 latency.",
-            ),
-            SubQuestion(
-                id="SQ-2",
-                text="What durability tradeoffs matter for session storage?",
-                type="evaluative",
-                falsification_target="Redis durability matches PostgreSQL crash recovery.",
-            ),
-        ],
-        optimization_axes=["latency vs durability"],
-        research_plan="benchmarks; crash-recovery evidence; contradictory benchmarks",
-    )
-
-
 def _tyler_stage4_stage1_result() -> DecompositionResult:
     """Fixture Tyler Stage 1 artifact for Stage 4 runtime tests."""
     return DecompositionResult(
@@ -619,7 +594,6 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
 
     result = await canonicalize_tyler_v1(
         _tyler_stage4_bundle(),
-        decomposition=_tyler_stage4_decomposition(),
         analyst_runs=_tyler_stage4_analyst_runs(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
         trace_id="test-trace",
@@ -669,7 +643,6 @@ async def test_canonicalize_tyler_v1_fails_loud_on_persistent_empty_stage4(
     with pytest.raises(ValueError, match="empty claim ledger and assumption set after retry"):
         await canonicalize_tyler_v1(
             _tyler_stage4_bundle(),
-            decomposition=_tyler_stage4_decomposition(),
             analyst_runs=_tyler_stage4_analyst_runs(),
             tyler_stage_1_result=_tyler_stage4_stage1_result(),
             trace_id="test-trace",
@@ -731,7 +704,6 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
 
     result = await canonicalize_tyler_v1(
         _tyler_stage4_bundle(),
-        decomposition=_tyler_stage4_decomposition(),
         analyst_runs=_tyler_stage4_analyst_runs(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
         trace_id="test-trace",
@@ -795,7 +767,6 @@ async def test_canonicalize_tyler_v1_live_path_requires_only_tyler_stage3_inputs
 
     result = await canonicalize_tyler_v1(
         _tyler_stage4_bundle(),
-        decomposition=_tyler_stage4_decomposition(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
         tyler_stage_3_results=analyses,
         tyler_stage_3_alias_mapping=alias_mapping,

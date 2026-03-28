@@ -102,24 +102,23 @@ def test_fixture_sidecars_auto_detect_tyler_only(tmp_path: Path) -> None:
     _write_tyler_stage2(tmp_path)
     _write_legacy_decomposition(tmp_path / "decomposition.json")
 
-    decomp, stage1, stage2 = _load_fixture_sidecars(fixture)
+    stage1, stage2 = _load_fixture_sidecars(fixture)
 
-    assert decomp is None
     assert stage1 is not None
     assert stage2 is not None
 
 
-def test_fixture_sidecars_load_legacy_decomposition_only_when_explicit(tmp_path: Path) -> None:
+def test_fixture_sidecars_fail_loud_on_legacy_decomposition_input(tmp_path: Path) -> None:
     fixture = _write_fixture_bundle(tmp_path)
     legacy_path = tmp_path / "decomposition.json"
     _write_legacy_decomposition(legacy_path)
 
-    decomp, stage1, stage2 = _load_fixture_sidecars(
-        fixture,
-        decomposition_path=legacy_path,
-    )
-
-    assert decomp is not None
-    assert decomp.sub_questions[0].id == "SQ-1"
-    assert stage1 is None
-    assert stage2 is None
+    try:
+        _load_fixture_sidecars(
+            fixture,
+            decomposition_path=legacy_path,
+        )
+    except ValueError as exc:
+        assert "Legacy decomposition.json is no longer a live runtime input" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("Expected legacy decomposition input to fail loudly")

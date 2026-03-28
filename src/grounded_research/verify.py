@@ -25,7 +25,6 @@ from grounded_research.models import (
     Dispute,
     EvidenceBundle,
     EvidenceItem,
-    QuestionDecomposition,
     SourceRecord,
     VerificationQueryBatch,
 )
@@ -643,7 +642,6 @@ async def verify_disputes_tyler_v1(
     *,
     stage_4_result: TylerClaimExtractionResult,
     bundle: EvidenceBundle,
-    decomposition: QuestionDecomposition | None,
     stage_1_result: DecompositionResult | None = None,
     stage_2_result: EvidencePackage | None = None,
     trace_id: str,
