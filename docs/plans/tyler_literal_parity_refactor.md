@@ -189,14 +189,15 @@ Repo-local stage-contract migration is now complete.
 
 The remaining gap is no longer Stage 1-6 contract wiring. It is:
 
-1. benchmark re-anchor on the fully Tyler-native runtime
+1. prompt-quality recovery on the fully Tyler-native runtime after benchmark
+   re-anchor completed with regressed usefulness
 2. explicit handling of shared-infra differences from Tyler's specified
    provider/model/search stack
 
 ## Immediate Next Step
 
-Execute `docs/plans/tyler_literal_parity_benchmark_reanchor.md`:
+Execute the next Tyler-native quality wave:
 
-1. complete a live Tyler Stage 1-6 smoke trace
-2. rerun the tracked benchmark on the Tyler-native path
-3. record whether literal parity preserved or regressed usefulness
+1. audit live Tyler prompt fidelity stage by stage
+2. isolate which Tyler-native stages are still adapted in quality, not contract
+3. improve the weakest Tyler-native stages and rerun the tracked benchmark

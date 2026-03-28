@@ -5,13 +5,17 @@ This note answers one narrow question:
 > Is the current `grounded-research` runtime implementing Tyler's
 > `tyler_response_20260326/` prompts and schemas literally?
 
-Answer: **not fully yet**.
+Answer: **repo-local runtime parity is implemented, but quality parity is not
+yet proven**.
 
 The repo-local runtime now runs Tyler-native Stage 1 through Stage 6 contracts
-and persists those artifacts in pipeline state, but full Tyler compliance is
-still not complete because:
+and persists those artifacts in pipeline state. The remaining gap is not stage
+contract wiring. It is benchmark quality and explicit shared-infra boundaries.
 
-- the benchmark re-anchor wave is still open
+Full Tyler closure is still not complete because:
+
+- the benchmark re-anchor wave completed with regressed usefulness
+- the next open wave is prompt-quality recovery on the Tyler-native path
 - current compatibility projections still exist for downstream surfaces
 - provider/model/search assumptions that Tyler specified remain explicit
   shared-infra gaps outside this repo
@@ -39,7 +43,7 @@ Remaining non-literal gaps are now narrower:
 
 1. current compatibility projections still coexist with the Tyler-native
    runtime artifacts
-2. tracked benchmark re-anchor is not yet closed
+2. tracked benchmark re-anchor closed with regressed usefulness
 3. Tyler's provider/model/search assumptions are not wired literally in this
    repo because they belong in shared infrastructure
 
@@ -54,7 +58,7 @@ Remaining non-literal gaps are now narrower:
 | Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` is an explicit downstream projection | Yes (runtime), compatibility projection remains |
 | Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Yes (runtime), compatibility projection remains |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; current `FinalReport` and markdown report are compatibility projections | Yes (runtime), compatibility projection remains |
-| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are now active for Stages 1-6; remaining non-literal provider/search assumptions are external | Yes (repo-local prompts), external assumptions remain |
+| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6, but the tracked UBI rerun still regressed in usefulness, so literal prompt fidelity must now be audited stage by stage | Runtime-active, quality still under audit |
 
 ## Current Prompt Inventory vs Tyler Prompt Inventory
 
@@ -97,24 +101,36 @@ Current repo intentionally diverged from that for stabilization and shared
 infra boundaries. Literal parity would require changing those assumptions or
 explicitly deciding to leave provider/model parity out of scope.
 
-### 3. Benchmark re-anchor is still open
+### 3. Benchmark quality still lags
 
-The deterministic parity suite is green, but one live smoke run on the fully
-Tyler-native path stalled in a late provider call before writing a trace. That
-is currently treated as a runtime/shared-infra issue, not a local schema
-migration failure, and the benchmark re-anchor plan remains open.
+The benchmark re-anchor wave is complete:
+
+- smoke and tracked fixture runs now serialize Tyler Stage 1-6 artifacts
+- the fixture-path Stage 2 emptiness bug was fixed locally
+- dense Tyler Stage 2 and Stage 4 both required stronger primary models
+
+But the tracked rerun at `output/tyler_literal_parity_ubi_reanchor_v5/` still
+regressed in usefulness:
+
+- only `12` Stage 4 claims
+- only `2` cited final claims
+- loses to both saved comparison anchors
+
+So the next local frontier is no longer contract migration. It is Tyler-native
+prompt-quality recovery.
 
 ## Recommendation
 
 Do not claim full Tyler closure yet.
 
-The correct next move is the benchmark re-anchor wave:
+The correct next move is the prompt-quality recovery wave:
 
-1. complete one live trace with Tyler Stage 1-6 fields
-2. rerun the tracked benchmark on the Tyler-native path
-3. record whether literal parity preserves or regresses usefulness
+1. audit literal prompt fidelity stage by stage
+2. identify the weakest Tyler-native stages on the tracked UBI rerun
+3. rerun the same benchmark after local quality recovery
 
 Those steps are captured in:
 
 - `docs/plans/tyler_literal_parity_refactor.md`
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
+- `docs/plans/tyler_literal_prompt_quality_recovery.md`

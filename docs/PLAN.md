@@ -24,7 +24,7 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status (2026-03-26)
+## Current Status (2026-03-27)
 
 **v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational.**
 
@@ -85,8 +85,8 @@ Current operational notes:
   explicit finite request timeouts for long runs
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
-- there is no active repo-local hardening backlog; the next wave must be opened
-  by a completed benchmark trigger
+- active repo-local frontier is Tyler-native quality recovery after the literal
+  parity benchmark re-anchor completed with regressed usefulness
 
 ## Governance Surfaces
 
@@ -137,7 +137,8 @@ Current open work is intentionally narrow:
   `docs/plans/depth_modes_wave1_execution.md`
 - active Tyler literal-parity remaining wave:
   `docs/plans/tyler_literal_parity_refactor.md`,
-  `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
+  `docs/plans/tyler_literal_parity_benchmark_reanchor.md`,
+  `docs/plans/tyler_literal_prompt_quality_recovery.md`
 - Tyler V1 reference map and follow-through:
   `docs/TYLER_V1_CURRENT_REPO_MAP.md`,
   `docs/plans/tyler_v1_followthrough.md`

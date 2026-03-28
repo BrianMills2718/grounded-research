@@ -32,27 +32,29 @@ configurable depth modes (standard/deep/thorough).
 - 1 feature remains cut (#6 complexity assessment; #3 ambiguity and #38
   shuffling were later un-cut and implemented)
 
-## Next: Tyler Parity Benchmark Re-Anchor
+## Next: Tyler-Native Prompt Quality Recovery
 
-The contract migration wave is complete. The active repo-local wave is now
-benchmark re-anchor on the fully Tyler-native runtime.
+The contract migration wave and benchmark re-anchor are complete. The Tyler
+runtime is now mechanically stable end-to-end, but the tracked Tyler-native UBI
+rerun still regressed in decision usefulness.
 
 Immediate repo-local goal:
 
-- complete one Tyler-native live smoke trace with Stage 1-6 artifacts
-- ensure live Stage 4 survives cheap-model failure modes:
-  - schema-valid empty artifacts
-  - schema-invalid near-miss artifacts with real claims but malformed routing
-  - primary-model timeout on dense fixtures
-- rerun one tracked benchmark on that path
-- classify the result as preserved, improved, or regressed usefulness
+- audit active Tyler prompt files stage by stage against Tyler's prompt spec
+- identify which Tyler-native stages are too thin on the tracked UBI rerun
+- repair local prompt/runtime quality bottlenecks without reopening contract
+  migration
+- rerun the same tracked benchmark gate
+- classify the result honestly as recovered or still divergent
 
-If the remaining blocker is only provider/runtime behavior, record it as a
-shared-infra issue instead of reopening local schema work.
+If the remaining blocker is only provider/runtime behavior after prompt-quality
+recovery, record it as a shared-infra issue instead of reopening local contract
+work.
 
 See:
 
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
+- `docs/plans/tyler_literal_prompt_quality_recovery.md`
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
 
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate

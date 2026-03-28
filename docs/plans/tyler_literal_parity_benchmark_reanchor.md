@@ -1,6 +1,6 @@
 # Tyler Literal Parity Benchmark Re-Anchor
 
-**Status:** In Progress
+**Status:** Completed
 **Parent plan:** `docs/plans/tyler_literal_parity_refactor.md`
 **Purpose:** Re-anchor the tracked benchmark surfaces on the fully Tyler-native
 runtime and make any remaining divergence explicit instead of leaving literal
@@ -54,6 +54,42 @@ This wave is complete only if:
    - parity regressed usefulness
 4. any unresolved gap is tagged as repo-local or shared-infra, not left
    ambiguous
+
+## Result
+
+Completed on `2026-03-27`.
+
+Outcome:
+
+- literal Tyler runtime is now mechanically stable end-to-end on both smoke and
+  tracked fixture paths
+- the fixture-path Stage 2 emptiness bug was local and is fixed via current-ID
+  to Tyler-ID translation
+- dense Tyler-native Stage 4 required promotion of a stronger primary model
+- dense Tyler-native Stage 2 also required promotion of a stronger primary
+  finding-extraction model
+- benchmark usefulness still regressed after those mechanical/runtime fixes
+
+Tracked rerun:
+
+- output dir: `output/tyler_literal_parity_ubi_reanchor_v5/`
+- Tyler Stage 2 source counts by sub-question: `15, 16, 15, 4, 11`
+- Tyler Stage 3 claim counts by analyst: `10, 6, 3`
+- Tyler Stage 4 output: `12` claims, `1` dispute
+- final report: `2` cited claims, `0` grounding warnings, `2` pipeline warnings
+
+Comparisons:
+
+- vs Perplexity:
+  `output/fair_tyler_literal_parity_ubi_reanchor_v5_vs_ubi_perplexity.md`
+- vs current dense-dedup anchor:
+  `output/fair_tyler_literal_parity_ubi_reanchor_v5_vs_ubi_dense_dedup_eval.md`
+
+Classification:
+
+- repo-local parity migration: complete
+- benchmark re-anchor: completed with **regressed usefulness**
+- next repo-local frontier: prompt-quality recovery on the Tyler-native path
 
 ## Execution Order
 
@@ -109,5 +145,6 @@ Current benchmark target:
 | schema-valid empty Tyler Stage 4 artifact | Stage 4 returns `claim_ledger=[]` and `assumption_set=[]` despite non-empty Stage 3 analyses | retry with the configured stronger Stage 4 model; fail loud if retry is still empty |
 | near-miss Stage 4 schema failure | primary Stage 4 output contains real claims but misplaces disputes/assumptions or omits required fields | retry with the configured stronger Stage 4 model using the concrete validation failure summary |
 | cheap-model Stage 4 timeout | the primary Stage 4 model never returns inside the configured window on dense fixtures | promote the already-proven stronger Stage 4 model to primary config, keep the cheaper model only as fallback |
-| benchmark regression after literal parity | Tyler-native path loses decision usefulness | record the divergence explicitly and isolate whether it is prompt/provider behavior or local contract logic |
+| cheap-model Stage 2 timeout on dense fixtures | Tyler Stage 2 finding extraction advances, but average latency is high and repeated calls exceed a minute or time out on large fixture bundles | promote the stronger evidence-extraction model to primary config, keep the cheaper model only as fallback, then rerun the benchmark from a clean output directory |
+| benchmark regression after literal parity | Tyler-native path loses decision usefulness despite stable end-to-end execution | close this wave honestly and open a prompt-quality recovery plan focused on the weak Tyler-native stages |
 | silent fallback to current artifacts | smoke trace lacks Tyler stage fields even though tests pass | treat as local bug and reopen runtime wiring |
