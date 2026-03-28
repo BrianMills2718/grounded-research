@@ -410,7 +410,7 @@ async def run_pipeline_from_question(
         print(f"Observability DB: {runtime_policy['db_path']}")
     print()
 
-    tyler_stage_1_result, _legacy_decomposition, validation = await decompose_with_validation_tyler_v1(
+    tyler_stage_1_result, validation = await decompose_with_validation_tyler_v1(
         question, trace_id,
     )
     print(f"  Core question: {tyler_stage_1_result.core_question[:80]}...")

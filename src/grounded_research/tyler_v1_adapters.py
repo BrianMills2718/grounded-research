@@ -13,13 +13,7 @@ from collections import Counter, defaultdict
 import logging
 import re
 
-from grounded_research.models import (
-    ArbitrationResult as RuntimeArbitrationResult,
-    ClaimUpdate as RuntimeClaimUpdate,
-    EvidenceBundle,
-    QuestionDecomposition,
-    SubQuestion as CurrentSubQuestion,
-)
+from grounded_research.models import ArbitrationResult as RuntimeArbitrationResult, ClaimUpdate as RuntimeClaimUpdate
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
     AnalysisObject,
@@ -36,7 +30,6 @@ from grounded_research.tyler_v1_models import (
     DisputeStatus,
     DisputeType,
     EvidenceTrailEntry,
-    EvidenceLabel,
     EvidencePackage,
     ExtractionStatistics,
     Finding,
@@ -55,32 +48,6 @@ from grounded_research.tyler_v1_models import (
 _LOG = logging.getLogger(__name__)
 
 
-def current_to_tyler_sub_question_id_map(
-    current_decomposition: QuestionDecomposition,
-    tyler_decomposition: DecompositionResult,
-) -> dict[str, str]:
-    """Translate current runtime sub-question IDs into Tyler Stage 1 IDs.
-
-    Fixture bundles often preserve the shipped runtime's `SQ-*` sub-question
-    IDs while the Tyler-native Stage 1 decomposition uses canonical `Q-*`
-    IDs. The runtime migration keeps sub-questions in positional lockstep, so
-    position is the correct bridge while both representations coexist.
-    """
-    if len(current_decomposition.sub_questions) != len(tyler_decomposition.sub_questions):
-        raise ValueError(
-            "Current and Tyler decompositions must have the same number of sub-questions "
-            "to translate fixture evidence IDs."
-        )
-    return {
-        current_sub_question.id: tyler_sub_question.id
-        for current_sub_question, tyler_sub_question in zip(
-            current_decomposition.sub_questions,
-            tyler_decomposition.sub_questions,
-            strict=True,
-        )
-    }
-
-
 def normalize_tyler_decomposition_ids(result: DecompositionResult) -> DecompositionResult:
     """Normalize Tyler Stage 1 IDs after LLM generation.
 
@@ -92,215 +59,6 @@ def normalize_tyler_decomposition_ids(result: DecompositionResult) -> Decomposit
         if not sub_question.id.startswith("Q-"):
             sub_question.id = f"Q-{idx}"
     return result
-
-
-def tyler_decomposition_to_current(result: DecompositionResult) -> QuestionDecomposition:
-    """Convert Tyler's Stage 1 artifact into the current runtime decomposition.
-
-    This keeps the runtime operational while Stage 1 begins migrating toward the
-    literal Tyler contract.
-    """
-    type_map = {
-        "empirical": "factual",
-        "interpretive": "evaluative",
-        "preference": "evaluative",
-    }
-    return QuestionDecomposition(
-        core_question=result.core_question,
-        sub_questions=[
-            CurrentSubQuestion(
-                id=sq.id,
-                text=sq.question,
-                type=type_map.get(sq.type, "scope"),
-                falsification_target=(
-                    result.research_plan.falsification_targets[idx]
-                    if idx < len(result.research_plan.falsification_targets)
-                    else "N/A"
-                ),
-            )
-            for idx, sq in enumerate(result.sub_questions)
-        ],
-        optimization_axes=result.optimization_axes,
-        research_plan=(
-            "Verify: "
-            + "; ".join(result.research_plan.what_to_verify)
-            + ". Critical sources: "
-            + ", ".join(result.research_plan.critical_source_types)
-        ),
-        ambiguous_terms=[],
-    )
-
-
-def current_decomposition_to_tyler(
-    decomposition: QuestionDecomposition,
-    original_query: str,
-) -> DecompositionResult:
-    """Convert the shipped decomposition artifact into Tyler's Stage 1 contract."""
-    type_map = {
-        "factual": "empirical",
-        "causal": "empirical",
-        "comparative": "interpretive",
-        "evaluative": "interpretive",
-        "scope": "preference",
-    }
-    critical_source_types = list(
-        dict.fromkeys(
-            phrase.strip()
-            for phrase in re.split(r"[;,]", decomposition.research_plan)
-            if phrase.strip()
-        )
-    )[:4]
-    if not critical_source_types:
-        critical_source_types = ["official docs", "benchmarks"]
-
-    return DecompositionResult(
-        core_question=decomposition.core_question or original_query,
-        sub_questions=[
-            TylerSubQuestion(
-                id=f"Q-{idx}",
-                question=sq.text,
-                type=type_map.get(sq.type, "interpretive"),
-                research_priority="high" if idx == 1 else "medium",
-                search_guidance=sq.falsification_target or "Find high-quality evidence that would change the answer.",
-            )
-            for idx, sq in enumerate(decomposition.sub_questions, start=1)
-        ],
-        optimization_axes=decomposition.optimization_axes,
-        research_plan={
-            "what_to_verify": [sq.text for sq in decomposition.sub_questions[:3]],
-            "critical_source_types": critical_source_types,
-            "falsification_targets": [
-                sq.falsification_target or "Contradictory high-quality evidence"
-                for sq in decomposition.sub_questions
-            ],
-        },
-        stage_summary={
-            "stage_name": "Stage 1: Intake & Decomposition",
-            "goal": "Adapt the shipped decomposition into Tyler's literal Stage 1 contract.",
-            "key_findings": [
-                f"{len(decomposition.sub_questions)} current sub-questions preserved",
-                "Optimization axes and falsification targets carried forward",
-                "Type mapping from current decomposition is an explicit migration bridge",
-            ],
-            "decisions_made": [
-                "Mapped current sub-question taxonomy onto Tyler's Stage 1 taxonomy",
-                "Projected the current research_plan string into Tyler's structured research_plan",
-            ],
-            "outcome": f"Tyler DecompositionResult for query: {original_query[:80]}",
-            "reasoning": "Adapter conversion from current QuestionDecomposition into Tyler's Stage 1 contract.",
-        },
-    )
-
-
-def _quality_tier_to_score(quality_tier: str) -> float:
-    """Map current qualitative source tiers onto Tyler's numeric quality score."""
-    return {
-        "authoritative": 0.9,
-        "reliable": 0.75,
-        "unknown": 0.5,
-        "unreliable": 0.2,
-    }.get(quality_tier, 0.5)
-
-
-def _current_source_to_evidence_label(source_type: str) -> EvidenceLabel:
-    """Approximate Tyler evidence labels from current source metadata."""
-    if source_type in {"government_db", "primary_document", "academic"}:
-        return EvidenceLabel.VENDOR_DOCUMENTED
-    if source_type in {"news", "web_search"}:
-        return EvidenceLabel.EMPIRICALLY_OBSERVED
-    if source_type in {"platform_transparency", "social_media"}:
-        return EvidenceLabel.MODEL_SELF_CHARACTERIZATION
-    return EvidenceLabel.SPECULATIVE_INFERENCE
-
-
-def current_bundle_to_tyler_evidence_package(
-    bundle: EvidenceBundle,
-    decomposition: DecompositionResult,
-    *,
-    current_decomposition: QuestionDecomposition | None = None,
-) -> EvidencePackage:
-    """Convert the current flat evidence bundle into Tyler's Stage 2 artifact."""
-    current_sources = {source.id: source for source in bundle.sources}
-    findings_by_subq_source: dict[tuple[str, str], list[Finding]] = defaultdict(list)
-
-    tyler_question_ids = [sq.id for sq in decomposition.sub_questions]
-    if not tyler_question_ids:
-        raise ValueError("Tyler decomposition must include at least one sub-question.")
-    current_to_tyler_ids = (
-        current_to_tyler_sub_question_id_map(current_decomposition, decomposition)
-        if current_decomposition is not None
-        else {}
-    )
-
-    for item in bundle.evidence:
-        source = current_sources.get(item.source_id)
-        if source is None:
-            continue
-        target_sub_questions = item.sub_question_ids or [tyler_question_ids[0]]
-        for sub_question_id in target_sub_questions:
-            translated_sub_question_id = current_to_tyler_ids.get(sub_question_id, sub_question_id)
-            findings_by_subq_source[(translated_sub_question_id, source.id)].append(
-                Finding(
-                    finding=item.content,
-                    evidence_label=_current_source_to_evidence_label(source.source_type),
-                    original_quote=item.content if item.content_type in {"quotation", "data_point"} else None,
-                )
-            )
-
-    sub_question_evidence: list[SubQuestionEvidence] = []
-    for sub_question in decomposition.sub_questions:
-        sources: list[Source] = []
-        for source_id, source in current_sources.items():
-            findings = findings_by_subq_source.get((sub_question.id, source_id))
-            if not findings:
-                continue
-            sources.append(
-                Source(
-                    id=source.id,
-                    url=source.url,
-                    title=source.title,
-                    source_type=source.source_type,
-                    quality_score=_quality_tier_to_score(source.quality_tier),
-                    publication_date=source.published_at.date().isoformat() if source.published_at else None,
-                    retrieval_date=source.retrieved_at.date().isoformat(),
-                    key_findings=findings,
-                )
-            )
-        sub_question_evidence.append(
-            SubQuestionEvidence(
-                sub_question_id=sub_question.id,
-                sources=sources,
-                meets_sufficiency=len(sources) >= 2,
-                gap_description=None if len(sources) >= 2 else f"Fewer than 2 sources found for {sub_question.id}",
-            )
-        )
-
-    queries_per_sub_question = {
-        sub_question.id: 0
-        for sub_question in decomposition.sub_questions
-    }
-    return EvidencePackage(
-        sub_question_evidence=sub_question_evidence,
-        total_queries_used=0,
-        queries_per_sub_question=queries_per_sub_question,
-        stage_summary=decomposition.stage_summary.model_copy(
-            update={
-                "stage_name": "Stage 2: Broad Retrieval & Evidence Normalization",
-                "goal": "Assemble evidence by sub-question in Tyler's Stage 2 artifact shape.",
-                "key_findings": [
-                    f"{len(bundle.sources)} current sources adapted into Tyler Stage 2 shape",
-                    f"{len(bundle.evidence)} current evidence items converted into findings",
-                    "Quality score and evidence label mapping are adapter approximations during migration",
-                ],
-                "decisions_made": [
-                    "Grouped evidence by Tyler sub-question ID",
-                    "Derived Tyler findings from current evidence items",
-                ],
-                "outcome": f"{len(sub_question_evidence)} sub-question evidence groups",
-                "reasoning": "Adapter conversion from current flat EvidenceBundle into Tyler's grouped EvidencePackage contract.",
-            }
-        ),
-    )
 def normalize_tyler_analysis_object(
     result: AnalysisObject,
     *,

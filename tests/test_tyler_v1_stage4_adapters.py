@@ -1,29 +1,9 @@
-"""Tests for the remaining Tyler Stage 1 and Stage 4 adapter helpers."""
+"""Tests for the remaining Tyler Stage 4 normalization helpers."""
 
 from __future__ import annotations
 
-from grounded_research.models import QuestionDecomposition, SubQuestion
-from grounded_research.tyler_v1_adapters import (
-    current_decomposition_to_tyler,
-    normalize_tyler_claim_extraction_result,
-)
+from grounded_research.tyler_v1_adapters import normalize_tyler_claim_extraction_result
 from grounded_research.tyler_v1_models import ClaimExtractionResult, ClaimStatus
-
-
-def test_current_decomposition_to_tyler_preserves_core_structure() -> None:
-    current = QuestionDecomposition(
-        core_question="Should cities adopt UBI pilots?",
-        sub_questions=[
-            SubQuestion(id="SQ-1", text="What happened in prior pilots?", type="factual", falsification_target="Prior pilots caused severe harm."),
-            SubQuestion(id="SQ-2", text="How should policymakers interpret mixed evidence?", type="evaluative", falsification_target="Interpretive consensus rejects pilots."),
-        ],
-        optimization_axes=["risk vs upside"],
-        research_plan="official docs; evaluations; contradictory evidence",
-    )
-    tyler = current_decomposition_to_tyler(current, original_query=current.core_question)
-    assert tyler.core_question == current.core_question
-    assert [sq.id for sq in tyler.sub_questions] == ["Q-1", "Q-2"]
-    assert tyler.sub_questions[0].type == "empirical"
 
 
 def test_normalize_tyler_claim_extraction_result_rewrites_ids_and_routes() -> None:

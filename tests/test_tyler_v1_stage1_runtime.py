@@ -50,7 +50,7 @@ def _decomposition_result() -> DecompositionResult:
 
 
 @pytest.mark.asyncio
-async def test_decompose_with_validation_tyler_v1_returns_tyler_and_current(monkeypatch) -> None:
+async def test_decompose_with_validation_tyler_v1_returns_tyler_and_validation(monkeypatch) -> None:
     async def fake_decompose_question_tyler_v1(*args, **kwargs):
         return _decomposition_result()
 
@@ -73,13 +73,12 @@ async def test_decompose_with_validation_tyler_v1_returns_tyler_and_current(monk
         fake_validate_decomposition,
     )
 
-    tyler_result, current, validation = await decompose_with_validation_tyler_v1(
+    tyler_result, validation = await decompose_with_validation_tyler_v1(
         question="What should we do?",
         trace_id="test/trace",
     )
 
     assert tyler_result.sub_questions[0].id == "Q-1"
-    assert current.sub_questions[0].text == "What does the direct evidence show?"
     assert validation is not None
     assert validation.verdict == "proceed"
 
@@ -123,7 +122,7 @@ async def test_decompose_with_validation_tyler_v1_retries_once_on_revision(monke
         fake_validate_decomposition,
     )
 
-    tyler_result, current, validation = await decompose_with_validation_tyler_v1(
+    tyler_result, validation = await decompose_with_validation_tyler_v1(
         question="What should we do?",
         trace_id="test/trace",
     )
@@ -131,6 +130,5 @@ async def test_decompose_with_validation_tyler_v1_retries_once_on_revision(monke
     assert len(calls) == 2
     assert "Revision guidance" in calls[1]
     assert tyler_result.core_question == "What should we do?"
-    assert current.core_question == "What should we do?"
     assert validation is not None
     assert validation.verdict == "proceed"
