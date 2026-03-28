@@ -194,6 +194,87 @@ Still remaining in this slice:
 - `PipelineState` still stores compatibility artifacts as first-class siblings
   of the Tyler-native outputs
 
+## Next 24 Hours
+
+The remaining wave is now narrow enough to execute as four ordered phases.
+These phases are intended to run continuously in order unless a documented
+architectural concern or failing verification result blocks the next slice.
+
+### Phase A: Canonical Output Cutover
+
+Goal:
+
+- make Tyler Stage 6 and Tyler-native handoff artifacts the primary exported
+  machine-readable outputs
+
+Required changes:
+
+- stop treating `FinalReport` as the primary canonical export artifact in the
+  normal pipeline path
+- add a Tyler-native downstream handoff artifact
+- make `report.md`, `summary.md`, `trace.json`, and `handoff.json` derive
+  primarily from Tyler Stage 5/6 artifacts
+
+Acceptance:
+
+- engine no longer needs `state.report` for the canonical successful path
+- `handoff.json` is Tyler-native when Tyler Stage 5/6 exist
+- export and phase-boundary tests pass
+
+### Phase B: Canonical Export Contract Rewrite
+
+Goal:
+
+- rewrite docs/tests so the primary export contract is Tyler-native
+
+Required changes:
+
+- update `docs/CONTRACTS.md`, `docs/PLAN.md`, `README.md`, and any primary
+  boundary tests that still describe `FinalReport` as the main success artifact
+- move compatibility `FinalReport` language behind an explicit compatibility note
+
+Acceptance:
+
+- active docs describe Tyler Stage 6 + Tyler handoff as the canonical output surface
+- primary boundary tests assert Tyler-native artifacts first
+
+### Phase C: Stage 5 Compatibility Demotion
+
+Goal:
+
+- keep Stage 5 compatibility ledger only as transitional debt, not the primary
+  semantic output of adjudication
+
+Required changes:
+
+- reduce live dependence on projected `ClaimLedger` where Stage 5 Tyler artifacts
+  already contain the needed truth
+- document and isolate any remaining consumer that still truly needs the
+  compatibility ledger
+
+Acceptance:
+
+- no primary export or validation path depends on `ClaimLedger`
+- remaining `ClaimLedger` usage is documented as transitional only
+
+### Phase D: State Cleanup And Final Review
+
+Goal:
+
+- make the remaining compatibility fields in `PipelineState` explicit debt, not
+  ambiguous co-equal outputs
+
+Required changes:
+
+- update `PipelineState` docs/comments and any remaining tests/docs that imply
+  compatibility fields are first-class canonical outputs
+- record any unresolved consumer dependency explicitly
+
+Acceptance:
+
+- the repo has one clear canonical runtime path and one clear compatibility-debt story
+- remaining uncertainties are documented explicitly in repo docs, not left implicit
+
 ### Slice 4: Strict analyst success defaults
 
 Files:

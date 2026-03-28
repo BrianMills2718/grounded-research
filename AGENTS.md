@@ -230,6 +230,29 @@ control-flow path.
 Compatibility adapters are temporary migration tools only. Remove them
 aggressively once the Tyler-literal path is verified.
 
+### 8b. Continuous Canonical Cutover
+
+When an active cutover plan is in progress, do not stop after one narrow patch
+just because one commit landed.
+
+The expected behavior is:
+
+- determine the remaining slices needed to finish the active cutover wave
+- write those slices into the active plan and notebook before continuing
+- execute them in order
+- commit each verified slice immediately
+- continue until the wave is actually complete
+
+Stop only for:
+
+- a real uncertainty about the desired architecture or contract
+- a concrete concern that the next deletion would break an undeclared consumer
+- a failing verification result that invalidates the current plan
+
+If there is uncertainty, document it in the plan, notebook, and traceable repo
+surface, then continue with the next unblocked slice. Do not stop simply
+because the work is large or because multiple commits are needed.
+
 ### 9. Prove The Thesis With The Smallest Useful Slice
 
 Do not build the full cathedral first.
