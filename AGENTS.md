@@ -253,6 +253,34 @@ If there is uncertainty, document it in the plan, notebook, and traceable repo
 surface, then continue with the next unblocked slice. Do not stop simply
 because the work is large or because multiple commits are needed.
 
+### 8c. Next-24h Execution Expectation
+
+When the user asks for the next 24 hours of work to be planned and executed,
+the expected behavior is strict:
+
+- determine every remaining phase needed to finish the active repo-local wave
+- make the phases explicit in the active plan and notebook before continuing
+- make acceptance criteria and failure modes explicit for each phase
+- execute continuously through all planned phases
+- commit every verified slice immediately
+- push once the wave is complete or once a durable boundary is reached
+
+Do not stop for:
+
+- the size of the remaining work
+- the fact that multiple commits are needed
+- the existence of historical compatibility code that the plan already says to delete
+
+Stop only for:
+
+- a real architectural uncertainty not covered by the active plan
+- a concrete undeclared consumer that would be broken by the next deletion
+- a failing verification result that means the plan itself is wrong
+
+If one of those happens, document it explicitly in the plan, notebook, and
+authority docs, then continue with the next unblocked phase instead of leaving
+the repo in a vague intermediate state.
+
 ### 9. Prove The Thesis With The Smallest Useful Slice
 
 Do not build the full cathedral first.

@@ -54,7 +54,14 @@ This wave is complete only if:
 ### Phase 1: Delete stored compatibility export state
 - remove `PipelineState.claim_ledger`
 - keep old traces readable via Pydantic's default extra-ignore behavior
+- files:
+  - `src/grounded_research/models.py`
+  - `tests/test_phase_boundaries.py`
+  - `tests/test_export.py`
 - acceptance: state/boundary suites still pass
+- verification:
+  - `python -m py_compile src/grounded_research/models.py tests/test_phase_boundaries.py tests/test_export.py`
+  - `./.venv/bin/python -m pytest tests/test_phase_boundaries.py tests/test_export.py -q`
 
 ### Phase 2: Delete compatibility export helpers
 - remove from `export.py`:
@@ -64,17 +71,41 @@ This wave is complete only if:
   - `_render_structured_report`
   - legacy `DownstreamHandoff` fallback branch in `write_outputs()`
 - remove dead imports tied only to those helpers
+- files:
+  - `src/grounded_research/export.py`
+  - `src/grounded_research/models.py`
+  - `tests/test_export.py`
 - acceptance: `export.py` still supports canonical Stage 6 rendering/writing only
+- verification:
+  - `python -m py_compile src/grounded_research/export.py tests/test_export.py`
+  - `./.venv/bin/python -m pytest tests/test_export.py tests/test_prompt_templates.py -q`
 
 ### Phase 3: Delete compatibility export tests and adapter-only report projection tests
 - remove tests that exist only to prove `FinalReport`/legacy handoff behavior
 - keep tests that prove Tyler-native grounding, summary writing, and handoff behavior
+- files:
+  - `tests/test_export.py`
+  - `tests/test_phase_boundaries.py`
+  - any adapter test that only proves `FinalReport` projection behavior
 - acceptance: remaining tests validate only the canonical path or explicitly retained adapters
+- verification:
+  - `./.venv/bin/python -m pytest tests/test_verify.py tests/test_export.py tests/test_phase_boundaries.py tests/test_prompt_templates.py -q`
 
 ### Phase 4: Rewrite active docs and commit map
 - update active docs to remove live ambiguity about `FinalReport`/legacy handoff
 - add this deletion wave to `TYLER_VARIANT_COMMIT_MAP.md`
+- files:
+  - `docs/CONTRACTS.md`
+  - `docs/PLAN.md`
+  - `docs/ROADMAP.md`
+  - `docs/ARCHITECTURE_ONE_PAGE.md`
+  - `docs/FEATURE_STATUS.md`
+  - `docs/TYLER_VARIANT_COMMIT_MAP.md`
+  - `docs/plans/CLAUDE.md`
 - acceptance: active docs describe one canonical output contract and archived variant references
+- verification:
+  - `rg -n "FinalReport|DownstreamHandoff" docs/CONTRACTS.md docs/PLAN.md docs/ROADMAP.md docs/ARCHITECTURE_ONE_PAGE.md docs/FEATURE_STATUS.md docs/plans/CLAUDE.md`
+  - returned hits, if any, must describe compatibility debt or historical references only
 
 ## Failure Modes
 
