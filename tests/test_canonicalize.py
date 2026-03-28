@@ -1,295 +1,29 @@
-"""Tests for claim extraction and claim canonicalization helpers."""
+"""Tests for Tyler Stage 4 canonicalization and semantic deduplication."""
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
-from grounded_research.canonicalize import canonicalize_tyler_v1, deduplicate_claims, extract_raw_claims
+from grounded_research.canonicalize import canonicalize_tyler_v1, deduplicate_claims
 from grounded_research.models import (
-    AnalystRun,
-    Counterargument,
     EvidenceBundle,
     EvidenceItem,
     RawClaim,
-    Recommendation,
     ResearchQuestion,
     SourceRecord,
-)
-from grounded_research.tyler_v1_adapters import (
-    build_tyler_alias_mapping,
-    current_analyst_run_to_tyler_analysis,
 )
 from grounded_research.tyler_v1_models import (
     AnalysisObject,
     ClaimExtractionResult,
+    Claim as TylerClaim,
+    ConfidenceLevel,
+    CounterArgument,
     DecompositionResult,
     ResearchPlan,
     StageSummary,
     SubQuestion as TylerSubQuestion,
+    Assumption as TylerAssumption,
 )
-
-
-@pytest.mark.asyncio
-async def test_extract_raw_claims_uses_claim_extraction_with_valid_evidence_whitelist(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Claim extraction should expose the valid evidence whitelist in the prompt and output."""
-    # mock-ok: LLM boundary is external; this test verifies local prompt wiring and post-processing.
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
-        assert task == "claim_extraction"
-        assert timeout == 240
-        assert "Analyst Claims" in messages[1]["content"]
-        assert "Valid Evidence IDs" in messages[1]["content"]
-        result = response_model(
-            claims=[
-                {
-                    "statement": "The Finnish Basic Income Experiment (2017-2018, N=2,000) found no employment gain.",
-                    "evidence_ids": ["E-1"],
-                    "confidence": "high",
-                    "reasoning": "Split from the analyst's broader summary claim.",
-                }
-            ]
-        )
-        return result, {}
-
-    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
-
-    bundle = EvidenceBundle(
-        question=ResearchQuestion(text="Did the Finnish basic income trial improve employment?"),
-        sources=[
-            SourceRecord(
-                id="S-1",
-                url="https://example.com/finnish-trial",
-                title="Finnish basic income report",
-                quality_tier="authoritative",
-            )
-        ],
-        evidence=[
-            EvidenceItem(
-                id="E-1",
-                source_id="S-1",
-                content="The trial found no statistically significant employment effect.",
-                content_type="text",
-            )
-        ],
-    )
-    analyst_runs = [
-        AnalystRun(
-            analyst_label="Alpha",
-            model="openrouter/openai/gpt-5-nano",
-            frame="verification_first",
-            claims=[
-                RawClaim(
-                    statement="Pilot programs show mixed labor-market effects.",
-                    evidence_ids=["E-1"],
-                    confidence="medium",
-                )
-            ],
-            recommendations=[Recommendation(statement="Do not assume employment gains from UBI pilots.")],
-            counterarguments=[Counterargument(target="recommendation", argument="The results may not generalize.", evidence_ids=["E-1"])],
-            summary="The Finnish trial did not improve employment.",
-        )
-    ]
-
-    raw_claims, claim_to_analyst = await extract_raw_claims(
-        analyst_runs,
-        bundle,
-        trace_id="test-trace",
-        max_budget=0.5,
-    )
-
-    assert len(raw_claims) == 1
-    assert raw_claims[0].id.startswith("RC-")
-    assert raw_claims[0].evidence_ids == ["E-1"]
-    assert claim_to_analyst[raw_claims[0].id] == "Alpha"
-
-
-@pytest.mark.asyncio
-async def test_extract_raw_claims_drops_claims_without_any_valid_evidence(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Claims that lose all evidence during cleanup must not enter the ledger."""
-    # mock-ok: verifies local post-processing for ungrounded claim extraction output.
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
-        assert task == "claim_extraction"
-        assert timeout == 240
-        result = response_model(
-            claims=[
-                {
-                    "statement": "Ungrounded synthesized claim about pilot design heterogeneity.",
-                    "evidence_ids": [],
-                    "confidence": "medium",
-                    "reasoning": "This should be dropped because it cites no valid evidence items.",
-                }
-            ]
-        )
-        return result, {}
-
-    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
-
-    bundle = EvidenceBundle(
-        question=ResearchQuestion(text="Do UBI pilots reduce workforce participation?"),
-        sources=[
-            SourceRecord(
-                id="S-1",
-                url="https://example.com/ubi",
-                title="UBI paper",
-                quality_tier="reliable",
-            )
-        ],
-        evidence=[
-            EvidenceItem(
-                id="E-1",
-                source_id="S-1",
-                content="A valid evidence item exists, but the extracted claim does not cite it.",
-                content_type="text",
-            )
-        ],
-    )
-    analyst_runs = [
-        AnalystRun(
-            analyst_label="Alpha",
-            model="openrouter/openai/gpt-5-nano",
-            frame="verification_first",
-            claims=[
-                RawClaim(
-                    statement="Some pilots vary substantially in design.",
-                    evidence_ids=["E-1"],
-                    confidence="medium",
-                )
-            ],
-            recommendations=[Recommendation(statement="Compare pilot designs before generalizing.")],
-            counterarguments=[Counterargument(target="recommendation", argument="Design variation may still hide common effects.", evidence_ids=["E-1"])],
-            summary="Pilot design varies substantially.",
-        )
-    ]
-
-    raw_claims, claim_to_analyst = await extract_raw_claims(
-        analyst_runs,
-        bundle,
-        trace_id="test-trace",
-        max_budget=0.5,
-    )
-
-    assert raw_claims == []
-    assert claim_to_analyst == {}
-
-
-@pytest.mark.asyncio
-async def test_extract_raw_claims_skips_failed_analysts(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Failed analyst runs should not trigger claim extraction calls."""
-    # mock-ok: verifies no external LLM call occurs when all analysts failed.
-    async def fake_acall_llm_structured(*args, **kwargs):  # pragma: no cover
-        raise AssertionError("Should not call LLM for failed analysts")
-
-    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
-
-    bundle = EvidenceBundle(
-        question=ResearchQuestion(text="Test question"),
-        sources=[],
-        evidence=[],
-    )
-    analyst_runs = [
-        AnalystRun(
-            analyst_label="Alpha",
-            model="openrouter/openai/gpt-5-nano",
-            frame="verification_first",
-            error="rate limit",
-        )
-    ]
-
-    raw_claims, claim_to_analyst = await extract_raw_claims(
-        analyst_runs,
-        bundle,
-        trace_id="test-trace",
-        max_budget=0.5,
-    )
-
-    assert raw_claims == []
-    assert claim_to_analyst == {}
-
-
-@pytest.mark.asyncio
-async def test_extract_raw_claims_respects_configured_concurrency(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Claim extraction fan-out should obey the configured concurrency cap."""
-    active_calls = 0
-    max_active_calls = 0
-
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
-        nonlocal active_calls, max_active_calls
-        assert task == "claim_extraction"
-        assert timeout == 240
-        active_calls += 1
-        max_active_calls = max(max_active_calls, active_calls)
-        await asyncio.sleep(0.01)
-        active_calls -= 1
-        return response_model(
-            claims=[
-                {
-                    "statement": f"Extracted claim for {trace_id}",
-                    "evidence_ids": ["E-1"],
-                    "confidence": "medium",
-                    "reasoning": "Concurrency test",
-                }
-            ]
-        ), {}
-
-    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
-    monkeypatch.setattr(
-        "grounded_research.canonicalize.get_phase_concurrency_config",
-        lambda: {"claim_extraction_max_concurrency": 1},
-    )
-
-    bundle = EvidenceBundle(
-        question=ResearchQuestion(text="Test question"),
-        sources=[
-            SourceRecord(
-                id="S-1",
-                url="https://example.com/source",
-                title="Source",
-                quality_tier="authoritative",
-            )
-        ],
-        evidence=[
-            EvidenceItem(
-                id="E-1",
-                source_id="S-1",
-                content="Evidence content",
-                content_type="text",
-            )
-        ],
-    )
-    analyst_runs = [
-        AnalystRun(
-            analyst_label=label,
-            model="openrouter/openai/gpt-5-nano",
-            frame="verification_first",
-            claims=[
-                RawClaim(
-                    statement=f"Claim from {label}",
-                    evidence_ids=["E-1"],
-                    confidence="medium",
-                )
-            ],
-            recommendations=[Recommendation(statement="Recommendation")],
-            counterarguments=[Counterargument(target="recommendation", argument="Counter", evidence_ids=["E-1"])],
-            summary=f"Summary {label}",
-        )
-        for label in ("Alpha", "Beta", "Gamma")
-    ]
-
-    raw_claims, claim_to_analyst = await extract_raw_claims(
-        analyst_runs,
-        bundle,
-        trace_id="test-trace",
-        max_budget=0.5,
-    )
-
-    assert len(raw_claims) == 3
-    assert len(claim_to_analyst) == 3
-    assert max_active_calls == 1
 
 
 @pytest.mark.asyncio
@@ -422,44 +156,6 @@ def _tyler_stage4_bundle() -> EvidenceBundle:
     )
 
 
-def _tyler_stage4_analyst_runs() -> list[AnalystRun]:
-    """Fixture analyst runs for Tyler Stage 4 runtime retry tests."""
-    return [
-        AnalystRun(
-            analyst_label="Alpha",
-            model="openrouter/google/gemini-2.5-flash",
-            frame="verification_first",
-            claims=[
-                RawClaim(
-                    id="RC-a1",
-                    statement="Redis achieved lower p99 latency than PostgreSQL for session reads.",
-                    evidence_ids=["E-1"],
-                    confidence="high",
-                )
-            ],
-            recommendations=[Recommendation(statement="Prefer Redis when latency is primary.")],
-            counterarguments=[Counterargument(target="redis", argument="Durability may matter more than latency.", evidence_ids=["E-2"])],
-            summary="Redis is lower-latency.",
-        ),
-        AnalystRun(
-            analyst_label="Beta",
-            model="openrouter/openai/gpt-5-nano",
-            frame="structured_decomposition",
-            claims=[
-                RawClaim(
-                    id="RC-b1",
-                    statement="PostgreSQL preserved sessions across crash recovery via WAL replay.",
-                    evidence_ids=["E-2"],
-                    confidence="high",
-                )
-            ],
-            recommendations=[Recommendation(statement="Prefer PostgreSQL when durability dominates.")],
-            counterarguments=[Counterargument(target="postgres", argument="Latency is materially higher than Redis.", evidence_ids=["E-1"])],
-            summary="PostgreSQL is more durable.",
-        ),
-    ]
-
-
 def _tyler_stage4_stage1_result() -> DecompositionResult:
     """Fixture Tyler Stage 1 artifact for Stage 4 runtime tests."""
     return DecompositionResult(
@@ -501,20 +197,78 @@ def _tyler_stage4_stage1_result() -> DecompositionResult:
 
 
 def _tyler_stage4_analysis_objects() -> tuple[list[AnalysisObject], dict[str, str]]:
-    """Build canonical Tyler Stage 3 fixtures from compatibility analyst runs."""
-    bundle = _tyler_stage4_bundle()
-    runs = _tyler_stage4_analyst_runs()
-    alias_mapping = build_tyler_alias_mapping(runs)
-    analyses = [
-        current_analyst_run_to_tyler_analysis(
-            run=run,
-            bundle=bundle,
-            model_alias=alias_mapping[run.analyst_label],
-            reasoning_frame=run.frame,
-        )
-        for run in runs
-    ]
-    return analyses, alias_mapping
+    """Build canonical Tyler Stage 3 fixtures without compatibility projections."""
+    return [
+        AnalysisObject(
+            model_alias="A",
+            reasoning_frame="verification_first",
+            recommendation="Prefer Redis when latency is primary.",
+            claims=[
+                TylerClaim(
+                    id="C-1",
+                    statement="Redis achieved lower p99 latency than PostgreSQL for session reads.",
+                    evidence_label="vendor_documented",
+                    source_references=["S-1"],
+                    confidence=ConfidenceLevel.HIGH,
+                )
+            ],
+            assumptions=[],
+            evidence_used=["S-1"],
+            counter_argument=CounterArgument(
+                argument="Durability may matter more than latency.",
+                strongest_evidence_against="PostgreSQL preserved sessions via WAL replay.",
+                counter_confidence=ConfidenceLevel.MEDIUM,
+            ),
+            falsification_conditions=["Durability requirements outweigh latency benefits."],
+            reasoning="Redis is lower-latency.",
+            stage_summary=StageSummary(
+                stage_name="Stage 3",
+                goal="goal",
+                key_findings=["k1", "k2", "k3"],
+                decisions_made=["d1"],
+                outcome="outcome",
+                reasoning="reasoning",
+            ),
+        ),
+        AnalysisObject(
+            model_alias="B",
+            reasoning_frame="structured_decomposition",
+            recommendation="Prefer PostgreSQL when durability dominates.",
+            claims=[
+                TylerClaim(
+                    id="C-1",
+                    statement="PostgreSQL preserved sessions across crash recovery via WAL replay.",
+                    evidence_label="vendor_documented",
+                    source_references=["S-2"],
+                    confidence=ConfidenceLevel.HIGH,
+                )
+            ],
+            assumptions=[
+                TylerAssumption(
+                    id="A-1",
+                    statement="Crash recovery matters for this workload.",
+                    depends_on_claims=["C-1"],
+                    if_wrong_impact="The durability recommendation weakens.",
+                )
+            ],
+            evidence_used=["S-2"],
+            counter_argument=CounterArgument(
+                argument="Latency is materially higher than Redis.",
+                strongest_evidence_against="Redis had lower p99 latency.",
+                counter_confidence=ConfidenceLevel.MEDIUM,
+            ),
+            falsification_conditions=["Latency dominates crash-recovery needs."],
+            reasoning="PostgreSQL is more durable.",
+            stage_summary=StageSummary(
+                stage_name="Stage 3",
+                goal="goal",
+                key_findings=["k1", "k2", "k3"],
+                decisions_made=["d1"],
+                outcome="outcome",
+                reasoning="reasoning",
+            ),
+        ),
+    ], {"Alpha": "A", "Beta": "B"}
 
 
 @pytest.mark.asyncio
@@ -591,11 +345,13 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
         ), {}
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    analyses, alias_mapping = _tyler_stage4_analysis_objects()
 
     result = await canonicalize_tyler_v1(
         _tyler_stage4_bundle(),
-        analyst_runs=_tyler_stage4_analyst_runs(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
+        tyler_stage_3_results=analyses,
+        tyler_stage_3_alias_mapping=alias_mapping,
         trace_id="test-trace",
         max_budget=0.5,
     )
@@ -639,12 +395,14 @@ async def test_canonicalize_tyler_v1_fails_loud_on_persistent_empty_stage4(
         ), {}
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    analyses, alias_mapping = _tyler_stage4_analysis_objects()
 
     with pytest.raises(ValueError, match="empty claim ledger and assumption set after retry"):
         await canonicalize_tyler_v1(
             _tyler_stage4_bundle(),
-            analyst_runs=_tyler_stage4_analyst_runs(),
             tyler_stage_1_result=_tyler_stage4_stage1_result(),
+            tyler_stage_3_results=analyses,
+            tyler_stage_3_alias_mapping=alias_mapping,
             trace_id="test-trace",
             max_budget=0.5,
         )
@@ -701,11 +459,13 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
         ), {}
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    analyses, alias_mapping = _tyler_stage4_analysis_objects()
 
     result = await canonicalize_tyler_v1(
         _tyler_stage4_bundle(),
-        analyst_runs=_tyler_stage4_analyst_runs(),
         tyler_stage_1_result=_tyler_stage4_stage1_result(),
+        tyler_stage_3_results=analyses,
+        tyler_stage_3_alias_mapping=alias_mapping,
         trace_id="test-trace",
         max_budget=0.5,
     )

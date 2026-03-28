@@ -1,7 +1,8 @@
-"""Claim canonicalization: extraction, deduplication, ledger assembly, dispute detection.
+"""Claim canonicalization for the Tyler-native adjudication pipeline.
 
-Phases 3a through 3c of the adjudication pipeline. Takes analyst runs and
-produces the canonical ClaimLedger with disputes.
+Phases 3a through 3c consume Tyler Stage 3 analysis objects and produce the
+canonical Tyler Stage 4 artifact. Legacy current-shape claim-extraction paths
+are intentionally excluded from the live runtime.
 """
 
 from __future__ import annotations
@@ -16,11 +17,9 @@ from grounded_research.config import (
     get_dedup_config,
     get_fallback_models,
     get_model,
-    get_phase_concurrency_config,
     get_tyler_literal_parity_config,
 )
 from grounded_research.models import (
-    AnalystRun,
     EvidenceBundle,
     ArbitrationResult,
     Claim,
@@ -29,11 +28,7 @@ from grounded_research.models import (
     RawClaim,
     DISPUTE_ROUTING,
 )
-from grounded_research.tyler_v1_adapters import (
-    build_tyler_alias_mapping,
-    current_analyst_run_to_tyler_analysis,
-    normalize_tyler_claim_extraction_result,
-)
+from grounded_research.tyler_v1_adapters import normalize_tyler_claim_extraction_result
 from grounded_research.tyler_v1_models import (
     ClaimExtractionResult as TylerClaimExtractionResult,
     DecompositionResult as TylerDecompositionResult,
@@ -44,14 +39,8 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 # ---------------------------------------------------------------------------
-# Tyler Stage 4 migration path
+# Tyler Stage 4 runtime path
 # ---------------------------------------------------------------------------
-
-def _current_frame_to_tyler(frame: str) -> str:
-    """Map the shipped analyst frame names onto Tyler's Stage 3 contract."""
-    if frame in {"step_back_abstraction", "structured_decomposition", "verification_first"}:
-        return frame
-    return "verification_first"
 
 
 def _tyler_stage4_assertion_count(stage_3_results: list["AnalysisObject"]) -> int:
@@ -95,17 +84,14 @@ async def _get_tyler_stage1_result(
 async def canonicalize_tyler_v1(
     bundle: EvidenceBundle,
     *,
-    analyst_runs: list[AnalystRun] | None = None,
     tyler_stage_1_result: TylerDecompositionResult | None = None,
-    tyler_stage_3_results: list["AnalysisObject"] | None = None,
-    tyler_stage_3_alias_mapping: dict[str, str] | None = None,
+    tyler_stage_3_results: list["AnalysisObject"],
+    tyler_stage_3_alias_mapping: dict[str, str],
     trace_id: str,
     max_budget: float = 1.0,
 ) -> TylerClaimExtractionResult:
     """Run Tyler's literal Stage 4 contract and return only the canonical artifact."""
     from llm_client import acall_llm_structured, render_prompt
-
-    successful_runs = [run for run in (analyst_runs or []) if run.succeeded]
 
     original_query = bundle.question.text if bundle.question else ""
     tyler_stage1 = tyler_stage_1_result or await _get_tyler_stage1_result(
@@ -113,30 +99,10 @@ async def canonicalize_tyler_v1(
         trace_id=f"{trace_id}/stage1_adapter",
         max_budget=max_budget * 0.15,
     )
-    if tyler_stage_3_results is None:
-        if len(successful_runs) < 2:
-            raise ValueError(
-                "Tyler Stage 4 requires canonical Tyler Stage 3 analysis objects in the live path. "
-                "Compatibility-mode current AnalystRun inputs must contain at least 2 successful runs."
-            )
-        alias_mapping = build_tyler_alias_mapping(successful_runs)
-        tyler_stage3_results = [
-            current_analyst_run_to_tyler_analysis(
-                run=run,
-                bundle=bundle,
-                model_alias=alias_mapping[run.analyst_label],
-                reasoning_frame=_current_frame_to_tyler(run.frame),
-            )
-            for run in successful_runs
-        ]
-    else:
-        tyler_stage3_results = list(tyler_stage_3_results)
-        if len(tyler_stage3_results) < 2:
-            raise ValueError("Tyler Stage 4 requires at least 2 Tyler Stage 3 analysis objects.")
-        if tyler_stage_3_alias_mapping is not None:
-            alias_mapping = dict(tyler_stage_3_alias_mapping)
-        else:
-            alias_mapping = {run.analyst_label: analysis.model_alias for run, analysis in zip(successful_runs, tyler_stage3_results)}
+    tyler_stage3_results = list(tyler_stage_3_results)
+    if len(tyler_stage3_results) < 2:
+        raise ValueError("Tyler Stage 4 requires at least 2 Tyler Stage 3 analysis objects.")
+    alias_mapping = dict(tyler_stage_3_alias_mapping)
     stage4_input_assertions = _tyler_stage4_assertion_count(tyler_stage3_results)
 
     messages = render_prompt(
@@ -222,178 +188,6 @@ async def canonicalize_tyler_v1(
                 f"after retry despite {stage4_input_assertions} upstream assertions."
             )
     return normalized
-
-
-# ---------------------------------------------------------------------------
-# Legacy Phase 3a: Claim extraction
-# ---------------------------------------------------------------------------
-
-async def extract_raw_claims(
-    analyst_runs: list[AnalystRun],
-    bundle: EvidenceBundle,
-    trace_id: str,
-    max_budget: float = 1.0,
-) -> tuple[list[RawClaim], dict[str, str]]:
-    """Extract normalized raw claims from analyst outputs with provenance tracking.
-
-    This is a dedicated claim-extraction stage rather than simple copy-through.
-    Each successful analyst run is processed independently so compound or vague
-    claims can be split and normalized into self-contained ledger-ready claims.
-
-    Returns (flat list of all RawClaims, mapping of claim_id → analyst_label).
-    """
-    from llm_client import acall_llm_structured, render_prompt
-    from pydantic import BaseModel, Field
-    from typing import Literal
-
-    import logging
-
-    logger = logging.getLogger(__name__)
-    valid_evidence_ids = {e.id for e in bundle.evidence}
-    evidence_by_id = {e.id: e for e in bundle.evidence}
-    source_by_id = {s.id: s for s in bundle.sources}
-
-    all_claims: list[RawClaim] = []
-    claim_to_analyst: dict[str, str] = {}
-
-    successful_runs = [run for run in analyst_runs if run.succeeded]
-    if not successful_runs:
-        return all_claims, claim_to_analyst
-
-    phase_concurrency = get_phase_concurrency_config()
-    claim_extraction_max_concurrency = max(
-        1,
-        int(phase_concurrency.get("claim_extraction_max_concurrency", 1)),
-    )
-    extraction_semaphore = asyncio.Semaphore(claim_extraction_max_concurrency)
-
-    async def _extract_for_run(run: AnalystRun) -> tuple[AnalystRun, BaseModel]:
-        async with extraction_semaphore:
-            cited_evidence_ids = {
-                eid
-                for claim in run.claims
-                for eid in claim.evidence_ids
-                if eid in valid_evidence_ids
-            }
-            cited_evidence_ids.update(
-                eid
-                for counterargument in run.counterarguments
-                for eid in counterargument.evidence_ids
-                if eid in valid_evidence_ids
-            )
-
-            if not cited_evidence_ids:
-                logger.warning(
-                    "Claim extraction %s: no valid cited evidence IDs available; skipping extraction",
-                    run.analyst_label,
-                )
-
-                class EmptyClaimExtractionResult(BaseModel):
-                    """No-op extraction result when there is no valid candidate evidence."""
-
-                    claims: list[RawClaim] = Field(default_factory=list)
-
-                return run, EmptyClaimExtractionResult()
-
-            relevant_evidence = [evidence_by_id[eid].model_dump() for eid in cited_evidence_ids]
-            relevant_sources = [
-                source_by_id[e.source_id].model_dump(mode="json")
-                for e in (evidence_by_id[eid] for eid in cited_evidence_ids)
-                if e.source_id in source_by_id
-            ]
-            ordered_candidate_ids = sorted(cited_evidence_ids)
-            AllowedEvidenceId = Literal.__getitem__(tuple(ordered_candidate_ids))
-
-            class ExtractedRawClaim(BaseModel):
-                """LLM-facing atomic claim without system-assigned IDs."""
-
-                statement: str = Field(
-                    description=(
-                        "A self-contained, falsifiable claim rewritten from the analyst's "
-                        "input claims. Preserve concrete entities, dates, numbers, and "
-                        "benchmarks when available."
-                    ),
-                )
-                evidence_ids: list[AllowedEvidenceId] = Field(
-                    default_factory=list,
-                    description=(
-                        "One or more supporting evidence IDs chosen only from the "
-                        f"candidate set: {ordered_candidate_ids}. Do not emit source IDs "
-                        "or invented evidence IDs."
-                    ),
-                )
-                confidence: str = Field(description="high, medium, or low")
-                reasoning: str = Field(
-                    default="",
-                    description="Why this atomic claim was extracted and how it maps back to the analyst's input.",
-                )
-
-            class ClaimExtractionResult(BaseModel):
-                """LLM output for one analyst's claim extraction pass."""
-
-                claims: list[ExtractedRawClaim] = Field(
-                    default_factory=list,
-                    description=(
-                        "Atomic normalized claims extracted from the analyst's structured "
-                        "output. Omit any claim that cannot be grounded in the candidate "
-                        "evidence IDs."
-                    ),
-                )
-
-            messages = render_prompt(
-                str(_PROJECT_ROOT / "prompts" / "claimify.yaml"),
-                analyst_label=run.analyst_label,
-                analyst_summary=run.summary,
-                analyst_claims=[claim.model_dump() for claim in run.claims],
-                assumptions=[assumption.model_dump() for assumption in run.assumptions],
-                recommendations=[recommendation.model_dump() for recommendation in run.recommendations],
-                counterarguments=[counterargument.model_dump() for counterargument in run.counterarguments],
-                evidence=relevant_evidence,
-                source_records=relevant_sources,
-                valid_evidence_ids=ordered_candidate_ids,
-            )
-
-            result, _meta = await acall_llm_structured(
-                get_model("claim_extraction"),
-                messages,
-                response_model=ClaimExtractionResult,
-                task="claim_extraction",
-                trace_id=f"{trace_id}/claim_extract/{run.analyst_label}",
-                timeout=get_request_timeout("claim_extraction"),
-                max_budget=max_budget / len(successful_runs),
-                fallback_models=get_fallback_models("claim_extraction"),
-            )
-            return run, result
-
-    extraction_results = await asyncio.gather(*[_extract_for_run(run) for run in successful_runs])
-
-    for run, extraction in extraction_results:
-        for extracted in extraction.claims:
-            invalid = [eid for eid in extracted.evidence_ids if eid not in valid_evidence_ids]
-            if invalid:
-                logger.warning(
-                    "Claim extraction %s: stripping hallucinated evidence IDs %s",
-                    run.analyst_label,
-                    invalid,
-                )
-            cleaned_ids = [eid for eid in extracted.evidence_ids if eid in valid_evidence_ids]
-            if not cleaned_ids:
-                logger.warning(
-                    "Claim extraction %s: dropping ungrounded claim after evidence cleanup: %s",
-                    run.analyst_label,
-                    extracted.statement[:160],
-                )
-                continue
-            claim = RawClaim(
-                statement=extracted.statement,
-                evidence_ids=cleaned_ids,
-                confidence=extracted.confidence if extracted.confidence in {"high", "medium", "low"} else "medium",
-                reasoning=extracted.reasoning,
-            )
-            all_claims.append(claim)
-            claim_to_analyst[claim.id] = run.analyst_label
-
-    return all_claims, claim_to_analyst
 
 
 # ---------------------------------------------------------------------------

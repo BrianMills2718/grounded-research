@@ -14,34 +14,22 @@ import logging
 import re
 
 from grounded_research.models import (
-    AnalystRun,
     ArbitrationResult as RuntimeArbitrationResult,
-    Counterargument as RuntimeCounterargument,
-    Claim as RuntimeClaim,
-    ClaimLedger,
     ClaimUpdate as RuntimeClaimUpdate,
-    Dispute as RuntimeDispute,
     EvidenceBundle,
     QuestionDecomposition,
-    RawClaim,
-    Recommendation,
-    Assumption as RuntimeAssumption,
     SubQuestion as CurrentSubQuestion,
-    _make_id,
 )
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
     AnalysisObject,
     ArbitrationAssessment,
-    Assumption,
     AssumptionSetEntry,
     ClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus,
     ClaimStatusUpdate,
-    ConfidenceLevel,
     ConfidenceAssessment,
-    CounterArgument,
     DecompositionResult,
     DisagreementMapEntry,
     DisputeQueueEntry,
@@ -52,7 +40,6 @@ from grounded_research.tyler_v1_models import (
     EvidencePackage,
     ExtractionStatistics,
     Finding,
-    Claim as TylerClaim,
     KeyAssumption,
     ModelPosition,
     PreservedAlternative,
@@ -314,118 +301,6 @@ def current_bundle_to_tyler_evidence_package(
             }
         ),
     )
-
-
-def _current_confidence_to_tyler(confidence: str) -> ConfidenceLevel:
-    """Map current confidence strings onto Tyler's enum."""
-    return {
-        "high": ConfidenceLevel.HIGH,
-        "medium": ConfidenceLevel.MEDIUM,
-        "low": ConfidenceLevel.LOW,
-    }.get(confidence, ConfidenceLevel.MEDIUM)
-
-
-def current_analyst_run_to_tyler_analysis(
-    run: AnalystRun,
-    bundle: EvidenceBundle,
-    model_alias: str,
-    reasoning_frame: str,
-) -> AnalysisObject:
-    """Convert the current analyst runtime output into Tyler's Stage 3 artifact."""
-    evidence_lookup = {item.id: item for item in bundle.evidence}
-
-    def evidence_ids_to_source_ids(evidence_ids: list[str]) -> list[str]:
-        seen: list[str] = []
-        for evidence_id in evidence_ids:
-            source_id = evidence_lookup.get(evidence_id).source_id if evidence_id in evidence_lookup else None
-            if source_id and source_id not in seen:
-                seen.append(source_id)
-        return seen
-
-    def evidence_ids_to_label(evidence_ids: list[str]) -> EvidenceLabel:
-        source_ids = evidence_ids_to_source_ids(evidence_ids)
-        if not source_ids:
-            return EvidenceLabel.SPECULATIVE_INFERENCE
-        labels = [
-            _current_source_to_evidence_label(source.source_type)
-            for source in bundle.sources
-            if source.id in source_ids
-        ]
-        if EvidenceLabel.VENDOR_DOCUMENTED in labels:
-            return EvidenceLabel.VENDOR_DOCUMENTED
-        if EvidenceLabel.EMPIRICALLY_OBSERVED in labels:
-            return EvidenceLabel.EMPIRICALLY_OBSERVED
-        if EvidenceLabel.MODEL_SELF_CHARACTERIZATION in labels:
-            return EvidenceLabel.MODEL_SELF_CHARACTERIZATION
-        return EvidenceLabel.SPECULATIVE_INFERENCE
-
-    counter = run.counterarguments[0] if run.counterarguments else None
-    strongest_evidence_against = ""
-    if counter:
-        for evidence_id in counter.evidence_ids:
-            item = evidence_lookup.get(evidence_id)
-            if item is not None:
-                strongest_evidence_against = item.content
-                break
-
-    return AnalysisObject(
-        model_alias=model_alias,
-        reasoning_frame=reasoning_frame,
-        recommendation=run.recommendations[0].statement if run.recommendations else run.summary,
-        claims=[
-            TylerClaim(
-                id=f"C-{idx}",
-                statement=claim.statement,
-                evidence_label=evidence_ids_to_label(claim.evidence_ids),
-                source_references=evidence_ids_to_source_ids(claim.evidence_ids),
-                confidence=_current_confidence_to_tyler(claim.confidence),
-            )
-            for idx, claim in enumerate(run.claims, start=1)
-        ],
-        assumptions=[
-            Assumption(
-                id=f"A-{idx}",
-                statement=assumption.statement,
-                depends_on_claims=run.recommendations[0].supporting_claim_ids if run.recommendations else [],
-                if_wrong_impact=assumption.basis or "Would weaken the recommendation if false.",
-            )
-            for idx, assumption in enumerate(run.assumptions, start=1)
-        ],
-        evidence_used=[
-            source_id
-            for source_id in dict.fromkeys(
-                source_id
-                for claim in run.claims
-                for source_id in evidence_ids_to_source_ids(claim.evidence_ids)
-            )
-        ],
-        counter_argument=CounterArgument(
-            argument=counter.argument if counter else "No counterargument returned.",
-            strongest_evidence_against=strongest_evidence_against or "No specific opposing evidence was cited.",
-            counter_confidence=_current_confidence_to_tyler(run.claims[0].confidence if run.claims else "medium"),
-        ),
-        falsification_conditions=[
-            counter.argument if counter else "Material contradictory evidence would change the recommendation."
-        ],
-        reasoning=run.summary,
-        stage_summary={
-            "stage_name": "Stage 3: Independent Candidate Generation",
-            "goal": "Convert one analyst's reasoning into Tyler's Stage 3 analysis artifact.",
-            "key_findings": [
-                f"{len(run.claims)} claims adapted from current analyst output",
-                f"{len(run.assumptions)} assumptions adapted",
-                "Counterargument and source lineage preserved through adapter mapping",
-            ],
-            "decisions_made": [
-                "Mapped evidence IDs to Tyler source references",
-                "Approximated evidence labels from current source metadata",
-            ],
-            "outcome": f"Tyler AnalysisObject for alias {model_alias}",
-            "reasoning": "Adapter conversion from current AnalystRun into Tyler's Stage 3 contract.",
-        },
-    )
-
-
 def normalize_tyler_analysis_object(
     result: AnalysisObject,
     *,
@@ -491,85 +366,6 @@ def normalize_tyler_analysis_object(
             "evidence_used": evidence_used,
         }
     )
-
-
-def tyler_analysis_to_current_analyst_run(
-    analysis: AnalysisObject,
-    bundle: EvidenceBundle,
-    *,
-    analyst_label: str,
-    model_name: str,
-) -> AnalystRun:
-    """Project Tyler Stage 3 output back into the shipped AnalystRun surface."""
-    source_to_evidence_ids: dict[str, list[str]] = defaultdict(list)
-    for item in bundle.evidence:
-        source_to_evidence_ids[item.source_id].append(item.id)
-
-    raw_claims: list[RawClaim] = []
-    for idx, claim in enumerate(analysis.claims, start=1):
-        evidence_ids = _ordered_unique(
-            evidence_id
-            for source_id in claim.source_references
-            for evidence_id in source_to_evidence_ids.get(source_id, [])[:2]
-        )
-        raw_claims.append(
-            RawClaim(
-                id=f"RC-{idx}",
-                statement=claim.statement,
-                evidence_ids=evidence_ids,
-                confidence=str(claim.confidence.value).lower(),
-                reasoning=analysis.reasoning,
-            )
-        )
-
-    supporting_claim_ids = [claim.id for claim in raw_claims]
-    supporting_evidence_ids = _ordered_unique(
-        evidence_id
-        for claim in raw_claims
-        for evidence_id in claim.evidence_ids
-    )
-
-    return AnalystRun(
-        analyst_label=analyst_label,
-        model=model_name,
-        frame=analysis.reasoning_frame,
-        claims=raw_claims,
-        assumptions=[
-            RuntimeAssumption(
-                id=assumption.id,
-                statement=assumption.statement,
-                basis=assumption.if_wrong_impact,
-            )
-            for assumption in analysis.assumptions
-        ],
-        recommendations=[
-            Recommendation(
-                statement=analysis.recommendation,
-                supporting_claim_ids=supporting_claim_ids,
-                conditions="; ".join(analysis.falsification_conditions),
-            )
-        ],
-        counterarguments=[
-            RuntimeCounterargument(
-                target=analysis.recommendation,
-                argument=analysis.counter_argument.argument,
-                evidence_ids=supporting_evidence_ids[:3],
-            )
-        ],
-        summary=analysis.reasoning,
-    )
-
-
-def build_tyler_alias_mapping(analyst_runs: list[AnalystRun]) -> dict[str, str]:
-    """Assign deterministic Tyler aliases A/B/C to successful analyst runs."""
-    aliases = ["A", "B", "C"]
-    succeeded = [run for run in analyst_runs if run.succeeded]
-    mapping: dict[str, str] = {}
-    for idx, run in enumerate(succeeded):
-        mapping[run.analyst_label] = aliases[idx] if idx < len(aliases) else f"A{idx + 1}"
-    return mapping
-
-
 def _ordered_unique(items: list[str]) -> list[str]:
     seen: set[str] = set()
     ordered: list[str] = []
@@ -578,12 +374,6 @@ def _ordered_unique(items: list[str]) -> list[str]:
             ordered.append(item)
             seen.add(item)
     return ordered
-
-
-def _normalize_statement_key(text: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", text.lower())).strip()
-
-
 def _compute_resolution_routing(dispute_type: DisputeType, decision_critical: bool) -> str:
     """Match Tyler's deterministic routing table from Stage 4."""
     if not decision_critical:
@@ -814,127 +604,6 @@ def normalize_tyler_claim_extraction_result(
             "statistics": stats,
         }
     )
-
-
-def tyler_stage4_to_current_ledger(
-    result: ClaimExtractionResult,
-    stage_3_results: list[AnalysisObject],
-    bundle: EvidenceBundle,
-    alias_mapping: dict[str, str],
-) -> ClaimLedger:
-    """Project Tyler Stage 4 output back into the shipped ClaimLedger contract."""
-    reverse_alias_mapping = {alias: label for label, alias in alias_mapping.items()}
-    source_to_evidence_ids: dict[str, list[str]] = defaultdict(list)
-    for item in bundle.evidence:
-        source_to_evidence_ids[item.source_id].append(item.id)
-
-    raw_claim_records: list[tuple[str, str, str, set[str], set[str]]] = []
-    for analysis in stage_3_results:
-        alias = analysis.model_alias
-        for claim in analysis.claims:
-            source_refs = set(claim.source_references)
-            tokens = set(_normalize_statement_key(claim.statement).split())
-            raw_claim_records.append(
-                (f"{alias}:{claim.id}", alias, claim.statement, source_refs, tokens)
-            )
-
-    def _match_raw_claim_ids(entry: ClaimLedgerEntry) -> list[str]:
-        entry_tokens = set(_normalize_statement_key(entry.statement).split())
-        entry_source_refs = set(entry.source_references)
-        candidates: list[tuple[int, str]] = []
-        for raw_id, alias, statement, source_refs, tokens in raw_claim_records:
-            if alias not in entry.source_models:
-                continue
-            score = 0
-            if entry_source_refs & source_refs:
-                score += 4
-            score += len(entry_tokens & tokens)
-            if score > 0:
-                candidates.append((score, raw_id))
-        if not candidates:
-            fallback = [
-                raw_id
-                for raw_id, alias, _statement, _source_refs, _tokens in raw_claim_records
-                if alias in entry.source_models
-            ]
-            return _ordered_unique(fallback[:1])
-        candidates.sort(reverse=True)
-        return _ordered_unique([raw_id for _score, raw_id in candidates[:4]])
-
-    current_claims: list[RuntimeClaim] = []
-    for entry in result.claim_ledger:
-        source_raw_claim_ids = _match_raw_claim_ids(entry)
-        evidence_ids = _ordered_unique(
-            [
-                evidence_id
-                for source_id in entry.source_references
-                for evidence_id in source_to_evidence_ids.get(source_id, [])
-            ]
-        )
-        current_status = {
-            ClaimStatus.SUPPORTED: "supported",
-            ClaimStatus.VERIFIED: "supported",
-            ClaimStatus.REFUTED: "refuted",
-        }.get(entry.status, "initial")
-        current_claims.append(
-            RuntimeClaim(
-                id=entry.id,
-                statement=entry.statement,
-                status=current_status,
-                source_raw_claim_ids=source_raw_claim_ids or [f"derived:{entry.id}"],
-                analyst_sources=[
-                    reverse_alias_mapping[alias]
-                    for alias in entry.source_models
-                    if alias in reverse_alias_mapping
-                ],
-                evidence_ids=evidence_ids,
-                confidence="medium",
-                status_reason=f"Projected from Tyler Stage 4 status {entry.status.value}.",
-            )
-        )
-
-    current_disputes: list[RuntimeDispute] = []
-    for dispute in result.dispute_queue:
-        if len(dispute.claims_involved) < 2:
-            _LOG.warning(
-                "Skipping Tyler Stage 4 dispute %s in current-ledger projection because it references fewer than 2 claims: %s",
-                dispute.id,
-                dispute.claims_involved,
-            )
-            continue
-        current_type = {
-            DisputeType.EMPIRICAL: "factual_conflict",
-            DisputeType.INTERPRETIVE: "interpretive_conflict",
-            DisputeType.PREFERENCE_WEIGHTED: "preference_conflict",
-            DisputeType.SPEC_AMBIGUITY: "ambiguity",
-            DisputeType.OTHER: "ambiguity",
-        }[dispute.type]
-        current_route = {
-            "stage_5_evidence": "verify",
-            "stage_5_arbitration": "arbitrate",
-            "stage_6_user_input": "surface",
-            "logged_only": "surface",
-        }[dispute.resolution_routing]
-        current_disputes.append(
-            RuntimeDispute(
-                id=dispute.id,
-                dispute_type=current_type,
-                route=current_route,
-                claim_ids=dispute.claims_involved,
-                description=dispute.description,
-                severity="decision_critical" if dispute.decision_critical else "notable",
-                resolved=dispute.status is not DisputeStatus.UNRESOLVED,
-                resolution_summary=dispute.decision_critical_rationale,
-            )
-        )
-
-    return ClaimLedger(
-        claims=current_claims,
-        disputes=current_disputes,
-        arbitration_results=[],
-    )
-
-
 def tyler_assessment_to_current_arbitration(
     assessment: ArbitrationAssessment,
     additional_sources: list[AdditionalSource],
