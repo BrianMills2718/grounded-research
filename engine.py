@@ -192,7 +192,7 @@ async def run_pipeline(
         state.current_phase = "canonicalize"
         print("\n[Phase 3] Running Tyler Stage 4 claim extraction...")
 
-        tyler_stage_4_result, ledger = await canonicalize_tyler_v1(
+        tyler_stage_4_result, _compat_ledger = await canonicalize_tyler_v1(
             analyst_runs,
             bundle,
             decomposition=decomposition,
@@ -225,19 +225,19 @@ async def run_pipeline(
 
         # --- User steering (preference/ambiguity disputes) ---
         preference_disputes = [
-            d for d in ledger.disputes
-            if d.dispute_type in ("preference_conflict", "ambiguity") and not d.resolved
+            d
+            for d in tyler_stage_4_result.dispute_queue
+            if d.type.value in {"preference_weighted", "spec_ambiguity"}
+            and d.status.value == "unresolved"
         ]
         if preference_disputes and sys.stdin.isatty():
             print(f"\n[Steering] {len(preference_disputes)} preference/ambiguity disputes found.")
             for d in preference_disputes[:2]:  # max 2 questions
-                print(f"\n  {d.id} [{d.dispute_type}]: {d.description[:120]}...")
-                print(f"  Claims: {d.claim_ids}")
+                print(f"\n  {d.id} [{d.type.value}]: {d.description[:120]}...")
+                print(f"  Claims: {d.claims_involved}")
                 try:
                     answer = input("  Your guidance (or Enter to skip): ").strip()
                     if answer:
-                        d.resolution_summary = f"User guidance: {answer}"
-                        d.resolved = True
                         state.user_guidance_notes.append(f"{d.id}: {answer}")
                         print(f"  → Recorded.")
                 except (EOFError, KeyboardInterrupt):
@@ -249,9 +249,8 @@ async def run_pipeline(
         print("\n[Phase 4] Verifying decision-critical disputes...")
 
         max_disputes = int(get_budget("verification_max_disputes"))
-        tyler_stage_5_result, ledger, adjudication_warnings, phase4_llm_calls = await verify_disputes_tyler_v1(
+        tyler_stage_5_result, adjudication_warnings, phase4_llm_calls = await verify_disputes_tyler_v1(
             stage_4_result=state.tyler_stage_4_result,
-            prior_ledger=ledger,
             bundle=bundle,
             decomposition=decomposition,
             stage_1_result=state.tyler_stage_1_result,
@@ -261,7 +260,6 @@ async def run_pipeline(
             max_budget=total_budget * 0.3,
         )
         state.tyler_stage_5_result = tyler_stage_5_result
-        arb_results = ledger.arbitration_results
         for warning in adjudication_warnings:
             state.add_warning(
                 "adjudicate",
@@ -276,10 +274,13 @@ async def run_pipeline(
             completed_at=datetime.now(timezone.utc),
             succeeded=True,
             llm_calls=phase4_llm_calls,
-            output_summary=f"{len(arb_results)} disputes arbitrated, {len(adjudication_warnings)} adjudication warnings",
+            output_summary=(
+                f"{len(tyler_stage_5_result.disputes_investigated)} disputes arbitrated, "
+                f"{len(adjudication_warnings)} adjudication warnings"
+            ),
         ))
-        for ar in arb_results:
-            print(f"  {ar.dispute_id} → {ar.verdict}")
+        for ar in tyler_stage_5_result.disputes_investigated:
+            print(f"  {ar.dispute_id} → {ar.resolution.value}")
 
         # --- Phase 5: Export ---
         phase_start = datetime.now(timezone.utc)

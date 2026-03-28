@@ -353,7 +353,7 @@ async def arbitrate_dispute(
 
 
 async def _collect_fresh_evidence_for_dispute(
-    dispute: Dispute,
+    dispute_id: str,
     queries: list[str],
     bundle: EvidenceBundle,
     trace_id: str,
@@ -379,8 +379,8 @@ async def _collect_fresh_evidence_for_dispute(
     if not queries:
         warnings.append(VerificationWarning(
             code="verification_no_queries",
-            message=f"No verification queries available for dispute {dispute.id}.",
-            context={"dispute_id": dispute.id},
+            message=f"No verification queries available for dispute {dispute_id}.",
+            context={"dispute_id": dispute_id},
         ))
         return disputes_new_sources, disputes_new_evidence, warnings
 
@@ -393,7 +393,7 @@ async def _collect_fresh_evidence_for_dispute(
                 query,
                 count=max_results_per_query,
                 freshness=freshness,
-                trace_id=f"{trace_id}/search/{dispute.id}",
+                trace_id=f"{trace_id}/search/{dispute_id}",
                 task="verification.search",
             )
             payload = json.loads(raw_results)
@@ -401,16 +401,16 @@ async def _collect_fresh_evidence_for_dispute(
         except Exception as exc:
             warnings.append(VerificationWarning(
                 code="verification_search_failed",
-                message=f"Search failed for dispute {dispute.id}: {exc}",
-                context={"dispute_id": dispute.id, "query": query},
+                message=f"Search failed for dispute {dispute_id}: {exc}",
+                context={"dispute_id": dispute_id, "query": query},
             ))
             continue
 
         if not search_results:
             warnings.append(VerificationWarning(
                 code="verification_no_results",
-                message=f"No search results for dispute {dispute.id}.",
-                context={"dispute_id": dispute.id, "query": query},
+                message=f"No search results for dispute {dispute_id}.",
+                context={"dispute_id": dispute_id, "query": query},
             ))
             continue
 
@@ -450,8 +450,8 @@ async def _collect_fresh_evidence_for_dispute(
             except Exception as exc:
                 warnings.append(VerificationWarning(
                     code="verification_fetch_failed",
-                    message=f"Direct fetch failed for dispute {dispute.id}: {exc}",
-                    context={"dispute_id": dispute.id, "url": url},
+                    message=f"Direct fetch failed for dispute {dispute_id}: {exc}",
+                    context={"dispute_id": dispute_id, "url": url},
                 ))
                 continue
 
@@ -462,16 +462,16 @@ async def _collect_fresh_evidence_for_dispute(
                 except Exception as exc:
                     warnings.append(VerificationWarning(
                         code="verification_fetch_failed",
-                        message=f"Jina fallback failed for dispute {dispute.id}: {exc}",
-                        context={"dispute_id": dispute.id, "url": url},
+                        message=f"Jina fallback failed for dispute {dispute_id}: {exc}",
+                        context={"dispute_id": dispute_id, "url": url},
                     ))
                     continue
 
             if page.get("error"):
                 warnings.append(VerificationWarning(
                     code="verification_fetch_failed",
-                    message=f"Fetch returned error for dispute {dispute.id}: {page.get('error')}",
-                    context={"dispute_id": dispute.id, "url": url},
+                    message=f"Fetch returned error for dispute {dispute_id}: {page.get('error')}",
+                    context={"dispute_id": dispute_id, "url": url},
                 ))
                 continue
 
@@ -487,7 +487,7 @@ async def _collect_fresh_evidence_for_dispute(
                     source_id=source.id,
                     content=page_text,
                     content_type="text",
-                    relevance_note=f"{text_field} from {url} for dispute {dispute.id}",
+                    relevance_note=f"{text_field} from {url} for dispute {dispute_id}",
                     extraction_method="llm",
                 ))
 
@@ -497,8 +497,8 @@ async def _collect_fresh_evidence_for_dispute(
     if not disputes_new_evidence:
         warnings.append(VerificationWarning(
             code="verification_no_fresh_evidence",
-            message=f"No usable fresh evidence for dispute {dispute.id}.",
-            context={"dispute_id": dispute.id},
+            message=f"No usable fresh evidence for dispute {dispute_id}.",
+            context={"dispute_id": dispute_id},
         ))
 
     return disputes_new_sources, disputes_new_evidence, warnings
@@ -645,7 +645,6 @@ def _normalize_tyler_claim_status_updates(
 async def verify_disputes_tyler_v1(
     *,
     stage_4_result: TylerClaimExtractionResult,
-    prior_ledger: ClaimLedger,
     bundle: EvidenceBundle,
     decomposition: QuestionDecomposition | None,
     stage_1_result: DecompositionResult | None = None,
@@ -653,8 +652,8 @@ async def verify_disputes_tyler_v1(
     trace_id: str,
     max_disputes: int = 5,
     max_budget: float = 2.0,
-) -> tuple[VerificationResult, ClaimLedger, list[VerificationWarning], int]:
-    """Run Tyler's Stage 5 artifact and project it into the shipped ledger."""
+) -> tuple[VerificationResult, list[VerificationWarning], int]:
+    """Run Tyler's Stage 5 artifact without depending on projected ClaimLedger."""
     original_query = bundle.question.text if bundle.question else ""
     if stage_1_result is not None:
         tyler_stage1 = stage_1_result
@@ -699,7 +698,7 @@ async def verify_disputes_tyler_v1(
                 "reasoning": "The Stage 4 dispute queue had no unresolved empirical or interpretive decision-critical disputes.",
             },
         )
-        return empty, prior_ledger, [], 0
+        return empty, [], 0
 
     depth_cfg = get_depth_config()
     max_rounds = max(1, int(depth_cfg.get("arbitration_max_rounds", 1)))
@@ -712,9 +711,6 @@ async def verify_disputes_tyler_v1(
     rounds_used = 0
 
     for dispute in actionable:
-        current_dispute = next((item for item in prior_ledger.disputes if item.id == dispute.id), None)
-        if current_dispute is None:
-            continue
         claim_entries = [claim_lookup[claim_id] for claim_id in dispute.claims_involved if claim_id in claim_lookup]
         relevant_original_sources = [
             source
@@ -750,7 +746,7 @@ async def verify_disputes_tyler_v1(
             search_budget[dispute.id] = search_budget.get(dispute.id, 0) + len(queries)
 
             new_sources, new_evidence, new_warnings = await _collect_fresh_evidence_for_dispute(
-                dispute=current_dispute,
+                dispute_id=dispute.id,
                 queries=queries,
                 bundle=bundle,
                 trace_id=round_trace_id,
@@ -833,8 +829,7 @@ async def verify_disputes_tyler_v1(
             "reasoning": "Literal Tyler Stage 5 arbitration ran against targeted fresh evidence, then the result was normalized into strict post-verification claim statuses.",
         },
     )
-    current_ledger = tyler_stage5_to_current_ledger(verification_result, prior_ledger)
-    return verification_result, current_ledger, warnings, llm_calls
+    return verification_result, warnings, llm_calls
 
 
 async def verify_disputes(

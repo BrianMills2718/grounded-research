@@ -213,7 +213,7 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
     )
 
     _sources, _evidence, warnings = await _collect_fresh_evidence_for_dispute(
-        dispute=dispute,
+        dispute_id=dispute.id,
         queries=["test query"],
         bundle=bundle,
         trace_id="trace-root",
@@ -388,10 +388,10 @@ async def test_verify_disputes_stops_after_first_resolved_round(
 
 
 @pytest.mark.asyncio
-async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledger(
+async def test_verify_disputes_tyler_v1_updates_stage5_artifact_without_compat_ledger(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Tyler Stage 5 should become the source artifact while still updating the current ledger."""
+    """Tyler Stage 5 should update only the canonical verification artifact."""
     monkeypatch.setattr("grounded_research.verify.get_depth_config", lambda: {"arbitration_max_rounds": 1})
 
     async def fake_decompose_question_tyler_v1(question: str, trace_id: str, max_budget: float = 0.5):
@@ -431,7 +431,7 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledg
             ),
         )
 
-    async def fake_collect(dispute, queries, bundle, trace_id):
+    async def fake_collect(dispute_id, queries, bundle, trace_id):
         source = SourceRecord(url="https://example.com/fresh", title="Fresh source")
         evidence = EvidenceItem(
             source_id=source.id,
@@ -509,11 +509,6 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledg
             "reasoning": "reasoning",
         },
     )
-    prior_ledger = ClaimLedger(
-        claims=[_make_claim("C-1"), _make_claim("C-2")],
-        disputes=[_make_dispute(["C-1", "C-2"])],
-        arbitration_results=[],
-    )
     bundle = EvidenceBundle(
         question=ResearchQuestion(text="Should cities adopt UBI pilots?"),
         sources=[SourceRecord(id="S-1", url="https://example.com/source", title="Source")],
@@ -534,9 +529,8 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledg
         ),
     )
 
-    verification_result, ledger, warnings, llm_calls = await verify_disputes_tyler_v1(
+    verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
-        prior_ledger=prior_ledger,
         bundle=bundle,
         decomposition=None,
         stage_2_result=stage_2_result,
@@ -546,8 +540,7 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledg
     )
 
     assert verification_result.updated_claim_ledger[0].status == TylerClaimStatus.VERIFIED
-    assert ledger.claims[0].status == "supported"
-    assert ledger.arbitration_results[0].verdict == "supported"
+    assert verification_result.disputes_investigated[0].resolution is ResolutionOutcome.CLAIM_SUPPORTED
     assert llm_calls == 1
     assert warnings == []
 
@@ -562,7 +555,7 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
     async def fail_decompose(*args, **kwargs):
         raise AssertionError("should not re-decompose")
 
-    async def fake_collect(dispute, queries, bundle, trace_id):
+    async def fake_collect(dispute_id, queries, bundle, trace_id):
         return [], [], []
 
     async def fake_arbitrate(**kwargs):
@@ -678,11 +671,6 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
             "reasoning": "reasoning",
         },
     )
-    prior_ledger = ClaimLedger(
-        claims=[_make_claim("C-1"), _make_claim("C-2")],
-        disputes=[_make_dispute(["C-1", "C-2"])],
-        arbitration_results=[],
-    )
     bundle = EvidenceBundle(
         question=ResearchQuestion(text="Question"),
         sources=[],
@@ -690,9 +678,8 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
         gaps=[],
     )
 
-    verification_result, _ledger, warnings, llm_calls = await verify_disputes_tyler_v1(
+    verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
-        prior_ledger=prior_ledger,
         bundle=bundle,
         decomposition=None,
         stage_1_result=stage_1_result,
@@ -731,7 +718,6 @@ async def test_verify_disputes_tyler_v1_requires_canonical_stage2() -> None:
             "reasoning": "reasoning",
         },
     )
-    prior_ledger = ClaimLedger(claims=[], disputes=[], arbitration_results=[])
     bundle = EvidenceBundle(
         question=ResearchQuestion(text="Question"),
         sources=[],
@@ -742,7 +728,6 @@ async def test_verify_disputes_tyler_v1_requires_canonical_stage2() -> None:
     with pytest.raises(ValueError, match="Tyler Stage 5 requires a canonical Tyler Stage 2 EvidencePackage"):
         await verify_disputes_tyler_v1(
             stage_4_result=stage_4_result,
-            prior_ledger=prior_ledger,
             bundle=bundle,
             decomposition=None,
             trace_id="trace-root",
