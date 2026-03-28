@@ -48,6 +48,17 @@ Use when you need:
 
 - the recovered Tyler-native path that beats cached Perplexity on tracked UBI
 
+### Tyler canonical export cutover
+
+- `683660e` Clarify 24h execution expectation and export deletion phases
+- `cda75c7` Delete legacy export runtime path
+- `ac78c5c` Remove legacy export adapter debt
+
+Use when you need:
+
+- the first `main` state with one Tyler-native export contract
+- the commit boundary where legacy structured report and handoff surfaces were removed
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

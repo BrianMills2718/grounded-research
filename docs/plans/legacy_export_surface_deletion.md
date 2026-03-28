@@ -1,6 +1,6 @@
 # Legacy Export Surface Deletion
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Delete compatibility-only export surfaces that no longer have live runtime consumers, so the repo has one canonical Tyler-native output contract and does not keep legacy report/handoff shapes alive in `main` just for tests.
 
 ## Why This Plan Exists
@@ -48,6 +48,14 @@ This wave is complete only if:
 3. `write_outputs()` only writes Tyler-native summary/handoff outputs
 4. active docs describe one canonical export contract with no active ambiguity
 5. targeted export/verify/prompt/boundary tests pass after compatibility-test removal or replacement
+
+Completed result:
+
+- `683660e` clarified the execution boundary and phase-level verification
+- `cda75c7` removed the live legacy export/runtime path
+- `ac78c5c` removed the remaining legacy export adapter debt and compatibility-only prompt tests
+- targeted suites passed after the deletion wave:
+  - `63 passed` across export, adapter, verify, prompt-template, and phase-boundary coverage
 
 ## Ordered Phases
 

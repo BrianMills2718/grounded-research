@@ -59,7 +59,7 @@ Remaining non-literal gaps are now narrower:
 | Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | live runtime now produces and persists `PipelineState.tyler_stage_3_results`; current `AnalystRun` is an explicit projection | Yes (runtime), compatibility projection remains |
 | Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` is an explicit downstream projection | Yes (runtime), compatibility projection remains |
 | Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Yes (runtime), compatibility projection remains |
-| Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; current `FinalReport` and markdown report are compatibility projections | Yes (runtime), compatibility projection remains |
+| Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; markdown renders directly from Tyler Stage 6 and legacy `FinalReport` export has been removed | Yes (runtime) |
 | Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6; repo-local quality recovery improved the tracked UBI case materially, but a small gap to the dense-dedup anchor remains | Runtime-active, locally recovered, not benchmark-identical |
 
 ## Current Prompt Inventory vs Tyler Prompt Inventory
@@ -70,10 +70,10 @@ Remaining non-literal gaps are now narrower:
 | Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Literal prompt now active in runtime |
 | Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Literal prompt now active in runtime |
 | Stage 3 analyst base + 3 frame inserts | `prompts/tyler_v1_analyst.yaml` | Literal prompt now active in runtime |
-| Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema now active, but downstream stages still rely on a projected repo-local ledger |
+| Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema active; remaining debt is only internal Stage 4 `ClaimLedger` projection scaffolding |
 | Stage 5 verification query generation | `prompts/verification_queries.yaml` | Adapted, not literal |
-| Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Literal prompt active, projected into current compatibility surfaces |
-| Stage 6 synthesis report | `prompts/tyler_v1_synthesis.yaml` | Literal prompt active, projected into current compatibility surfaces |
+| Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Literal prompt active in runtime |
+| Stage 6 synthesis report | `prompts/tyler_v1_synthesis.yaml` | Literal prompt active in runtime and now drives the only live export surface |
 
 ## Exact Remaining Non-Literal Gaps That Matter
 
@@ -86,10 +86,9 @@ projections for:
 - `EvidenceBundle`
 - `AnalystRun`
 - `ClaimLedger`
-- `FinalReport`
 
-These no longer define the live Tyler runtime, but they still exist for
-historical traces and downstream compatibility.
+These no longer define the live Tyler runtime. The remaining active debt is
+internal projection scaffolding, not public export compatibility.
 
 ### 2. Provider and model assumptions are not literal
 

@@ -91,7 +91,8 @@ Current operational notes:
 - current local implementation frontier is canonical Tyler cutover: delete
   compatibility/runtime adapter debt and keep one canonical runtime path
 - canonical successful exports now center Tyler Stage 6 plus Tyler-native
-  downstream handoff artifacts; `FinalReport` is compatibility-only debt
+  downstream handoff artifacts; legacy structured-report and handoff surfaces
+  are no longer part of the live runtime path
 
 ## Governance Surfaces
 
@@ -601,7 +602,6 @@ Each prompt is a YAML/Jinja2 template in `prompts/`, loaded via
 | `dispute_classify.yaml` | 3c | `claims: list[Claim]` | dispute list with `DisputeType` per conflict |
 | `arbitration.yaml` | 4 | `dispute: Dispute`, `claims: list[Claim]`, `evidence: list[EvidenceItem]`, `new_evidence: list[EvidenceItem]` | `ArbitrationResult` |
 | `tyler_v1_synthesis.yaml` | 5 | Tyler Stage 1/2/4/5 structured state | `SynthesisReport` (canonical structured output) |
-| `synthesis.yaml` | 5 | `question: ResearchQuestion`, `ledger: ClaimLedger`, `evidence_gaps: list[str]` | `FinalReport` (compatibility-only structured output) |
 
 Phase 3a (claim extraction) likely does not need a prompt — it gathers
 `AnalystRun.claims` directly. A normalization prompt may be added if

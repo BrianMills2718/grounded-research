@@ -102,7 +102,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | Tyler `SynthesisReport.executive_recommendation` + `decision_relevant_tradeoffs`. Long report has verdict + alternatives sections. |
 | 46 | Tier B: Disagreement map, alternatives, confidence | KEEP | **DONE** | Tyler `SynthesisReport.disagreement_map`, `preserved_alternatives`, `confidence_assessment`. |
 | 47 | Tier C: Claim ledger, evidence trail, gaps | KEEP | **DONE** | Tyler `summary.md` includes claim excerpt and evidence trail. `trace.json` carries full Tyler ledger and verification artifacts. |
-| 48 | Anti-pattern validation checks | SIMPLIFY | **DONE** | `validate_grounding()` checks claim ID resolution and evidence linkage. Hallucinated IDs stripped. |
+| 48 | Anti-pattern validation checks | SIMPLIFY | **DONE** | `validate_tyler_grounding()` checks Tyler claim/source resolution across Stage 2, Stage 5, and Stage 6. |
 | 49 | Generate trace file with full observability | KEEP | **DONE** | `trace.json` = full `PipelineState`. |
 
 ## CROSS-CUTTING — FALLBACK & DEGRADATION

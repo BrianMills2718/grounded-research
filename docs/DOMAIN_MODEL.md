@@ -80,11 +80,12 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 ## Open Design Questions
 
 - Whether `AnalystRun.succeeded` should require non-empty claims beyond `error is None`
-- Whether `FinalReport` should split into typed sections or stay compact in v1
 - When `AssumptionLedger` should be promoted from deferred to current
 
 ## Resolved Direction
 
 - Tyler-literal stage artifacts are the canonical runtime target
-- compatibility/public surfaces are temporary migration debt slated for removal,
-  not long-term co-equal APIs
+- legacy structured-report and handoff outputs are already removed from the
+  live runtime path
+- remaining compatibility projections are temporary migration debt slated for
+  removal, not long-term co-equal APIs

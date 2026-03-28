@@ -15,12 +15,11 @@ Current runtime note:
 
 - the live runtime now also persists Tyler-native Stage 1-6 artifacts in
   `PipelineState`
-- the legacy `QuestionDecomposition`, `EvidenceBundle`, `AnalystRun`,
-  `ClaimLedger`, and `FinalReport` surfaces still exist as compatibility or
-  public-output projections
-- Tyler-literal artifacts are the target canonical contract
-- the compatibility/public surfaces are temporary migration debt, not the
-  desired long-term truth
+- Tyler-literal artifacts are the canonical export contract
+- legacy `FinalReport` and legacy downstream handoff surfaces have been removed
+  from the live runtime path
+- remaining compatibility projections are limited to internal Stage 3/4/5
+  migration debt, not public outputs
 
 It is the bridge between:
 
@@ -113,7 +112,6 @@ Minimum trace expectations:
 - imported evidence bundle if available
 - analyst runs, including failed runs where possible
 - Tyler Stage 4/5/6 artifacts if canonicalization, verification, and export succeeded
-- compatibility artifacts only when explicitly produced during cutover
 - warnings
 - per-phase trace entries
 
@@ -392,9 +390,7 @@ These are loud export failures, not silent warnings.
 
 ## Remaining Open Contract Questions
 
-- whether the compatibility `ClaimLedger` should be removed entirely or kept as
-  a short-lived transitional projection while downstream consumers migrate
-- whether the compatibility `FinalReport` should be removed entirely or kept as
-  a short-lived explicit fallback surface
-- whether verification query generation should be one batch call or one call per
-  dispute in the first live implementation
+- whether the remaining internal `ClaimLedger` projection should be removed
+  entirely or kept briefly as migration scaffolding for Stage 4/5 internals
+- whether verification query generation should be one batch call or one call
+  per dispute in the first live implementation

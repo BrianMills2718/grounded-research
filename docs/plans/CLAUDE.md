@@ -26,7 +26,8 @@
 | [tyler_stage3_model_role_recovery.md](tyler_stage3_model_role_recovery.md) | Completed | Gate-time execution slice under Tyler prompt-quality recovery: closest-available Stage 3 role parity removed DeepSeek from the primary path and recovered analyst density on the tracked UBI fixture. |
 | [tyler_stage6_decision_guidance_recovery.md](tyler_stage6_decision_guidance_recovery.md) | Completed | Follow-up Stage 6 slice: underfilled decision fields now trigger a repair loop; the tracked UBI rerun fills tradeoffs and alternatives and remains slightly behind only the dense-dedup anchor. |
 | [tyler_canonical_cutover.md](tyler_canonical_cutover.md) | In Progress | Delete-first cutover plan to make the Tyler-literal path the only canonical runtime, preserve older variants by commit/eval references, and remove compatibility adapter debt aggressively. |
-| [legacy_export_surface_deletion.md](legacy_export_surface_deletion.md) | In Progress | Child wave under Tyler canonical cutover: remove compatibility-only export/report surfaces and keep one Tyler-native output contract in `main`. |
+| [legacy_export_surface_deletion.md](legacy_export_surface_deletion.md) | Completed | Child wave under Tyler canonical cutover: compatibility-only export/report surfaces were deleted and `main` now has one Tyler-native output contract. |
+| [stage45_projection_deletion.md](stage45_projection_deletion.md) | In Progress | Current child wave under Tyler canonical cutover: remove the remaining live Stage 4/5 `ClaimLedger` projection debt from the runtime path. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |
