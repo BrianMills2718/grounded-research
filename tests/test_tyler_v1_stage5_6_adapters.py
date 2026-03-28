@@ -7,7 +7,6 @@ from grounded_research.tyler_v1_adapters import (
     render_tyler_synthesis_markdown,
     tyler_assessment_to_current_arbitration,
     tyler_stage5_to_current_ledger,
-    tyler_synthesis_to_current_report,
 )
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
@@ -172,7 +171,7 @@ def test_tyler_stage5_to_current_ledger_projects_statuses() -> None:
     assert ledger.arbitration_results[0].verdict == "refuted"
 
 
-def test_tyler_synthesis_projection_and_markdown_render() -> None:
+def test_tyler_synthesis_markdown_render() -> None:
     report = SynthesisReport(
         executive_recommendation="Recommendation based on C-1.",
         conditions_of_validity=["If C-1 stops holding, reconsider."],
@@ -219,10 +218,7 @@ def test_tyler_synthesis_projection_and_markdown_render() -> None:
         stage_summary=_stage_summary("Stage 6"),
     )
 
-    current = tyler_synthesis_to_current_report(report, original_query="What should we do?")
     markdown = render_tyler_synthesis_markdown(report, original_query="What should we do?")
 
-    assert current.cited_claim_ids == ["C-1"]
-    assert "D-1" in current.disagreement_summary
     assert "## Executive Recommendation" in markdown
     assert "C-1" in markdown

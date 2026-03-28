@@ -22,7 +22,6 @@ from grounded_research.models import (
     ClaimUpdate as RuntimeClaimUpdate,
     Dispute as RuntimeDispute,
     EvidenceBundle,
-    FinalReport,
     QuestionDecomposition,
     RawClaim,
     Recommendation,
@@ -1018,29 +1017,6 @@ def tyler_stage5_to_current_ledger(
         claims=list(claim_map.values()),
         disputes=list(dispute_map.values()),
         arbitration_results=arbitration_results,
-    )
-
-
-def tyler_synthesis_to_current_report(report: SynthesisReport, original_query: str) -> FinalReport:
-    """Project Tyler Stage 6 output into the shipped structured report surface."""
-    cited_claim_ids = [entry.claim_id for entry in report.claim_ledger_excerpt]
-    disagreement_summary = "\n".join(
-        f"{entry.dispute_id}: {entry.summary} — {entry.resolution}"
-        for entry in report.disagreement_map
-    )
-    alternatives = [
-        f"{alternative.alternative} — {alternative.conditions_for_preference}"
-        for alternative in report.preserved_alternatives
-    ]
-    return FinalReport(
-        title=original_query[:120] or "Grounded research report",
-        question=original_query,
-        recommendation=report.executive_recommendation,
-        alternatives=alternatives,
-        disagreement_summary=disagreement_summary,
-        evidence_gaps=report.evidence_gaps,
-        flip_conditions=report.conditions_of_validity,
-        cited_claim_ids=cited_claim_ids,
     )
 
 
