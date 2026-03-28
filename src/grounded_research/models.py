@@ -871,8 +871,6 @@ class PipelineState(BaseModel):
     tyler_stage_3_alias_mapping: dict[str, str] = Field(default_factory=dict)
     tyler_stage_3_results: list[TylerAnalysisObject] = Field(default_factory=list)
     tyler_stage_4_result: TylerClaimExtractionResult | None = None
-    # Compatibility projection of Tyler Stage 4/5 used only by legacy surfaces.
-    claim_ledger: ClaimLedger | None = None
     tyler_stage_5_result: TylerVerificationResult | None = None
 
     # --- Outputs ---
