@@ -10,10 +10,8 @@ from grounded_research.collect import build_tyler_evidence_package, generate_sea
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
-    QuestionDecomposition,
     ResearchQuestion,
     SourceRecord,
-    SubQuestion as CurrentSubQuestion,
 )
 from grounded_research.tyler_v1_models import DecompositionResult, ResearchPlan, StageSummary, SubQuestion
 
@@ -55,29 +53,6 @@ def _tyler_decomposition() -> DecompositionResult:
             falsification_targets=["contradictory RCT result", "N/A"],
         ),
         stage_summary=_stage_summary("Stage 1: Intake & Decomposition"),
-    )
-
-
-def _current_decomposition() -> QuestionDecomposition:
-    return QuestionDecomposition(
-        core_question="What is the current evidence?",
-        sub_questions=[
-            CurrentSubQuestion(
-                id="SQ-alpha",
-                text="What did pilot A show?",
-                type="factual",
-                falsification_target="Contradictory high-quality pilot evidence.",
-            ),
-            CurrentSubQuestion(
-                id="SQ-beta",
-                text="How should we interpret mixed findings?",
-                type="evaluative",
-                falsification_target="A stronger alternative interpretation.",
-            ),
-        ],
-        optimization_axes=["employment vs broader welfare"],
-        research_plan="official reports; academic",
-        ambiguous_terms=[],
     )
 
 
@@ -247,15 +222,10 @@ async def test_build_tyler_evidence_package_translates_legacy_fixture_sub_questi
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
     monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
 
-    stage_2 = await build_tyler_evidence_package(
-        bundle,
-        _tyler_decomposition(),
-        trace_id="test/trace",
-        current_decomposition=_current_decomposition(),
-        query_counts_by_sub_question={"Q-1": 4, "Q-2": 4},
-    )
-
-    q1 = next(item for item in stage_2.sub_question_evidence if item.sub_question_id == "Q-1")
-    assert len(q1.sources) == 2
-    assert q1.meets_sufficiency is True
-    assert q1.sources[0].key_findings[0].finding == "Legacy fixture evidence was translated."
+    with pytest.raises(ValueError, match="requires Tyler Stage 1 sub-question IDs"):
+        await build_tyler_evidence_package(
+            bundle,
+            _tyler_decomposition(),
+            trace_id="test/trace",
+            query_counts_by_sub_question={"Q-1": 4, "Q-2": 4},
+        )

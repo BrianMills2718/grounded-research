@@ -37,7 +37,6 @@ from grounded_research.config import (
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
-    QuestionDecomposition,
     ResearchQuestion,
     SourceRecord,
 )
@@ -584,7 +583,6 @@ async def build_tyler_evidence_package(
     stage_1_result: TylerDecompositionResult,
     trace_id: str,
     *,
-    current_decomposition: QuestionDecomposition | None = None,
     query_counts_by_sub_question: dict[str, int] | None = None,
     max_budget: float = 0.5,
 ) -> TylerEvidencePackage:
@@ -605,20 +603,23 @@ async def build_tyler_evidence_package(
             description="Atomic findings extracted from this source for the given sub-question.",
         )
 
-    from grounded_research.tyler_v1_adapters import current_to_tyler_sub_question_id_map
-
     source_by_id = {source.id: source for source in bundle.sources}
-    current_to_tyler_ids = (
-        current_to_tyler_sub_question_id_map(current_decomposition, stage_1_result)
-        if current_decomposition is not None
-        else {}
-    )
+    valid_sub_question_ids = {sub_question.id for sub_question in stage_1_result.sub_questions}
     grouped_items: dict[tuple[str, str], list[EvidenceItem]] = {}
     for item in bundle.evidence:
         target_sub_question_ids = item.sub_question_ids or [stage_1_result.sub_questions[0].id]
+        unknown_sub_question_ids = sorted(
+            sub_question_id
+            for sub_question_id in target_sub_question_ids
+            if sub_question_id not in valid_sub_question_ids
+        )
+        if unknown_sub_question_ids:
+            raise ValueError(
+                "Tyler Stage 2 requires Tyler Stage 1 sub-question IDs in EvidenceItem.sub_question_ids. "
+                f"Unknown IDs: {', '.join(unknown_sub_question_ids)}"
+            )
         for sub_question_id in target_sub_question_ids:
-            translated_sub_question_id = current_to_tyler_ids.get(sub_question_id, sub_question_id)
-            grouped_items.setdefault((translated_sub_question_id, item.source_id), []).append(item)
+            grouped_items.setdefault((sub_question_id, item.source_id), []).append(item)
 
     sub_question_evidence: list[SubQuestionEvidence] = []
     query_counts = dict(query_counts_by_sub_question or {})
