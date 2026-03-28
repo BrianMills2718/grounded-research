@@ -878,8 +878,6 @@ class PipelineState(BaseModel):
     # --- Outputs ---
     tyler_stage_6_result: TylerSynthesisReport | None = None
     tyler_handoff: TylerDownstreamHandoff | None = None
-    # Compatibility projection of Tyler Stage 6 used only by legacy surfaces.
-    report: FinalReport | None = None
 
     # --- Observability ---
     user_guidance_notes: list[str] = Field(default_factory=list)

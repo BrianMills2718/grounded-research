@@ -283,6 +283,7 @@ Current concern:
 Completed in this wave:
 
 - canonical successful export no longer stores `FinalReport` in the live engine path
+- `PipelineState` no longer stores a `report` field at all
 - `handoff.json` now prefers the Tyler-native Stage 2/5/6 handoff artifact
 - phase-boundary tests now load the Tyler-native trace directly and rebuild the
   Stage 3 analyst boundary view from canonical Tyler artifacts instead of
@@ -312,8 +313,8 @@ Remaining ordered phases after this commit:
 
 1. isolate remaining compatibility-only export helpers behind explicit legacy
    boundaries and stop presenting them as normal runtime surfaces
-2. determine whether any non-test consumer still needs `PipelineState.claim_ledger`
-   or `PipelineState.report`; if not, delete those fields in one cutover commit
+2. determine whether any non-test consumer still needs `PipelineState.claim_ledger`;
+   if not, delete it in one cutover commit
 3. rerun the Tyler-native canonical benchmark/export path after the state cleanup
    to prove the canonical path still works without the legacy projections
 

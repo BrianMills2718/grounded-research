@@ -837,12 +837,6 @@ def write_outputs(
         report_path = output_dir / "report.md"
         report_path.write_text(long_report_md)
         paths["report"] = report_path
-    elif state.report:
-        # Fallback to structured report rendering if long-form not available
-        report_path = output_dir / "report.md"
-        md = _render_structured_report(state.report, state.claim_ledger)
-        report_path.write_text(md)
-        paths["report"] = report_path
 
     # summary.md — the structured report as a quick reference
     if state.tyler_stage_6_result is not None and state.question is not None:
@@ -851,11 +845,6 @@ def write_outputs(
             state.tyler_stage_6_result,
             state.question.text,
         )
-        summary_path.write_text(md)
-        paths["summary"] = summary_path
-    elif state.report:
-        summary_path = output_dir / "summary.md"
-        md = _render_structured_report(state.report, state.claim_ledger)
         summary_path.write_text(md)
         paths["summary"] = summary_path
 
