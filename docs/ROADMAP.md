@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-03-27
+**Last updated:** 2026-03-28
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
@@ -35,8 +35,8 @@ configurable depth modes (standard/deep/thorough).
 ## Next: Tyler-Native Prompt Quality Recovery
 
 The contract migration wave and benchmark re-anchor are complete. The Tyler
-runtime is now mechanically stable end-to-end, but the tracked Tyler-native UBI
-rerun still regressed in decision usefulness.
+runtime is now mechanically stable end-to-end, and the prompt-quality recovery
+wave has materially improved the tracked Tyler-native UBI path.
 
 Immediate repo-local goal:
 
@@ -47,9 +47,17 @@ Immediate repo-local goal:
 - rerun the same tracked benchmark gate
 - classify the result honestly as recovered or still divergent
 
-If the remaining blocker is only provider/runtime behavior after prompt-quality
-recovery, record it as a shared-infra issue instead of reopening local contract
-work.
+Current state after the recovery wave:
+
+- `output/tyler_literal_parity_ubi_reanchor_v8/` beats cached Perplexity on the
+  tracked UBI comparison
+- it still trails the saved dense-dedup anchor slightly
+- that residual gap is now explicit: the dense-dedup path still packages more
+  breadth/context and alternatives than the Tyler-native path
+
+If the remaining blocker is only provider/runtime behavior or frontier-model
+availability after this recovery, record it as a shared-infra issue instead of
+reopening local contract work.
 
 See:
 

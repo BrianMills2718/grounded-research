@@ -1,6 +1,6 @@
 # Tyler Stage 6 Decision-Guidance Recovery
 
-**Status:** In Progress
+**Status:** Completed
 **Parent plan:** `docs/plans/tyler_literal_prompt_quality_recovery.md`
 **Purpose:** Recover decision usefulness on the Tyler-native path by repairing
 underfilled Stage 6 synthesis fields, especially tradeoffs, alternatives, and
@@ -62,3 +62,31 @@ This wave passes only if the rerun:
    - cited-claim count
 4. improves decision usefulness enough to tie or beat the dense-dedup anchor,
    or leaves a precise, evidence-backed residual gap
+
+## Outcome
+
+Completed on:
+
+- `output/tyler_literal_parity_ubi_reanchor_v8/`
+
+Observed results:
+
+- Stage 6 repair loop fired once because `preserved_alternatives` was underfilled
+- final report length increased to `~3170` words
+- decision tradeoffs: `3`
+- preserved alternatives: `2`
+- disagreement map entries: `1`
+- claim ledger excerpt items: `7`
+- cited claims: `6`
+- grounding warnings: `0`
+
+Fair comparisons:
+
+- beats cached Perplexity on decision usefulness:
+  `output/fair_tyler_literal_parity_ubi_reanchor_v8_vs_ubi_perplexity.md`
+- still trails the saved dense-dedup anchor slightly:
+  `output/fair_tyler_literal_parity_ubi_reanchor_v8_vs_ubi_dense_dedup_eval.md`
+
+Residual gap is now explicit rather than ambiguous: the Tyler-native path still
+packages less breadth/context than the dense-dedup benchmark-optimal report,
+even after the Stage 6 decision-field repair loop.

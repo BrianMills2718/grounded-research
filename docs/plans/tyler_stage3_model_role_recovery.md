@@ -1,6 +1,6 @@
 # Tyler Stage 3 Model-Role Recovery
 
-**Status:** In Progress
+**Status:** Completed
 **Parent plan:** `docs/plans/tyler_literal_prompt_quality_recovery.md`
 **Purpose:** Recover Tyler-native Stage 3 quality by aligning the active
 analyst role/model assignment to the closest available Tyler mapping and
@@ -88,6 +88,27 @@ This wave passes only if:
    - final cited-claim count
 5. any remaining gap to Tyler's exact model-role spec is recorded explicitly as
    a local model-availability concern, not buried
+
+## Outcome
+
+Completed on the tracked fixture path:
+
+- `output/tyler_literal_parity_ubi_reanchor_v7_retry1/`
+
+Observed results:
+
+- Analyst A: `9` claims
+- Analyst B: `20` claims
+- Analyst C: `6` claims
+- Stage 4: `28` claims, `2` disputes
+- final cited claims: `5`
+- export grounding warnings: `0`
+
+The closest-available role recovery fixed the Stage 3 sparsity problem and beat
+cached Perplexity on the next fair comparison, but the Tyler-native path still
+trailed the saved dense-dedup anchor on decision usefulness. That shifted the
+next bottleneck to Stage 6 decision packaging rather than leaving Stage 3
+ambiguous.
 
 ## Execution Order
 

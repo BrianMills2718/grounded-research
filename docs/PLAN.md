@@ -135,7 +135,7 @@ Current open work is intentionally narrow:
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`
-- active Tyler literal-parity remaining wave:
+- Tyler literal-parity completed repo-local recovery references:
   `docs/plans/tyler_literal_parity_refactor.md`,
   `docs/plans/tyler_literal_parity_benchmark_reanchor.md`,
   `docs/plans/tyler_literal_prompt_quality_recovery.md`,

@@ -1,12 +1,12 @@
 # Tyler Literal Prompt Quality Recovery
 
-**Status:** In Progress
+**Status:** Completed
 **Parent plan:** `docs/plans/tyler_literal_parity_refactor.md`
 **Purpose:** Recover benchmark usefulness on the now-stable Tyler-native
 runtime by auditing and tightening literal prompt fidelity and stage-level
 quality where the contract migration alone proved insufficient.
 
-## Why This Wave Exists
+## Why This Wave Existed
 
 The Tyler-native runtime now works end-to-end, but the tracked UBI re-anchor
 still regressed badly in decision usefulness:
@@ -77,6 +77,40 @@ This wave is complete only if:
      still loses
 4. any unresolved gap is tagged as repo-local or shared-infra, not left
    ambiguous
+
+## Outcome
+
+This wave completed in two gate-time sub-slices:
+
+1. Stage 3 role recovery:
+   - `docs/plans/tyler_stage3_model_role_recovery.md`
+   - closest-available Tyler role ordering
+   - DeepSeek removed from the primary analyst path
+2. Stage 6 decision-guidance recovery:
+   - `docs/plans/tyler_stage6_decision_guidance_recovery.md`
+   - underfilled decision-field repair loop
+   - stronger Stage 6 prompt pressure for tradeoffs/alternatives/disagreement coverage
+
+Final tracked result:
+
+- `output/tyler_literal_parity_ubi_reanchor_v8/`
+
+Compared with the original v5 trigger:
+
+- Stage 3 improved from `10/6/3` claims to `8/17/7`
+- Stage 4 improved from `12` claims and `1` dispute to `38` claims and `3` disputes
+- Stage 6 improved from `2` cited claims to `6`
+- export grounding warnings dropped to `0`
+
+Outcome classification:
+
+- repo-local Tyler-native quality recovery is materially successful
+- the Tyler-native path now beats cached Perplexity on the tracked UBI question
+- it still trails the saved dense-dedup anchor slightly, for an explicit reason:
+  the dense-dedup path still packages broader contextual alternatives and
+  uncertainty framing a bit better than the Tyler-native path
+
+That remaining difference is now evidence-backed rather than ambiguous.
 
 ## Execution Order
 

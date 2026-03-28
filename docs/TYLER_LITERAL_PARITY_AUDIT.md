@@ -14,11 +14,11 @@ contract wiring. It is benchmark quality and explicit shared-infra boundaries.
 
 Full Tyler closure is still not complete because:
 
-- the benchmark re-anchor wave completed with regressed usefulness
-- the next open wave is prompt-quality recovery on the Tyler-native path
 - current compatibility projections still exist for downstream surfaces
 - provider/model/search assumptions that Tyler specified remain explicit
   shared-infra gaps outside this repo
+- the Tyler-native path still trails the saved dense-dedup anchor slightly even
+  after prompt-quality recovery
 
 ## Scope
 
@@ -101,7 +101,8 @@ Current repo intentionally diverged from that for stabilization and shared
 infra boundaries. Literal parity would require changing those assumptions or
 explicitly deciding to leave provider/model parity out of scope.
 
-### 3. Benchmark quality still lags
+### 3. Benchmark quality no longer lags Perplexity, but still differs from the
+saved dense-dedup anchor
 
 The benchmark re-anchor wave is complete:
 
@@ -109,15 +110,19 @@ The benchmark re-anchor wave is complete:
 - the fixture-path Stage 2 emptiness bug was fixed locally
 - dense Tyler Stage 2 and Stage 4 both required stronger primary models
 
-But the tracked rerun at `output/tyler_literal_parity_ubi_reanchor_v5/` still
-regressed in usefulness:
+Recovery progression:
 
-- only `12` Stage 4 claims
-- only `2` cited final claims
-- loses to both saved comparison anchors
+- `output/tyler_literal_parity_ubi_reanchor_v5/`: regressed badly
+- `output/tyler_literal_parity_ubi_reanchor_v7_retry1/`: Stage 3 recovered and
+  beat cached Perplexity, but still trailed dense-dedup
+- `output/tyler_literal_parity_ubi_reanchor_v8/`: Stage 6 decision packaging
+  improved further, still beats cached Perplexity, and remains only slightly
+  behind the dense-dedup anchor
 
-So the next local frontier is no longer contract migration. It is Tyler-native
-prompt-quality recovery.
+So the next local frontier is no longer contract migration, and it is no longer
+an unclassified prompt crisis either. The remaining difference is now a narrow,
+evidence-backed divergence between the Tyler-native path and the prior
+benchmark-optimal dense-dedup path.
 
 ## Recommendation
 
