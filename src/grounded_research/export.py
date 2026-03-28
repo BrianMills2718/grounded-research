@@ -34,7 +34,6 @@ from grounded_research.models import (
 )
 from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import (
-    current_bundle_to_tyler_evidence_package,
     render_tyler_synthesis_markdown,
     tyler_synthesis_to_current_report,
 )
@@ -259,11 +258,13 @@ async def generate_tyler_synthesis_report(
             max_budget=max_budget * 0.15,
         )
 
-    stage_2_result = state.tyler_stage_2_result or current_bundle_to_tyler_evidence_package(
-        state.evidence_bundle,
-        tyler_stage1,
-        current_decomposition=decomposition,
-    )
+    stage_2_result = state.tyler_stage_2_result
+    if stage_2_result is None:
+        raise ValueError(
+            "Tyler Stage 6 requires a canonical Tyler Stage 2 EvidencePackage in PipelineState. "
+            "Populate `state.tyler_stage_2_result` from the live pipeline or fixture artifacts "
+            "instead of rebuilding it from the legacy EvidenceBundle."
+        )
     stage_4_result = state.tyler_stage_4_result
     stage_5_result = state.tyler_stage_5_result
 

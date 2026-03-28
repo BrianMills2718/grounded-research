@@ -612,11 +612,6 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
         raise AssertionError("should not re-decompose")
 
     monkeypatch.setattr("grounded_research.decompose.decompose_question_tyler_v1", fail_decompose)
-    monkeypatch.setattr(
-        "grounded_research.export.current_bundle_to_tyler_evidence_package",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("should not rebuild stage 2")),
-    )
-
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
@@ -1007,6 +1002,76 @@ async def test_generate_tyler_synthesis_report_redecomposes_from_question_not_pr
 
     assert calls["decompose"] == 1
     assert result.executive_recommendation == "Recommendation."
+
+
+@pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_requires_canonical_stage2() -> None:
+    """Stage 6 should fail loud when the canonical Tyler Stage 2 artifact is missing."""
+
+    def stage_summary(stage_name: str) -> StageSummary:
+        return StageSummary(
+            stage_name=stage_name,
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        )
+
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[],
+            evidence=[],
+            gaps=[],
+        ),
+        tyler_stage_1_result=DecompositionResult(
+            core_question="What is the evidence?",
+            sub_questions=[
+                TylerSubQuestion(id="Q-1", question="Q1", type="empirical", research_priority="high", search_guidance="docs"),
+                TylerSubQuestion(id="Q-2", question="Q2", type="interpretive", research_priority="medium", search_guidance="critiques"),
+            ],
+            optimization_axes=["speed vs rigor"],
+            research_plan=ResearchPlan(
+                what_to_verify=["claim"],
+                critical_source_types=["official docs"],
+                falsification_targets=["contradiction"],
+            ),
+            stage_summary=stage_summary("Stage 1"),
+        ),
+        tyler_stage_4_result=TylerClaimExtractionResult(
+            claim_ledger=[],
+            assumption_set=[],
+            dispute_queue=[],
+            statistics={
+                "total_claims": 0,
+                "total_assumptions": 0,
+                "total_disputes": 0,
+                "disputes_by_type": {},
+                "decision_critical_disputes": 0,
+                "claims_per_model": {},
+            },
+            stage_summary=stage_summary("Stage 4"),
+        ),
+        tyler_stage_5_result=VerificationResult(
+            disputes_investigated=[],
+            additional_sources=[],
+            updated_claim_ledger=[],
+            updated_dispute_queue=[],
+            search_budget={},
+            rounds_used=1,
+            stage_summary=stage_summary("Stage 5"),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="Tyler Stage 6 requires a canonical Tyler Stage 2 EvidencePackage"):
+        await generate_tyler_synthesis_report(
+            state,
+            decomposition=None,
+            trace_id="trace-root",
+        )
 
 
 def test_successful_analyst_run_requires_counterarguments() -> None:

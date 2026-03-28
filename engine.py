@@ -493,6 +493,8 @@ def main() -> None:
         out_dir = args.output_dir or (PROJECT_ROOT / "output" / "pipeline")
         # Load decomposition if provided alongside fixture
         decomp = None
+        tyler_stage_1_result = None
+        tyler_stage_2_result = None
         if args.decomposition and args.decomposition.exists():
             from grounded_research.models import QuestionDecomposition
             decomp = QuestionDecomposition.model_validate_json(args.decomposition.read_text())
@@ -502,7 +504,27 @@ def main() -> None:
             decomp = QuestionDecomposition.model_validate_json(
                 args.fixture.parent.joinpath("decomposition.json").read_text()
             )
-        asyncio.run(run_pipeline(args.fixture, out_dir, decomposition=decomp))
+        if args.fixture.parent.joinpath("tyler_stage_1.json").exists():
+            from grounded_research.tyler_v1_models import DecompositionResult
+
+            tyler_stage_1_result = DecompositionResult.model_validate_json(
+                args.fixture.parent.joinpath("tyler_stage_1.json").read_text()
+            )
+        if args.fixture.parent.joinpath("tyler_stage_2.json").exists():
+            from grounded_research.tyler_v1_models import EvidencePackage
+
+            tyler_stage_2_result = EvidencePackage.model_validate_json(
+                args.fixture.parent.joinpath("tyler_stage_2.json").read_text()
+            )
+        asyncio.run(
+            run_pipeline(
+                args.fixture,
+                out_dir,
+                decomposition=decomp,
+                tyler_stage_1_result=tyler_stage_1_result,
+                tyler_stage_2_result=tyler_stage_2_result,
+            )
+        )
     else:
         # Default: use golden fixture
         fixture = PROJECT_ROOT / "tests" / "fixtures" / "session_storage_bundle.json"

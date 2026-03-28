@@ -77,6 +77,13 @@ Second-wave debt:
 - Tyler -> current projections for `AnalystRun`, `ClaimLedger`, `FinalReport`
 - old public/runtime docs still centered on compatibility artifacts
 
+Current highest-value remaining debt:
+
+- Tyler Stage 3 still projects `AnalysisObject` into `AnalystRun` in the live path
+- Tyler Stage 4/5/6 still project into `ClaimLedger` / `FinalReport`
+- `PipelineState` still stores compatibility artifacts as first-class siblings of
+  the Tyler-native stage artifacts
+
 ## Execution Order
 
 ### Slice 1: Kill Stage 1 regeneration from old decomposition
@@ -99,6 +106,13 @@ Acceptance:
 - targeted tests pass
 - fixture and question paths still produce Tyler Stage 1 deterministically
 
+Completed:
+
+- `50d73e2` removed live Stage 1 reconstruction from legacy
+  `QuestionDecomposition`
+- the canonical runtime now regenerates Tyler Stage 1 from the original
+  question when the persisted Tyler artifact is absent
+
 ### Slice 2: Tighten canonical docs and public contract language
 
 Files:
@@ -112,6 +126,40 @@ Rules:
 
 - stop describing compatibility surfaces as the safer long-term contract
 - mark adapters as temporary and slated for removal
+
+Completed:
+
+- `16b9aca` updated the active authority docs so Tyler-literal artifacts are the
+  target canonical contract and compatibility surfaces are temporary migration debt
+
+### Slice 2b: Kill Stage 2 reconstruction from legacy EvidenceBundle
+
+Files:
+
+- `engine.py`
+- `src/grounded_research/verify.py`
+- `src/grounded_research/export.py`
+
+Rules:
+
+- Stage 5 and Stage 6 must require canonical Tyler Stage 2
+- do not rebuild Tyler Stage 2 from `EvidenceBundle` inside verification or synthesis
+- fixture CLI should prefer persisted `tyler_stage_1.json` / `tyler_stage_2.json`
+  artifacts when present
+
+Acceptance:
+
+- targeted tests pass
+- verification and synthesis fail loud if canonical Tyler Stage 2 is absent
+- fixture mode prefers canonical Tyler artifacts over legacy auto-detected files
+
+Completed:
+
+- `verify_disputes_tyler_v1()` now requires canonical Tyler Stage 2 instead of
+  rebuilding it from `EvidenceBundle`
+- `generate_tyler_synthesis_report()` now requires `state.tyler_stage_2_result`
+- fixture CLI auto-detect now loads `tyler_stage_1.json` and `tyler_stage_2.json`
+  from the fixture directory when available
 
 ### Slice 3: Remove Tyler-to-current runtime projections where no longer needed
 

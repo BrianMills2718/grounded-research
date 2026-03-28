@@ -520,12 +520,26 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_and_current_ledg
         evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Base evidence", content_type="text")],
         gaps=[],
     )
+    stage_2_result = EvidencePackage(
+        sub_question_evidence=[],
+        total_queries_used=0,
+        queries_per_sub_question={"Q-1": 0, "Q-2": 0},
+        stage_summary=StageSummary(
+            stage_name="Stage 2",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
 
     verification_result, ledger, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
         prior_ledger=prior_ledger,
         bundle=bundle,
         decomposition=None,
+        stage_2_result=stage_2_result,
         trace_id="trace-1",
         max_disputes=1,
         max_budget=0.5,
@@ -691,3 +705,47 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
     assert warnings == []
     assert llm_calls == 0
     assert verification_result.search_budget == {"D-1": 3}
+
+
+@pytest.mark.asyncio
+async def test_verify_disputes_tyler_v1_requires_canonical_stage2() -> None:
+    """Stage 5 should fail loud when the canonical Tyler Stage 2 artifact is missing."""
+    stage_4_result = TylerClaimExtractionResult(
+        claim_ledger=[],
+        assumption_set=[],
+        dispute_queue=[],
+        statistics={
+            "total_claims": 0,
+            "total_assumptions": 0,
+            "total_disputes": 0,
+            "disputes_by_type": {},
+            "decision_critical_disputes": 0,
+            "claims_per_model": {},
+        },
+        stage_summary={
+            "stage_name": "Stage 4",
+            "goal": "goal",
+            "key_findings": ["k1", "k2", "k3"],
+            "decisions_made": ["d1"],
+            "outcome": "outcome",
+            "reasoning": "reasoning",
+        },
+    )
+    prior_ledger = ClaimLedger(claims=[], disputes=[], arbitration_results=[])
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="Question"),
+        sources=[],
+        evidence=[],
+        gaps=[],
+    )
+
+    with pytest.raises(ValueError, match="Tyler Stage 5 requires a canonical Tyler Stage 2 EvidencePackage"):
+        await verify_disputes_tyler_v1(
+            stage_4_result=stage_4_result,
+            prior_ledger=prior_ledger,
+            bundle=bundle,
+            decomposition=None,
+            trace_id="trace-root",
+            max_disputes=1,
+            max_budget=1.0,
+        )

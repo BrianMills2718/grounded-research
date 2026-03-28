@@ -30,7 +30,6 @@ from grounded_research.models import (
     VerificationQueryBatch,
 )
 from grounded_research.tyler_v1_adapters import (
-    current_bundle_to_tyler_evidence_package,
     normalize_tyler_claim_extraction_result,
     tyler_stage5_to_current_ledger,
 )
@@ -668,10 +667,10 @@ async def verify_disputes_tyler_v1(
             max_budget=max_budget * 0.1,
         )
     if stage_2_result is None:
-        stage_2_result = current_bundle_to_tyler_evidence_package(
-            bundle,
-            tyler_stage1,
-            current_decomposition=decomposition,
+        raise ValueError(
+            "Tyler Stage 5 requires a canonical Tyler Stage 2 EvidencePackage. "
+            "Pass `stage_2_result` from the live pipeline or fixture artifacts "
+            "instead of rebuilding it from the legacy EvidenceBundle."
         )
     claim_lookup = {claim.id: claim.model_copy(deep=True) for claim in stage_4_result.claim_ledger}
     dispute_lookup = {dispute.id: dispute.model_copy(deep=True) for dispute in stage_4_result.dispute_queue}
