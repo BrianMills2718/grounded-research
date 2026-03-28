@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from grounded_research.export import generate_report, generate_tyler_synthesis_report, render_long_report
+from grounded_research.export import (
+    generate_report,
+    generate_tyler_synthesis_report,
+    render_long_report,
+    validate_tyler_grounding,
+    write_outputs,
+)
 from grounded_research.config import get_tyler_literal_parity_config
 from grounded_research.models import (
     AnalystRun,
@@ -99,6 +107,37 @@ def _tyler_report() -> SynthesisReport:
         reasoning="Reasoning",
         stage_summary=StageSummary(
             stage_name="Stage 6",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
+
+
+def _stage5_result_for_report() -> VerificationResult:
+    return VerificationResult(
+        disputes_investigated=[],
+        additional_sources=[],
+        updated_claim_ledger=[
+            ClaimLedgerEntry(
+                id="C-1",
+                statement="Primary claim",
+                source_models=["A"],
+                evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                source_references=["S-1"],
+                status=TylerClaimStatus.VERIFIED,
+                supporting_models=["A"],
+                contesting_models=[],
+                related_assumptions=[],
+            )
+        ],
+        updated_dispute_queue=[],
+        search_budget={},
+        rounds_used=1,
+        stage_summary=StageSummary(
+            stage_name="Stage 5",
             goal="goal",
             key_findings=["k1", "k2", "k3"],
             decisions_made=["d1"],
@@ -1096,3 +1135,57 @@ def test_failed_analyst_run_allows_empty_counterarguments() -> None:
 
     assert result.counterarguments == []
     assert not result.succeeded
+
+
+def test_validate_tyler_grounding_checks_stage5_claims_and_sources() -> None:
+    """Tyler-native grounding should validate against Stage 5 and known sources."""
+    report = _tyler_report()
+    verification_result = _stage5_result_for_report()
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="What is the evidence?"),
+        sources=[
+            SourceRecord(
+                id="S-1",
+                url="https://example.com/source",
+                title="Source",
+                quality_tier="authoritative",
+            )
+        ],
+        evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+        gaps=[],
+    )
+
+    assert validate_tyler_grounding(
+        report,
+        verification_result=verification_result,
+        bundle=bundle,
+    ) == []
+
+
+def test_write_outputs_prefers_tyler_summary_when_present(tmp_path: Path) -> None:
+    """Summary output should render from Tyler Stage 6 when the canonical artifact exists."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[
+                SourceRecord(
+                    id="S-1",
+                    url="https://example.com/source",
+                    title="Source",
+                    quality_tier="authoritative",
+                )
+            ],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_6_result=_tyler_report(),
+        claim_ledger=ClaimLedger(claims=[], disputes=[], arbitration_results=[]),
+    )
+
+    paths = write_outputs(state, tmp_path, long_report_md="# Long report")
+
+    summary = paths["summary"].read_text()
+    assert "## Executive Recommendation" in summary
+    assert "Recommendation based on C-1." in summary

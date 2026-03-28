@@ -185,11 +185,12 @@ Completed so far:
   `AnalystRun`s
 - the Stage 4 compatibility ledger projection now derives raw-claim provenance
   from Tyler Stage 3 claims rather than from projected `AnalystRun` claims
+- export validation and `summary.md` now treat Tyler Stage 6 as the primary
+  validated/rendered summary surface instead of the projected `FinalReport`
 
 Still remaining in this slice:
 
 - Stage 5 still projects `VerificationResult` into `ClaimLedger`
-- Stage 6 still projects `SynthesisReport` into `FinalReport`
 - `PipelineState` still stores compatibility artifacts as first-class siblings
   of the Tyler-native outputs
 

@@ -185,6 +185,55 @@ def validate_grounding(
     return errors
 
 
+def validate_tyler_grounding(
+    report: SynthesisReport,
+    *,
+    verification_result: "VerificationResult",
+    bundle: EvidenceBundle,
+) -> list[str]:
+    """Validate the canonical Tyler Stage 6 artifact against Stage 5 and sources.
+
+    This is the primary grounding check for the Tyler-native runtime. It avoids
+    treating the compatibility `FinalReport` projection as the canonical source
+    of truth.
+    """
+    errors: list[str] = []
+    claim_map = {claim.id: claim for claim in verification_result.updated_claim_ledger}
+    source_ids = {source.id for source in bundle.sources}
+    source_ids.update(source.source_id for source in verification_result.additional_sources)
+
+    for excerpt in report.claim_ledger_excerpt:
+        claim = claim_map.get(excerpt.claim_id)
+        if claim is None:
+            errors.append(f"Claim excerpt {excerpt.claim_id} not found in Tyler Stage 5 ledger")
+            continue
+        if not claim.source_references:
+            errors.append(f"Claim excerpt {excerpt.claim_id} has no source references in Tyler Stage 5 ledger")
+            continue
+        missing_refs = [source_id for source_id in claim.source_references if source_id not in source_ids]
+        if missing_refs:
+            errors.append(
+                f"Claim excerpt {excerpt.claim_id} references unknown sources: {', '.join(missing_refs)}"
+            )
+
+    evidence_trail_ids = {source.source_id for source in report.evidence_trail}
+    unknown_trail_ids = sorted(evidence_trail_ids - source_ids)
+    for source_id in unknown_trail_ids:
+        errors.append(f"Evidence trail source {source_id} not found in Stage 2/5 source inventory")
+
+    unresolved_dispute_ids = {
+        dispute.id
+        for dispute in verification_result.updated_dispute_queue
+        if dispute.status is not None and dispute.status.value == "unresolved"
+    }
+    mentioned_dispute_ids = {entry.dispute_id for entry in report.disagreement_map}
+    missing_disputes = sorted(unresolved_dispute_ids - mentioned_dispute_ids)
+    for dispute_id in missing_disputes:
+        errors.append(f"Unresolved Tyler dispute {dispute_id} not mentioned in disagreement_map")
+
+    return errors
+
+
 def _ensure_unresolved_disputes_in_report(report: FinalReport, ledger: ClaimLedger) -> FinalReport:
     """Preserve unresolved disputes in the projected report surface.
 
@@ -555,6 +604,56 @@ async def generate_report(
     return report
 
 
+def _render_tyler_structured_summary(report: SynthesisReport, original_query: str) -> str:
+    """Render Tyler Stage 6 as a concise summary artifact."""
+    lines = [
+        f"# {original_query}",
+        "",
+        "## Executive Recommendation",
+        "",
+        report.executive_recommendation,
+        "",
+    ]
+
+    if report.conditions_of_validity:
+        lines.extend(["## Conditions Of Validity", ""])
+        for condition in report.conditions_of_validity:
+            lines.append(f"- {condition}")
+        lines.append("")
+
+    if report.decision_relevant_tradeoffs:
+        lines.extend(["## Decision-Relevant Tradeoffs", ""])
+        for tradeoff in report.decision_relevant_tradeoffs:
+            lines.append(f"- If optimize for **{tradeoff.if_optimize_for}**: {tradeoff.then_recommend}")
+        lines.append("")
+
+    if report.preserved_alternatives:
+        lines.extend(["## Preserved Alternatives", ""])
+        for alternative in report.preserved_alternatives:
+            lines.append(f"- **{alternative.alternative}**: {alternative.conditions_for_preference}")
+        lines.append("")
+
+    if report.disagreement_map:
+        lines.extend(["## Disagreement Map", ""])
+        for entry in report.disagreement_map:
+            lines.append(f"- **{entry.dispute_id}** [{entry.type.value}] {entry.summary}")
+        lines.append("")
+
+    if report.claim_ledger_excerpt:
+        lines.extend(["## Claim Ledger Excerpt", ""])
+        for claim in report.claim_ledger_excerpt:
+            lines.append(f"- **{claim.claim_id}** [{claim.final_status.value}] {claim.statement}")
+        lines.append("")
+
+    if report.evidence_gaps:
+        lines.extend(["## Evidence Gaps", ""])
+        for gap in report.evidence_gaps:
+            lines.append(f"- {gap}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def _find_long_report_quality_issues(markdown: str) -> list[str]:
     """Return mechanically detectable long-report quality defects."""
     issues: list[str] = []
@@ -731,7 +830,15 @@ def write_outputs(
         paths["report"] = report_path
 
     # summary.md — the structured report as a quick reference
-    if state.report:
+    if state.tyler_stage_6_result is not None and state.question is not None:
+        summary_path = output_dir / "summary.md"
+        md = _render_tyler_structured_summary(
+            state.tyler_stage_6_result,
+            state.question.text,
+        )
+        summary_path.write_text(md)
+        paths["summary"] = summary_path
+    elif state.report:
         summary_path = output_dir / "summary.md"
         md = _render_structured_report(state.report, state.claim_ledger)
         summary_path.write_text(md)

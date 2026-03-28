@@ -44,7 +44,7 @@ async def run_pipeline(
         generate_report,
         generate_tyler_synthesis_report,
         render_long_report,
-        validate_grounding,
+        validate_tyler_grounding,
         write_outputs,
     )
     from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
@@ -298,8 +298,12 @@ async def run_pipeline(
         report = await generate_report(state, trace_id, max_budget=total_budget * 0.1)
         state.report = report
 
-        # Grounding validation
-        grounding_errors = validate_grounding(report, ledger, bundle)
+        # Grounding validation now treats the Tyler Stage 6 artifact as primary.
+        grounding_errors = validate_tyler_grounding(
+            tyler_stage_6_result,
+            verification_result=tyler_stage_5_result,
+            bundle=bundle,
+        )
         if grounding_errors:
             for err in grounding_errors:
                 state.add_warning("export", "grounding", err)
@@ -320,7 +324,7 @@ async def run_pipeline(
             succeeded=True,
             llm_calls=2,
             output_summary=(
-                f"Structured report: {len(report.cited_claim_ids)} cited claims, "
+                f"Tyler Stage 6: {len(tyler_stage_6_result.claim_ledger_excerpt)} cited claims, "
                 f"{len(grounding_errors)} grounding warnings. "
                 f"Long report: ~{len(long_report_md.split())} words."
             ),
@@ -337,9 +341,9 @@ async def run_pipeline(
             print(f"  Wrote: {path}")
 
         print(f"\n=== Pipeline complete ===")
-        print(f"Report: {report.title}")
+        print(f"Report: {bundle.question.text}")
         print(f"Long report: ~{len(long_report_md.split())} words")
-        print(f"Cited claims: {len(report.cited_claim_ids)}")
+        print(f"Cited claims: {len(tyler_stage_6_result.claim_ledger_excerpt)}")
         print(f"Grounding warnings: {len(grounding_errors)}")
         print(f"Pipeline warnings: {len(state.warnings)}")
 
