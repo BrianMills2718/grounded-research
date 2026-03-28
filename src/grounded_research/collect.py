@@ -394,7 +394,7 @@ async def generate_search_queries(
 ) -> tuple[list[str], dict[str, str]]:
     """Generate diverse search queries for a research question via LLM.
 
-    If sub_questions are provided (from QuestionDecomposition), generates
+    If sub_questions are provided (from Tyler Stage 1 decomposition), generates
     queries per sub-question for focused evidence collection. Otherwise
     falls back to monolithic question-level query generation.
 
@@ -771,7 +771,7 @@ async def collect_evidence(
 ) -> EvidenceBundle | tuple[EvidenceBundle, dict[str, int]]:
     """Collect evidence for a research question from web sources.
 
-    If sub_questions are provided (from QuestionDecomposition), generates
+    If sub_questions are provided (from Tyler Stage 1 decomposition), generates
     focused search queries per sub-question. Otherwise uses monolithic
     question-level queries.
 

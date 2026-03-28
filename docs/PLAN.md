@@ -84,8 +84,8 @@ Current operational notes:
 - repo-local Tyler runtime migration and prompt-quality recovery are complete;
   the remaining explicit gap is a slight divergence from the dense-dedup anchor
   plus shared-infra/provider-model differences outside this repo
-- current local implementation frontier is canonical Tyler cutover: delete
-  isolated compatibility/runtime adapter debt and keep one canonical runtime path
+- current local implementation frontier is canonical Tyler cutover: delete the
+  remaining internal current-shape protocol debt and keep one canonical runtime path
 - canonical successful exports now center Tyler Stage 6 plus Tyler-native
   downstream handoff artifacts; legacy structured-report and handoff surfaces
   are no longer part of the live runtime path
@@ -137,12 +137,13 @@ Current open work is intentionally narrow:
 - canonical Tyler-literal cutover:
   `docs/plans/tyler_canonical_cutover.md`
 - current child wave under that cutover:
-  `docs/plans/current_shape_model_surface_deletion.md`
+  `docs/plans/stage5_internal_protocol_literalization.md`
 - completed child waves under that cutover:
   `docs/plans/legacy_export_surface_deletion.md`,
   `docs/plans/stage45_projection_deletion.md`,
   `docs/plans/stage13_runtime_projection_cutover.md`,
-  `docs/plans/isolated_compatibility_surface_deletion.md`
+  `docs/plans/isolated_compatibility_surface_deletion.md`,
+  `docs/plans/current_shape_model_surface_deletion.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

@@ -157,7 +157,7 @@ def stage_5_result(state: PipelineState):
 
 
 class TestPhase1ToPhase2:
-    """Contract: EvidenceBundle → AnalystRun inputs."""
+    """Contract: EvidenceBundle feeds canonical Tyler Stage 3 analysis."""
 
     def test_bundle_has_question(self, bundle: EvidenceBundle) -> None:
         assert bundle.question.text, "Question text is empty"

@@ -65,9 +65,10 @@ Current implementation frontier:
 - treat `docs/plans/stage45_projection_deletion.md` as completed
 - treat `docs/plans/stage13_runtime_projection_cutover.md` as completed
 - treat `docs/plans/isolated_compatibility_surface_deletion.md` as completed
-- execute `docs/plans/current_shape_model_surface_deletion.md` as the current
-  child wave under that cutover
-- remove the remaining current-shape model/helper debt aggressively
+- treat `docs/plans/current_shape_model_surface_deletion.md` as completed
+- execute `docs/plans/stage5_internal_protocol_literalization.md` as the
+  current child wave under that cutover
+- remove the remaining internal current-shape Stage 5 protocol debt aggressively
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes
 

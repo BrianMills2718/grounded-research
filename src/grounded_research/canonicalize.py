@@ -60,8 +60,8 @@ async def _get_tyler_stage1_result(
     """Produce a Tyler-native Stage 1 artifact for Stage 4 prompt rendering.
 
     Canonical Stage 4 should depend on Tyler Stage 1 directly. If the persisted
-    Tyler artifact is missing, regenerate it from the original question instead
-    of rebuilding it from the legacy `QuestionDecomposition` projection.
+    Tyler artifact is missing, regenerate it from the original question rather
+    than reconstructing a deleted compatibility decomposition surface.
     """
 
     from grounded_research.decompose import decompose_question_tyler_v1

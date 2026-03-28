@@ -647,7 +647,7 @@ async def verify_disputes_tyler_v1(
     max_disputes: int = 5,
     max_budget: float = 2.0,
 ) -> tuple[VerificationResult, list[VerificationWarning], int]:
-    """Run Tyler's Stage 5 artifact without depending on projected ClaimLedger."""
+    """Run Tyler's Stage 5 artifact without depending on deleted ledger projections."""
     original_query = bundle.question.text if bundle.question else ""
     if stage_1_result is not None:
         tyler_stage1 = stage_1_result

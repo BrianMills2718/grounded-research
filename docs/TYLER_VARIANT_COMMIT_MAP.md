@@ -96,6 +96,19 @@ Use when you need:
 - the last commit range before the remaining current-shape model/helper surfaces
   became the only compatibility debt left in `main`
 
+### Current-shape model surface deletion
+
+- `dfa85dd` Validate Tyler Stage 1 without current-shape adapters
+- `a9f31ee` Delete legacy verification and anonymization helpers
+- `4e2ea43` Delete current-shape model classes
+
+Use when you need:
+
+- the boundary where `QuestionDecomposition`, `AnalystRun`, and `ClaimLedger`
+  disappeared from `models.py`
+- the first `main` state where the Stage 3 quality floor lives only on
+  canonical Tyler `AnalysisObject`s
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

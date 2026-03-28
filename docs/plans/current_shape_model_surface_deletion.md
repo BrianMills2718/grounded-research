@@ -1,6 +1,6 @@
 # Current-Shape Model Surface Deletion
 
-**Status:** Planned
+**Status:** Completed
 **Purpose:** Delete the remaining current-shape model/helper surfaces so
 `main` keeps one canonical Tyler-native runtime and one canonical vocabulary.
 
@@ -45,6 +45,26 @@ This wave is complete only if:
 6. targeted decomposition/verification/anonymization/phase-boundary tests pass
 7. active docs describe the remaining compatibility policy truthfully and do
    not treat current-shape models as co-equal runtime contracts
+
+## Completed
+
+- `dfa85dd` Validate Tyler Stage 1 without current-shape adapters
+- `a9f31ee` Delete legacy verification and anonymization helpers
+- `4e2ea43` Delete current-shape model classes
+
+Verified:
+
+- `python -m py_compile src/grounded_research/decompose.py src/grounded_research/verify.py src/grounded_research/canonicalize.py src/grounded_research/anonymize.py src/grounded_research/analysts.py src/grounded_research/models.py tests/test_tyler_v1_stage1_runtime.py tests/test_verify.py tests/test_anonymize.py tests/test_tyler_v1_stage3_runtime.py tests/test_engine_fixture_loading.py tests/test_export.py tests/test_tyler_v1_stage5_6_adapters.py`
+- `./.venv/bin/python -m pytest tests/test_tyler_v1_stage1_runtime.py tests/test_tyler_v1_stage4_adapters.py tests/test_engine_fixture_loading.py tests/test_phase_boundaries.py -q`
+- `./.venv/bin/python -m pytest tests/test_verify.py tests/test_anonymize.py tests/test_phase_boundaries.py -q`
+- `./.venv/bin/python -m pytest tests/test_tyler_v1_stage3_runtime.py tests/test_engine_fixture_loading.py tests/test_export.py tests/test_tyler_v1_stage5_6_adapters.py tests/test_phase_boundaries.py -q`
+- `./.venv/bin/python -m pytest tests/test_verify.py tests/test_canonicalize.py tests/test_prompt_templates.py -q`
+
+Outcome:
+
+- `main` no longer defines or imports `QuestionDecomposition`, `AnalystRun`, or `ClaimLedger`
+- the Stage 3 quality floor moved to canonical Tyler `AnalysisObject` validation
+- remaining cutover debt is now narrower Stage 5 internal current-shape protocol debt
 
 ## Ordered Phases
 

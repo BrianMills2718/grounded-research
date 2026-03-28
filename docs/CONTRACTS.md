@@ -18,8 +18,8 @@ Current runtime note:
 - Tyler-literal artifacts are the canonical runtime and export contract
 - legacy `FinalReport`, legacy downstream handoff, and Stage 1/3 runtime
   projections are gone from the live path
-- remaining compatibility debt is limited to current-shape model/helper
-  surfaces under active deletion, not public outputs
+- remaining repo-local compatibility debt is limited to a narrow internal
+  Stage 5 protocol layer under active cutover, not public outputs
 
 It is the bridge between:
 
