@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from grounded_research.config import get_fallback_models, get_model
-from grounded_research.models import DecompositionValidation, QuestionDecomposition, _make_id
+from grounded_research.models import DecompositionValidation, QuestionDecomposition
 from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import (
     normalize_tyler_decomposition_ids,
@@ -19,26 +19,6 @@ from grounded_research.tyler_v1_adapters import (
 from grounded_research.tyler_v1_models import DecompositionResult
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-
-
-async def decompose_question(
-    question: str,
-    trace_id: str,
-    max_budget: float = 0.5,
-    time_sensitivity: str = "mixed",
-) -> QuestionDecomposition:
-    """Decompose a research question into typed sub-questions.
-
-    Returns a QuestionDecomposition with core question, sub-questions,
-    optimization axes, and a research plan. Uses structured output to
-    guarantee schema compliance.
-    """
-    _tyler_result, current = await decompose_question_with_tyler_adapter(
-        question=question,
-        trace_id=trace_id,
-        max_budget=max_budget,
-    )
-    return current
 
 
 async def decompose_question_tyler_v1(
@@ -74,20 +54,6 @@ async def decompose_question_tyler_v1(
     return normalize_tyler_decomposition_ids(result)
 
 
-async def decompose_question_with_tyler_adapter(
-    question: str,
-    trace_id: str,
-    max_budget: float = 0.5,
-) -> tuple[DecompositionResult, QuestionDecomposition]:
-    """Produce a Tyler-native decomposition and an adapted current-runtime copy."""
-    tyler_result = await decompose_question_tyler_v1(
-        question=question,
-        trace_id=trace_id,
-        max_budget=max_budget,
-    )
-    return tyler_result, tyler_decomposition_to_current(tyler_result)
-
-
 async def validate_decomposition(
     question: str,
     decomposition: QuestionDecomposition,
@@ -121,25 +87,6 @@ async def validate_decomposition(
     return result
 
 
-async def decompose_with_validation(
-    question: str,
-    trace_id: str,
-    max_budget: float = 0.5,
-    time_sensitivity: str = "mixed",
-) -> tuple[QuestionDecomposition, DecompositionValidation | None]:
-    """Decompose a question and validate the result. Retry once if verdict is 'revise'.
-
-    Returns (decomposition, validation). Validation is None if skipped.
-    """
-    _tyler_result, current, validation = await decompose_with_validation_tyler_v1(
-        question=question,
-        trace_id=trace_id,
-        max_budget=max_budget,
-        time_sensitivity=time_sensitivity,
-    )
-    return current, validation
-
-
 async def decompose_with_validation_tyler_v1(
     question: str,
     trace_id: str,
@@ -153,6 +100,7 @@ async def decompose_with_validation_tyler_v1(
     and downstream migration slices that still depend on the shipped contract.
     """
     import logging
+    del time_sensitivity
 
     logger = logging.getLogger(__name__)
 
