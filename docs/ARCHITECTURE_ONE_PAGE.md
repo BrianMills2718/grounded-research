@@ -25,8 +25,9 @@ Current runtime note:
 
 - the live runtime now also persists Tyler-native Stage 1-6 artifacts
 - legacy structured-report and handoff outputs are gone from the live runtime
-- remaining compatibility debt is concentrated in internal Stage 3/4/5
-  projections, not public export surfaces
+- Stage 1/3 projections are also gone from the live runtime path
+- remaining compatibility debt is now isolated helper/test/migration code, not
+  public export surfaces
 
 ## System Boundary
 
@@ -121,12 +122,15 @@ Input:
 
 Output:
 
-- `list[AnalystRun]`
+- Tyler `AnalysisObject[]`
+- `Stage3AttemptTrace[]`
 
 Purpose:
 
 - run 3 independent analyses with different reasoning frames
-- force explicit claims, assumptions, recommendations, and counterarguments
+- force explicit claims, assumptions, recommendation, and counterargument
+- preserve execution visibility without storing a second semantic Stage 3
+  contract in pipeline state
 
 Preferred frame set after the core slice is stable:
 
@@ -142,12 +146,11 @@ Non-negotiable:
 
 Input:
 
-- `list[AnalystRun]`
+- Tyler `AnalysisObject[]`
 
 Output:
 
-- `ClaimLedger`
-- `list[Dispute]`
+- Tyler `ClaimExtractionResult`
 
 Purpose:
 
@@ -176,14 +179,12 @@ Rule:
 
 Input:
 
-- `ClaimLedger`
-- `list[Dispute]`
+- Tyler `ClaimExtractionResult`
 - `EvidenceBundle`
 
 Output:
 
-- updated `ClaimLedger`
-- `list[ArbitrationResult]`
+- Tyler `VerificationResult`
 
 Purpose:
 
@@ -205,8 +206,7 @@ Input:
 
 - `ResearchQuestion`
 - `EvidenceBundle`
-- `ClaimLedger`
-- `list[Dispute]`
+- Tyler `VerificationResult`
 
 Output:
 
@@ -233,14 +233,12 @@ Rule:
 - `SourceRecord`
 - `EvidenceItem`
 - `EvidenceBundle`
-- `AnalystRun`
-- `RawClaim`
-- `Claim`
-- `Assumption`
-- `Dispute`
-- `VerificationQueryBatch`
-- `ArbitrationResult`
-- `ClaimLedger`
+- Tyler `DecompositionResult`
+- Tyler `EvidencePackage`
+- Tyler `AnalysisObject`
+- `Stage3AttemptTrace`
+- Tyler `ClaimExtractionResult`
+- Tyler `VerificationResult`
 - Tyler `SynthesisReport`
 - Tyler-native downstream handoff
 - `PipelineWarning`

@@ -70,6 +70,20 @@ Use when you need:
 - the commit boundary where the ignored Stage 4 compatibility return and dead
   Stage 5 current-ledger adapter were removed
 
+### Stage 1/3 live runtime projection cutover
+
+- `754f6f8` Clarify Stage 1/3 cutover phases and rollback policy
+- `96bff31` Make Stage 2 consume Tyler Stage 1 directly
+- `05304e0` Make legacy decomposition explicit-only in fixture mode
+- `c81f20b` Replace runtime AnalystRun state with Stage 3 attempt traces
+- `332827f` Prove Stage 4 live path runs from Tyler Stage 3 inputs
+- `ba1c449` Remove live QuestionDecomposition dependency from runtime
+
+Use when you need:
+
+- the boundary where Stage 1/3 projections stopped participating in the live runtime
+- the first `main` state where the engine consumes Tyler Stage 1/2/3 directly
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

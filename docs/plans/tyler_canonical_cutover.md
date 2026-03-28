@@ -79,9 +79,9 @@ Second-wave debt:
 
 Current highest-value remaining debt:
 
-- Tyler Stage 1 still projects into `QuestionDecomposition` for collection and fixture orchestration
-- Tyler Stage 3 still projects `AnalysisObject` into `AnalystRun` in the live path
-- `PipelineState` still stores `analyst_runs` alongside the canonical Tyler Stage 3 artifacts
+- isolated compatibility APIs still exist for Stage 1 current-shape decomposition helpers
+- isolated compatibility APIs still exist for the legacy `AnalystRun`-based analyst path
+- isolated compatibility helpers still exist around current-shape claim extraction / adapter conversions
 
 ## Execution Order
 
@@ -187,11 +187,16 @@ Completed so far:
 - export validation and `summary.md` now treat Tyler Stage 6 as the primary
   validated/rendered summary surface instead of the projected `FinalReport`
 
-Still remaining in this slice:
+Completed since the original write-up:
 
-- Stage 1/3 runtime projections still drive parts of collection, fixture loading,
-  and human-readable phase summaries
-- `PipelineState` still stores `analyst_runs` alongside the canonical Tyler outputs
+- Stage 1/3 runtime projections no longer drive collection, fixture loading, or
+  human-readable phase summaries
+- `PipelineState` no longer stores `analyst_runs`; it stores only canonical
+  Tyler Stage 3 results plus `stage3_attempts`
+
+Next child wave:
+
+- `docs/plans/isolated_compatibility_surface_deletion.md`
 
 ## Next 24 Hours
 

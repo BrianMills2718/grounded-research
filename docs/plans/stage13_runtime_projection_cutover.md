@@ -1,6 +1,6 @@
 # Stage 1/3 Runtime Projection Cutover
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Decide and execute the remaining cutover from legacy
 `QuestionDecomposition` / `AnalystRun` runtime projections to Tyler Stage 1/3
 artifacts as the only live orchestration surfaces.
@@ -51,6 +51,29 @@ This wave is complete only if:
 3. the live engine no longer needs projected `AnalystRun` to run
 4. active docs describe Tyler Stage 1/3 as the live orchestration contract
 5. fixture, collection, analyst, and phase-boundary tests pass on the new path
+
+## Result
+
+Completed. The live runtime now:
+
+1. consumes Tyler Stage 1/2/3 artifacts directly
+2. derives sufficiency from Tyler Stage 2 instead of current decomposition
+3. stores `stage3_attempts` instead of projected `analyst_runs`
+4. drives live Stage 4 from Tyler Stage 3 artifacts
+5. fails loud on legacy `decomposition.json` runtime input
+
+Verified by:
+
+- `37 passed` for Stage 3 attempt-trace and boundary coverage
+- `64 passed` for engine/fixture/canonicalize/verify/export/phase-boundary integration
+
+Key commits:
+
+- `96bff31` Make Stage 2 consume Tyler Stage 1 directly
+- `05304e0` Make legacy decomposition explicit-only in fixture mode
+- `c81f20b` Replace runtime AnalystRun state with Stage 3 attempt traces
+- `332827f` Prove Stage 4 live path runs from Tyler Stage 3 inputs
+- `ba1c449` Remove live QuestionDecomposition dependency from runtime
 
 ## Ordered Phases
 

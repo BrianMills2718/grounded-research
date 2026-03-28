@@ -63,9 +63,10 @@ Current implementation frontier:
 - execute `docs/plans/tyler_canonical_cutover.md`
 - treat `docs/plans/legacy_export_surface_deletion.md` as completed
 - treat `docs/plans/stage45_projection_deletion.md` as completed
-- execute `docs/plans/stage13_runtime_projection_cutover.md` as the current
-  child wave under that cutover
-- remove compatibility/runtime adapter debt aggressively
+- treat `docs/plans/stage13_runtime_projection_cutover.md` as completed
+- execute `docs/plans/isolated_compatibility_surface_deletion.md` as the
+  current child wave under that cutover
+- remove isolated compatibility/runtime adapter debt aggressively
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes
 
@@ -157,10 +158,9 @@ shows a clear grounded-research-specific bottleneck.
 The next 24 hours of work should be treated as three explicit buckets:
 
 1. `grounded-research`
+   - finish Tyler canonical cutover by deleting non-live compatibility APIs
    - preserve the saved dense-dedup benchmark anchor
    - preserve the completed depth-wave and sectioned-synthesis behavior
-   - do not open a new repo-local plan until a completed benchmark provides a
-     clear diagnosis
 2. shared runtime
    - land any remaining `llm_client` durability/query follow-through on `main`
    - keep runtime policy and observability improvements shared, not local

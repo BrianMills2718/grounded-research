@@ -5,7 +5,7 @@ This note answers one narrow question:
 > Is the current `grounded-research` runtime implementing Tyler's
 > `tyler_response_20260326/` prompts and schemas literally?
 
-Answer: **repo-local runtime parity is implemented, and repo-local quality
+Answer: **repo-local live runtime parity is implemented, and repo-local quality
 recovery is materially successful, but full Tyler closure is still not
 complete**.
 
@@ -15,7 +15,7 @@ contract wiring. It is benchmark quality and explicit shared-infra boundaries.
 
 Full Tyler closure is still not complete because:
 
-- current compatibility projections still exist for downstream surfaces
+- isolated compatibility APIs still exist outside the live runtime path
 - provider/model/search assumptions that Tyler specified remain explicit
   shared-infra gaps outside this repo
 - the Tyler-native path still trails the saved dense-dedup anchor slightly even
@@ -42,8 +42,8 @@ through Stage 6.
 
 Remaining non-literal gaps are now narrower:
 
-1. current compatibility projections still coexist with the Tyler-native
-   runtime artifacts
+1. isolated compatibility APIs still coexist with the Tyler-native runtime
+   artifacts
 2. benchmark-optimal dense-dedup output still differs slightly from the
    Tyler-native path
 3. Tyler's provider/model/search assumptions are not wired literally in this
@@ -54,9 +54,9 @@ Remaining non-literal gaps are now narrower:
 | Surface | Tyler literal contract | Current repo | Literal parity |
 |---|---|---|---|
 | Shared enums | `EvidenceLabel`, `DisputeType`, `ClaimStatus`, `DisputeStatus`, `ConfidenceLevel`, `ResolutionOutcome` | Tyler schema enums now live in `tyler_v1_models.py` and drive the Tyler-native runtime stages | Yes |
-| Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | live runtime now produces and persists `PipelineState.tyler_stage_1_result`; current `QuestionDecomposition` is a compatibility projection | Yes (runtime), compatibility projection remains |
+| Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | live runtime now produces and persists `PipelineState.tyler_stage_1_result`; current `QuestionDecomposition` is no longer a live runtime contract | Yes (runtime) |
 | Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | live runtime now produces and persists `PipelineState.tyler_stage_2_result`; current `EvidenceBundle` remains the retrieval substrate and compatibility surface | Yes (runtime), compatibility substrate remains |
-| Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | live runtime now produces and persists `PipelineState.tyler_stage_3_results`; current `AnalystRun` is an explicit projection | Yes (runtime), compatibility projection remains |
+| Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | live runtime now produces and persists `PipelineState.tyler_stage_3_results`; runtime trace stores only `stage3_attempts` for observability and no longer stores projected `AnalystRun` | Yes (runtime) |
 | Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; current `ClaimLedger` is an explicit downstream projection | Yes (runtime), compatibility projection remains |
 | Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; current ledger/arbitration surfaces are compatibility projections | Yes (runtime), compatibility projection remains |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; markdown renders directly from Tyler Stage 6 and legacy `FinalReport` export has been removed | Yes (runtime) |
@@ -77,10 +77,10 @@ Remaining non-literal gaps are now narrower:
 
 ## Exact Remaining Non-Literal Gaps That Matter
 
-### 1. Compatibility projections still coexist
+### 1. Isolated compatibility APIs still coexist
 
-The live runtime is Tyler-native, but the repo still keeps compatibility
-projections for:
+The live runtime is Tyler-native, but the repo still keeps isolated
+compatibility APIs for:
 
 - `QuestionDecomposition`
 - `EvidenceBundle`
@@ -88,7 +88,7 @@ projections for:
 - `ClaimLedger`
 
 These no longer define the live Tyler runtime. The remaining active debt is
-internal projection scaffolding, not public export compatibility.
+isolated helper/test/migration scaffolding, not public export compatibility.
 
 ### 2. Provider and model assumptions are not literal
 

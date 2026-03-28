@@ -37,25 +37,21 @@ See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
 When invoked with a question (`python engine.py "question"`):
 
 ```
-Question → decompose_with_validation() → QuestionDecomposition
-    ↓ (retry once if verdict = "revise")
-Sub-questions → generate_search_queries() per SQ → Brave Search → fetch pages (parallel)
+Question → decompose_with_validation_tyler_v1() → Tyler Stage 1 `DecompositionResult`
+    ↓ (validation may still trigger one retry)
+Sub-questions → generate_search_queries() per Tyler `Q-*` → Brave Search → fetch pages (parallel)
     ↓
 score_source_quality() → quality tiers on sources
     ↓
-Evidence sufficiency check per sub-question → gaps added
+Tyler Stage 2 `EvidencePackage` + sufficiency check per sub-question → gaps added
     ↓
 compress_evidence() if > threshold → reduced bundle
     ↓
-run_analysts() → 3 independent analyst roles × 3 frames (parallel)
-    ↓ (evidence leakage check)
-extract_raw_claims() → strip hallucinated evidence IDs
-    ↓
-deduplicate_claims() → canonical claims (fallback: 1:1 if dedup fails)
-    ↓
-detect_disputes() → severity classification → DISPUTE_ROUTING
+run_analysts_tyler_v1() → Tyler Stage 3 `AnalysisObject[]` + `stage3_attempts`
+    ↓ (evidence leakage check on Tyler Stage 3 text)
+canonicalize_tyler_v1() → Tyler Stage 4 `ClaimExtractionResult`
     ↓ (user steering: preference/ambiguity disputes, TTY only)
-verify_disputes() → fresh evidence search → arbitration (decision-critical only)
+verify_disputes_tyler_v1() → Tyler Stage 5 `VerificationResult`
     ↓ (position shuffling, ADR-0004 invariant: fresh evidence required)
 generate_tyler_synthesis_report() → Tyler SynthesisReport (canonical structured export)
     ↓
@@ -89,7 +85,7 @@ Current operational notes:
   the remaining explicit gap is a slight divergence from the dense-dedup anchor
   plus shared-infra/provider-model differences outside this repo
 - current local implementation frontier is canonical Tyler cutover: delete
-  compatibility/runtime adapter debt and keep one canonical runtime path
+  isolated compatibility/runtime adapter debt and keep one canonical runtime path
 - canonical successful exports now center Tyler Stage 6 plus Tyler-native
   downstream handoff artifacts; legacy structured-report and handoff surfaces
   are no longer part of the live runtime path
@@ -141,7 +137,11 @@ Current open work is intentionally narrow:
 - canonical Tyler-literal cutover:
   `docs/plans/tyler_canonical_cutover.md`
 - current child wave under that cutover:
-  `docs/plans/legacy_export_surface_deletion.md`
+  `docs/plans/isolated_compatibility_surface_deletion.md`
+- completed child waves under that cutover:
+  `docs/plans/legacy_export_surface_deletion.md`,
+  `docs/plans/stage45_projection_deletion.md`,
+  `docs/plans/stage13_runtime_projection_cutover.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`
@@ -207,6 +207,15 @@ path when practical. Output contracts stay the same regardless of mode.
 
 These phases are sequencing and acceptance boundaries, not a required concrete
 runtime topology.
+
+Historical note:
+
+- the detailed Phase 2a/2b/3a/3b/3c write-ups below predate the Tyler-native
+  cutover and are retained mainly as design history
+- the live runtime contract is the Tyler Stage 1-6 topology described above
+- where those older sections mention `AnalystRun` or direct raw-claim
+  extraction, read them as archived compatibility context rather than the
+  canonical current path
 
 ### Phase -1: Thesis Falsification
 
@@ -597,7 +606,7 @@ Each prompt is a YAML/Jinja2 template in `prompts/`, loaded via
 
 | Prompt file | Phase | Input variables | Output schema |
 |---|---|---|---|
-| `analyst.yaml` | 2 | `question: ResearchQuestion`, `evidence: list[EvidenceItem]`, `frame: AnalystFrame` | `AnalystRun` (structured output) |
+| `analyst.yaml` | legacy compatibility only | `question: ResearchQuestion`, `evidence: list[EvidenceItem]`, `frame: AnalystFrame` | `AnalystRun` (not part of the live runtime path) |
 | `dedup.yaml` | 3b | `raw_claims: list[RawClaim]` | equivalence class grouping → `list[Claim]` |
 | `dispute_classify.yaml` | 3c | `claims: list[Claim]` | dispute list with `DisputeType` per conflict |
 | `arbitration.yaml` | 4 | `dispute: Dispute`, `claims: list[Claim]`, `evidence: list[EvidenceItem]`, `new_evidence: list[EvidenceItem]` | `ArbitrationResult` |

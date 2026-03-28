@@ -13,13 +13,13 @@ evidence bundle.
 
 Current runtime note:
 
-- the live runtime now also persists Tyler-native Stage 1-6 artifacts in
+- the live runtime now persists Tyler-native Stage 1-6 artifacts in
   `PipelineState`
-- Tyler-literal artifacts are the canonical export contract
-- legacy `FinalReport` and legacy downstream handoff surfaces have been removed
-  from the live runtime path
-- remaining compatibility projections are limited to internal Stage 3/4/5
-  migration debt, not public outputs
+- Tyler-literal artifacts are the canonical runtime and export contract
+- legacy `FinalReport`, legacy downstream handoff, and Stage 1/3 runtime
+  projections are gone from the live path
+- remaining compatibility debt is limited to isolated helper/test/migration
+  APIs, not public outputs
 
 It is the bridge between:
 
@@ -57,37 +57,17 @@ raw question or imported bundle
         ▼
 Phase 1  Ingest
 in:  question text + optional upstream bundle
-out: EvidenceBundle
+out: EvidenceBundle + Tyler Stage 1/2 artifacts
         │
         ▼
-Phase 2a Single Analyst
-in:  ResearchQuestion + EvidenceBundle
-out: AnalystRun
+Phase 2  Analyze
+in:  ResearchQuestion + EvidenceBundle + Tyler Stage 1/2
+out: Tyler `AnalysisObject[]` + `Stage3AttemptTrace[]`
         │
         ▼
-Phase 2b Three Analysts
-in:  ResearchQuestion + EvidenceBundle
-out: list[AnalystRun]
-        │
-        ▼
-Phase 3a Claim Extraction
-in:  list[AnalystRun]
-out: list[RawClaim]
-        │
-        ▼
-Phase 3b Deduplication
-in:  list[RawClaim]
-out: list[Claim]
-        │
-        ▼
-Phase 3c Ledger + Disputes
-in:  list[Claim]
-out: ClaimLedger
-        │
-        ▼
-Phase 4a Verification Query Generation
-in:  list[Dispute]
-out: list[VerificationQueryBatch]
+Phase 3  Canonicalize
+in:  Tyler `AnalysisObject[]`
+out: Tyler `ClaimExtractionResult`
         │
         ▼
 Phase 4b Tyler Verification
@@ -110,7 +90,7 @@ Minimum trace expectations:
 
 - original normalized question if available
 - imported evidence bundle if available
-- analyst runs, including failed runs where possible
+- Stage 3 attempt traces, including failed runs where possible
 - Tyler Stage 4/5/6 artifacts if canonicalization, verification, and export succeeded
 - warnings
 - per-phase trace entries
@@ -134,22 +114,18 @@ Examples:
 - verification query cap reached: stop generating more queries, warn, continue
 - export grounding failure: fail the export stage loudly
 
-### Analyst Success Contract
+### Stage 3 Success Contract
 
-An `AnalystRun` counts as successful only if:
+A Tyler Stage 3 attempt counts as successful only if:
 
-- `error is None`
-- it includes at least one recommendation
-- it includes at least one counterargument
-- it includes at least one claim, with depth-specific minimums from config
-- claims have non-empty evidence IDs
-- counterarguments have non-empty evidence IDs
+- it produces a valid Tyler `AnalysisObject`
+- the normalized result preserves the assigned `model_alias` and reasoning frame
+- the attempt trace records success with a non-negative `claim_count`
 
 Current explicit nuance:
 
-- full evidence-reference resolution against the active `EvidenceBundle` is
-  still enforced at the stage boundary and Tyler-native runtime path, not in
-  the standalone `AnalystRun` model validator
+- the older standalone `AnalystRun` validator still exists only for isolated
+  compatibility helpers and tests; it is not the live Stage 3 runtime contract
 
 ### Routing Contract
 
@@ -173,7 +149,7 @@ This is a validation experiment rather than a pipeline phase.
 | Field | Value |
 |---|---|
 | Input | `question: str` + imported evidence payload |
-| Output | 3 `AnalystRun`-shaped outputs (or equivalent analyst artifacts) + minimal claim extraction artifact + manual disagreement review |
+| Output | 3 analyst artifacts (or equivalent) + minimal claim extraction artifact + manual disagreement review |
 | Success | Disagreements are not mostly framing noise; at least some are decision-relevant |
 | Failure | Analysts mostly restate each other; disagreement signal is weak |
 | Trace expectation | enough metadata to compare analysts, inspect minimal extracted claims, and record manual review outcome |
@@ -237,66 +213,27 @@ Verified high-level surfaces:
 Exact adapter field mapping should remain provisional until a real ingest slice
 is wired and tested against a committed sample.
 
-## Phase 2a: Single Analyst
+## Phase 2: Analyze
 
 | Field | Value |
 |---|---|
-| Input | `ResearchQuestion` + `EvidenceBundle` |
-| Output | `AnalystRun` |
-| Success | parses to valid `AnalystRun`; claims reference real evidence IDs; at least one claim and one recommendation are expected in live mode |
-| Failure | malformed structured output; invalid evidence references; empty critical sections in live mode |
-| LLM calls | 1 structured call |
-| Trace | assigned frame, model, success/failure, summary |
-
-## Phase 2b: Three Independent Analysts
-
-| Field | Value |
-|---|---|
-| Input | `ResearchQuestion` + `EvidenceBundle` |
-| Output | `list[AnalystRun]` |
-| Success | at least 2 successful analysts; different frames assigned; no analyst output contaminates another analyst input |
+| Input | `ResearchQuestion` + `EvidenceBundle` + Tyler Stage 1/2 |
+| Output | Tyler `AnalysisObject[]` + `Stage3AttemptTrace[]` |
+| Success | at least 2 successful Tyler analysis objects; different frames assigned; no analyst output contaminates another analyst input |
 | Failure | fewer than 2 successful analysts |
 | LLM calls | 3 structured calls in parallel |
-| Trace | all analyst traces preserved, including failed ones |
+| Trace | all `stage3_attempts` preserved, including failed ones |
 
-## Phase 3a: Claim Extraction
-
-| Field | Value |
-|---|---|
-| Input | `list[AnalystRun]` |
-| Output | `list[RawClaim]` |
-| Success | every `RawClaim` traces to an `AnalystRun`; no provenance loss |
-| Failure | invented claims or loss of analyst provenance |
-| LLM calls | ideally 0 in the first slice, since `AnalystRun.claims` already exist |
-| Trace | raw claim count by analyst |
-
-## Phase 3b: Deduplication
+## Phase 3: Canonicalize
 
 | Field | Value |
 |---|---|
-| Input | `list[RawClaim]` |
-| Output | `list[Claim]` |
-| Success | source raw claim IDs preserved; analyst sources preserved; near-identical claims merge conservatively |
-| Failure | over-merge, under-merge, or lost provenance |
-| LLM calls | 1 structured call |
-| Trace | raw-claim count, canonical-claim count, merge summary |
-
-Failure semantics:
-
-- malformed dedup output is a loud failure for the sub-slice
-- do not silently substitute heuristic dedup logic
-
-## Phase 3c: Ledger Assembly and Dispute Detection
-
-| Field | Value |
-|---|---|
-| Input | `list[Claim]` |
-| Output | `ClaimLedger` |
-| Success | disputes reference real claim IDs; routes match `DISPUTE_ROUTING`; no phantom disputes survive review |
-| Failure | invalid claim references; routes that disagree with the code-owned table |
-| LLM calls | 1 structured dispute-classification call |
-| Code-owned | ID assignment, routing, ledger assembly |
-| Trace | dispute count by type and route |
+| Input | Tyler `AnalysisObject[]` + Tyler Stage 1 |
+| Output | Tyler `ClaimExtractionResult` |
+| Success | claim ledger, assumption set, and dispute queue are structurally coherent and source-grounded |
+| Failure | malformed or empty extraction output when Stage 3 clearly produced extractable assertions |
+| LLM calls | 1 structured call plus retry only on explicit Stage 4 failure modes |
+| Trace | claim count, dispute count, and per-model statistics from Tyler Stage 4 |
 
 ## Phase 4: Verification and Arbitration (Agentic)
 
@@ -311,13 +248,13 @@ Phase 4 uses `llm_client`'s `python_tools` agent loop (`acall_llm` with
 
 | Field | Value |
 |---|---|
-| Input | one `Dispute` + its `Claim` objects + relevant `EvidenceItem` context |
-| Output | `ArbitrationResult` + `list[EvidenceItem]` (newly found) |
-| Success | arbitration references newly retrieved evidence; claim updates consistent with verdict; dispute resolution status set |
+| Input | one Tyler dispute + its Stage 4 claim entries + relevant evidence context |
+| Output | Tyler `VerificationResult` updates + `AdditionalSource[]` |
+| Success | arbitration references newly retrieved evidence; claim updates consistent with resolution; dispute status set |
 | Failure | verdict without new evidence where new evidence was required; tool errors that prevent search; budget exhaustion before meaningful search |
 | Execution mode | agentic — `acall_llm(..., python_tools=[...], max_turns=N)` |
-| Code-owned | applying `ArbitrationResult.claim_updates` to ledger; marking disputes resolved; validating new evidence IDs |
-| Trace | tool calls made, queries searched, evidence found, arbitration verdict, cost |
+| Code-owned | applying Tyler `ClaimStatusUpdate`s to the Stage 4 ledger; marking disputes resolved; validating new evidence IDs |
+| Trace | tool calls made, queries searched, additional sources found, arbitration resolution, cost |
 
 ### Agent tools for Phase 4
 
