@@ -59,6 +59,13 @@ def _make_result(label: str, claim_count: int) -> AnalystRun:
         frame="verification_first",
         model="test-model",
         claims=claims,
+        recommendations=[
+            {
+                "statement": "Recommendation",
+                "supporting_claim_ids": [claim["id"] for claim in claims[:3]],
+                "conditions": "Default recommendation conditions.",
+            }
+        ],
         counterarguments=[{"target": "recommendation", "argument": "Counterargument", "evidence_ids": ["E-00000001"]}],
         summary="Summary",
         completed_at=datetime.now(timezone.utc),

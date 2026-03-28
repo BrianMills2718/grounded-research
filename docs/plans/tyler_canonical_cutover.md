@@ -196,6 +196,23 @@ Default policy should require:
 
 Depth-specific minimum claim counts may remain configurable.
 
+Completed:
+
+- successful `AnalystRun` artifacts now require:
+  - no error
+  - at least one recommendation
+  - at least one counterargument
+  - at least one claim, with depth-specific minimums from config
+  - non-empty claim evidence IDs
+  - non-empty counterargument evidence IDs
+- defaults are now config-backed under `analyst_success`
+
+Explicit remaining nuance:
+
+- full evidence-reference resolution against the active `EvidenceBundle` is still
+  enforced at the stage boundary and Tyler-native runtime path, not inside the
+  standalone `AnalystRun` model validator
+
 ## Failure Modes
 
 | Failure mode | What it looks like | Response |

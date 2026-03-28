@@ -145,6 +145,17 @@ analysis_coverage:
   analyst_retry_min_claim_ratio: 0.75
   analyst_retry_max_attempts: 1
 
+analyst_success:
+  require_claim: true
+  require_recommendation: true
+  require_counterargument: true
+  require_claim_evidence_ids: true
+  require_counterargument_evidence_ids: true
+  min_claims_by_depth:
+    standard: 1
+    deep: 2
+    thorough: 3
+
 tyler_literal_parity:
   stage4_retry_on_empty_claims: true
   stage4_retry_model: "openrouter/google/gemini-2.5-flash"

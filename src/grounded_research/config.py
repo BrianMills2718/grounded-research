@@ -233,6 +233,31 @@ def get_analysis_coverage_config() -> dict[str, int | float | bool]:
     return defaults
 
 
+def get_analyst_success_config() -> dict[str, Any]:
+    """Get structural analyst-success policy with quality-first defaults.
+
+    A successful analyst run should represent a minimally usable analytical
+    artifact, not just an exception-free response. The runtime still allows
+    failures to be preserved as `error != None` trace artifacts.
+    """
+    cfg = load_config()
+    configured = cfg.get("analyst_success", {})
+    defaults: dict[str, Any] = {
+        "require_claim": True,
+        "require_recommendation": True,
+        "require_counterargument": True,
+        "require_claim_evidence_ids": True,
+        "require_counterargument_evidence_ids": True,
+        "min_claims_by_depth": {
+            "standard": 1,
+            "deep": 2,
+            "thorough": 3,
+        },
+    }
+    defaults.update(configured)
+    return defaults
+
+
 def get_tyler_literal_parity_config() -> dict[str, Any]:
     """Get Tyler literal-parity runtime safety policy with config overrides.
 

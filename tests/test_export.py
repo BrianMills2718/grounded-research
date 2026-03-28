@@ -1074,8 +1074,8 @@ async def test_generate_tyler_synthesis_report_requires_canonical_stage2() -> No
         )
 
 
-def test_successful_analyst_run_requires_counterarguments() -> None:
-    """Successful analyst outputs must carry at least one counterargument."""
+def test_successful_analyst_run_requires_quality_minimums() -> None:
+    """Successful analyst outputs must meet the configured structural floor."""
     with pytest.raises(ValueError):
         AnalystRun(
             analyst_label="Alpha",

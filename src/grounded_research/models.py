@@ -461,12 +461,45 @@ class AnalystRun(BaseModel):
         return self.error is None
 
     @model_validator(mode="after")
-    def _validate_counterarguments_when_successful(self) -> "AnalystRun":
-        """Require counterarguments only for successful analyst outputs."""
-        if self.error is None and not self.counterarguments:
+    def _validate_success_requirements(self) -> "AnalystRun":
+        """Require quality-minimum structure for successful analyst outputs."""
+        if self.error is not None:
+            return self
+
+        from grounded_research.config import get_analyst_success_config, load_config
+
+        policy = get_analyst_success_config()
+        depth_name = str(load_config().get("depth", "standard"))
+        min_claims_by_depth = policy.get("min_claims_by_depth", {})
+        min_claims = int(min_claims_by_depth.get(depth_name, min_claims_by_depth.get("standard", 1)))
+
+        if bool(policy.get("require_claim", True)) and len(self.claims) < min_claims:
+            raise ValueError(
+                f"Successful AnalystRun outputs must include at least {min_claims} claim(s) at depth `{depth_name}`."
+            )
+        if bool(policy.get("require_recommendation", True)) and not self.recommendations:
+            raise ValueError(
+                "Successful AnalystRun outputs must include at least one recommendation."
+            )
+        if bool(policy.get("require_counterargument", True)) and not self.counterarguments:
             raise ValueError(
                 "Successful AnalystRun outputs must include at least one counterargument."
             )
+        if bool(policy.get("require_claim_evidence_ids", True)):
+            claim_without_evidence = next((claim.id for claim in self.claims if not claim.evidence_ids), None)
+            if claim_without_evidence is not None:
+                raise ValueError(
+                    f"Successful AnalystRun claim {claim_without_evidence} must cite at least one evidence ID."
+                )
+        if bool(policy.get("require_counterargument_evidence_ids", True)):
+            counter_without_evidence = next(
+                (counter.target for counter in self.counterarguments if not counter.evidence_ids),
+                None,
+            )
+            if counter_without_evidence is not None:
+                raise ValueError(
+                    "Successful AnalystRun counterarguments must cite at least one evidence ID."
+                )
         return self
 
 
