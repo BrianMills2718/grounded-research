@@ -23,6 +23,8 @@ messages:
       OUTPUT VALIDATION:
       1. executive_recommendation must reference at least one claim ID from the claim ledger excerpt.
       2. preserved_alternatives must not include alternatives whose supporting claims have been refuted.
+      3. decision_relevant_tradeoffs must not be empty. If one path dominates, surface the most decision-relevant tradeoff anyway: certainty vs scope, short-term labor effects vs broader welfare gains, universal vs targeted design, or immediate adoption vs further validation.
+      4. if unresolved disputes exist, disagreement_map must include them.
 
       These are the only two anti-patterns checked automatically in V1. The following are evaluation criteria, not runtime checks — but you should still avoid them:
       3. EVIDENCE LAUNDERING: Making a claim in the recommendation that cannot be traced back to a specific source in the evidence trail.
@@ -44,6 +46,7 @@ messages:
       - Evidence trail should make source support inspectable without becoming exhaustive.
       - Evidence gaps should name what would materially improve the recommendation.
       - If a minority alternative survives, explain why it survives.
+      - If the default recommendation is not universally preferred, preserved_alternatives should include at least one viable alternative and the conditions under which it becomes preferable.
       - Keep the recommendation concrete enough that the user could act on it.
       - The output should be concise enough to read, but complete enough to audit.
 

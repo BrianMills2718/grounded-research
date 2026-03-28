@@ -246,6 +246,10 @@ def get_tyler_literal_parity_config() -> dict[str, Any]:
         "stage4_retry_on_empty_claims": True,
         "stage4_retry_model": "openrouter/google/gemini-2.5-flash",
         "stage4_retry_fallback_models": ["openrouter/openai/gpt-5-nano"],
+        "stage6_repair_on_underfilled_fields": True,
+        "stage6_repair_attempts": 1,
+        "stage6_min_tradeoffs": 1,
+        "stage6_min_preserved_alternatives": 1,
     }
     defaults.update(configured)
     return defaults

@@ -21,6 +21,7 @@ from grounded_research.config import (
     get_export_policy_config,
     get_fallback_models,
     get_model,
+    get_tyler_literal_parity_config,
 )
 from grounded_research.models import (
     ClaimLedger,
@@ -206,6 +207,32 @@ def _ensure_unresolved_disputes_in_report(report: FinalReport, ledger: ClaimLedg
     return report
 
 
+def _validate_tyler_synthesis_report(
+    report: SynthesisReport,
+    *,
+    unresolved_dispute_ids: set[str],
+    min_tradeoffs: int,
+    min_preserved_alternatives: int,
+) -> list[str]:
+    """Return repair feedback for underfilled Tyler Stage 6 outputs."""
+    errors: list[str] = []
+    if len(report.decision_relevant_tradeoffs) < min_tradeoffs:
+        errors.append(
+            "decision_relevant_tradeoffs is underfilled. Add concrete decision tradeoffs tied to the recommendation and evidence."
+        )
+    if len(report.preserved_alternatives) < min_preserved_alternatives:
+        errors.append(
+            "preserved_alternatives is underfilled. Preserve at least one viable alternative when different conditions would rationally change the recommendation."
+        )
+    disagreement_ids = {entry.dispute_id for entry in report.disagreement_map}
+    missing_unresolved = sorted(unresolved_dispute_ids - disagreement_ids)
+    if missing_unresolved:
+        errors.append(
+            "disagreement_map is missing unresolved disputes: " + ", ".join(missing_unresolved)
+        )
+    return errors
+
+
 async def generate_tyler_synthesis_report(
     state: PipelineState,
     *,
@@ -220,6 +247,7 @@ async def generate_tyler_synthesis_report(
     assert state.tyler_stage_5_result is not None
     assert state.evidence_bundle is not None
     assert state.question is not None
+    parity_policy = get_tyler_literal_parity_config()
 
     if state.tyler_stage_1_result is not None:
         tyler_stage1 = state.tyler_stage_1_result
@@ -378,16 +406,55 @@ async def generate_tyler_synthesis_report(
         response_schema_json=SynthesisReport.model_json_schema(),
     )
 
-    report, _meta = await acall_llm_structured(
-        get_model("synthesis"),
-        messages,
-        response_model=SynthesisReport,
-        task="synthesis_tyler_v1",
-        trace_id=f"{trace_id}/synthesis_tyler_v1",
-        timeout=get_request_timeout("synthesis"),
-        max_budget=max_budget,
-        fallback_models=get_fallback_models("synthesis"),
-    )
+    unresolved_dispute_ids = {
+        dispute.id
+        for dispute in stage_5_result.updated_dispute_queue
+        if dispute.status is not None and dispute.status.value == "unresolved"
+    }
+
+    async def _generate_once(feedback: list[str], suffix: str) -> SynthesisReport:
+        prompt_messages = messages
+        if feedback:
+            prompt_messages = prompt_messages + [
+                {
+                    "role": "user",
+                    "content": "Repair feedback for the previous draft:\n- " + "\n- ".join(feedback),
+                }
+            ]
+        report, _meta = await acall_llm_structured(
+            get_model("synthesis"),
+            prompt_messages,
+            response_model=SynthesisReport,
+            task="synthesis_tyler_v1",
+            trace_id=f"{trace_id}/synthesis_tyler_v1{suffix}",
+            timeout=get_request_timeout("synthesis"),
+            max_budget=max_budget,
+            fallback_models=get_fallback_models("synthesis"),
+        )
+        return report
+
+    report = await _generate_once(feedback=[], suffix="")
+    if bool(parity_policy.get("stage6_repair_on_underfilled_fields", True)):
+        max_repairs = int(parity_policy.get("stage6_repair_attempts", 1))
+        for attempt in range(1, max_repairs + 1):
+            repair_feedback = _validate_tyler_synthesis_report(
+                report,
+                unresolved_dispute_ids=unresolved_dispute_ids,
+                min_tradeoffs=int(parity_policy.get("stage6_min_tradeoffs", 1)),
+                min_preserved_alternatives=int(
+                    parity_policy.get("stage6_min_preserved_alternatives", 1)
+                ),
+            )
+            if not repair_feedback:
+                break
+            _LOG.warning(
+                "Tyler Stage 6 synthesis underfilled critical fields; retrying once. errors=%s",
+                repair_feedback,
+            )
+            report = await _generate_once(
+                feedback=repair_feedback,
+                suffix=f"/repair_{attempt}",
+            )
     return report
 
 

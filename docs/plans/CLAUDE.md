@@ -24,6 +24,7 @@
 | [tyler_literal_parity_benchmark_reanchor.md](tyler_literal_parity_benchmark_reanchor.md) | Completed | Post-migration benchmark gate for the fully Tyler-native runtime is complete: the runtime is stable end-to-end, but the tracked UBI rerun still regressed in usefulness after local mechanical fixes. |
 | [tyler_literal_prompt_quality_recovery.md](tyler_literal_prompt_quality_recovery.md) | In Progress | Next 24-hour Tyler-native wave: audit literal prompt fidelity stage by stage, repair the weakest local stages, and rerun the same tracked benchmark gate. |
 | [tyler_stage3_model_role_recovery.md](tyler_stage3_model_role_recovery.md) | In Progress | Gate-time execution slice under Tyler prompt-quality recovery: closest-available Stage 3 role parity, removal of DeepSeek from the primary analyst path, and rerun of the tracked UBI fixture. |
+| [tyler_stage6_decision_guidance_recovery.md](tyler_stage6_decision_guidance_recovery.md) | In Progress | Next gate-time slice after Stage 3 recovery: repair underfilled Tyler Stage 6 decision fields and rerun the tracked UBI fixture against the dense-dedup anchor. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |
