@@ -19,7 +19,7 @@ from grounded_research.config import (
     get_model,
     get_tyler_literal_parity_config,
 )
-from grounded_research.models import EvidenceBundle, ArbitrationResult, Claim, Dispute, RawClaim, DISPUTE_ROUTING
+from grounded_research.models import EvidenceBundle, Claim, Dispute, RawClaim, DISPUTE_ROUTING
 from grounded_research.tyler_v1_adapters import normalize_tyler_claim_extraction_result
 from grounded_research.tyler_v1_models import (
     ClaimExtractionResult as TylerClaimExtractionResult,

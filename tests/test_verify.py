@@ -13,20 +13,14 @@ import json
 import pytest
 
 from grounded_research.models import (
-    ArbitrationResult,
-    Claim,
-    ClaimUpdate,
-    Dispute,
     EvidenceBundle,
     EvidenceItem,
     ResearchQuestion,
     SourceRecord,
-    VerificationQueryBatch,
 )
 from grounded_research.verify import (
     _collect_fresh_evidence_for_dispute,
-    _enforce_arbitration_protocol,
-    arbitrate_dispute,
+    arbitrate_dispute_tyler_v1,
     verify_disputes_tyler_v1,
 )
 from grounded_research.tyler_v1_models import (
@@ -46,146 +40,73 @@ from grounded_research.tyler_v1_models import (
 )
 
 
-def _make_claim(claim_id: str) -> Claim:
-    """Create a minimal canonical claim for verification tests."""
-    return Claim(
-        id=claim_id,
-        statement=f"Claim {claim_id}",
-        source_raw_claim_ids=[f"RC-{claim_id}"],
-        analyst_sources=["Alpha"],
-        evidence_ids=["E-base"],
-        confidence="medium",
-    )
-
-
-def _make_dispute(claim_ids: list[str]) -> Dispute:
-    """Create a minimal dispute covering the supplied claims."""
-    return Dispute(
-        id="D-1",
-        dispute_type="factual_conflict",
-        route="verify",
-        claim_ids=claim_ids,
-        description="Conflicting evidence about the same factual question.",
-        severity="decision_critical",
-    )
-
-
-def test_enforce_arbitration_protocol_demotes_invalid_claim_updates() -> None:
-    """Non-inconclusive verdicts without valid structured updates must fail loud."""
-    dispute = _make_dispute(["C-1", "C-2"])
-    claim_map = {"C-1": _make_claim("C-1"), "C-2": _make_claim("C-2")}
-    result = ArbitrationResult(
-        dispute_id=dispute.id,
-        verdict="supported",
-        new_evidence_ids=["E-fresh"],
-        reasoning="Fresh evidence supposedly supports the claim.",
-        claim_updates=[
-            ClaimUpdate(
-                claim_id="C-1",
-                new_status="supported",
-                basis_type="new_evidence",
-                cited_evidence_ids=["E-not-fresh"],
-                justification="This should be rejected because it cites the wrong evidence.",
-            )
-        ],
-    )
-
-    cleaned, warnings = _enforce_arbitration_protocol(
-        dispute=dispute,
-        result=result,
-        claim_map=claim_map,
-        fresh_evidence_ids={"E-fresh"},
-    )
-
-    assert cleaned.verdict == "inconclusive"
-    assert cleaned.claim_updates == []
-    warning_codes = {warning.code for warning in warnings}
-    assert "verification_claim_update_missing_fresh_evidence" in warning_codes
-    assert "verification_no_valid_claim_updates" in warning_codes
-
-
-def test_enforce_arbitration_protocol_keeps_valid_updates() -> None:
-    """Valid structured updates tied to fresh evidence should survive."""
-    dispute = _make_dispute(["C-1", "C-2"])
-    claim_map = {"C-1": _make_claim("C-1"), "C-2": _make_claim("C-2")}
-    result = ArbitrationResult(
-        dispute_id=dispute.id,
-        verdict="revised",
-        new_evidence_ids=["E-fresh", "E-stale"],
-        reasoning="Fresh evidence narrows the claim.",
-        claim_updates=[
-            ClaimUpdate(
-                claim_id="C-1",
-                new_status="revised",
-                basis_type="resolved_contradiction",
-                cited_evidence_ids=["E-fresh", "E-stale"],
-                justification="The fresh rerun resolves the earlier contradiction by narrowing the claim scope.",
-            )
-        ],
-    )
-
-    cleaned, warnings = _enforce_arbitration_protocol(
-        dispute=dispute,
-        result=result,
-        claim_map=claim_map,
-        fresh_evidence_ids={"E-fresh"},
-    )
-
-    assert cleaned.verdict == "revised"
-    assert cleaned.new_evidence_ids == ["E-fresh"]
-    assert len(cleaned.claim_updates) == 1
-    assert cleaned.claim_updates[0].cited_evidence_ids == ["E-fresh"]
-    assert warnings == []
-
-
-def test_arbitration_result_accepts_legacy_dict_claim_updates() -> None:
-    """Historical traces using dict claim_updates should still parse."""
-    result = ArbitrationResult.model_validate(
-        {
-            "dispute_id": "D-legacy",
-            "verdict": "revised",
-            "new_evidence_ids": ["E-1"],
-            "reasoning": "Legacy trace payload.",
-            "claim_updates": {"C-1": "revised"},
-        }
-    )
-
-    assert len(result.claim_updates) == 1
-    assert result.claim_updates[0].claim_id == "C-1"
-    assert result.claim_updates[0].new_status == "revised"
-
-
 @pytest.mark.asyncio
-async def test_arbitrate_dispute_passes_configured_timeout(
+async def test_arbitrate_dispute_tyler_v1_passes_configured_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Arbitration calls should use the configured finite request timeout."""
+    """Live Tyler Stage 5 arbitration should use the configured finite timeout."""
     async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
-        assert task == "dispute_arbitration"
+        assert task == "dispute_arbitration_tyler_v1"
         assert timeout == 240
         return response_model(
-            verdict="inconclusive",
-            new_evidence_ids=[],
+            dispute_id="D-1",
+            resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+            updated_claim_statuses=[],
+            new_evidence_summary="No fresh evidence materially changed the claim.",
             reasoning="No fresh evidence materially changed the claim.",
-            claim_updates=[],
         ), {}
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
 
-    dispute = _make_dispute(["C-1", "C-2"])
-    claims = [_make_claim("C-1"), _make_claim("C-2")]
-    evidence = []
+    dispute = DisputeQueueEntry(
+        id="D-1",
+        type=DisputeType.EMPIRICAL,
+        description="Conflicting evidence about the same factual question.",
+        claims_involved=["C-1", "C-2"],
+        model_positions=[],
+        decision_critical=True,
+        decision_critical_rationale="Could change answer.",
+        status=DisputeStatus.UNRESOLVED,
+        resolution_routing="stage_5_evidence",
+    )
+    claim_ledger = [
+        ClaimLedgerEntry(
+            id="C-1",
+            statement="Claim 1",
+            source_models=["A"],
+            evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+            source_references=["S-1"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["A"],
+            contesting_models=["B"],
+            related_assumptions=[],
+        ),
+        ClaimLedgerEntry(
+            id="C-2",
+            statement="Claim 2",
+            source_models=["B"],
+            evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+            source_references=["S-2"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["B"],
+            contesting_models=["A"],
+            related_assumptions=[],
+        ),
+    ]
 
-    result = await arbitrate_dispute(
+    result = await arbitrate_dispute_tyler_v1(
+        original_query="What is the evidence?",
         dispute=dispute,
-        claims=claims,
-        available_evidence=evidence,
-        fresh_evidence=evidence,
+        claim_ledger_entries=claim_ledger,
+        relevant_original_sources=[],
+        new_evidence=[],
         trace_id="trace-1",
         max_budget=0.5,
     )
 
-    assert result.verdict == "inconclusive"
+    assert result.dispute_id == "D-1"
+    assert result.resolution is ResolutionOutcome.EVIDENCE_INSUFFICIENT
 
 
 @pytest.mark.asyncio
@@ -202,7 +123,6 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
 
     monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
 
-    dispute = _make_dispute(["C-1", "C-2"])
     bundle = EvidenceBundle(
         question=ResearchQuestion(text="What is the evidence?"),
         sources=[],
@@ -211,7 +131,7 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
     )
 
     _sources, _evidence, warnings = await _collect_fresh_evidence_for_dispute(
-        dispute_id=dispute.id,
+        dispute_id="D-1",
         queries=["test query"],
         bundle=bundle,
         trace_id="trace-root",

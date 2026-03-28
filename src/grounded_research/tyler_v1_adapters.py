@@ -13,7 +13,6 @@ from collections import Counter, defaultdict
 import logging
 import re
 
-from grounded_research.models import ArbitrationResult as RuntimeArbitrationResult, ClaimUpdate as RuntimeClaimUpdate
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
     AnalysisObject,
@@ -362,42 +361,6 @@ def normalize_tyler_claim_extraction_result(
             "statistics": stats,
         }
     )
-def tyler_assessment_to_current_arbitration(
-    assessment: ArbitrationAssessment,
-    additional_sources: list[AdditionalSource],
-) -> RuntimeArbitrationResult:
-    """Project one Tyler arbitration assessment into the shipped runtime artifact."""
-    verdict = {
-        ResolutionOutcome.CLAIM_SUPPORTED: "supported",
-        ResolutionOutcome.CLAIM_REFUTED: "refuted",
-        ResolutionOutcome.INTERPRETATION_REVISED: "revised",
-        ResolutionOutcome.EVIDENCE_INSUFFICIENT: "inconclusive",
-    }[assessment.resolution]
-
-    source_ids = [source.source_id for source in additional_sources if source.retrieved_for_dispute == assessment.dispute_id]
-    status_map = {
-        ClaimStatus.VERIFIED: "supported",
-        ClaimStatus.REFUTED: "refuted",
-        ClaimStatus.UNRESOLVED: "inconclusive",
-    }
-    return RuntimeArbitrationResult(
-        dispute_id=assessment.dispute_id,
-        verdict=verdict,
-        new_evidence_ids=source_ids,
-        reasoning=assessment.reasoning,
-        claim_updates=[
-            RuntimeClaimUpdate(
-                claim_id=update.claim_id,
-                new_status=status_map.get(update.new_status, "revised"),
-                basis_type="new_evidence",
-                cited_evidence_ids=source_ids,
-                justification=update.remaining_uncertainty or assessment.new_evidence_summary,
-            )
-            for update in assessment.updated_claim_statuses
-        ],
-    )
-
-
 def render_tyler_synthesis_markdown(report: SynthesisReport, original_query: str) -> str:
     """Render Tyler's structured synthesis artifact as the final markdown report."""
     lines = [

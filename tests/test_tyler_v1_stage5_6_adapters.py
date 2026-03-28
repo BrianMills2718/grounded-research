@@ -2,30 +2,17 @@
 
 from __future__ import annotations
 
-from grounded_research.tyler_v1_adapters import (
-    render_tyler_synthesis_markdown,
-    tyler_assessment_to_current_arbitration,
-)
+from grounded_research.tyler_v1_adapters import render_tyler_synthesis_markdown
 from grounded_research.tyler_v1_models import (
-    AdditionalSource,
-    ArbitrationAssessment,
-    ClaimLedgerEntry,
-    ClaimStatus,
-    ClaimStatusUpdate,
     ConfidenceAssessment,
     DisagreementMapEntry,
-    DisputeQueueEntry,
-    DisputeStatus,
     DisputeType,
-    EvidenceLabel,
     EvidenceTrailEntry,
     KeyAssumption,
     PreservedAlternative,
-    ResolutionOutcome,
     StageSummary,
     SynthesisReport,
     Tradeoff,
-    VerificationResult,
 )
 
 
@@ -38,40 +25,6 @@ def _stage_summary(name: str) -> StageSummary:
         outcome="outcome",
         reasoning="reasoning",
     )
-
-
-def test_tyler_assessment_to_current_arbitration_maps_resolution_and_sources() -> None:
-    assessment = ArbitrationAssessment(
-        dispute_id="D-1",
-        new_evidence_summary="Fresh evidence favored one side.",
-        reasoning="Reasoning",
-        resolution=ResolutionOutcome.CLAIM_SUPPORTED,
-        updated_claim_statuses=[
-            ClaimStatusUpdate(
-                claim_id="C-1",
-                new_status=ClaimStatus.VERIFIED,
-                confidence_in_resolution="high",
-                remaining_uncertainty=None,
-            )
-        ],
-    )
-    additional_sources = [
-        AdditionalSource(
-            source_id="S-99",
-            url="https://example.com/fresh",
-            title="Fresh source",
-            quality_score=0.8,
-            key_findings=["Fresh finding"],
-            retrieved_for_dispute="D-1",
-        )
-    ]
-
-    result = tyler_assessment_to_current_arbitration(assessment, additional_sources)
-
-    assert result.dispute_id == "D-1"
-    assert result.verdict == "supported"
-    assert result.new_evidence_ids == ["S-99"]
-    assert result.claim_updates[0].new_status == "supported"
 
 
 def test_tyler_synthesis_markdown_render() -> None:
