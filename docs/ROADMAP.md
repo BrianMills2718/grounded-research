@@ -61,6 +61,8 @@ Current stop line:
 Current implementation frontier:
 
 - execute `docs/plans/tyler_canonical_cutover.md`
+- execute `docs/plans/legacy_export_surface_deletion.md` as the current child
+  wave under that cutover
 - remove compatibility/runtime adapter debt aggressively
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes

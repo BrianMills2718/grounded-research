@@ -139,6 +139,8 @@ Current open work is intentionally narrow:
 
 - canonical Tyler-literal cutover:
   `docs/plans/tyler_canonical_cutover.md`
+- current child wave under that cutover:
+  `docs/plans/legacy_export_surface_deletion.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`
