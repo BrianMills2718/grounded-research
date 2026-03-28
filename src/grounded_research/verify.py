@@ -29,10 +29,7 @@ from grounded_research.models import (
     SourceRecord,
     VerificationQueryBatch,
 )
-from grounded_research.tyler_v1_adapters import (
-    normalize_tyler_claim_extraction_result,
-    tyler_stage5_to_current_ledger,
-)
+from grounded_research.tyler_v1_adapters import normalize_tyler_claim_extraction_result
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
     ArbitrationAssessment,

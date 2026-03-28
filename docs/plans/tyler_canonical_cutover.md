@@ -79,10 +79,9 @@ Second-wave debt:
 
 Current highest-value remaining debt:
 
+- Tyler Stage 1 still projects into `QuestionDecomposition` for collection and fixture orchestration
 - Tyler Stage 3 still projects `AnalysisObject` into `AnalystRun` in the live path
-- Tyler Stage 4/5/6 still project into `ClaimLedger` / `FinalReport`
-- `PipelineState` still stores compatibility artifacts as first-class siblings of
-  the Tyler-native stage artifacts
+- `PipelineState` still stores `analyst_runs` alongside the canonical Tyler Stage 3 artifacts
 
 ## Execution Order
 
@@ -190,9 +189,9 @@ Completed so far:
 
 Still remaining in this slice:
 
-- Stage 5 still projects `VerificationResult` into `ClaimLedger`
-- `PipelineState` still stores compatibility artifacts as first-class siblings
-  of the Tyler-native outputs
+- Stage 1/3 runtime projections still drive parts of collection, fixture loading,
+  and human-readable phase summaries
+- `PipelineState` still stores `analyst_runs` alongside the canonical Tyler outputs
 
 ## Next 24 Hours
 
@@ -314,12 +313,12 @@ Acceptance:
 
 Remaining ordered phases after this commit:
 
-1. isolate remaining compatibility-only export helpers behind explicit legacy
-   boundaries and stop presenting them as normal runtime surfaces
-2. determine whether any non-test consumer still needs `PipelineState.claim_ledger`
-   at all; the live engine and live verification path no longer do
-3. rerun the Tyler-native canonical benchmark/export path after the state cleanup
-   to prove the canonical path still works without the legacy projections
+1. remove the remaining live Stage 4/5 `ClaimLedger` projection debt from the
+   runtime path
+2. define and execute the Stage 1/3 runtime cutover away from
+   `QuestionDecomposition` and `AnalystRun`
+3. rerun the Tyler-native canonical benchmark/export path after the remaining
+   runtime projection cleanup
 
 ### Slice 4: Strict analyst success defaults
 

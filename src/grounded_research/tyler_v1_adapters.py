@@ -63,7 +63,6 @@ from grounded_research.tyler_v1_models import (
     SubQuestion as TylerSubQuestion,
     SubQuestionEvidence,
     Tradeoff,
-    VerificationResult,
 )
 
 _LOG = logging.getLogger(__name__)
@@ -936,16 +935,6 @@ def tyler_stage4_to_current_ledger(
     )
 
 
-def _tyler_claim_status_to_current(status: ClaimStatus) -> str:
-    """Project Tyler claim lifecycle states onto the shipped runtime statuses."""
-    return {
-        ClaimStatus.SUPPORTED: "supported",
-        ClaimStatus.VERIFIED: "supported",
-        ClaimStatus.REFUTED: "refuted",
-        ClaimStatus.UNRESOLVED: "inconclusive",
-    }.get(status, "initial")
-
-
 def tyler_assessment_to_current_arbitration(
     assessment: ArbitrationAssessment,
     additional_sources: list[AdditionalSource],
@@ -979,44 +968,6 @@ def tyler_assessment_to_current_arbitration(
             )
             for update in assessment.updated_claim_statuses
         ],
-    )
-
-
-def tyler_stage5_to_current_ledger(
-    verification_result: VerificationResult,
-    prior_ledger: ClaimLedger,
-) -> ClaimLedger:
-    """Project Tyler Stage 5 output into the shipped ClaimLedger contract."""
-    claim_map = {claim.id: claim.model_copy(deep=True) for claim in prior_ledger.claims}
-    for updated_claim in verification_result.updated_claim_ledger:
-        current_claim = claim_map.get(updated_claim.id)
-        if current_claim is None:
-            continue
-        current_claim.status = _tyler_claim_status_to_current(updated_claim.status)
-        current_claim.status_reason = f"Projected from Tyler Stage 5 status {updated_claim.status.value}."
-        claim_map[current_claim.id] = current_claim
-
-    dispute_map = {dispute.id: dispute.model_copy(deep=True) for dispute in prior_ledger.disputes}
-    for updated_dispute in verification_result.updated_dispute_queue:
-        current_dispute = dispute_map.get(updated_dispute.id)
-        if current_dispute is None:
-            continue
-        current_dispute.resolved = updated_dispute.status in {DisputeStatus.RESOLVED, DisputeStatus.DEFERRED_TO_USER}
-        current_dispute.resolution_summary = updated_dispute.decision_critical_rationale
-        dispute_map[current_dispute.id] = current_dispute
-
-    arbitration_results = [
-        tyler_assessment_to_current_arbitration(
-            assessment,
-            verification_result.additional_sources,
-        )
-        for assessment in verification_result.disputes_investigated
-    ]
-
-    return ClaimLedger(
-        claims=list(claim_map.values()),
-        disputes=list(dispute_map.values()),
-        arbitration_results=arbitration_results,
     )
 
 

@@ -62,8 +62,9 @@ Current implementation frontier:
 
 - execute `docs/plans/tyler_canonical_cutover.md`
 - treat `docs/plans/legacy_export_surface_deletion.md` as completed
-- execute `docs/plans/stage45_projection_deletion.md` as the current child wave
-  under that cutover
+- treat `docs/plans/stage45_projection_deletion.md` as completed
+- execute `docs/plans/stage13_runtime_projection_cutover.md` as the current
+  child wave under that cutover
 - remove compatibility/runtime adapter debt aggressively
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes

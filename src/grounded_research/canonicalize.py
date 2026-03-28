@@ -34,7 +34,6 @@ from grounded_research.tyler_v1_adapters import (
     build_tyler_alias_mapping,
     current_analyst_run_to_tyler_analysis,
     normalize_tyler_claim_extraction_result,
-    tyler_stage4_to_current_ledger,
 )
 from grounded_research.tyler_v1_models import (
     ClaimExtractionResult as TylerClaimExtractionResult,
@@ -104,14 +103,8 @@ async def canonicalize_tyler_v1(
     tyler_stage_3_alias_mapping: dict[str, str] | None = None,
     trace_id: str,
     max_budget: float = 1.0,
-) -> tuple[TylerClaimExtractionResult, ClaimLedger]:
-    """Run Tyler's literal Stage 4 contract and project it to the current ledger.
-
-    This is the primary migration path for the Stage 4 refactor. The Tyler
-    artifact is treated as the source of truth; the current ClaimLedger is an
-    explicit projection kept only so Stage 5 and Stage 6 can continue running
-    until their own migrations land.
-    """
+) -> TylerClaimExtractionResult:
+    """Run Tyler's literal Stage 4 contract and return only the canonical artifact."""
     from llm_client import acall_llm_structured, render_prompt
 
     successful_runs = [run for run in analyst_runs if run.succeeded]
@@ -227,13 +220,7 @@ async def canonicalize_tyler_v1(
                 "Tyler Stage 4 returned an empty claim ledger and assumption set "
                 f"after retry despite {stage4_input_assertions} upstream assertions."
             )
-    ledger = tyler_stage4_to_current_ledger(
-        normalized,
-        stage_3_results=tyler_stage3_results,
-        bundle=bundle,
-        alias_mapping=alias_mapping,
-    )
-    return normalized, ledger
+    return normalized
 
 
 # ---------------------------------------------------------------------------

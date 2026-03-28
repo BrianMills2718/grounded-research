@@ -192,7 +192,7 @@ async def run_pipeline(
         state.current_phase = "canonicalize"
         print("\n[Phase 3] Running Tyler Stage 4 claim extraction...")
 
-        tyler_stage_4_result, _compat_ledger = await canonicalize_tyler_v1(
+        tyler_stage_4_result = await canonicalize_tyler_v1(
             analyst_runs,
             bundle,
             decomposition=decomposition,

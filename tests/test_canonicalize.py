@@ -595,7 +595,7 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
 
-    result, ledger = await canonicalize_tyler_v1(
+    result = await canonicalize_tyler_v1(
         _tyler_stage4_analyst_runs(),
         _tyler_stage4_bundle(),
         decomposition=_tyler_stage4_decomposition(),
@@ -609,7 +609,6 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
         "claim_extraction_tyler_v1_retry",
     ]
     assert len(result.claim_ledger) == 1
-    assert len(ledger.claims) == 1
 
 
 @pytest.mark.asyncio
@@ -708,7 +707,7 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
 
-    result, ledger = await canonicalize_tyler_v1(
+    result = await canonicalize_tyler_v1(
         _tyler_stage4_analyst_runs(),
         _tyler_stage4_bundle(),
         decomposition=_tyler_stage4_decomposition(),
@@ -722,7 +721,6 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
         "claim_extraction_tyler_v1_retry",
     ]
     assert len(result.claim_ledger) == 1
-    assert len(ledger.claims) == 1
 
 
 @pytest.mark.asyncio

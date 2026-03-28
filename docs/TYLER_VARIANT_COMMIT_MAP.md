@@ -59,6 +59,15 @@ Use when you need:
 - the first `main` state with one Tyler-native export contract
 - the commit boundary where legacy structured report and handoff surfaces were removed
 
+### Stage 4/5 projection deletion
+
+- `d42f5f5` Record canonical export contract and next cutover wave
+
+Use when you need:
+
+- the documented boundary where export deletion closed and the next child wave opened
+- the starting point for removing internal `ClaimLedger` projection debt
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

@@ -6,7 +6,6 @@ from grounded_research.models import Claim, ClaimLedger, Dispute
 from grounded_research.tyler_v1_adapters import (
     render_tyler_synthesis_markdown,
     tyler_assessment_to_current_arbitration,
-    tyler_stage5_to_current_ledger,
 )
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
@@ -74,101 +73,6 @@ def test_tyler_assessment_to_current_arbitration_maps_resolution_and_sources() -
     assert result.verdict == "supported"
     assert result.new_evidence_ids == ["S-99"]
     assert result.claim_updates[0].new_status == "supported"
-
-
-def test_tyler_stage5_to_current_ledger_projects_statuses() -> None:
-    prior = ClaimLedger(
-        claims=[
-            Claim(
-                id="C-1",
-                statement="Claim one",
-                source_raw_claim_ids=["RC-1"],
-                analyst_sources=["Alpha"],
-                evidence_ids=["E-1"],
-            ),
-            Claim(
-                id="C-2",
-                statement="Claim two",
-                source_raw_claim_ids=["RC-2"],
-                analyst_sources=["Beta"],
-                evidence_ids=["E-2"],
-            ),
-        ],
-        disputes=[
-            Dispute(
-                id="D-1",
-                claim_ids=["C-1", "C-2"],
-                dispute_type="interpretive_conflict",
-                route="arbitrate",
-                description="Interpretation conflict",
-                severity="decision_critical",
-            )
-        ],
-        arbitration_results=[],
-    )
-    verification = VerificationResult(
-        disputes_investigated=[
-            ArbitrationAssessment(
-                dispute_id="D-1",
-                new_evidence_summary="Fresh evidence",
-                reasoning="Reasoning",
-                resolution=ResolutionOutcome.CLAIM_REFUTED,
-                updated_claim_statuses=[
-                    ClaimStatusUpdate(
-                        claim_id="C-1",
-                        new_status=ClaimStatus.REFUTED,
-                        confidence_in_resolution="medium",
-                        remaining_uncertainty=None,
-                    )
-                ],
-            )
-        ],
-        additional_sources=[
-            AdditionalSource(
-                source_id="S-99",
-                url="https://example.com/fresh",
-                title="Fresh source",
-                quality_score=0.8,
-                key_findings=["Fresh finding"],
-                retrieved_for_dispute="D-1",
-            )
-        ],
-        updated_claim_ledger=[
-            ClaimLedgerEntry(
-                id="C-1",
-                statement="Claim one",
-                source_models=["A"],
-                evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
-                source_references=["S-1"],
-                status=ClaimStatus.REFUTED,
-                supporting_models=["A"],
-                contesting_models=["B"],
-                related_assumptions=[],
-            )
-        ],
-        updated_dispute_queue=[
-            DisputeQueueEntry(
-                id="D-1",
-                type=DisputeType.INTERPRETIVE,
-                description="Interpretation conflict",
-                claims_involved=["C-1"],
-                model_positions=[],
-                decision_critical=True,
-                decision_critical_rationale="Changes answer",
-                status=DisputeStatus.RESOLVED,
-                resolution_routing="stage_5_arbitration",
-            )
-        ],
-        search_budget={"D-1": 3},
-        rounds_used=1,
-        stage_summary=_stage_summary("Stage 5"),
-    )
-
-    ledger = tyler_stage5_to_current_ledger(verification, prior)
-
-    assert ledger.claims[0].status == "refuted"
-    assert ledger.disputes[0].resolved is True
-    assert ledger.arbitration_results[0].verdict == "refuted"
 
 
 def test_tyler_synthesis_markdown_render() -> None:

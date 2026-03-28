@@ -1,6 +1,6 @@
 # Stage 4/5 Projection Deletion
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Remove the remaining live `ClaimLedger` compatibility projections
 from the Tyler-native runtime path so Stage 4 and Stage 5 expose only canonical
 Tyler artifacts in `main`.
@@ -52,6 +52,15 @@ This wave is complete only if:
    tests are deleted if they have no active runtime consumer
 4. targeted canonicalize/verify/phase-boundary/adapter tests pass
 5. active docs describe `ClaimLedger` projection debt precisely and narrowly
+
+Completed result:
+
+- `cda75c7` removed the live legacy export/runtime path
+- `ac78c5c` removed the remaining legacy export adapter debt
+- this wave removed the ignored Stage 4 compatibility ledger return and the
+  dead Stage 5 current-ledger adapter
+- targeted suites passed after the cut:
+  - `52 passed` across canonicalize, verify, adapter, and phase-boundary coverage
 
 ## Ordered Phases
 
