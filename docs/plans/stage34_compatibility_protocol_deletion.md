@@ -1,6 +1,6 @@
 # Stage 3/4 Compatibility Protocol Deletion
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Delete the dead current-shape Stage 3/4 utility path so the repo
 keeps one canonical Stage 4 vocabulary.
 
@@ -87,3 +87,20 @@ Files:
 | A deleted Stage 4 helper still backs a hidden runtime path | canonicalization or phase-boundary tests fail outside the old compatibility tests | restore only the minimal behavior needed for the live Tyler path, not the deleted helper API |
 | Test coverage drops below live Stage 4 needs | only old dedup tests were proving something still live | replace with Tyler Stage 4 tests rather than restoring current-shape utilities |
 | Docs still imply dual Stage 4 contracts | active docs mention current `Claim`/`Dispute` as live | rewrite immediately; do not leave mixed vocabulary in active docs |
+
+## Completed
+
+- `ecfbce9` Delete Stage 3/4 compatibility protocol surfaces
+
+Verified:
+
+- `python -m py_compile src/grounded_research/canonicalize.py src/grounded_research/models.py tests/test_canonicalize.py tests/test_tyler_v1_models.py`
+- `./.venv/bin/python -m pytest tests/test_canonicalize.py tests/test_tyler_v1_models.py tests/test_verify.py tests/test_export.py tests/test_phase_boundaries.py tests/test_prompt_templates.py -q`
+
+Outcome:
+
+- `canonicalize.py` exports only Tyler Stage 4 canonicalization helpers
+- `models.py` no longer defines the dead current-shape Stage 3/4 semantic
+  models or routing table
+- the old dense-dedup utility tests are gone
+- active repo-local compatibility debt is no longer in the live runtime code

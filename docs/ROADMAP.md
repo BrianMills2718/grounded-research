@@ -60,19 +60,16 @@ Current stop line:
 
 Current implementation frontier:
 
-- execute `docs/plans/tyler_canonical_cutover.md`
-- treat `docs/plans/legacy_export_surface_deletion.md` as completed
-- treat `docs/plans/stage45_projection_deletion.md` as completed
-- treat `docs/plans/stage13_runtime_projection_cutover.md` as completed
-- treat `docs/plans/isolated_compatibility_surface_deletion.md` as completed
-- treat `docs/plans/current_shape_model_surface_deletion.md` as completed
-- execute `docs/plans/stage5_internal_protocol_literalization.md` as the
-  current child wave under that cutover
-- treat `docs/plans/stage34_compatibility_protocol_deletion.md` as the next
-  child wave once the Stage 5 protocol surface is gone
-- remove the remaining internal current-shape Stage 5 protocol debt aggressively
+- treat `docs/plans/tyler_canonical_cutover.md` as completed for repo-local
+  runtime debt
 - preserve older tuned variants by commit references and eval-time comparison,
   not as co-equal runtime modes
+- do not reopen local compatibility deletion without a new benchmark-triggered
+  grounded-research-specific diagnosis
+- move the next concrete work into:
+  - `prompt_eval` for Tyler-literal vs calibrated-legacy comparison
+  - `llm_client` for model/runtime/observability follow-through
+  - `open_web_retrieval` for provider/search parity work
 
 See:
 
@@ -162,16 +159,16 @@ shows a clear grounded-research-specific bottleneck.
 The next 24 hours of work should be treated as three explicit buckets:
 
 1. `grounded-research`
-   - finish Tyler canonical cutover by deleting non-live compatibility APIs
-   - preserve the saved dense-dedup benchmark anchor
-   - preserve the completed depth-wave and sectioned-synthesis behavior
-2. shared runtime
+   - preserve the saved dense-dedup and Tyler-literal benchmark anchors
+   - keep active docs and commit-map references aligned with the now-complete
+     canonical cutover
+   - do not add new local runtime branches or legacy fallbacks
+2. shared evaluation
+   - compare Tyler-literal against calibrated legacy in `prompt_eval`
+   - treat prompt/model family comparison as eval-time work, not runtime modes
+3. shared runtime / retrieval
    - land any remaining `llm_client` durability/query follow-through on `main`
-   - keep runtime policy and observability improvements shared, not local
-3. shared retrieval / evaluation
-   - keep provider-adapter work in `open_web_retrieval`
-   - use `prompt_eval` for Gemini structured-output comparison before changing
-     execution policy here
+   - keep provider-adapter and search-stack work in `open_web_retrieval`
 
 ### Priority 4: Choose The Next Benchmark Wave Explicitly
 

@@ -67,21 +67,21 @@ DONE here may only partially satisfy the richer V1 contract.
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
 | 27 | Decompose analyses into atomic claims | KEEP | **DONE** | Tyler Stage 4 consumes Tyler `AnalysisObject[]` directly and emits canonical `ClaimExtractionResult`. |
-| 28 | Deduplicate claims across models | KEEP | **DONE** | `deduplicate_claims()` via LLM grouping. |
+| 28 | Deduplicate claims across models | KEEP | **DONE** | Tyler Stage 4 `ClaimExtractionResult` now owns canonical claim merging directly; the old `deduplicate_claims()` helper has been deleted from `main`. |
 | 29 | Assign global IDs & carry forward evidence labels | KEEP | **DONE** | C- prefix IDs, evidence_ids propagated through dedup. |
 | 30 | Evidence-label leakage check | DEFER | **DONE** | URL regex scan on analyst outputs emits `PipelineWarning` on leakage. |
-| 31 | Identify cross-model conflicts & classify dispute type | KEEP | **DONE** | `detect_disputes()` with 4 dispute types. |
+| 31 | Identify cross-model conflicts & classify dispute type | KEEP | **DONE** | Tyler Stage 4 now emits `dispute_queue` directly; the old `detect_disputes()` helper has been deleted from `main`. |
 | 32 | Assess decision-criticality per dispute | KEEP | **DONE** | Severity classification with schema-level guidance. Current shipped runtime distinguishes `decision_critical`, `notable`, and `minor` and uses that classification for routing/escalation. |
-| 33 | Compute resolution routing deterministically | KEEP | **DONE** | `DISPUTE_ROUTING` code-owned table. |
+| 33 | Compute resolution routing deterministically | KEEP | **DONE** | Tyler Stage 4 normalization computes deterministic routing mechanically from dispute type and criticality. |
 
 ## STAGE 5 — TARGETED VERIFICATION & ARBITRATION
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 34 | Generate counterfactual queries per disputed claim | KEEP | **DONE** | `generate_verification_queries()` produces search queries for disputed claims. |
+| 34 | Generate counterfactual queries per disputed claim | KEEP | **DONE** | Tyler Stage 5 generates dispute-focused fresh-evidence queries directly from decision-critical dispute context. |
 | 35 | Search for both supporting & disconfirming evidence | KEEP | **DONE** | Fresh evidence fetched via Brave Search during arbitration. |
-| 36 | Schema-driven single-turn critique per dispute | KEEP | **DONE** | `arbitrate_dispute()` with structured ArbitrationResult. |
-| 37 | Update claim statuses in ledger | KEEP | **DONE** | `ArbitrationResult.claim_updates` applied to ledger. |
+| 36 | Schema-driven single-turn critique per dispute | KEEP | **DONE** | Tyler Stage 5 arbitration emits structured `ArbitrationAssessment` inside `VerificationResult`. |
+| 37 | Update claim statuses in ledger | KEEP | **DONE** | Tyler `ClaimStatusUpdate`s are applied to the Stage 4 ledger to produce the Stage 5 updated ledger. |
 | 38 | Shuffle analyst positions to prevent primacy bias | CUT | **DONE** | `verify.py` shuffles claim order with fixed seed per dispute before arbitration. |
 | 39 | Enforce budget controls | SIMPLIFY | **DONE** | `max_disputes`, `max_turns` in config. No novelty detection. |
 

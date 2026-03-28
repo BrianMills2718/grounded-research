@@ -18,8 +18,8 @@ Current runtime note:
 - Tyler-literal artifacts are the canonical runtime and export contract
 - legacy `FinalReport`, legacy downstream handoff, and Stage 1/3 runtime
   projections are gone from the live path
-- remaining repo-local compatibility debt is limited to a narrow internal
-  Stage 5 protocol layer under active cutover, not public outputs
+- remaining differences from Tyler's exact intended stack are now shared-infra
+  or benchmark/eval concerns, not parallel repo-local runtime contracts
 
 It is the bridge between:
 
@@ -129,17 +129,16 @@ Current explicit nuance:
 
 ### Routing Contract
 
-Dispute routing is code-owned via `DISPUTE_ROUTING` in
-`src/grounded_research/models.py`.
+Dispute routing is code-owned during Tyler Stage 4 normalization.
 
 Current routing:
 
-- `factual_conflict -> verify`
-- `interpretive_conflict -> arbitrate`
-- `preference_conflict -> surface` (interactive user steering in TTY mode, auto-skip otherwise)
-- `ambiguity -> surface` (interactive user steering in TTY mode, auto-skip otherwise)
+- empirical + decision-critical -> `stage_5_evidence`
+- interpretive + decision-critical -> `stage_5_arbitration`
+- preference/spec ambiguity/other + decision-critical -> `stage_6_user_input`
+- non-decision-critical disputes -> `logged_only`
 
-The LLM may classify the dispute type.
+The LLM may classify dispute type and criticality.
 The route itself is not an LLM judgment.
 
 ## Phase -1: Thesis Falsification
@@ -273,35 +272,18 @@ inconclusive with a warning.
 
 ### Fallback for Phase -1 and early slices
 
-Before the agentic Phase 4 is wired, verification may use the simpler
-sub-slice pattern (Phase 4a: structured query generation + Phase 4b: structured
-arbitration). The output contract (`ArbitrationResult` + new evidence) is the
-same either way. The agentic version is the target design; the structured
-sub-slice is a stepping stone.
+This stepping-stone text is now historical only.
+The live runtime already executes Tyler-native Stage 5, so older
+`ArbitrationResult` / `VerificationQueryBatch` language should be read as
+archived implementation history rather than the current contract.
 
-### Phase 4 sub-slices (stepping stone)
+### Historical stepping-stone note
 
-These remain in the plan as the initial implementation path before the full
-agentic loop is wired:
-
-**Phase 4a: Verification Query Generation**
-
-| Field | Value |
-|---|---|
-| Input | verify-worthy `list[Dispute]` |
-| Output | `list[VerificationQueryBatch]` |
-| Success | each batch maps to a real dispute; queries specific enough to gather evidence |
-| LLM calls | 1 structured call or 1 per dispute |
-
-**Phase 4b: Arbitration and Ledger Update**
-
-| Field | Value |
-|---|---|
-| Input | Tyler `ClaimExtractionResult` + fresh `EvidencePackage` / `EvidenceItem` records |
-| Output | Tyler `VerificationResult` |
-| Success | every arbitration references new evidence; claim updates consistent with verdict |
-| LLM calls | 1 arbitration call per dispute |
-| Code-owned | applying `claim_updates`, dispute resolution flags, warning emission |
+Earlier implementation waves decomposed Phase 4 into query-generation and
+single-turn arbitration sub-slices while the agentic path was being proven.
+Those sub-slices are now historical only. The live contract is the Tyler-native
+Phase 4 contract above: decision-critical disputes in, Tyler
+`VerificationResult` plus additional sources out.
 
 ## Phase 5: Export
 
@@ -327,7 +309,8 @@ These are loud export failures, not silent warnings.
 
 ## Remaining Open Contract Questions
 
-- whether current-shape model classes should remain available for archived
-  traces after the active deletion wave lands
-- whether verification query generation should be one batch call or one call
-  per dispute in the first live implementation
+- whether Tyler-literal should merely beat cached Perplexity or must also match
+  the saved dense-dedup anchor before being treated as the uncontested best
+  benchmark profile
+- which exact quality-first model defaults should be preferred when Tyler's
+  ideal frontier stack is unavailable in shared infra

@@ -1,10 +1,10 @@
 # Tyler Canonical Cutover
 
-**Status:** In Progress
+**Status:** Completed (repo-local)
 **Purpose:** Remove the remaining compatibility/runtime adapter debt and make
 the Tyler-literal path the only canonical runtime in `grounded-research`.
 
-## Why This Plan Exists
+## Why This Plan Existed
 
 The repo now has Tyler-native Stage 1-6 runtime artifacts, but still keeps a
 meaningful amount of migration scaffolding alive:
@@ -77,12 +77,13 @@ Second-wave debt:
 - Tyler -> current projections for `AnalystRun`, `ClaimLedger`, `FinalReport`
 - old public/runtime docs still centered on compatibility artifacts
 
-Current highest-value remaining debt:
+Completed result:
 
-- current-shape model/helper surfaces still exist for Stage 1 validation
-- current-shape model/helper surfaces still exist for legacy verification/build helpers
-- current-shape model classes still exist in `models.py` even though the live
-  runtime no longer depends on them
+- repo-local compatibility/runtime adapter debt is no longer part of the live
+  Tyler path
+- `main` now keeps one canonical Tyler-literal runtime/export contract
+- historical variants are preserved by commit references and benchmark/eval
+  artifacts rather than co-equal runtime modes
 
 ## Execution Order
 
@@ -199,9 +200,11 @@ Completed child waves:
 
 - `docs/plans/isolated_compatibility_surface_deletion.md`
 
-Next child wave:
+Completed child waves:
 
 - `docs/plans/current_shape_model_surface_deletion.md`
+- `docs/plans/stage5_internal_protocol_literalization.md`
+- `docs/plans/stage34_compatibility_protocol_deletion.md`
 
 ## Next 24 Hours
 

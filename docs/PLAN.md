@@ -81,11 +81,13 @@ Current operational notes:
   explicit finite request timeouts for long runs
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
-- repo-local Tyler runtime migration and prompt-quality recovery are complete;
-  the remaining explicit gap is a slight divergence from the dense-dedup anchor
+- repo-local Tyler runtime migration, prompt-quality recovery, and canonical
+  cutover are complete
+- the remaining explicit gap is a slight divergence from the dense-dedup anchor
   plus shared-infra/provider-model differences outside this repo
-- current local implementation frontier is canonical Tyler cutover: delete the
-  remaining internal current-shape protocol debt and keep one canonical runtime path
+- there is no active repo-local compatibility-deletion wave left in `main`;
+  the next meaningful work is benchmark/eval comparison and shared-infra
+  follow-through
 - canonical successful exports now center Tyler Stage 6 plus Tyler-native
   downstream handoff artifacts; legacy structured-report and handoff surfaces
   are no longer part of the live runtime path
@@ -134,18 +136,19 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 Current open work is intentionally narrow:
 
-- canonical Tyler-literal cutover:
+- repo-local Tyler canonical cutover reference:
   `docs/plans/tyler_canonical_cutover.md`
-- current child wave under that cutover:
-  `docs/plans/stage5_internal_protocol_literalization.md`
-- next child wave after that:
-  `docs/plans/stage34_compatibility_protocol_deletion.md`
 - completed child waves under that cutover:
   `docs/plans/legacy_export_surface_deletion.md`,
   `docs/plans/stage45_projection_deletion.md`,
   `docs/plans/stage13_runtime_projection_cutover.md`,
   `docs/plans/isolated_compatibility_surface_deletion.md`,
-  `docs/plans/current_shape_model_surface_deletion.md`
+  `docs/plans/current_shape_model_surface_deletion.md`,
+  `docs/plans/stage5_internal_protocol_literalization.md`,
+  `docs/plans/stage34_compatibility_protocol_deletion.md`
+- there is currently no active repo-local implementation wave; the next
+  concrete work should be benchmark/eval comparison in `prompt_eval` and
+  shared-infra follow-through in `llm_client` / `open_web_retrieval`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

@@ -1,10 +1,14 @@
-"""Adapters between the shipped runtime models and Tyler V1 literal contracts.
+"""Normalization and rendering helpers for the Tyler-literal runtime.
 
-These adapters support the staged literal-parity migration. They make it
-possible to generate Tyler-native artifacts without forcing the whole runtime
-to switch contracts in one unsafe step. During the migration, Tyler-native
-artifacts are treated as the primary contract while the shipped runtime keeps
-receiving explicit projected copies where later phases still depend on them.
+The canonical runtime now persists Tyler Stage 1-6 artifacts directly. This
+module no longer exists to project between co-equal runtime contracts. Its job
+is narrower:
+
+- normalize Tyler artifacts after LLM generation so IDs and references are
+  deterministic and resolvable
+- keep routing/status transitions code-owned where Tyler expects deterministic
+  mechanical behavior
+- render Tyler Stage 6 structured state into markdown output
 """
 
 from __future__ import annotations
@@ -58,6 +62,8 @@ def normalize_tyler_decomposition_ids(result: DecompositionResult) -> Decomposit
         if not sub_question.id.startswith("Q-"):
             sub_question.id = f"Q-{idx}"
     return result
+
+
 def normalize_tyler_analysis_object(
     result: AnalysisObject,
     *,
@@ -123,6 +129,8 @@ def normalize_tyler_analysis_object(
             "evidence_used": evidence_used,
         }
     )
+
+
 def _ordered_unique(items: list[str]) -> list[str]:
     seen: set[str] = set()
     ordered: list[str] = []
@@ -131,6 +139,8 @@ def _ordered_unique(items: list[str]) -> list[str]:
             ordered.append(item)
             seen.add(item)
     return ordered
+
+
 def _compute_resolution_routing(dispute_type: DisputeType, decision_critical: bool) -> str:
     """Match Tyler's deterministic routing table from Stage 4."""
     if not decision_critical:

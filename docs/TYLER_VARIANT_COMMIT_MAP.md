@@ -109,6 +109,18 @@ Use when you need:
 - the first `main` state where the Stage 3 quality floor lives only on
   canonical Tyler `AnalysisObject`s
 
+### Final Stage 5 and Stage 3/4 protocol deletion
+
+- `fe31e8b` Delete Stage 5 compatibility protocol surfaces
+- `ecfbce9` Delete Stage 3/4 compatibility protocol surfaces
+
+Use when you need:
+
+- the boundary where the last live current-shape verification protocol types
+  disappeared from `main`
+- the first `main` state where Stage 4 and Stage 5 operate only on Tyler-native
+  semantic models
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

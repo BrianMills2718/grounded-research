@@ -8,10 +8,10 @@ disagree, models.py wins.
 
 Current runtime note:
 
-- this document indexes the remaining entities in `models.py` while the repo
-  finishes deleting current-shape compatibility surfaces
 - Tyler-native literal entities in `src/grounded_research/tyler_v1_models.py`
-  are the canonical runtime artifacts and now persist in `PipelineState`
+  are the canonical semantic runtime artifacts and persist in `PipelineState`
+- `models.py` now mostly holds support entities: evidence records, validation,
+  phase traces, Stage 3 attempt traces, and top-level pipeline state
 - if you need literal Tyler artifact shapes, consult
   `docs/TYLER_LITERAL_PARITY_AUDIT.md` and `tyler_v1_models.py`
 
@@ -21,12 +21,9 @@ Current runtime note:
 |--------|--------|
 | `S-` | SourceRecord |
 | `E-` | EvidenceItem |
-| `A-` | Assumption |
-| `AN-` | AnalystRun |
-| `RC-` | RawClaim |
-| `C-` | Claim (canonical) |
-| `D-` | Dispute |
-| `AR-` | ArbitrationResult |
+| `A-` | Tyler assumption IDs inside canonical artifacts |
+| `C-` | Tyler claim IDs inside canonical artifacts |
+| `D-` | Tyler dispute IDs inside canonical artifacts |
 
 IDs are trace-facing and human-readable, not content hashes.
 
@@ -36,12 +33,7 @@ IDs are trace-facing and human-readable, not content hashes.
 |------|--------|
 | `TimeSensitivity` | `stable`, `mixed`, `time_sensitive` |
 | `SourceType` | `government_db`, `court_record`, `news`, `academic`, `primary_document`, `web_search`, `social_media`, `platform_transparency`, `other` |
-| `QualityTier` | `authoritative`, `reliable`, `secondary`, `unknown` |
-| `ClaimStatus` | `initial`, `supported`, `revised`, `refuted`, `inconclusive` |
-| `DisputeType` | `factual_conflict`, `interpretive_conflict`, `preference_conflict`, `ambiguity` |
-| `DisputeRoute` | `verify`, `arbitrate`, `surface` |
-| `ArbitrationVerdict` | `supported`, `revised`, `refuted`, `inconclusive` |
-| `AnalystFrame` | `verification_first`, `structured_decomposition`, `step_back_abstraction`, `general` |
+| `QualityTier` | `authoritative`, `reliable`, `unknown`, `unreliable` |
 | `PipelinePhase` | `init`, `ingest`, `analyze`, `canonicalize`, `adjudicate`, `export`, `complete`, `failed` |
 
 ## Entity Relationships
@@ -52,23 +44,13 @@ ResearchQuestion
             ├─► SourceRecord (1:many)
             └─► EvidenceItem (1:many, each links to one SourceRecord)
 
-EvidenceBundle
-    └─► AnalystRun (1:3+, parallel, blind)
-            ├─► RawClaim (1:many)
-            ├─► Assumption (1:many)
-            ├─► Recommendation (1:many)
-            └─► Counterargument (1:many)
+EvidenceBundle + Tyler Stage 1/2
+    └─► Tyler AnalysisObject[] (1:3+, parallel, blind)
+            └─► Tyler ClaimExtractionResult
+                    └─► Tyler VerificationResult
+                            └─► Tyler SynthesisReport
 
-RawClaim ──dedup──► Claim (many:1, provenance preserved)
-
-Claim ──conflict──► Dispute (many:many, route code-owned)
-
-Dispute ──verify──► ArbitrationResult (1:1, cites new evidence)
-                        └─► claim_updates (updates Claim.status)
-
-ClaimLedger = claims + disputes + arbitration_results
-
-PipelineState = full trace (question + bundle + runs + ledger + report + warnings)
+PipelineState = full trace (question + bundle + Tyler stage artifacts + warnings)
 ```
 
 ## Planned-Future Entities
@@ -78,12 +60,14 @@ PipelineState = full trace (question + bundle + runs + ledger + report + warning
 
 ## Open Design Questions
 
-- When `AssumptionLedger` should be promoted from deferred to current
+- whether `models.py` should remain a mixed support-model + pipeline-state file
+  or be narrowed further now that semantic runtime contracts live in
+  `tyler_v1_models.py`
 
 ## Resolved Direction
 
 - Tyler-literal stage artifacts are the canonical runtime target
 - legacy structured-report and handoff outputs are already removed from the
   live runtime path
-- remaining current-shape model/helper surfaces are temporary migration debt
-  slated for deletion, not long-term co-equal APIs
+- historical current-shape artifacts are preserved only by commits and archived
+  docs, not as co-equal runtime APIs

@@ -1,6 +1,6 @@
 # Stage 5 Internal Protocol Literalization
 
-**Status:** In Progress
+**Status:** Completed
 **Purpose:** Remove the remaining current-shape internal protocol types from
 the live Tyler Stage 5 path so `main` keeps one canonical runtime vocabulary.
 
@@ -101,3 +101,20 @@ Files:
 | Tyler dispute protocol loses fail-loud checks | verification tests stop rejecting malformed updates or missing fresh evidence | port the existing protocol checks onto Tyler Stage 5 models directly; do not restore current-shape result models |
 | Search-budget accounting becomes implicit | `VerificationResult.search_budget` no longer matches dispute queries used | keep explicit per-dispute query counts in the new helper surface and assert them in tests |
 | A deleted compatibility helper still supports a real inspection need | tests or CLI output lose human-readable dispute summaries | rederive summaries from Tyler artifacts rather than restoring compatibility projections |
+
+## Completed
+
+- `fe31e8b` Delete Stage 5 compatibility protocol surfaces
+
+Verified:
+
+- `python -m py_compile src/grounded_research/verify.py src/grounded_research/models.py src/grounded_research/tyler_v1_adapters.py src/grounded_research/canonicalize.py tests/test_verify.py tests/test_tyler_v1_stage5_6_adapters.py`
+- `./.venv/bin/python -m pytest tests/test_verify.py tests/test_tyler_v1_stage5_6_adapters.py tests/test_export.py tests/test_phase_boundaries.py tests/test_canonicalize.py tests/test_prompt_templates.py -q`
+
+Outcome:
+
+- live Stage 5 no longer imports or returns current-shape `ArbitrationResult`,
+  `ClaimUpdate`, or `VerificationQueryBatch`
+- Stage 5 compatibility projection helpers are gone from the live code
+- the remaining repo-local cutover debt moved down to dead Stage 3/4
+  compatibility protocol surfaces
