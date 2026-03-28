@@ -15,47 +15,84 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
 
-def test_analyst_prompt_renders_with_source_metadata() -> None:
-    """Analyst prompt should render with source metadata and evidence context."""
+def test_tyler_analyst_prompt_renders_with_stage_inputs() -> None:
+    """Tyler Stage 3 prompt should render with canonical Stage 1/2 inputs."""
     messages = render_prompt(
-        str(PROMPTS_DIR / "analyst.yaml"),
-        question={
-            "text": "Should we adopt tool X for a latency-sensitive service?",
-            "time_sensitivity": "mixed",
-            "scope_notes": "Assume a small engineering team.",
+        str(PROMPTS_DIR / "tyler_v1_analyst.yaml"),
+        original_query="Should we adopt tool X for a latency-sensitive service?",
+        stage_1={
+            "core_question": "Should we adopt tool X for a latency-sensitive service?",
+            "sub_questions": [
+                {
+                    "id": "Q-1",
+                    "question": "What do the performance benchmarks show?",
+                    "type": "empirical",
+                    "research_priority": "high",
+                    "search_guidance": "benchmarks",
+                }
+            ],
+            "optimization_axes": ["latency vs reliability"],
+            "research_plan": {
+                "what_to_verify": ["performance claims"],
+                "critical_source_types": ["benchmarks"],
+                "falsification_targets": ["contradictory benchmark"],
+            },
+            "stage_summary": {
+                "stage_name": "Stage 1",
+                "goal": "goal",
+                "key_findings": ["k1", "k2", "k3"],
+                "decisions_made": ["d1"],
+                "outcome": "outcome",
+                "reasoning": "reasoning",
+            },
         },
-        source_records=[
-            {
-                "id": "S-1",
-                "title": "Official benchmark note",
-                "quality_tier": "authoritative",
-                "recency_score": 0.9,
-            }
-        ],
-        evidence=[
-            {
-                "id": "E-1",
-                "source_id": "S-1",
-                "content_type": "text",
-                "content": "Tool X handled 10k requests/second with p95 latency under 40ms.",
-                "relevance_note": "Direct performance evidence.",
-            }
-        ],
-        frame="verification_first",
-        sub_questions=[],
-        optimization_axes=[],
-        ambiguous_terms=[],
-        claim_target=8,
-        source_count=1,
-        evidence_count=1,
-        coverage_retry_note="",
+        stage_2={
+            "sub_question_evidence": [
+                {
+                    "sub_question_id": "Q-1",
+                    "sources": [
+                        {
+                            "id": "S-1",
+                            "url": "https://example.com/benchmark",
+                            "title": "Official benchmark note",
+                            "source_type": "official_docs",
+                            "quality_score": 0.9,
+                            "publication_date": "2026-01-01",
+                            "retrieval_date": "2026-03-28",
+                            "key_findings": [
+                                {
+                                    "finding": "Tool X handled 10k requests/second with p95 latency under 40ms.",
+                                    "evidence_label": "vendor_documented",
+                                    "original_quote": "Tool X handled 10k requests/second with p95 latency under 40ms.",
+                                }
+                            ],
+                        }
+                    ],
+                    "meets_sufficiency": True,
+                    "gap_description": None,
+                }
+            ],
+            "total_queries_used": 3,
+            "queries_per_sub_question": {"Q-1": 3},
+            "stage_summary": {
+                "stage_name": "Stage 2",
+                "goal": "goal",
+                "key_findings": ["k1", "k2", "k3"],
+                "decisions_made": ["d1"],
+                "outcome": "outcome",
+                "reasoning": "reasoning",
+            },
+        },
+        model_alias="A",
+        reasoning_frame="verification_first",
+        response_schema_json={"type": "object"},
     )
 
     assert len(messages) == 2
     assert "INDEPENDENCE PROTOCOL" in messages[0]["content"]
-    assert "Source Records" in messages[1]["content"]
-    assert "specific study, benchmark, organization, population, or numerical" in messages[1]["content"]
-    assert "approximately 8 distinct evidence-backed claims" in messages[1]["content"]
+    assert "Your model alias: A" in messages[1]["content"]
+    assert "DECOMPOSITION:" in messages[1]["content"]
+    assert "EVIDENCE PACKAGE:" in messages[1]["content"]
 
 
 def test_dedup_prompt_renders_with_conservative_merge_rules() -> None:
@@ -385,4 +422,3 @@ def test_source_scoring_prompt_renders_yaml_template() -> None:
     assert "Assign each source one quality tier" in messages[0]["content"]
     assert "Score the quality of each source" in messages[1]["content"]
     assert "S-1" in messages[1]["content"]
-
