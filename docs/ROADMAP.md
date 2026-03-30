@@ -66,10 +66,10 @@ Current implementation frontier:
   not as co-equal runtime modes
 - do not reopen local compatibility deletion without a new benchmark-triggered
   grounded-research-specific diagnosis
-- the first `prompt_eval` Tyler-literal vs calibrated-legacy comparison is now
-  complete
+- the first two frozen `prompt_eval` Tyler-literal vs calibrated-legacy
+  comparisons are now complete
 - the next concrete work is:
-  - expand the frozen comparison set in `prompt_eval`
+  - expand the frozen comparison set beyond the current `2` matched cases
   - land remaining `llm_client` and `open_web_retrieval` provider/model parity work
   - keep the one Tyler-internal Stage 2 prompt/schema ambiguity documented rather than papered over
 
@@ -179,14 +179,21 @@ Completed wave:
 - `docs/plans/tyler_literal_default_eval_wave1.md`
 - `docs/notebooks/29_tyler_literal_default_eval_wave1.ipynb`
 
-Wave 1 outcome:
+Wave 1 outcome (historical proof-of-concept):
 
 1. frozen manifest, harness, and saved outputs now exist
 2. `prompt_eval` completed the comparison end to end from saved outputs
 3. the result favored Tyler-literal over the archived calibrated legacy anchor
    on the tracked UBI case
-4. the remaining limit is explicit one-case coverage, not an ambiguous runtime
+4. at that point the remaining limit was explicit one-case coverage, not an ambiguous runtime
    choice
+
+Wave 2 outcome:
+
+1. PFAS now exists as a second matched Tyler-vs-legacy frozen case
+2. Tyler-literal was again favored over archived calibrated legacy
+3. the frozen-eval story is now two-case directional evidence, not one-case evidence
+4. the next eval frontier is breadth, not proof-of-concept
 
 Next shared-eval frontier:
 

@@ -14,7 +14,8 @@ few real gaps remain:
 
 - repo-local prompt literalness is now closed, with one documented Tyler
   Stage 2 schema/prompt ambiguity
-- frozen eval evidence still covers only one shared Tyler-vs-legacy case
+- frozen eval evidence now covers two matched Tyler-vs-legacy cases, but it is
+  still narrow directional evidence rather than broad proof
 - Tyler-specified provider/model parity still depends on shared infrastructure
 
 ## Non-Goals
@@ -92,6 +93,8 @@ Execution surface:
 
 ### Phase 2: Expand Frozen Eval Coverage
 
+**Status:** Completed
+
 Scope:
 
 - saved Tyler-literal benchmark outputs
@@ -116,6 +119,8 @@ Failure modes:
 - outputs are too heterogeneous to support a real paired comparison
 
 ### Phase 3: Lock Shared-Infra Parity Boundaries
+
+**Status:** Completed
 
 Scope:
 
@@ -154,7 +159,7 @@ Shared infra:
 
 Evaluation:
 
-1. frozen Tyler-vs-legacy comparison still has narrow coverage breadth
+1. frozen Tyler-vs-legacy comparison now has two-case directional coverage only
 
 ## Acceptance Rule
 

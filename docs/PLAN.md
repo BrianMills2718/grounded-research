@@ -157,13 +157,20 @@ Current open work is intentionally narrow:
 - the first frozen shared-eval comparison is complete:
   `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
   over the archived calibrated legacy anchor on the tracked UBI case
-- the remaining explicit uncertainty is coverage breadth of the frozen eval
-  set plus prompt-literalness closure for Stage 1/2/5, not runtime-contract
-  ambiguity in this repo
+- the second frozen shared-eval comparison is complete:
+  `output/tyler_literal_default_eval_wave2_pfas/summary.md` again favored
+  Tyler-literal over the archived calibrated legacy anchor on PFAS
+- the remaining explicit uncertainty is evaluation breadth beyond the current
+  two-case frozen set plus shared-infra provider/model parity, not
+  runtime-contract ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
-- active child wave:
-  `docs/plans/tyler_prompt_literalness_wave1.md`
+- there is currently no active repo-local implementation wave
+- completed eval-expansion wave:
+  `docs/plans/tyler_literal_default_eval_wave2.md`
+- supporting status notes:
+  `docs/TYLER_FROZEN_EVAL_STATUS.md`,
+  `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

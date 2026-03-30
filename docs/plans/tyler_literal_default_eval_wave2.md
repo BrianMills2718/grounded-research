@@ -1,6 +1,6 @@
 # Tyler Literal Default Eval Wave 2
 
-**Status:** Active
+**Status:** Completed
 **Type:** cross-repo evaluation
 **Priority:** High
 **Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
@@ -149,10 +149,10 @@ Minimum verification:
 
 ## Todo List
 
-- [ ] Phase 1: define the second frozen pair
-- [ ] Phase 2: generate the Tyler-literal PFAS counterpart
-- [ ] Phase 3: freeze and score the PFAS pair
-- [ ] Phase 4: record the two-case conclusion
+- [x] Phase 1: define the second frozen pair
+- [x] Phase 2: generate the Tyler-literal PFAS counterpart
+- [x] Phase 3: freeze and score the PFAS pair
+- [x] Phase 4: record the two-case conclusion
 
 ## 24h Execution Rule
 
