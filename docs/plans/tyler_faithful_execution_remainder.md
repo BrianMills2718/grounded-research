@@ -12,7 +12,8 @@ that `grounded-research` has faithfully executed Tyler's V1 plan.
 This plan exists because repo-local runtime cutover is already complete, but a
 few real gaps remain:
 
-- Stage 1, Stage 2, and Stage 5 prompt literalness is not fully closed
+- repo-local prompt literalness is now closed, with one documented Tyler
+  Stage 2 schema/prompt ambiguity
 - frozen eval evidence still covers only one shared Tyler-vs-legacy case
 - Tyler-specified provider/model parity still depends on shared infrastructure
 
@@ -44,9 +45,9 @@ This plan does not reopen:
 This remainder plan is complete only if:
 
 1. repo-local docs say exactly what is still local work vs shared-infra work,
-2. Stage 1, Stage 2, and Stage 5 prompt literalness is either:
-   - closed by a line-by-line audit and patch, or
-   - documented as an explicit justified deviation,
+2. repo-local prompt literalness is closed by a line-by-line audit and patch,
+   with any remaining conflict documented as an explicit Tyler-internal
+   ambiguity,
 3. the frozen Tyler-vs-legacy comparison set is no longer a single-case story,
 4. remaining provider/model parity gaps are explicitly named as external
    dependencies rather than implied local TODOs.
@@ -55,12 +56,14 @@ This remainder plan is complete only if:
 
 ### Phase 1: Close Repo-Local Prompt Literalness
 
+**Status:** Completed
+
 Scope:
 
 - `prompts/tyler_v1_decompose.yaml`
 - `prompts/tyler_v1_query_diversification.yaml`
 - `prompts/tyler_v1_extract_findings.yaml`
-- `prompts/verification_queries.yaml`
+- deterministic Stage 5 query generation in `src/grounded_research/verify.py`
 - the stage call sites that invoke them
 
 Deliverables:
@@ -141,10 +144,7 @@ Failure modes:
 
 Repo-local:
 
-1. Stage 1 prompt not yet re-audited line by line
-2. Stage 2 query diversification prompt not yet re-audited line by line
-3. Stage 2 finding extraction prompt not yet re-audited line by line
-4. Stage 5 verification query generation remains adapted rather than literal
+1. none
 
 Shared infra:
 

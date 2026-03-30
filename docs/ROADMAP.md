@@ -70,8 +70,8 @@ Current implementation frontier:
   complete
 - the next concrete work is:
   - expand the frozen comparison set in `prompt_eval`
-  - close remaining prompt-literalness uncertainty for Stage 1/2/5
   - land remaining `llm_client` and `open_web_retrieval` provider/model parity work
+  - keep the one Tyler-internal Stage 2 prompt/schema ambiguity documented rather than papered over
 
 See:
 

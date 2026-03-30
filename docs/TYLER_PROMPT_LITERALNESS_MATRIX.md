@@ -21,7 +21,6 @@ Compared local surfaces:
 - `prompts/tyler_v1_query_diversification.yaml`
 - `prompts/tyler_v1_extract_findings.yaml`
 - `src/grounded_research/verify.py::_build_tyler_verification_queries`
-- `prompts/verification_queries.yaml`
 
 ## Classification Legend
 
@@ -91,28 +90,28 @@ Compared local surfaces:
 | Recency-sensitive query behavior | Tyler defines an optional dated query only for recency-sensitive claims; local runtime always emits exactly three fixed queries and has no recency-sensitive branch | Patch | add explicit recency-sensitive branch and make it configurable |
 | Position-aware logic | Tyler's template depends on stronger vs weaker position framing; current builder ignores that distinction | Patch | use dispute positions/claim context to generate the weaker-position support query |
 | Authoritative targeting | Tyler expects the authoritative query to target the best source class/domain; current builder emits a generic `official study YEAR` string | Patch | generate authoritative-source-focused queries with domain/type hints where available |
-| `prompts/verification_queries.yaml` | File exists but the live Stage 5 path does not use it | Patch | either delete it or repurpose it into the literal orchestrator template surface used by tests/docs |
+| Dead prompt surface | `prompts/verification_queries.yaml` was unused by the live Stage 5 path | Patched | deleted so Stage 5 has one unambiguous runtime surface |
 | Tavily-specific parameters | Tyler mentions `search_depth=\"advanced\"` and `chunks_per_source=3` | Shared infra | keep this out of local adapter logic; document ownership in shared infra |
 
 ## Summary
 
-The actual patch burden is concentrated in Stage 5.
+The actual patch burden was concentrated in Stage 5, and that patch is now the
+live path in `verify.py`.
 
 Stage classification after audit:
 
-1. Stage 1 decomposition: local prompt patch
-2. Stage 2 query diversification: likely no substantive patch
-3. Stage 2 finding extraction: local prompt patch plus one documented spec ambiguity
-4. Stage 5 neutral verification queries: real repo-local rewrite
+1. Stage 1 decomposition: patched
+2. Stage 2 query diversification: literal enough, no substantive patch beyond exact wording confirmation
+3. Stage 2 finding extraction: patched, with one explicit Tyler-internal schema/prompt ambiguity preserved in docs
+4. Stage 5 neutral verification queries: rewritten live builder, tested, dead prompt surface deleted
 
-## Explicit Remaining Questions After Phase 1
+## Resolved Outcome
 
-These are narrow enough to continue without stopping:
+Repo-local prompt literalness is now closed for this wave except for one
+documented Tyler-internal ambiguity:
 
-1. For Stage 1 and Stage 2 prompt files, should the patch aim for exact textual
-   parity even where the current wording is semantically equivalent?
-   - Current user instruction: yes, exact wording where possible.
-2. For Stage 5, should `prompts/verification_queries.yaml` become the tested
-   local template surface, or should the literal behavior live only in code?
-   - Current plan decision: either is acceptable; prefer the simpler surface
-     that keeps the runtime unambiguous.
+- Tyler's global shared output block says every prompt has a reasoning field.
+- Tyler's Stage 2 `Finding` schema does not provide one.
+- The local prompt preserves every non-conflicting shared-protocol line and
+  omits the impossible reasoning-field line rather than violating Tyler's own
+  schema contract.

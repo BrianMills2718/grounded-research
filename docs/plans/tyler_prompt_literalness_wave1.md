@@ -1,6 +1,6 @@
 # Tyler Prompt Literalness Wave 1
 
-**Status:** Active
+**Status:** Completed
 **Type:** repo-local implementation
 **Priority:** High
 **Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
@@ -42,7 +42,7 @@ In scope:
 - `prompts/tyler_v1_extract_findings.yaml`
 - Stage 5 neutral verification query generation in:
   - `src/grounded_research/verify.py`
-  - `prompts/verification_queries.yaml` or a renamed Tyler-native replacement
+  - deterministic Stage 5 query generation in `src/grounded_research/verify.py`
 - docs that classify the audited results
 - tests for Stage 5 query-generation behavior and prompt render/wiring
 
@@ -70,9 +70,9 @@ Out of scope:
 5. Do not create an alternate runtime profile for prompt comparisons in
    `grounded-research`. The live prompt family remains Tyler-literal; any
    comparison stays in `prompt_eval`.
-6. Rename `prompts/verification_queries.yaml` only if that improves clarity
-   without creating migration ambiguity. Otherwise keep the path and make the
-   content Tyler-literal.
+6. The dead `prompts/verification_queries.yaml` surface is deleted once the
+   live Stage 5 builder is Tyler-literal and tested. Do not keep an unused
+   prompt file alive as a shadow runtime path.
 
 ## Acceptance Criteria
 
@@ -189,7 +189,7 @@ Minimum verification for this wave:
 - [x] Phase 1: produce the literalness matrix
 - [x] Phase 2: patch Stage 1 and Stage 2 prompts
 - [x] Phase 3: literalize Stage 5 query generation
-- [ ] Phase 4: reconcile docs
+- [x] Phase 4: reconcile docs
 
 ## 24h Execution Rule
 

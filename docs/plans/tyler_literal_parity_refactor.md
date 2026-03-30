@@ -143,7 +143,7 @@ Files likely touched:
 
 - `verify.py`
 - `export.py`
-- `prompts/verification_queries.yaml`
+- deterministic Stage 5 verification query generation in `verify.py`
 - `prompts/arbitration.yaml`
 - `prompts/synthesis.yaml`
 - `prompts/long_report.yaml`

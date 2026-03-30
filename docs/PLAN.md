@@ -489,8 +489,8 @@ Goal:
 Execution mode (current): structured 4a/4b sub-slices.
 Phase 4 currently runs as:
 
-- Phase 4a (`verification_queries.yaml`): one structured query-generation call for
-  the selected disputes.
+- deterministic Tyler-literal query generation in `verify.py` for the selected
+  disputes.
 - Phase 4b (`arbitration.yaml`): one structured arbitration call per dispute with
   fresh evidence available.
 
@@ -499,7 +499,8 @@ after this baseline is stable.
 
 Build:
 
-- `verification_queries.yaml` prompt and structured LLM binding for query batches
+- deterministic Tyler-literal verification query builder with explicit
+  neutral/supporting/authoritative/dated query roles
 - arbitration prompt/contract for evidence-driven verdicts with fresh evidence IDs
 - code-owned ledger update logic (applies `ArbitrationResult.claim_updates`)
 - `max_turns` is recorded and validated as a phase-gate control (configurable in

@@ -1,22 +1,25 @@
 # Tyler Literal Prompt Fidelity Audit
 
-**Status:** Updated after Stage 3 and Stage 6 recovery
+**Status:** Updated after prompt-literalness wave closure
 **Purpose:** Identify whether the active Tyler-native prompt files are truly
 literal Tyler prompt implementations or still adapted simplifications that
 likely explain the current benchmark regression.
 
 ## Executive Verdict
 
-The live Tyler-native prompt package is **materially closer to literal and now
-quality-recovered enough to beat cached Perplexity on the tracked UBI case**,
-but it is still not identical to the prior benchmark-optimal dense-dedup path.
+The live Tyler-native prompt package is **repo-locally literal for the active
+runtime surfaces**, with one explicit Tyler-internal ambiguity in Stage 2
+finding extraction. It is also quality-recovered enough to beat cached
+Perplexity on the tracked UBI case, while still differing from the prior
+benchmark-optimal dense-dedup path.
 
 Current state:
 
 - runtime is Tyler-native at the schema/artifact level
 - active prompt files exist for Stage 1-6
-- but at least some live prompt files are still compressed or adapted relative
-  to `tyler_response_20260326/4. V1_PROMPTS (1).md`
+- Stage 1, Stage 2, and Stage 5 have now been audited line by line
+- Stage 5 lives only in the deterministic builder in `verify.py`; the dead
+  `prompts/verification_queries.yaml` surface has been deleted
 
 This was the leading local explanation for why the Tyler-native UBI rerun at
 `output/tyler_literal_parity_ubi_reanchor_v5/` was mechanically stable but
@@ -33,12 +36,12 @@ One additional explicit concern remains local and should not be hidden inside
 
 | Stage | Active file | Initial classification | Why |
 |---|---|---|---|
-| Stage 1 decomposition | `prompts/tyler_v1_decompose.yaml` | Not re-audited line by line; no benchmark evidence of a local defect | desired literalness is still an assumption, but there is no current grounded-research-specific failure signal here |
-| Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Not re-audited line by line; no benchmark evidence of a local defect | current uncertainty is explicit rather than hidden |
-| Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Not re-audited line by line; no benchmark evidence of a local defect | current uncertainty is explicit rather than hidden |
+| Stage 1 decomposition | `prompts/tyler_v1_decompose.yaml` | Literal | shared output protocol restored to Tyler wording |
+| Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Literal | prompt already matched Tyler closely; wording confirmed line by line |
+| Stage 2 finding extraction | `prompts/tyler_v1_extract_findings.yaml` | Literal except one justified Tyler-internal ambiguity | shared protocol restored; reasoning-field line omitted because Tyler's own `Finding` schema has no reasoning field |
 | Stage 3 analyst | `prompts/tyler_v1_analyst.yaml` | Literal enough locally; model-role recovery completed | v7 recovered analyst density to `9/20/6` and v8 stayed healthy at `8/17/7` |
 | Stage 4 claim extraction | `prompts/tyler_v1_stage4.yaml` | Literal enough locally | later recovery runs reached `28` and then `38` Tyler claims |
-| Stage 5 verification queries | `prompts/verification_queries.yaml` | Adapted, not literal | already known from Tyler parity audit; this remains a real divergence |
+| Stage 5 verification queries | `src/grounded_research/verify.py::_build_tyler_verification_queries` | Literal behavior | neutral, weaker-position, authoritative, and optional dated query roles are now explicit and tested |
 | Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Not re-audited line by line; contract is Tyler-native and no current benchmark defect is isolated here | literalness uncertainty remains explicit |
 | Stage 6 synthesis | `prompts/tyler_v1_synthesis.yaml` | Literal enough locally with repair loop | v8 produced `3` tradeoffs, `2` preserved alternatives, and `6` cited claims |
 
@@ -63,13 +66,15 @@ prompt-quality repairs.
 
 ## Current Conclusion
 
-Repo-local prompt-quality recovery is complete enough to classify honestly:
+Repo-local prompt literalness is now complete enough to classify honestly:
 
 1. Tyler-native prompt/runtime quality now beats cached Perplexity on the
    tracked UBI benchmark
 2. the remaining gap to the dense-dedup anchor is small and evidence-backed,
    not an unclassified local defect
-3. exact frontier-model parity and provider assumptions remain shared-infra /
+3. one Stage 2 prompt/schema conflict remains explicitly documented as a Tyler
+   internal ambiguity, not a hidden local TODO
+4. exact frontier-model parity and provider assumptions remain shared-infra /
    model-availability concerns, not hidden local TODOs
 
 The remaining faithful-Tyler execution work is tracked in:

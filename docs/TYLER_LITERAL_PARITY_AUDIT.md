@@ -15,7 +15,8 @@ contract wiring. It is benchmark quality and explicit shared-infra boundaries.
 
 Full Tyler closure is still not complete because:
 
-- prompt fidelity is still not fully closed line by line for Stages 1, 2, and 5
+- prompt fidelity is now closed repo-locally except for one explicit
+  Tyler-internal Stage 2 schema/prompt ambiguity
 - provider/model/search assumptions that Tyler specified remain explicit
   shared-infra gaps outside this repo
 - frozen comparison coverage is still narrow, and the Tyler-native path still
@@ -43,8 +44,8 @@ through Stage 6.
 
 Remaining non-literal gaps are now narrower:
 
-1. prompt literalness is still not fully proven line by line for Stages 1, 2,
-   and 5
+1. one explicit Tyler-internal Stage 2 prompt/schema ambiguity remains
+   documented locally
 2. benchmark-optimal dense-dedup output still differs slightly from the
    Tyler-native path
 3. Tyler's provider/model/search assumptions are not wired literally in this
@@ -72,22 +73,29 @@ Remaining non-literal gaps are now narrower:
 | Stage 2 query diversification | `prompts/tyler_v1_query_diversification.yaml` | Literal prompt now active in runtime |
 | Stage 3 analyst base + 3 frame inserts | `prompts/tyler_v1_analyst.yaml` | Literal prompt now active in runtime |
 | Stage 4 claim extraction + dispute localization | `prompts/tyler_v1_stage4.yaml` | Literal prompt/schema active; remaining debt is current-shape model/helper deletion, not Stage 4 prompt wiring |
-| Stage 5 verification query generation | `prompts/verification_queries.yaml` | Adapted, not literal |
+| Stage 5 verification query generation | `src/grounded_research/verify.py::_build_tyler_verification_queries` | Literal deterministic builder now active; dead prompt file deleted |
 | Stage 5 arbitration | `prompts/tyler_v1_arbitration.yaml` | Literal prompt active in runtime |
 | Stage 6 synthesis report | `prompts/tyler_v1_synthesis.yaml` | Literal prompt active in runtime and now drives the only live export surface |
 
 ## Exact Remaining Non-Literal Gaps That Matter
 
-### 1. Prompt fidelity is not fully closed line by line
+### 1. Prompt fidelity is now closed repo-locally, with one explicit Tyler ambiguity
 
-The live runtime uses Tyler-stage prompt files, but prompt fidelity is not fully
-closed yet:
+The live runtime now uses Tyler-stage prompt files or Tyler-literal
+deterministic orchestration for the remaining surfaces:
 
-- Stage 1 decomposition has not been re-audited line by line
-- Stage 2 query diversification and finding extraction have not been re-audited
-  line by line
-- Stage 5 verification query generation still uses
-  `prompts/verification_queries.yaml`, which remains adapted rather than literal
+- Stage 1 decomposition was re-audited and patched
+- Stage 2 query diversification was re-audited and confirmed literal
+- Stage 2 finding extraction was re-audited and patched
+- Stage 5 verification query generation now uses a Tyler-literal deterministic
+  builder in `verify.py`
+
+One explicit ambiguity remains:
+
+- Tyler's global shared output block requires a reasoning field on every
+  prompt, but Tyler's own Stage 2 `Finding` schema has no reasoning field.
+- Local implementation preserves the compatible shared-protocol lines and
+  documents the conflict instead of violating Tyler's schema.
 
 ### 2. Provider and model assumptions are not literal
 
@@ -135,7 +143,7 @@ The correct current classification is:
 2. repo-local Tyler quality recovery is complete enough to beat cached
    Perplexity on the tracked UBI benchmark
 3. the remaining gaps are explicit:
-   - Stage 1/2/5 prompt fidelity is not fully closed line by line
+   - one explicit Tyler-internal Stage 2 schema/prompt ambiguity remains documented
    - slight divergence from the dense-dedup benchmark-optimal path
    - shared-infra/model-availability differences from Tyler's specified stack
 

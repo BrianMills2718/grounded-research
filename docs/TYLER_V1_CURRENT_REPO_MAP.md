@@ -43,11 +43,12 @@ parity is a shared-infrastructure concern, not a repo-local requirement.
 Tyler V1 is written around stronger frontier-model role assignments than the
 current shipped config can use reliably and locally.
 
-### 3. Prompt literalness is not fully closed
+### 3. Prompt literalness is now closed repo-locally, with one explicit Tyler ambiguity
 
-The live runtime uses Tyler-stage prompt files, but Stage 1, Stage 2, and Stage
-5 still have explicit prompt-literalness uncertainty. Stage 5 verification
-query generation remains adapted rather than literal.
+The live runtime now uses Tyler-stage prompt files for Stage 1 and Stage 2 and
+a Tyler-literal deterministic builder for Stage 5. The only remaining
+repo-local caveat is Tyler's own internal conflict between the global shared
+output block and the Stage 2 `Finding` schema, which has no reasoning field.
 
 ## Boundary Decisions
 
@@ -97,7 +98,7 @@ bugs:
    `prompt_eval`
 3. Frontier-model production profile after cheap-model stabilization
 4. Frozen eval expansion beyond the single tracked UBI Tyler-vs-legacy case
-5. Line-by-line closure of remaining prompt-literalness uncertainty
+5. Broader frozen eval coverage beyond the tracked UBI Tyler-vs-legacy case
 
 ## What Not To Do
 
