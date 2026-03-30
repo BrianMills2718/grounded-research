@@ -20,6 +20,7 @@ from grounded_research.models import (
 )
 from grounded_research.verify import (
     _collect_fresh_evidence_for_dispute,
+    _build_tyler_verification_queries,
     arbitrate_dispute_tyler_v1,
     verify_disputes_tyler_v1,
 )
@@ -35,9 +36,116 @@ from grounded_research.tyler_v1_models import (
     EvidenceLabel,
     ResearchPlan,
     ResolutionOutcome,
+    Source as TylerSource,
     StageSummary,
     SubQuestion,
 )
+
+
+def test_build_tyler_verification_queries_matches_literal_query_roles() -> None:
+    """Stage 5 should emit neutral, weaker-position, and authoritative queries."""
+    dispute = DisputeQueueEntry(
+        id="D-1",
+        type=DisputeType.EMPIRICAL,
+        description="Whether employment changed",
+        claims_involved=["C-1", "C-2"],
+        model_positions=[],
+        decision_critical=True,
+        decision_critical_rationale="Could change the recommendation.",
+        status=DisputeStatus.UNRESOLVED,
+        resolution_routing="stage_5_evidence",
+    )
+    claim_entries = [
+        ClaimLedgerEntry(
+            id="C-1",
+            statement="Employment stayed flat in the pilot",
+            source_models=["A", "B"],
+            evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+            source_references=["S-1"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["A", "B"],
+            contesting_models=["C"],
+            related_assumptions=[],
+        ),
+        ClaimLedgerEntry(
+            id="C-2",
+            statement="Employment declined after the pilot",
+            source_models=["C"],
+            evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+            source_references=["S-2"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["C"],
+            contesting_models=["A", "B"],
+            related_assumptions=[],
+        ),
+    ]
+    relevant_original_sources = [
+        TylerSource(
+            id="S-2",
+            url="https://oecd.org/reports/pilot-labor-study",
+            title="Pilot labor study",
+            source_type="academic",
+            quality_score=0.91,
+            publication_date="2025-10-01",
+            retrieval_date="2026-03-30",
+            key_findings=[],
+        )
+    ]
+
+    queries = _build_tyler_verification_queries(
+        dispute=dispute,
+        claim_entries=claim_entries,
+        relevant_original_sources=relevant_original_sources,
+        original_query="Should cities adopt UBI pilots?",
+        time_sensitivity="mixed",
+    )
+
+    assert queries[0] == "Did employment change?"
+    assert queries[1] == "Employment declined after the pilot evidence study report"
+    assert queries[2] == "site:oecd.org employment change"
+    assert len(queries) == 3
+
+
+def test_build_tyler_verification_queries_adds_dated_search_only_when_time_sensitive() -> None:
+    """Time-sensitive disputes should add the Tyler-style dated authoritative query."""
+    dispute = DisputeQueueEntry(
+        id="D-1",
+        type=DisputeType.INTERPRETIVE,
+        description="How regulators interpret the new rule",
+        claims_involved=["C-1"],
+        model_positions=[],
+        decision_critical=True,
+        decision_critical_rationale="Could change the recommendation.",
+        status=DisputeStatus.UNRESOLVED,
+        resolution_routing="stage_5_arbitration",
+    )
+    claim_entries = [
+        ClaimLedgerEntry(
+            id="C-1",
+            statement="Regulators prefer a broad reading of the rule",
+            source_models=["A"],
+            evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+            source_references=["S-1"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["A"],
+            contesting_models=[],
+            related_assumptions=[],
+        )
+    ]
+
+    queries = _build_tyler_verification_queries(
+        dispute=dispute,
+        claim_entries=claim_entries,
+        relevant_original_sources=[],
+        original_query="How should we interpret the rule?",
+        time_sensitivity="time_sensitive",
+    )
+
+    assert len(queries) == 4
+    assert queries[0] == "What does the evidence show about how regulators interpret the new rule?"
+    assert queries[1] == "Regulators prefer a broad reading of the rule evidence study report"
+    assert queries[2] == "How regulators interpret the new rule official documentation peer reviewed analysis"
+    assert queries[3].endswith(" 2026")
 
 
 @pytest.mark.asyncio

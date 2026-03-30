@@ -188,7 +188,7 @@ Minimum verification for this wave:
 
 - [x] Phase 1: produce the literalness matrix
 - [x] Phase 2: patch Stage 1 and Stage 2 prompts
-- [ ] Phase 3: literalize Stage 5 query generation
+- [x] Phase 3: literalize Stage 5 query generation
 - [ ] Phase 4: reconcile docs
 
 ## 24h Execution Rule

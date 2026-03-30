@@ -13,8 +13,11 @@ fail-loud invariants for evidence-backed arbitration.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from grounded_research.config import get_budget, get_depth_config, get_fallback_models, get_model, load_config
 from grounded_research.models import (
@@ -26,11 +29,13 @@ from grounded_research.tyler_v1_models import (
     AdditionalSource,
     ArbitrationAssessment,
     ClaimExtractionResult as TylerClaimExtractionResult,
+    ClaimLedgerEntry,
     ClaimStatus as TylerClaimStatus,
     ClaimStatusUpdate,
     DisputeQueueEntry,
     DisputeStatus,
     ResolutionOutcome,
+    Source as TylerSource,
     VerificationResult,
 )
 
@@ -62,8 +67,6 @@ def _freshness_for_time_sensitivity(time_sensitivity: str) -> str:
     """Map project time-sensitivity into Brave-style freshness windows."""
     return _FRESHNESS_MAP.get(time_sensitivity, "pm")
 
-
-from grounded_research.evidence_utils import estimate_recency as _estimate_recency
 async def _collect_fresh_evidence_for_dispute(
     dispute_id: str,
     queries: list[str],
@@ -217,20 +220,144 @@ async def _collect_fresh_evidence_for_dispute(
 
 
 def _build_tyler_verification_queries(
+    *,
     dispute: DisputeQueueEntry,
-    claim_statements: list[str],
+    claim_entries: list[ClaimLedgerEntry],
+    relevant_original_sources: list[TylerSource],
     original_query: str,
+    time_sensitivity: str,
 ) -> list[str]:
-    """Deterministically construct Tyler-style neutral verification queries."""
-    base = dispute.description or original_query
-    first_claim = claim_statements[0] if claim_statements else original_query
-    second_claim = claim_statements[1] if len(claim_statements) > 1 else first_claim
-    year = "2026"
-    return [
-        f"{base} evidence",
-        f"{first_claim} versus {second_claim}",
-        f"{base} official study {year}",
+    """Construct Tyler-literal neutral/supporting/authoritative verification queries."""
+    neutral_query = _build_neutral_verification_question(
+        dispute=dispute,
+        claim_entries=claim_entries,
+        original_query=original_query,
+    )
+    weaker_claim = _select_weaker_claim_for_verification(claim_entries)
+    authoritative_query = _build_authoritative_verification_query(
+        dispute=dispute,
+        claim_entries=claim_entries,
+        relevant_original_sources=relevant_original_sources,
+        original_query=original_query,
+    )
+
+    queries = [
+        neutral_query,
+        _build_weaker_position_support_query(weaker_claim.statement if weaker_claim else neutral_query),
+        authoritative_query,
     ]
+    if time_sensitivity == "time_sensitive":
+        queries.append(_build_dated_verification_query(authoritative_query))
+    return queries
+
+
+def _strip_terminal_punctuation(text: str) -> str:
+    """Normalize terminal punctuation so query builders stay deterministic."""
+    return text.strip().rstrip(".!?")
+
+
+def _build_neutral_verification_question(
+    *,
+    dispute: DisputeQueueEntry,
+    claim_entries: list[ClaimLedgerEntry],
+    original_query: str,
+) -> str:
+    """Convert a dispute into a neutral question without presupposing either side."""
+    description = _strip_terminal_punctuation(dispute.description or "")
+    if description.lower().startswith("whether "):
+        predicate = _normalize_whether_predicate(description[8:])
+        if predicate.lower().startswith("there "):
+            return f"Was {predicate}?"
+        return f"Did {predicate}?"
+    if description.endswith("?"):
+        return description
+    if description:
+        return f"What does the evidence show about {description.lower()}?"
+    if claim_entries:
+        return f"What does the evidence show about {_strip_terminal_punctuation(claim_entries[0].statement).lower()}?"
+    return f"What does the evidence show about {_strip_terminal_punctuation(original_query)}?"
+
+
+def _normalize_whether_predicate(predicate: str) -> str:
+    """Turn a 'whether X happened' predicate into a natural neutral-question predicate."""
+    words = predicate.split()
+    if not words:
+        return predicate
+    last_word = words[-1]
+    if re.fullmatch(r"[A-Za-z]+ed", last_word):
+        words[-1] = f"{last_word[:-1]}"
+    return " ".join(words)
+
+
+def _claim_support_score(claim: ClaimLedgerEntry) -> tuple[int, int, str]:
+    """Rank claims by support so Stage 5 can target the weaker position deterministically."""
+    return (
+        len(claim.supporting_models) - len(claim.contesting_models),
+        len(claim.supporting_models),
+        claim.id,
+    )
+
+
+def _select_weaker_claim_for_verification(
+    claim_entries: list[ClaimLedgerEntry],
+) -> ClaimLedgerEntry | None:
+    """Choose the less-supported claim so verification counteracts confirmation bias."""
+    if not claim_entries:
+        return None
+    return min(claim_entries, key=_claim_support_score)
+
+
+def _build_weaker_position_support_query(statement: str) -> str:
+    """Generate a query seeking evidence for the currently weaker position."""
+    return f"{_strip_terminal_punctuation(statement)} evidence study report"
+
+
+def _extract_authoritative_domain(
+    relevant_original_sources: list[TylerSource],
+) -> str | None:
+    """Pick the strongest known domain for authoritative-source targeting."""
+    ranked_sources = sorted(
+        relevant_original_sources,
+        key=lambda source: (
+            source.source_type not in {"official_docs", "academic"},
+            -source.quality_score,
+        ),
+    )
+    for source in ranked_sources:
+        hostname = urlparse(source.url).hostname or ""
+        hostname = hostname.removeprefix("www.")
+        if hostname:
+            return hostname
+    return None
+
+
+def _build_authoritative_verification_query(
+    *,
+    dispute: DisputeQueueEntry,
+    claim_entries: list[ClaimLedgerEntry],
+    relevant_original_sources: list[TylerSource],
+    original_query: str,
+) -> str:
+    """Target the most authoritative source class available for the dispute."""
+    domain = _extract_authoritative_domain(relevant_original_sources)
+    topic = _strip_terminal_punctuation(dispute.description or "")
+    if topic.lower().startswith("whether "):
+        topic = _normalize_whether_predicate(topic[8:])
+    if not topic and claim_entries:
+        topic = _strip_terminal_punctuation(claim_entries[0].statement)
+    if not topic:
+        topic = _strip_terminal_punctuation(original_query)
+    if domain:
+        return f"site:{domain} {topic}"
+    if dispute.type.value == "empirical":
+        return f"{topic} official report primary study"
+    return f"{topic} official documentation peer reviewed analysis"
+
+
+def _build_dated_verification_query(authoritative_query: str) -> str:
+    """Add an explicit current-year authoritative query for time-sensitive disputes."""
+    current_year = str(datetime.now(timezone.utc).year)
+    return f"{authoritative_query} {current_year}"
 
 
 def _build_additional_sources(
@@ -450,9 +577,11 @@ async def verify_disputes_tyler_v1(
             round_trace_id = f"{trace_id}/verify_tyler/{dispute.id}/round_{round_idx}"
             round_budget = budget_per_dispute / max_rounds
             queries = _build_tyler_verification_queries(
-                dispute,
-                [claim.statement for claim in claim_entries],
-                original_query,
+                dispute=dispute,
+                claim_entries=claim_entries,
+                relevant_original_sources=relevant_original_sources,
+                original_query=original_query,
+                time_sensitivity=getattr(bundle.question, "time_sensitivity", "mixed"),
             )
             search_budget[dispute.id] = search_budget.get(dispute.id, 0) + len(queries)
 
