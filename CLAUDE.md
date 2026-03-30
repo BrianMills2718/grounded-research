@@ -304,6 +304,22 @@ Do not reopen deleted local compatibility code just to create another
 comparison path. Use frozen artifacts, commit references, and shared eval
 infrastructure instead.
 
+When there *is* an active repo-local implementation wave, treat the request as
+"finish the wave unless a real architectural concern appears." In practice this
+means:
+
+- convert the wave into explicit ordered phases with pass/fail criteria
+- keep the plan's todo list synchronized as phases move from pending -> in
+  progress -> completed
+- do not stop after the audit, after the first patch, or after the first commit
+- continue through every remaining phase until the wave is actually closed
+- if a real uncertainty appears, record it in the active plan/notebook and
+  authority docs, then continue with the next unblocked phase instead of
+  pausing the entire program
+
+The default assumption is not "plan a lot and stop." The default assumption is
+"plan, execute, verify, commit, continue" until the current wave is done.
+
 ### 8d. Rollback Safety During Long Waves
 
 When a long cutover or deletion wave is in progress, preserve rollback points

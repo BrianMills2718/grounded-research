@@ -190,3 +190,11 @@ Minimum verification for this wave:
 - [ ] Phase 2: patch Stage 1 and Stage 2 prompts
 - [ ] Phase 3: literalize Stage 5 query generation
 - [ ] Phase 4: reconcile docs
+
+## 24h Execution Rule
+
+This wave should be executed continuously until all four phases are closed or a
+real architectural concern appears. Do not stop after the audit or after one
+verified patch just because the repo now has another rollback point. The todo
+list above is the live phase tracker and must stay synchronized with actual
+progress.
