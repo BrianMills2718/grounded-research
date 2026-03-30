@@ -64,6 +64,8 @@ analyst_frames:
   - "verification_first"          # Analyst C — challenge claims against evidence and assumptions
 
 collection:
+  search_provider: "tavily"
+  search_locale: "en"
   num_queries: 15
   results_per_query: 10
   max_sources: 50

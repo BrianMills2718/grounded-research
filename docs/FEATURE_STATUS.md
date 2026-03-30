@@ -79,7 +79,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
 | 34 | Generate counterfactual queries per disputed claim | KEEP | **DONE** | Tyler Stage 5 generates dispute-focused fresh-evidence queries directly from decision-critical dispute context. |
-| 35 | Search for both supporting & disconfirming evidence | KEEP | **DONE** | Fresh evidence fetched via Brave Search during arbitration. |
+| 35 | Search for both supporting & disconfirming evidence | KEEP | **DONE** | Fresh evidence fetched via the shared-provider search tool during arbitration; Tavily is now the quality-first default. |
 | 36 | Schema-driven single-turn critique per dispute | KEEP | **DONE** | Tyler Stage 5 arbitration emits structured `ArbitrationAssessment` inside `VerificationResult`. |
 | 37 | Update claim statuses in ledger | KEEP | **DONE** | Tyler `ClaimStatusUpdate`s are applied to the Stage 4 ledger to produce the Stage 5 updated ledger. |
 | 38 | Shuffle analyst positions to prevent primacy bias | CUT | **DONE** | `verify.py` shuffles claim order with fixed seed per dispute before arbitration. |

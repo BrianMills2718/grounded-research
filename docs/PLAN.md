@@ -39,7 +39,7 @@ When invoked with a question (`python engine.py "question"`):
 ```
 Question → decompose_with_validation_tyler_v1() → Tyler Stage 1 `DecompositionResult`
     ↓ (validation may still trigger one retry)
-Sub-questions → generate_search_queries() per Tyler `Q-*` → Brave Search → fetch pages (parallel)
+Sub-questions → generate_search_queries() per Tyler `Q-*` → shared web search (`tavily` default) → fetch pages (parallel)
     ↓
 score_source_quality() → quality tiers on sources
     ↓
@@ -69,8 +69,8 @@ Key definitions:
 Current operational notes:
 - full pipeline implemented with configurable depth modes (`standard`, `deep`,
   `thorough`)
-- raw-question collection uses first-party Brave-backed search and shared
-  retrieval infrastructure, not a bespoke workflow engine
+- raw-question collection uses shared-provider search via `open_web_retrieval`
+  with Tavily as the quality-first default, not a bespoke workflow engine
 - `deep` and `thorough` now add goal-driven evidence extraction on persisted
   page text, while `standard` keeps the cheaper notes/key-section path
 - deeper modes now allow multi-round arbitration when earlier rounds remain
@@ -165,7 +165,7 @@ Current open work is intentionally narrow:
   runtime-contract ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
-- active provider-cutover wave:
+- completed provider-cutover wave:
   `docs/plans/tavily_integration_wave1.md`
 - there is currently no active repo-local implementation wave
 - completed eval-expansion wave:

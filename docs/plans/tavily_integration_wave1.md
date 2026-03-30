@@ -1,6 +1,6 @@
 # Tavily Integration Wave 1
 
-**Status:** In Progress
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** `open_web_retrieval` Tavily adapter landed on `main`
@@ -115,3 +115,11 @@ Fail:
 5. Delete the Brave-specific tool and tests
 6. Run targeted tests and one live Tavily smoke
 7. Reconcile active docs
+
+## Completed 2026-03-30
+
+- replaced `tools/brave_search.py` with `tools/web_search.py`
+- moved provider choice into config and defaulted it to `collection.search_provider: "tavily"`
+- updated Stage 2 collection and Stage 5 verification to consume the shared-provider tool
+- deleted the Brave-specific wrapper and tests
+- verified with targeted tests plus a live Tavily smoke from `grounded-research`

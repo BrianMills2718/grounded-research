@@ -2,7 +2,7 @@
 
 Takes a question string and automatically builds an EvidenceBundle by:
 1. Generating diverse search queries via LLM
-2. Searching via Brave Search API with recency filtering
+2. Searching via the shared web-search provider with recency filtering
 3. Fetching and extracting full page content from top results (parallelized)
 4. Extracting multiple evidence items per page
 5. Structuring everything into an EvidenceBundle
@@ -781,7 +781,7 @@ async def collect_evidence(
     Depth is controlled by num_queries × results_per_query for search
     breadth, and max_sources for how many pages to actually fetch.
     """
-    from grounded_research.tools.brave_search import search_web
+    from grounded_research.tools.web_search import search_web
     from grounded_research.tools.fetch_page import fetch_page, set_pages_dir
 
     config = load_config()
@@ -906,7 +906,7 @@ async def collect_evidence(
             sources=candidate_sources,
             evidence=[],
             gaps=[],
-            imported_from="brave_search_candidates",
+            imported_from="web_search_candidates",
         )
         from grounded_research.source_quality import score_source_quality
 
@@ -1182,7 +1182,7 @@ async def collect_evidence(
         sources=sources,
         evidence=evidence,
         gaps=gaps,
-        imported_from="brave_search",
+        imported_from="web_search",
     )
 
     tier_counts = {}

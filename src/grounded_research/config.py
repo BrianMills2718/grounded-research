@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from typing import Literal
 
 import yaml
 
@@ -16,6 +17,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _CONFIG_PATH = _PROJECT_ROOT / "config" / "config.yaml"
 
 _cached_config: dict[str, Any] | None = None
+SearchProvider = Literal["tavily", "brave", "searxng"]
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:
@@ -180,6 +182,22 @@ def get_collection_ranking_config() -> dict[str, Any]:
     }
     defaults.update(configured)
     return defaults
+
+
+def get_search_provider_config() -> dict[str, str]:
+    """Get shared web-search provider policy with quality-first defaults.
+
+    Search-provider choice belongs in config so the application can prefer the
+    strongest available shared substrate without hardcoding provider names in
+    collection or verification logic.
+    """
+    cfg = load_config()
+    collection = cfg.get("collection", {})
+    provider = collection.get("search_provider", "tavily")
+    locale = collection.get("search_locale", "en")
+    if provider not in {"tavily", "brave", "searxng"}:
+        raise ValueError(f"Unsupported search provider in config: {provider}")
+    return {"provider": provider, "locale": locale}
 
 
 def get_evidence_policy_config() -> dict[str, Any]:

@@ -70,8 +70,8 @@ Current implementation frontier:
   comparisons are now complete
 - the next concrete work is:
   - expand the frozen comparison set beyond the current `2` matched cases
-  - land remaining `llm_client` and `open_web_retrieval` provider/model parity work
-  - cut the live application over from the Brave-specific search tool to shared Tavily-backed search
+  - land remaining shared provider/model parity work
+  - preserve the new shared Tavily-backed search path as the quality-first default
   - keep the one Tyler-internal Stage 2 prompt/schema ambiguity documented rather than papered over
 
 See:
@@ -150,7 +150,7 @@ live in shared infrastructure or future benchmark expansion.
 - finish any remaining runtime-default improvements in `llm_client`
 - continue using `open_web_retrieval` and shared observability rather than
   reintroducing project-local fetch/runtime logic
-- keep Tavily/Exa provider-parity work in `open_web_retrieval`, not here
+- keep Exa/provider-expansion work in `open_web_retrieval`, not here
 - evaluate Gemini structured-output quality in `llm_client` / `prompt_eval`
   before expanding Gemini's reasoning-critical structured stages
 - use `prompt_eval` for future prompt/model comparison work instead of adding

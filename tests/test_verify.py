@@ -229,7 +229,7 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
         captured["task"] = task
         return json.dumps({"results": []})
 
-    monkeypatch.setattr("grounded_research.tools.brave_search.search_web", fake_search_web)
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
 
     bundle = EvidenceBundle(
         question=ResearchQuestion(text="What is the evidence?"),

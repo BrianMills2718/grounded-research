@@ -106,7 +106,7 @@ pip install -e path/to/llm_client
 pip install -e path/to/open_web_retrieval
 ```
 
-Requires API keys for: Gemini, OpenRouter (routes to current configured OpenAI/Gemini models), Brave Search. Optionally: Perplexity (for comparison scripts).
+Requires API keys for: Gemini, OpenRouter (routes to current configured OpenAI/Gemini models), Tavily for the default quality-first search path. Brave remains optional if you reconfigure `collection.search_provider`. Optionally: Perplexity (for comparison scripts).
 
 ## Documentation
 

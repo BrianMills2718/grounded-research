@@ -64,7 +64,7 @@ def _load_verification_config() -> dict[str, object]:
 
 
 def _freshness_for_time_sensitivity(time_sensitivity: str) -> str:
-    """Map project time-sensitivity into Brave-style freshness windows."""
+    """Map project time-sensitivity into shared-provider freshness windows."""
     return _FRESHNESS_MAP.get(time_sensitivity, "pm")
 
 async def _collect_fresh_evidence_for_dispute(
@@ -74,7 +74,7 @@ async def _collect_fresh_evidence_for_dispute(
     trace_id: str,
  ) -> tuple[list[SourceRecord], list[EvidenceItem], list[VerificationWarning]]:
     """Run query search, read results, and convert to SourceRecord/EvidenceItems."""
-    from grounded_research.tools.brave_search import search_web
+    from grounded_research.tools.web_search import search_web
     from grounded_research.tools.fetch_page import fetch_page
     from grounded_research.tools.jina_reader import fetch_page_jina
 

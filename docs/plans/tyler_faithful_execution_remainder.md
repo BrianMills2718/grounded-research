@@ -153,7 +153,7 @@ Repo-local:
 
 Shared infra:
 
-1. Tavily + Exa parity in `open_web_retrieval`
+1. Exa parity in `open_web_retrieval` (Tavily parity and app consumption are now shipped)
 2. frontier-model role parity in production config / availability
 3. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
 

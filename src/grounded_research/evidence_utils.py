@@ -5,7 +5,7 @@ Avoids duplication of freshness mapping and recency estimation logic.
 
 from __future__ import annotations
 
-# Freshness filter for Brave Search API
+# Freshness filter for the shared search-provider tool
 FRESHNESS_MAP = {
     "time_sensitive": "pd",  # past day for fast-moving topics
     "mixed": "py",           # past year for general topics
