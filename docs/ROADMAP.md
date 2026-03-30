@@ -79,6 +79,7 @@ See:
 - `docs/plans/tyler_literal_prompt_quality_recovery.md`
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
 - `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/tyler_prompt_literalness_wave1.md`
 
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 

@@ -82,6 +82,11 @@ Failure modes:
 - a real local deviation is left undocumented
 - provider/model constraints are misclassified as local prompt defects
 
+Execution surface:
+
+- `docs/plans/tyler_prompt_literalness_wave1.md`
+- `docs/notebooks/31_tyler_prompt_literalness_wave1.ipynb`
+
 ### Phase 2: Expand Frozen Eval Coverage
 
 Scope:

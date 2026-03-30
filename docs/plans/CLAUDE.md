@@ -35,6 +35,7 @@
 | [stage34_compatibility_protocol_deletion.md](stage34_compatibility_protocol_deletion.md) | Completed | Child wave under Tyler canonical cutover: deleted the dead Stage 3/4 compatibility utility path so `main` keeps one Stage 4 vocabulary. |
 | [tyler_literal_default_eval_wave1.md](tyler_literal_default_eval_wave1.md) | Completed | Cross-repo evaluation wave complete: frozen Tyler-literal vs archived calibrated legacy artifacts were compared through `prompt_eval`, Tyler-literal won the first shared case, and the remaining limit is explicit one-case coverage rather than runtime ambiguity. |
 | [tyler_faithful_execution_remainder.md](tyler_faithful_execution_remainder.md) | Active | Defines what still remains for faithful Tyler execution after repo-local runtime cutover: prompt-literalness closure, frozen-eval expansion, and shared provider/model parity boundaries. |
+| [tyler_prompt_literalness_wave1.md](tyler_prompt_literalness_wave1.md) | Active | Execution-ready child wave for exact repo-local prompt literalness: Stage 1, Stage 2, and Stage 5 are audited line by line against Tyler and patched where the divergence is still local. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

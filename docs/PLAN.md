@@ -162,6 +162,8 @@ Current open work is intentionally narrow:
   ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
+- active child wave:
+  `docs/plans/tyler_prompt_literalness_wave1.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`
