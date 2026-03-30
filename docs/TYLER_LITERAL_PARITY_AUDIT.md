@@ -15,11 +15,12 @@ contract wiring. It is benchmark quality and explicit shared-infra boundaries.
 
 Full Tyler closure is still not complete because:
 
-- current-shape model/helper surfaces still exist outside the live runtime path
+- prompt fidelity is still not fully closed line by line for Stages 1, 2, and 5
 - provider/model/search assumptions that Tyler specified remain explicit
   shared-infra gaps outside this repo
-- the Tyler-native path still trails the saved dense-dedup anchor slightly even
-  after prompt-quality recovery
+- frozen comparison coverage is still narrow, and the Tyler-native path still
+  trails the saved dense-dedup anchor slightly even after prompt-quality
+  recovery
 
 ## Scope
 
@@ -42,8 +43,8 @@ through Stage 6.
 
 Remaining non-literal gaps are now narrower:
 
-1. current-shape model/helper surfaces still coexist with the Tyler-native runtime
-   artifacts
+1. prompt literalness is still not fully proven line by line for Stages 1, 2,
+   and 5
 2. benchmark-optimal dense-dedup output still differs slightly from the
    Tyler-native path
 3. Tyler's provider/model/search assumptions are not wired literally in this
@@ -55,10 +56,10 @@ Remaining non-literal gaps are now narrower:
 |---|---|---|---|
 | Shared enums | `EvidenceLabel`, `DisputeType`, `ClaimStatus`, `DisputeStatus`, `ConfidenceLevel`, `ResolutionOutcome` | Tyler schema enums now live in `tyler_v1_models.py` and drive the Tyler-native runtime stages | Yes |
 | Stage 1 decomposition | `DecompositionResult` with `SubQuestion.question`, `research_priority`, `search_guidance`, `ResearchPlan`, `StageSummary` | live runtime now produces and persists `PipelineState.tyler_stage_1_result`; current `QuestionDecomposition` is no longer a live runtime contract | Yes (runtime) |
-| Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | live runtime now produces and persists `PipelineState.tyler_stage_2_result`; current `EvidenceBundle` remains the retrieval substrate and compatibility surface | Yes (runtime), compatibility substrate remains |
+| Stage 2 evidence | `EvidencePackage` made of `SubQuestionEvidence -> Source -> Finding` with `EvidenceLabel` and `quality_score` | live runtime now produces and persists `PipelineState.tyler_stage_2_result`; `EvidenceBundle` remains the mechanical retrieval substrate feeding Stage 2, not a co-equal semantic runtime contract | Yes (runtime) |
 | Stage 3 analyst output | `AnalysisObject` with `model_alias`, single `recommendation`, Tyler claim/assumption/counterargument shapes, `stage_summary` | live runtime now produces and persists `PipelineState.tyler_stage_3_results`; runtime trace stores only `stage3_attempts` for observability and no longer stores projected `AnalystRun` | Yes (runtime) |
-| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; remaining current-shape debt is limited to model/helper surfaces under active deletion | Yes (runtime) |
-| Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; remaining current-shape debt is limited to helper/model surfaces outside the live path | Yes (runtime) |
+| Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; old Stage 4 compatibility protocols are removed from `main` | Yes (runtime) |
+| Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; old current-shape Stage 5 protocol surfaces are removed from `main` | Yes (runtime) |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; markdown renders directly from Tyler Stage 6 and legacy `FinalReport` export has been removed | Yes (runtime) |
 | Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6; repo-local quality recovery improved the tracked UBI case materially, but a small gap to the dense-dedup anchor remains | Runtime-active, locally recovered, not benchmark-identical |
 
@@ -77,18 +78,16 @@ Remaining non-literal gaps are now narrower:
 
 ## Exact Remaining Non-Literal Gaps That Matter
 
-### 1. Current-shape model/helper surfaces still coexist
+### 1. Prompt fidelity is not fully closed line by line
 
-The live runtime is Tyler-native, but the repo still keeps current-shape
-model/helper surfaces for:
+The live runtime uses Tyler-stage prompt files, but prompt fidelity is not fully
+closed yet:
 
-- `QuestionDecomposition`
-- `EvidenceBundle`
-- `AnalystRun`
-- `ClaimLedger`
-
-These no longer define the live Tyler runtime. The remaining active debt is
-current-shape helper/test/migration scaffolding, not public export compatibility.
+- Stage 1 decomposition has not been re-audited line by line
+- Stage 2 query diversification and finding extraction have not been re-audited
+  line by line
+- Stage 5 verification query generation still uses
+  `prompts/verification_queries.yaml`, which remains adapted rather than literal
 
 ### 2. Provider and model assumptions are not literal
 
@@ -120,10 +119,11 @@ Recovery progression:
   improved further, still beats cached Perplexity, and remains only slightly
   behind the dense-dedup anchor
 
-So the next local frontier is no longer contract migration, and it is no longer
-an unclassified prompt crisis either. The remaining difference is now a narrow,
-evidence-backed divergence between the Tyler-native path and the prior
-benchmark-optimal dense-dedup path.
+So the next local frontier is no longer contract migration. It is:
+
+- finishing literal prompt closure where the repo still diverges
+- expanding frozen evaluation beyond one shared case
+- keeping the remaining benchmark difference explicit instead of hand-waving it
 
 ## Recommendation
 
@@ -134,7 +134,8 @@ The correct current classification is:
 1. repo-local Tyler runtime parity is implemented
 2. repo-local Tyler quality recovery is complete enough to beat cached
    Perplexity on the tracked UBI benchmark
-3. the remaining gap is explicit:
+3. the remaining gaps are explicit:
+   - Stage 1/2/5 prompt fidelity is not fully closed line by line
    - slight divergence from the dense-dedup benchmark-optimal path
    - shared-infra/model-availability differences from Tyler's specified stack
 
@@ -143,3 +144,4 @@ Relevant references:
 - `docs/plans/tyler_literal_parity_refactor.md`
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
 - `docs/plans/tyler_literal_prompt_quality_recovery.md`
+- `docs/plans/tyler_faithful_execution_remainder.md`

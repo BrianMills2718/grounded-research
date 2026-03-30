@@ -6,8 +6,8 @@ This note maps Tyler's V1 package in `tyler_response_20260326/` to the current
 Use it as a boundary document:
 
 - Tyler's V1 package is a reference architecture and prompt/schema package.
-- The current repo is an already-built adjudication-centered system with its
-  own shipped contracts and benchmark history.
+- The current repo is now a Tyler-native adjudication-centered runtime with its
+  own benchmark history and shared-infra boundaries.
 - Not every divergence is a bug.
 
 ## What Already Aligns
@@ -21,13 +21,14 @@ These Tyler V1 ideas are already true in the current repo:
 - dispute detection and routing are first-class
 - targeted fresh-evidence arbitration exists
 - user steering for ambiguity/preference disputes exists
+- Tyler-native Stage 1-6 runtime artifacts are the live canonical contract
 - prompt hardening, Claimify-style extraction, anti-conformity enforcement,
   anonymization scrubbing, and dense canonicalization hardening were all landed
   during the Tyler-alignment waves
 
-## Intentional Divergences
+## Remaining Divergences
 
-These differences are deliberate or currently acceptable:
+These differences are deliberate, explicit, or still open:
 
 ### 1. Adjudication thesis over provider parity
 
@@ -37,30 +38,16 @@ The current repo is judged first on adjudication quality, not on matching that
 provider set exactly. First-party collection is implemented, but provider
 parity is a shared-infrastructure concern, not a repo-local requirement.
 
-### 2. Current repo contracts are not Tyler's exact enums
+### 2. Frontier-model parity is still not literal
 
-Tyler V1 uses one claim/dispute taxonomy. The current repo uses another:
+Tyler V1 is written around stronger frontier-model role assignments than the
+current shipped config can use reliably and locally.
 
-- current `ClaimStatus`: `initial`, `supported`, `revised`, `refuted`,
-  `inconclusive`
-- current dispute types/routes are repo-local contracts, not Tyler's exact
-  enum surface
+### 3. Prompt literalness is not fully closed
 
-Do not rename current contracts just to mimic Tyler's vocabulary unless the
-change buys clearer behavior, better validation, or better benchmark results.
-
-### 3. Cheap-model stabilization came before frontier-model parity
-
-Tyler V1 is written around frontier-model role assignments.
-
-The current repo intentionally stabilized the method on cheaper development
-models before revisiting production/frontier configuration.
-
-### 4. The current report contract is benchmarked, not schema-matched
-
-The report/output surface does not exactly mirror Tyler's 3-tier V1 contract.
-That is acceptable as long as grounding, dispute visibility, and benchmark
-quality stay strong.
+The live runtime uses Tyler-stage prompt files, but Stage 1, Stage 2, and Stage
+5 still have explicit prompt-literalness uncertainty. Stage 5 verification
+query generation remains adapted rather than literal.
 
 ## Boundary Decisions
 
@@ -109,8 +96,8 @@ bugs:
 2. Gemini JSON-Schema vs prompt-guided JSON comparison in `llm_client` /
    `prompt_eval`
 3. Frontier-model production profile after cheap-model stabilization
-4. Optional terminology parity if the current repo contracts are ever revised
-   for clarity or benchmark gain
+4. Frozen eval expansion beyond the single tracked UBI Tyler-vs-legacy case
+5. Line-by-line closure of remaining prompt-literalness uncertainty
 
 ## What Not To Do
 

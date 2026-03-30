@@ -24,7 +24,7 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status (2026-03-28)
+## Current Status (2026-03-30)
 
 **v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational.**
 
@@ -152,14 +152,16 @@ Current open work is intentionally narrow:
   `docs/plans/stage5_internal_protocol_literalization.md`,
   `docs/plans/stage34_compatibility_protocol_deletion.md`
 - there is currently no active repo-local implementation wave; the next
-  concrete work is the frozen Tyler-literal vs calibrated-legacy comparison in
-  `prompt_eval`, followed by shared-infra follow-through in `llm_client` /
-  `open_web_retrieval`
-- the first frozen shared-eval comparison is now complete:
+  concrete work is the faithful-Tyler remainder plan plus shared-infra
+  follow-through in `llm_client` / `open_web_retrieval`
+- the first frozen shared-eval comparison is complete:
   `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
   over the archived calibrated legacy anchor on the tracked UBI case
 - the remaining explicit uncertainty is coverage breadth of the frozen eval
-  set, not runtime-contract ambiguity in this repo
+  set plus prompt-literalness closure for Stage 1/2/5, not runtime-contract
+  ambiguity in this repo
+- active remainder plan:
+  `docs/plans/tyler_faithful_execution_remainder.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

@@ -8,10 +8,10 @@ dependencies rather than silent divergence.
 
 ## Why This Plan Exists
 
-The current repo does **not** implement Tyler's schemas and prompts literally.
-That is now a user-facing requirement, not a future-alignment candidate.
+This plan records the repo-local migration that made Tyler-native stage
+artifacts and prompt surfaces the live runtime contract in `main`.
 
-The gap is real in:
+The original repo-local gap was real in:
 
 - enums and status lifecycle
 - Stage 1 decomposition artifact
@@ -48,8 +48,8 @@ Shared-infra dependencies remain explicit:
    refactor.
 2. Migrate in phases; do not attempt a big-bang runtime rewrite.
 3. Land exact Tyler schema classes in code before rewriting runtime stages.
-4. Keep benchmarks running during migration through adapters or dual-surface
-   compatibility where practical.
+4. Keep benchmarks running during migration, but remove compatibility surfaces
+   aggressively once the Tyler-native path is verified.
 5. Stage 4 and Stage 6 are the highest-risk contract migrations and get their
    own dedicated waves.
 6. Do not claim full literal parity until the runtime uses Tyler-native stage
@@ -107,8 +107,9 @@ Status:
 - Completed for repo-local runtime output and trace state.
 - Tyler Stage 1, Stage 2, and Stage 3 now run as the live runtime artifacts
   and persist into `PipelineState`.
-- Current `QuestionDecomposition`, `EvidenceBundle`, and `AnalystRun` remain
-  as explicit compatibility projections.
+- `QuestionDecomposition` and `AnalystRun` are removed from the live runtime;
+  `EvidenceBundle` remains only as the mechanical retrieval substrate feeding
+  Tyler Stage 2.
 
 ### Phase 2: Stage 4 Major Contract Migration
 
@@ -132,8 +133,7 @@ Status:
 - Completed for Stage 4 runtime output and trace serialization.
 - Current `engine.py` now runs Tyler's literal Stage 4 prompt/schema and stores
   the `tyler_stage_4_result` artifact in pipeline state.
-- The shipped `ClaimLedger` remains as an explicit compatibility/public
-  projection from the Tyler artifact.
+- Current-shape Stage 4 compatibility protocols are removed from `main`.
 
 ### Phase 3: Stage 5-6 Major Contract Migration
 
@@ -159,9 +159,8 @@ Status:
 - Completed for Stage 5 and Stage 6 runtime output and trace serialization.
 - `engine.py` now runs Tyler-native Stage 5 and Stage 6 contracts and stores
   the results in pipeline state.
-- The shipped `ClaimLedger`, `ArbitrationResult`, `FinalReport`, and markdown
-  report remain explicit projections from the Tyler artifacts for compatibility
-  with the existing downstream surfaces.
+- Legacy `ArbitrationResult`, `FinalReport`, and old export/handoff runtime
+  surfaces are removed from `main`; markdown now renders from Tyler Stage 6.
 
 ### Phase 4: Benchmark Re-Anchor
 
@@ -193,6 +192,7 @@ The remaining differences are now:
 1. explicit shared-infra differences from Tyler's specified provider/model/search stack
 2. a small, evidence-backed benchmark divergence between the Tyler-native path
    and the saved dense-dedup benchmark-optimal path
+3. remaining prompt-literalness uncertainty for Stage 1, Stage 2, and Stage 5
 
 ## Current Stop Line
 
@@ -202,3 +202,7 @@ Do not reopen this refactor unless:
 
 1. a new benchmark identifies a grounded-research-specific regression, or
 2. shared-infra work lands that enables closer literal Tyler provider/model parity
+
+The remaining faithful-Tyler execution work is tracked separately in:
+
+- `docs/plans/tyler_faithful_execution_remainder.md`

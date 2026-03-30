@@ -58,7 +58,8 @@ Each run produces:
 - `summary.md` — Tyler-native structured summary
 - `trace.json` — full pipeline state with provenance
 - `handoff.json` — Tyler-native downstream handoff artifact
-- `decomposition.json` — sub-questions, optimization axes, research plan
+- `tyler_stage_1.json` — Tyler Stage 1 decomposition artifact
+- `tyler_stage_2.json` — Tyler Stage 2 evidence package artifact
 - `collected_bundle.json` — raw evidence bundle (reusable)
 
 ## Key features
@@ -87,10 +88,10 @@ All operational policy in `config/config.yaml`:
 
 ## Architecture
 
-- 20 YAML prompt templates in `prompts/`
+- 19 YAML prompt templates in `prompts/`
 - All LLM calls via [llm_client](https://github.com/BrianMills2718/llm_client)
 - Web search via [open_web_retrieval](https://github.com/BrianMills2718/open_web_retrieval)
-- 23 test modules covering phase-boundary contracts and Tyler-native runtime slices
+- 21 top-level test modules covering phase-boundary contracts and Tyler-native runtime slices
 - 7 ADRs documenting architectural decisions
 
 ## Setup

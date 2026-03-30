@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-03-29
+**Last updated:** 2026-03-30
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
@@ -66,16 +66,19 @@ Current implementation frontier:
   not as co-equal runtime modes
 - do not reopen local compatibility deletion without a new benchmark-triggered
   grounded-research-specific diagnosis
-- move the next concrete work into:
-  - `prompt_eval` for Tyler-literal vs calibrated-legacy comparison
-  - `llm_client` for model/runtime/observability follow-through
-  - `open_web_retrieval` for provider/search parity work
+- the first `prompt_eval` Tyler-literal vs calibrated-legacy comparison is now
+  complete
+- the next concrete work is:
+  - expand the frozen comparison set in `prompt_eval`
+  - close remaining prompt-literalness uncertainty for Stage 1/2/5
+  - land remaining `llm_client` and `open_web_retrieval` provider/model parity work
 
 See:
 
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
 - `docs/plans/tyler_literal_prompt_quality_recovery.md`
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/plans/tyler_faithful_execution_remainder.md`
 
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 

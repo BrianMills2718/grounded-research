@@ -71,3 +71,7 @@ Repo-local prompt-quality recovery is complete enough to classify honestly:
    not an unclassified local defect
 3. exact frontier-model parity and provider assumptions remain shared-infra /
    model-availability concerns, not hidden local TODOs
+
+The remaining faithful-Tyler execution work is tracked in:
+
+- `docs/plans/tyler_faithful_execution_remainder.md`
