@@ -172,7 +172,8 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_literal_default_eval_wave2.md`
 - supporting status notes:
   `docs/TYLER_FROZEN_EVAL_STATUS.md`,
-  `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`
+  `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`,
+  `docs/TYLER_EXECUTION_STATUS.md`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

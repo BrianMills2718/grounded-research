@@ -10,7 +10,7 @@ Define the smallest remaining work required to say, precisely and defensibly,
 that `grounded-research` has faithfully executed Tyler's V1 plan.
 
 This plan exists because repo-local runtime cutover is already complete, but a
-few real gaps remain:
+few Tyler-required gaps remain:
 
 - repo-local prompt literalness is now closed, with one documented Tyler
   Stage 2 schema/prompt ambiguity
@@ -174,3 +174,9 @@ Until then, the accurate claim is:
 
 - repo-local Tyler runtime parity is complete,
 - faithful Tyler execution is still in progress.
+
+## Canonical Status Surface
+
+For the strict `required / extension / blocked` checklist, use:
+
+- `docs/TYLER_EXECUTION_STATUS.md`

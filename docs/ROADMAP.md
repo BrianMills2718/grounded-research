@@ -81,6 +81,7 @@ See:
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
 - `docs/plans/tyler_faithful_execution_remainder.md`
 - `docs/plans/tyler_prompt_literalness_wave1.md`
+- `docs/TYLER_EXECUTION_STATUS.md`
 
 ## Next: Preserve Benchmarks And Choose The Next Expansion Gate
 

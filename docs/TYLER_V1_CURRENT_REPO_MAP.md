@@ -88,17 +88,15 @@ It belongs in:
 `grounded-research` should consume the result of that shared evaluation rather
 than invent its own one-off execution policy.
 
-## Future-Alignment Candidates
+## Remaining Tyler-Required Items
 
-These are still legitimate future candidates, but they are not current repo
-bugs:
+These are still real Tyler follow-through items:
 
-1. Tavily + Exa provider parity through `open_web_retrieval`
+1. Exa provider parity through `open_web_retrieval`
 2. Gemini JSON-Schema vs prompt-guided JSON comparison in `llm_client` /
    `prompt_eval`
 3. Frontier-model production profile after cheap-model stabilization
-4. Frozen eval expansion beyond the single tracked UBI Tyler-vs-legacy case
-5. Broader frozen eval coverage beyond the tracked UBI Tyler-vs-legacy case
+4. Broader frozen eval coverage beyond the current two matched Tyler-vs-legacy cases
 
 ## What Not To Do
 
