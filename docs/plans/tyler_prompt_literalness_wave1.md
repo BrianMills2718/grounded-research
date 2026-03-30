@@ -186,7 +186,7 @@ Minimum verification for this wave:
 
 ## Todo List
 
-- [ ] Phase 1: produce the literalness matrix
+- [x] Phase 1: produce the literalness matrix
 - [ ] Phase 2: patch Stage 1 and Stage 2 prompts
 - [ ] Phase 3: literalize Stage 5 query generation
 - [ ] Phase 4: reconcile docs
