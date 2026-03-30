@@ -85,9 +85,10 @@ def build_precomputed_payloads(
     repeats: int,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Build plain-Python inputs and outputs for prompt_eval precomputed scoring."""
+    input_id = manifest.experiment_name
     inputs = [
         {
-            "id": "ubi_current_evidence",
+            "id": input_id,
             "content": manifest.question,
             "expected": manifest.question,
         }
@@ -101,7 +102,7 @@ def build_precomputed_payloads(
             outputs.append(
                 {
                     "variant_name": variant.name,
-                    "input_id": inputs[0]["id"],
+                    "input_id": input_id,
                     "output": report_text,
                     "replicate": replicate,
                     "provenance": {

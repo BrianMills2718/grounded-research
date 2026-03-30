@@ -8,9 +8,12 @@ from scripts import eval_tyler_variants as eval_module
 
 
 def test_manifest_hashes_match_current_frozen_outputs() -> None:
-    """The checked-in manifest must match the saved frozen artifacts."""
-    manifest = eval_module.load_manifest()
-    eval_module.verify_manifest(manifest)
+    """All checked-in manifests must match the saved frozen artifacts."""
+    manifests = sorted((Path(eval_module.PROJECT_ROOT) / "config" / "eval_manifests").glob("*.json"))
+    assert manifests
+    for manifest_path in manifests:
+        manifest = eval_module.load_manifest(manifest_path)
+        eval_module.verify_manifest(manifest)
 
 
 def test_build_precomputed_payloads_repeats_each_variant() -> None:
@@ -20,9 +23,10 @@ def test_build_precomputed_payloads_repeats_each_variant() -> None:
     inputs, outputs = eval_module.build_precomputed_payloads(manifest, repeats=3)
 
     assert len(inputs) == 1
-    assert inputs[0]["id"] == "ubi_current_evidence"
+    assert inputs[0]["id"] == manifest.experiment_name
     assert len(outputs) == len(manifest.variants) * 3
     assert {item["variant_name"] for item in outputs} == {"tyler_literal", "calibrated_legacy"}
+    assert {item["input_id"] for item in outputs} == {manifest.experiment_name}
     assert {item["replicate"] for item in outputs} == {0, 1, 2}
     assert all("commit_anchor" in item["provenance"] for item in outputs)
 

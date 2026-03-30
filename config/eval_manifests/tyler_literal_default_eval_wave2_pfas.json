@@ -1,0 +1,54 @@
+{
+  "experiment_name": "tyler_literal_default_eval_wave2_pfas",
+  "question": "What are the documented health risks of PFAS (per- and polyfluoroalkyl substances) in drinking water, and what are the corresponding regulatory limits set by agencies, including the concentration levels?",
+  "variants": [
+    {
+      "name": "tyler_literal",
+      "label": "Tyler-literal PFAS fixture rerun",
+      "commit_anchor": "e7f8832",
+      "artifact_dir": "output/tyler_literal_pfas_eval_wave2",
+      "files": {
+        "report_md": {
+          "path": "output/tyler_literal_pfas_eval_wave2/report.md",
+          "sha256": "3d3d9361e60c1966246850a3c40f971cf06cce7db46d444351445dec0216ab00"
+        },
+        "summary_md": {
+          "path": "output/tyler_literal_pfas_eval_wave2/summary.md",
+          "sha256": "d16beb26781bd5ca80ab83ced89df4936d1c4c96129b28ad2a59aa0d09f6fbdd"
+        },
+        "trace_json": {
+          "path": "output/tyler_literal_pfas_eval_wave2/trace.json",
+          "sha256": "651d439749fc89af20ed83e52db54868fdc7fec5960a0845791fe7c0dc40439b"
+        },
+        "handoff_json": {
+          "path": "output/tyler_literal_pfas_eval_wave2/handoff.json",
+          "sha256": "5e98cf09797df5e7e3518ab35c298d8bb2558c00c2a7a0967c035f2b9b0f6b27"
+        }
+      }
+    },
+    {
+      "name": "calibrated_legacy",
+      "label": "Archived calibrated PFAS analytical anchor",
+      "commit_anchor": "unknown_archive",
+      "artifact_dir": "output/pfas_v2_analytical",
+      "files": {
+        "report_md": {
+          "path": "output/pfas_v2_analytical/report.md",
+          "sha256": "6d847231f058e94644d635d1f6026c1a4cc310e65bdb9bbf702dde6161222c00"
+        },
+        "summary_md": {
+          "path": "output/pfas_v2_analytical/summary.md",
+          "sha256": "1a881e417b1f9e123c1df741dd2b911841a9690870e95a416ce67c9739c268fb"
+        },
+        "trace_json": {
+          "path": "output/pfas_v2_analytical/trace.json",
+          "sha256": "301ab996b72a852d7c3a4f1b5f7266b05b4ac4a813f9b179f113fc72af93bdc1"
+        },
+        "handoff_json": {
+          "path": "output/pfas_v2_analytical/handoff.json",
+          "sha256": "1c9d1c789a4094febd56eb86963b59239a0b5dbf69af9ba24d9074c58ce5fcf1"
+        }
+      }
+    }
+  ]
+}
