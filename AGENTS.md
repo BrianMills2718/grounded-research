@@ -260,6 +260,8 @@ the expected behavior is strict:
 
 - determine every remaining phase needed to finish the active repo-local wave
 - make the phases explicit in the active plan and notebook before continuing
+- keep an explicit todo list synchronized with the active plan as phases move
+  from pending -> in progress -> completed
 - make acceptance criteria and failure modes explicit for each phase
 - execute continuously through all planned phases
 - commit every verified slice immediately
@@ -286,6 +288,21 @@ cleanup slices just to stay busy. Freeze `grounded-research` on the canonical
 Tyler path, keep benchmark anchors stable, and move the next frontier into
 `prompt_eval`, `llm_client`, or `open_web_retrieval` unless a new benchmark
 creates a grounded-research-specific diagnosis.
+
+When there is no active repo-local implementation wave, the next 24-hour plan
+must be a cross-repo program with:
+
+- a grounded-research plan and notebook that define the phases, success
+  criteria, and evidence artifacts
+- `prompt_eval` as the default place for comparing Tyler-literal against
+  archived calibrated variants
+- `llm_client` and `open_web_retrieval` as the default homes for any runtime,
+  observability, provider, or retrieval follow-through exposed by that
+  evaluation
+
+Do not reopen deleted local compatibility code just to create another
+comparison path. Use frozen artifacts, commit references, and shared eval
+infrastructure instead.
 
 ### 8d. Rollback Safety During Long Waves
 

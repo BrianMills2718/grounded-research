@@ -136,6 +136,11 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 Current open work is intentionally narrow:
 
+- active cross-repo evaluation wave:
+  `docs/plans/tyler_literal_default_eval_wave1.md`
+- active review notebook:
+  `docs/notebooks/29_tyler_literal_default_eval_wave1.ipynb`
+
 - repo-local Tyler canonical cutover reference:
   `docs/plans/tyler_canonical_cutover.md`
 - completed child waves under that cutover:
@@ -147,8 +152,9 @@ Current open work is intentionally narrow:
   `docs/plans/stage5_internal_protocol_literalization.md`,
   `docs/plans/stage34_compatibility_protocol_deletion.md`
 - there is currently no active repo-local implementation wave; the next
-  concrete work should be benchmark/eval comparison in `prompt_eval` and
-  shared-infra follow-through in `llm_client` / `open_web_retrieval`
+  concrete work is the frozen Tyler-literal vs calibrated-legacy comparison in
+  `prompt_eval`, followed by shared-infra follow-through in `llm_client` /
+  `open_web_retrieval`
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`

@@ -33,6 +33,7 @@
 | [current_shape_model_surface_deletion.md](current_shape_model_surface_deletion.md) | Completed | Child wave under Tyler canonical cutover: deleted the remaining current-shape model/helper surfaces (`QuestionDecomposition`, `AnalystRun`, `ClaimLedger`) and moved the Stage 3 quality floor onto canonical Tyler artifacts. |
 | [stage5_internal_protocol_literalization.md](stage5_internal_protocol_literalization.md) | Completed | Child wave under Tyler canonical cutover: removed the remaining current-shape internal Stage 5 protocol types from the live Tyler verification path. |
 | [stage34_compatibility_protocol_deletion.md](stage34_compatibility_protocol_deletion.md) | Completed | Child wave under Tyler canonical cutover: deleted the dead Stage 3/4 compatibility utility path so `main` keeps one Stage 4 vocabulary. |
+| [tyler_literal_default_eval_wave1.md](tyler_literal_default_eval_wave1.md) | In progress | Cross-repo evaluation wave: freeze Tyler-literal vs archived calibrated legacy artifacts, run the comparison through `prompt_eval`, and record the default-policy decision plus next shared-infra follow-through. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |
