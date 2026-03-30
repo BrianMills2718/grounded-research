@@ -121,6 +121,18 @@ Use when you need:
 - the first `main` state where Stage 4 and Stage 5 operate only on Tyler-native
   semantic models
 
+### Frozen shared-eval comparison
+
+- `abb8765` Plan Tyler literal default evaluation wave
+- `3d87f9c` Add frozen Tyler variant evaluation harness
+
+Use when you need:
+
+- the first disciplined `prompt_eval`-based comparison between Tyler-literal
+  and the archived calibrated legacy anchor
+- the manifest and script that compare saved artifacts without reviving a
+  second runtime path
+
 ## Policy
 
 If an older tuned variant is worth preserving, preserve it by:

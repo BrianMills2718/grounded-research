@@ -1,6 +1,6 @@
 # Tyler Literal Default Eval Wave 1
 
-**Status:** In progress
+**Status:** Completed
 **Type:** cross-repo evaluation
 **Priority:** High
 **Blocked By:** `prompt_eval` branch `plan-11-tyler-literal-eval` must remain
@@ -161,12 +161,43 @@ Failure modes:
 - docs still imply two co-equal runtime modes
 - result is recorded without its limits
 
+## Executed Result
+
+Wave 1 completed on 2026-03-29.
+
+Frozen comparison outputs:
+
+- manifest:
+  `config/eval_manifests/tyler_literal_default_eval_wave1.json`
+- harness:
+  `scripts/eval_tyler_variants.py`
+- saved eval outputs:
+  `output/tyler_literal_default_eval_wave1/result.json`
+  `output/tyler_literal_default_eval_wave1/summary.md`
+
+Observed result with `openrouter/openai/gpt-5.4-mini` and `3` scoring
+replicates per variant:
+
+- `tyler_literal` mean score: `0.85`
+- `calibrated_legacy` mean score: `0.6833`
+- difference: `+0.1667`
+- bootstrap CI: `[0.10, 0.25]`
+
+Dimension means favored Tyler-literal on:
+
+- factual accuracy
+- completeness
+- conflict and nuance
+- decision usefulness
+
+Analytical depth tied on this single-case eval.
+
 ## Todo List
 
-- [ ] Phase 1: freeze the comparison manifest
-- [ ] Phase 2: build the shared-eval harness
-- [ ] Phase 3: run the frozen comparison
-- [ ] Phase 4: record the decision and next follow-through
+- [x] Phase 1: freeze the comparison manifest
+- [x] Phase 2: build the shared-eval harness
+- [x] Phase 3: run the frozen comparison
+- [x] Phase 4: record the decision and next follow-through
 
 ## Acceptance Rule
 
@@ -183,3 +214,26 @@ Important:
 - this wave does **not** decide whether legacy should return as a runtime mode
 - it decides only whether Tyler-literal remains the canonical target and what
   the next evidence-backed follow-up should be
+
+## Decision
+
+Tyler-literal remains the canonical default runtime target.
+
+The archived calibrated legacy path remains:
+
+- commit-reference history
+- frozen benchmark artifact history
+- eval-time comparison only
+
+It does **not** return as a co-equal runtime mode in `main`.
+
+## Remaining Uncertainty
+
+This wave is based on one shared benchmark case only.
+
+That means:
+
+- the result is disciplined evidence, not ecosystem-wide proof
+- expanding the frozen case set is still worthwhile
+- any remaining model/provider/runtime gap should now be pursued in shared
+  infrastructure rather than by reopening local compatibility code

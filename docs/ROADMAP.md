@@ -170,20 +170,26 @@ The next 24 hours of work should be treated as three explicit buckets:
    - land any remaining `llm_client` durability/query follow-through on `main`
    - keep provider-adapter and search-stack work in `open_web_retrieval`
 
-Current active wave:
+Completed wave:
 
 - `docs/plans/tyler_literal_default_eval_wave1.md`
 - `docs/notebooks/29_tyler_literal_default_eval_wave1.ipynb`
 
-Wave 1 success criteria:
+Wave 1 outcome:
 
-1. a frozen manifest records the Tyler-literal and archived calibrated legacy
-   benchmark artifacts plus file hashes and commit anchors
-2. `prompt_eval` runs the comparison end to end from saved outputs without
-   reviving a second runtime path
-3. canonical docs record the result and the default-policy decision
-4. any remaining gap is assigned either to shared infra or to a future
-   benchmark-triggered wave, not left vague
+1. frozen manifest, harness, and saved outputs now exist
+2. `prompt_eval` completed the comparison end to end from saved outputs
+3. the result favored Tyler-literal over the archived calibrated legacy anchor
+   on the tracked UBI case
+4. the remaining limit is explicit one-case coverage, not an ambiguous runtime
+   choice
+
+Next shared-eval frontier:
+
+- expand the frozen comparison set beyond one shared case as new Tyler-literal
+  benchmark anchors are saved
+- keep archived calibrated legacy behavior as eval-time comparison only
+- do not reintroduce alternate runtime modes in `grounded-research`
 
 ### Priority 4: Choose The Next Benchmark Wave Explicitly
 

@@ -136,9 +136,9 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 Current open work is intentionally narrow:
 
-- active cross-repo evaluation wave:
+- completed cross-repo evaluation wave:
   `docs/plans/tyler_literal_default_eval_wave1.md`
-- active review notebook:
+- completed review notebook:
   `docs/notebooks/29_tyler_literal_default_eval_wave1.ipynb`
 
 - repo-local Tyler canonical cutover reference:
@@ -155,6 +155,11 @@ Current open work is intentionally narrow:
   concrete work is the frozen Tyler-literal vs calibrated-legacy comparison in
   `prompt_eval`, followed by shared-infra follow-through in `llm_client` /
   `open_web_retrieval`
+- the first frozen shared-eval comparison is now complete:
+  `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
+  over the archived calibrated legacy anchor on the tracked UBI case
+- the remaining explicit uncertainty is coverage breadth of the frozen eval
+  set, not runtime-contract ambiguity in this repo
 - deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`
