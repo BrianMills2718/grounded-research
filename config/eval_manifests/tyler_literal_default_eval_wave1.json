@@ -1,0 +1,54 @@
+{
+  "experiment_name": "tyler_literal_default_eval_wave1",
+  "question": "What is the current evidence from academic literature, pilot programs, and governmental reports regarding the impact of Universal Basic Income (with varying parameters) on workforce participation rates and related labor market outcomes?",
+  "variants": [
+    {
+      "name": "tyler_literal",
+      "label": "Tyler-literal recovered anchor",
+      "commit_anchor": "a40ed8f",
+      "artifact_dir": "output/tyler_literal_parity_ubi_reanchor_v8",
+      "files": {
+        "report_md": {
+          "path": "output/tyler_literal_parity_ubi_reanchor_v8/report.md",
+          "sha256": "21ec0699527226782844cb4740cbb9b8323aa73123a111db5a8e127a911a9b02"
+        },
+        "summary_md": {
+          "path": "output/tyler_literal_parity_ubi_reanchor_v8/summary.md",
+          "sha256": "10f2d197cef0c886287af5b814d2b9e77fd8734be691ecf7dc4b9388e723f9c4"
+        },
+        "trace_json": {
+          "path": "output/tyler_literal_parity_ubi_reanchor_v8/trace.json",
+          "sha256": "13a7fbf8eb2072f36e57a9271e83a4cd2e89a3c6b6bc5260c10096b47d0b027b"
+        },
+        "handoff_json": {
+          "path": "output/tyler_literal_parity_ubi_reanchor_v8/handoff.json",
+          "sha256": "13c7bdbc1dfa27a7b6a9f2363d882784f7035213e350fd321f44a5e8e546cc39"
+        }
+      }
+    },
+    {
+      "name": "calibrated_legacy",
+      "label": "Archived calibrated dense-dedup anchor",
+      "commit_anchor": "1aad652",
+      "artifact_dir": "output/ubi_dense_dedup_eval",
+      "files": {
+        "report_md": {
+          "path": "output/ubi_dense_dedup_eval/report.md",
+          "sha256": "245c1d83e1ef9e38e1f14e0ddf9646a01de5821e6ee79ef73b09118eb5431f99"
+        },
+        "summary_md": {
+          "path": "output/ubi_dense_dedup_eval/summary.md",
+          "sha256": "c44576ed4b1f4903621d91a950a6b7b7e881d430b4e39ffdc1e1d9ed50c643dd"
+        },
+        "trace_json": {
+          "path": "output/ubi_dense_dedup_eval/trace.json",
+          "sha256": "b56352d35ccbadc3f65396f9271e238d0b933a1a2349344f617f3b0137b9a5b4"
+        },
+        "handoff_json": {
+          "path": "output/ubi_dense_dedup_eval/handoff.json",
+          "sha256": "0468c9358bc41983dd8770224bf56a016afa7ea3fbb52290a33132eb136a98b6"
+        }
+      }
+    }
+  ]
+}
