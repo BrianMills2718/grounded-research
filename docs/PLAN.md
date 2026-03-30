@@ -165,6 +165,8 @@ Current open work is intentionally narrow:
   runtime-contract ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
+- active provider-cutover wave:
+  `docs/plans/tavily_integration_wave1.md`
 - there is currently no active repo-local implementation wave
 - completed eval-expansion wave:
   `docs/plans/tyler_literal_default_eval_wave2.md`

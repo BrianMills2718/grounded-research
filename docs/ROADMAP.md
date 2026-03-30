@@ -71,6 +71,7 @@ Current implementation frontier:
 - the next concrete work is:
   - expand the frozen comparison set beyond the current `2` matched cases
   - land remaining `llm_client` and `open_web_retrieval` provider/model parity work
+  - cut the live application over from the Brave-specific search tool to shared Tavily-backed search
   - keep the one Tyler-internal Stage 2 prompt/schema ambiguity documented rather than papered over
 
 See:
