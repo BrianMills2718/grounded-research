@@ -338,7 +338,6 @@ def get_runtime_reliability_config() -> dict[str, Any]:
         "request_timeouts_s": {
             "decomposition": 120,
             "query_generation": 120,
-            "source_scoring": 180,
             "analyst": 180,
             "claim_extraction": 240,
             "deduplication": 180,

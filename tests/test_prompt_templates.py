@@ -30,23 +30,6 @@ def test_tyler_stage1_decompose_prompt_renders_literal_shared_protocol() -> None
     assert "Original user query repeated for context anchoring:" in messages[1]["content"]
 
 
-def test_tyler_stage2_query_diversification_prompt_renders_literal_contract() -> None:
-    """Tyler Stage 2 query diversification prompt should render the literal query-role contract."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "tyler_v1_query_diversification.yaml"),
-        sub_question={
-            "question": "What do pilot results show about employment effects?",
-            "search_guidance": "official evaluations, labor-force results, follow-up studies",
-            "type": "empirical",
-        },
-    )
-
-    assert "Each query variant must use a DIFFERENT retrieval strategy" in messages[0]["content"]
-    assert "Do NOT use site: operators" in messages[0]["content"]
-    assert "Generate exactly 3 search query variants for Tavily" in messages[1]["content"]
-    assert "Additionally, generate 1 query variant for Exa" in messages[1]["content"]
-    assert "SEMANTIC DESCRIPTION" in messages[1]["content"]
-
 
 def test_tyler_stage2_extract_findings_prompt_renders_literal_shared_protocol() -> None:
     """Tyler Stage 2 extraction prompt should render the shared protocol minus unsupported reasoning text."""
@@ -149,99 +132,6 @@ def test_tyler_analyst_prompt_renders_with_stage_inputs() -> None:
     assert "EVIDENCE PACKAGE:" in messages[1]["content"]
 
 
-def test_dedup_prompt_renders_with_conservative_merge_rules() -> None:
-    """Dedup prompt should include the non-merge safeguards."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "dedup.yaml"),
-        raw_claims=[
-            {
-                "id": "RC-1",
-                "statement": "Latency improved by 20% in the 2025 benchmark.",
-                "confidence": "high",
-                "evidence_ids": ["E-1"],
-            },
-            {
-                "id": "RC-2",
-                "statement": "Latency improved by 20% in the 2024 benchmark.",
-                "confidence": "medium",
-                "evidence_ids": ["E-2"],
-            },
-        ],
-    )
-
-    assert "Do NOT merge claims that differ in timeframe" in messages[0]["content"]
-    assert "Every raw claim ID must appear in exactly one group" in messages[0]["content"]
-
-
-def test_claimify_prompt_renders_with_atomic_extraction_rules() -> None:
-    """Claimify prompt should render with atomization and lineage rules."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "claimify.yaml"),
-        analyst_label="Alpha",
-        analyst_summary="The benchmark result is mixed.",
-        analyst_claims=[
-            {
-                "id": "RC-source-1",
-                "statement": "Tool X is faster than Tool Y but has higher memory usage.",
-                "confidence": "medium",
-                "evidence_ids": ["E-1"],
-            }
-        ],
-        assumptions=[],
-        recommendations=[],
-        counterarguments=[],
-        source_records=[
-            {
-                "id": "S-1",
-                "title": "Benchmark report",
-                "quality_tier": "reliable",
-                "recency_score": 0.7,
-            }
-        ],
-        evidence=[
-            {
-                "id": "E-1",
-                "source_id": "S-1",
-                "content_type": "text",
-                "content": "Tool X beat Tool Y by 20% but used 2x the memory.",
-            }
-        ],
-        valid_evidence_ids=["E-1"],
-    )
-
-    assert "atomize compound claims into single assertions" in messages[0]["content"]
-    assert "Do not invent new evidence IDs" in messages[0]["content"]
-    assert "Never emit source IDs" in messages[0]["content"]
-    assert "Analyst Claims" in messages[1]["content"]
-    assert "Valid Evidence IDs" in messages[1]["content"]
-
-
-def test_arbitration_prompt_renders_with_anti_conformity_basis_language() -> None:
-    """Arbitration prompt should require explicit basis language."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "arbitration.yaml"),
-        dispute={
-            "id": "D-1",
-            "dispute_type": "factual_conflict",
-            "description": "Conflicting claims about benchmark throughput.",
-        },
-        claims=[
-            {"id": "C-1", "statement": "Tool X reached 10k req/s.", "confidence": "high", "evidence_ids": ["E-1"]},
-            {"id": "C-2", "statement": "Tool X did not exceed 7k req/s.", "confidence": "medium", "evidence_ids": ["E-2"]},
-        ],
-        evidence=[{"id": "E-1", "source_id": "S-1", "content": "Original benchmark summary."}],
-        fresh_evidence=[{"id": "E-3", "source_id": "S-3", "content": "Fresh rerun benchmark with updated numbers."}],
-    )
-
-    assert "Anti-conformity rules" in messages[0]["content"]
-    assert "new evidence" in messages[0]["content"]
-    assert "corrected assumption" in messages[0]["content"]
-    assert "resolved contradiction" in messages[0]["content"]
-    assert "`claim_updates` is a list of structured objects" in messages[0]["content"]
-    assert "cited_evidence_ids" in messages[0]["content"]
-    assert "justification" in messages[0]["content"]
-    assert "treat fresh evidence" in messages[1]["content"]
-    assert "required basis" in messages[1]["content"]
 
 
 def test_tyler_stage4_prompt_renders_with_literal_claimify_contract() -> None:
@@ -415,31 +305,6 @@ def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
     assert "Original query repeated" in messages[1]["content"]
 
 
-def test_dispute_classify_prompt_renders_with_type_guidance() -> None:
-    """Dispute classifier prompt should render with strengthened type guidance."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "dispute_classify.yaml"),
-        claims=[
-            {
-                "id": "C-1",
-                "statement": "Tool X is production-ready for small teams.",
-                "confidence": "medium",
-                "analyst_sources": ["Alpha"],
-                "evidence_ids": ["E-1"],
-            },
-            {
-                "id": "C-2",
-                "statement": "Tool X is only suitable for experimentation.",
-                "confidence": "medium",
-                "analyst_sources": ["Beta"],
-                "evidence_ids": ["E-2"],
-            },
-        ],
-    )
-
-    assert "Type guidance" in messages[0]["content"]
-    assert "Do not create disputes for stylistic differences" in messages[0]["content"]
-
 
 def test_query_generation_prompt_renders_sub_question_mode() -> None:
     """Query-generation prompt should render the sub-question contract via YAML."""
@@ -463,16 +328,3 @@ def test_query_generation_prompt_renders_sub_question_mode() -> None:
     assert "Universal Basic Income" in messages[1]["content"]
 
 
-def test_source_scoring_prompt_renders_yaml_template() -> None:
-    """Source-scoring prompt should render from prompt data, not inline strings."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "source_scoring.yaml"),
-        source_lines=[
-            "- S-1: National Bureau of Economic Research | https://nber.org/paper",
-            "- S-2: Personal blog | https://example.com/post",
-        ],
-    )
-
-    assert "Assign each source one quality tier" in messages[0]["content"]
-    assert "Score the quality of each source" in messages[1]["content"]
-    assert "S-1" in messages[1]["content"]

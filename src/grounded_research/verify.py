@@ -314,11 +314,6 @@ def _select_weaker_claim_for_verification(
     return min(claim_entries, key=_claim_support_score)
 
 
-def _build_weaker_position_support_query(statement: str) -> str:
-    """Generate a query seeking evidence for the currently weaker position."""
-    return f"{_strip_terminal_punctuation(statement)} evidence study report"
-
-
 def _select_leading_claim_for_refutation(
     claim_entries: list[ClaimLedgerEntry],
 ) -> ClaimLedgerEntry | None:
