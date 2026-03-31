@@ -54,17 +54,28 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate bench evaluate
+.PHONY: adjudicate adjudicate-test bench evaluate
 
-adjudicate: ## Run full adjudication pipeline (QUERY= or INPUT= required)
+adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
 		echo "Usage: make adjudicate QUERY='topic' or make adjudicate INPUT=evidence.json"; \
 		exit 1; \
 	fi
 	@if [ -n "$(QUERY)" ]; then \
-		$(PYTHON) -m grounded_research.cli run "$(QUERY)"; \
+		$(PYTHON) engine.py "$(QUERY)"; \
 	elif [ -n "$(INPUT)" ]; then \
-		$(PYTHON) -m grounded_research.cli run --input "$(INPUT)"; \
+		$(PYTHON) engine.py --fixture "$(INPUT)"; \
+	fi
+
+adjudicate-test: ## Run adjudication with cheap testing models (QUERY= or INPUT=)
+	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
+		echo "Usage: make adjudicate-test QUERY='topic' or make adjudicate-test INPUT=evidence.json"; \
+		exit 1; \
+	fi
+	@if [ -n "$(QUERY)" ]; then \
+		$(PYTHON) engine.py --config testing "$(QUERY)"; \
+	elif [ -n "$(INPUT)" ]; then \
+		$(PYTHON) engine.py --config testing --fixture "$(INPUT)"; \
 	fi
 
 bench: ## Run evaluation benchmarks

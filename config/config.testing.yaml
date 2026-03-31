@@ -3,48 +3,57 @@
 # synthesis length, and arbitration rounds. CLI: --depth deep
 depth: "standard"
 
-# Tyler V1 model assignments (Build Plan §Stage 1-6).
-# For cheap testing, use config/config.testing.yaml instead.
+# gemini-2.5-flash-lite via OpenRouter returns multiple tool calls which
+# Instructor rejects — every call fails then falls back. Use gpt-5-nano
+# for cheap tasks, gemini-2.5-flash for reasoning tasks.
 models:
-  decomposition: "openrouter/google/gemini-2.5-pro"        # Tyler: Gemini 3.1 Pro
-  analyst: "openrouter/openai/gpt-5.4"                     # Tyler: per-analyst override below
-  evidence_extraction: "openrouter/google/gemini-2.5-pro"  # Tyler: same as decomposition
-  claim_extraction: "openrouter/openai/gpt-5.4"            # Tyler: GPT-5.4 (best structured output)
-  deduplication: "openrouter/openai/gpt-5.4"               # Tyler: part of Stage 4
-  dispute_classification: "openrouter/openai/gpt-5.4"      # Tyler: part of Stage 4
-  arbitration: "openrouter/anthropic/claude-opus-4.6"      # Tyler: Claude Opus 4.6
-  synthesis: "openrouter/openai/gpt-5.4"                   # Tyler: TBD, must not dominate earlier stages
-  source_scoring: "openrouter/google/gemini-2.5-pro"       # Tyler: cost-efficient structured task
+  decomposition: "openrouter/google/gemini-2.5-flash"
+  analyst: "openrouter/openai/gpt-5.4-mini"
+  evidence_extraction: "openrouter/google/gemini-2.5-flash"
+  claim_extraction: "openrouter/google/gemini-2.5-flash"
+  deduplication: "openrouter/openai/gpt-5-nano"
+  dispute_classification: "openrouter/google/gemini-2.5-flash"
+  arbitration: "openrouter/openai/gpt-5-nano"
+  synthesis: "openrouter/google/gemini-2.5-flash"
+  source_scoring: "openrouter/google/gemini-2.5-flash"
 
-# Fallback chains per task (Tyler Build Plan §Cross-Cutting Requirements).
+# Fallback chains per task. When primary model exhausts retries,
+# try these in order. llm_client supports this natively via
+# fallback_models kwarg. Quality-aware: synthesis needs a strong
+# model, cheap tasks can fall back to anything.
 model_fallbacks:
-  decomposition: ["openrouter/openai/gpt-5.4-mini", "openrouter/anthropic/claude-sonnet-4.6"]
+  decomposition: ["openrouter/openai/gpt-5-nano"]
   analyst:
     - "openrouter/openai/gpt-5.4-mini"
-    - "openrouter/anthropic/claude-sonnet-4.6"
-    - "openrouter/google/gemini-2.5-flash"
-  evidence_extraction: ["openrouter/google/gemini-2.5-flash"]
-  claim_extraction: ["openrouter/anthropic/claude-opus-4.6"]   # Tyler: fallback Claude Opus
-  deduplication: ["openrouter/google/gemini-2.5-flash"]
-  dispute_classification: ["openrouter/google/gemini-2.5-flash"]
-  arbitration: ["openrouter/openai/gpt-5.4"]
-  synthesis: ["openrouter/anthropic/claude-opus-4.6"]
-  source_scoring: ["openrouter/google/gemini-2.5-flash"]
+    - "gemini/gemini-2.5-flash"
+    - "openrouter/openai/gpt-5.4-nano"
+  evidence_extraction: ["openrouter/openai/gpt-5-nano"]
+  claim_extraction: ["openrouter/openai/gpt-5-nano"]
+  deduplication: ["openrouter/openai/gpt-5-nano"]
+  dispute_classification: ["openrouter/openai/gpt-5-nano"]
+  arbitration: ["openrouter/openai/gpt-5-nano"]
+  synthesis: ["openrouter/openai/gpt-5-nano"]
+  source_scoring: ["openrouter/openai/gpt-5-nano"]
 
-# Tyler V1 Stage 3 analyst assignment (Build Plan §Stage 3).
-# Tyler specified cross-family diversity as a non-negotiable constraint.
+# Closest-available Tyler Stage 3 mapping.
+# Tyler specified:
+#   A = GPT-5.4 (step-back abstraction)
+#   B = Gemini 3.1 Pro (structured decomposition)
+#   C = Claude Opus 4.6 (verification-first)
+# The current shared registry does not expose Claude Opus 4.6, so the primary
+# trio uses the strongest locally available structured-output-safe substitutes.
+# DeepSeek is removed from the primary path because live Tyler-native runs
+# showed schema instability on `AnalysisObject`.
 analyst_models:
-  - "openrouter/openai/gpt-5.4"                    # Analyst A — step-back abstraction (Tyler: GPT-5.4)
-  - "openrouter/anthropic/claude-opus-4.6"          # Analyst B — structured decomposition (Tyler: Claude Opus 4.6)
-  - "openrouter/google/gemini-2.5-pro"              # Analyst C — verification-first (Tyler: Gemini 3.1 Pro)
+  - "openrouter/openai/gpt-5.4-mini"  # Analyst A — step-back abstraction
+  - "gemini/gemini-2.5-flash"  # Analyst B — structured decomposition
+  - "openrouter/openai/gpt-5.4-nano"  # Analyst C — verification-first (closest available Claude substitute)
 
-# Tyler Build Plan §Stage 5: max 3 queries per disputed claim, max 2 rounds.
 budgets:
   analyst_max_calls: 3
   analyst_min_successful: 2
-  verification_max_turns: 2
+  verification_max_turns: 10
   verification_max_disputes: 5
-  verification_max_queries_per_dispute: 3
   pipeline_max_budget_usd: 5.0
 
 # Each frame gives the analyst a distinct analytical lens on the same evidence.

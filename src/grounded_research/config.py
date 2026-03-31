@@ -14,10 +14,36 @@ from typing import Literal
 import yaml
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_CONFIG_PATH = _PROJECT_ROOT / "config" / "config.yaml"
+_CONFIG_DIR = _PROJECT_ROOT / "config"
+_DEFAULT_CONFIG_PATH = _CONFIG_DIR / "config.yaml"
 
 _cached_config: dict[str, Any] | None = None
-SearchProvider = Literal["tavily", "brave", "searxng"]
+SearchProvider = Literal["tavily", "brave", "searxng", "exa"]
+
+
+def _resolve_config_path() -> Path:
+    """Resolve config path from env var or default.
+
+    Set GROUNDED_RESEARCH_CONFIG=testing to use config/config.testing.yaml,
+    or set it to an absolute path for a custom config file.
+    """
+    import os
+
+    env = os.environ.get("GROUNDED_RESEARCH_CONFIG", "")
+    if not env:
+        return _DEFAULT_CONFIG_PATH
+    # Short names resolve to config/<name>.yaml
+    candidate = _CONFIG_DIR / f"config.{env}.yaml"
+    if candidate.exists():
+        return candidate
+    # Absolute or relative path
+    p = Path(env)
+    if p.exists():
+        return p
+    raise FileNotFoundError(
+        f"Config not found: tried {candidate} and {p}. "
+        f"Set GROUNDED_RESEARCH_CONFIG=testing for config/config.testing.yaml."
+    )
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:
@@ -25,7 +51,7 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
     global _cached_config
     if _cached_config is not None and path is None:
         return _cached_config
-    p = path or _CONFIG_PATH
+    p = path or _resolve_config_path()
     with open(p) as f:
         cfg = yaml.safe_load(f)
     if path is None:
@@ -195,7 +221,7 @@ def get_search_provider_config() -> dict[str, str]:
     collection = cfg.get("collection", {})
     provider = collection.get("search_provider", "tavily")
     locale = collection.get("search_locale", "en")
-    if provider not in {"tavily", "brave", "searxng"}:
+    if provider not in {"tavily", "brave", "searxng", "exa"}:
         raise ValueError(f"Unsupported search provider in config: {provider}")
     return {"provider": provider, "locale": locale}
 

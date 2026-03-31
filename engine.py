@@ -498,7 +498,17 @@ def main() -> None:
         default=None,
         help="Research depth (overrides config.yaml)",
     )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help='Config profile: "testing" for cheap models, or path to custom YAML',
+    )
     args = parser.parse_args()
+
+    # Set config profile before any config access
+    if args.config:
+        import os
+        os.environ["GROUNDED_RESEARCH_CONFIG"] = args.config
 
     # Override depth in config if CLI flag provided
     if args.depth:
