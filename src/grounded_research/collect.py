@@ -484,60 +484,50 @@ async def generate_search_queries_tyler_v1(
     trace_id: str,
     max_budget: float = 0.5,
 ) -> tuple[list[str], dict[str, str], dict[str, int]]:
-    """Generate Tyler-native Stage 2 query variants per sub-question."""
-    from llm_client import acall_llm_structured, render_prompt
-    from pydantic import BaseModel, Field
+    """Generate Tyler-native Stage 2 query variants per sub-question.
 
-    class TylerQueryVariants(BaseModel):
-        """One Tyler Stage 2 query set for a single sub-question."""
+    Tyler V1 spec §Stage 2: "Generate 3-5 query variants per sub-question
+    (formal/colloquial, academic/practitioner, broad/narrow) — string
+    templates, not a model call."
 
-        keyword_rewrite: str = Field(description="Keyword-oriented search query.")
-        practitioner_rewrite: str = Field(description="Practitioner-signal search query.")
-        contrarian_rewrite: str = Field(description="Query targeting falsifying or contradictory evidence.")
-        semantic_description: str = Field(description="Semantic description of the ideal document to find.")
-
+    No LLM call. Deterministic string templates only.
+    """
     query_to_sq: dict[str, str] = {}
     queries_per_sq: dict[str, int] = {}
     all_queries: list[str] = []
 
-    async def _generate_for_sub_question(sub_question) -> tuple[str, list[str]]:
-        messages = render_prompt(
-            str(_PROJECT_ROOT / "prompts" / "tyler_v1_query_diversification.yaml"),
-            sub_question=sub_question.model_dump(mode="json"),
-        )
-        result, _meta = await acall_llm_structured(
-            get_model("analyst"),
-            messages,
-            response_model=TylerQueryVariants,
-            task="query_generation_tyler_v1",
-            trace_id=f"{trace_id}/query_diversification/{sub_question.id}",
-            timeout=get_request_timeout("query_generation"),
-            max_budget=max_budget / max(1, len(stage_1_result.sub_questions)),
-            fallback_models=get_fallback_models("analyst"),
-        )
-        generated = [
-            result.keyword_rewrite.strip(),
-            result.practitioner_rewrite.strip(),
-            result.contrarian_rewrite.strip(),
-            result.semantic_description.strip(),
-        ]
-        deduped: list[str] = []
+    for sub_question in stage_1_result.sub_questions:
+        q = sub_question.question.strip().rstrip("?").strip()
+        guidance = (sub_question.search_guidance or "").strip()
+
+        generated: list[str] = []
         seen: set[str] = set()
-        for query in generated:
+
+        def _add(query: str) -> None:
+            query = query.strip()
             if query and query not in seen:
-                deduped.append(query)
+                generated.append(query)
                 seen.add(query)
-        return sub_question.id, deduped
 
-    results = await asyncio.gather(*[
-        _generate_for_sub_question(sub_question)
-        for sub_question in stage_1_result.sub_questions
-    ])
+        # 1. KEYWORD: extract core topic words
+        _add(q)
 
-    for sub_question_id, generated in results:
-        queries_per_sq[sub_question_id] = len(generated)
+        # 2. FORMAL/ACADEMIC: add academic signal
+        _add(f"{q} systematic review OR meta-analysis OR study")
+
+        # 3. PRACTITIONER: add practitioner signals
+        _add(f"{q} lessons learned OR we found that OR case study")
+
+        # 4. CONTRARIAN/FALSIFICATION: Tyler counterfactual pattern
+        _add(f"{q} limitations OR contradicted OR failure OR criticism")
+
+        # 5. If search_guidance provides extra keywords, use them
+        if guidance and guidance.lower() != q.lower():
+            _add(f"{q} {guidance}")
+
+        queries_per_sq[sub_question.id] = len(generated)
         for query in generated:
-            query_to_sq[query] = sub_question_id
+            query_to_sq[query] = sub_question.id
             all_queries.append(query)
 
     return all_queries, query_to_sq, queries_per_sq

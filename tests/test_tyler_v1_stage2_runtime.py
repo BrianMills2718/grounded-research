@@ -57,37 +57,25 @@ def _tyler_decomposition() -> DecompositionResult:
 
 
 @pytest.mark.asyncio
-async def test_generate_search_queries_tyler_v1_returns_mapped_variants(monkeypatch: pytest.MonkeyPatch) -> None:
-    variants = iter([
-        {
-            "keyword_rewrite": "ubi pilot labor supply",
-            "practitioner_rewrite": "ubi pilot lessons learned employment",
-            "contrarian_rewrite": "ubi pilot harms labor market",
-            "semantic_description": "A rigorous evaluation of ubi pilot labor-market effects.",
-        },
-        {
-            "keyword_rewrite": "ubi interpretation mixed findings",
-            "practitioner_rewrite": "ubi interpretation practitioner critique",
-            "contrarian_rewrite": "ubi interpretation alternative explanation",
-            "semantic_description": "A careful critique of how mixed ubi results should be interpreted.",
-        },
-    ])
-
-    async def fake_acall_llm_structured(*args, **kwargs):
-        response_model = kwargs["response_model"]
-        return response_model(**next(variants)), {}
-
-    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
-    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
-
+async def test_generate_search_queries_tyler_v1_returns_mapped_variants() -> None:
+    """Tyler V1 spec: string templates, not LLM calls. No mocking needed."""
     queries, query_to_sq, query_counts = await generate_search_queries_tyler_v1(
         _tyler_decomposition(),
         trace_id="test/trace",
     )
 
-    assert len(queries) == 8
-    assert query_to_sq["ubi pilot labor supply"] == "Q-1"
-    assert query_counts == {"Q-1": 4, "Q-2": 4}
+    # 2 sub-questions, each generates 4-5 template variants
+    assert len(queries) >= 8
+    # Each query maps to a sub-question ID
+    for q in queries:
+        assert query_to_sq[q] in ("Q-1", "Q-2")
+    # Both sub-questions have queries
+    assert query_counts["Q-1"] >= 4
+    assert query_counts["Q-2"] >= 4
+    # Verify template patterns present
+    assert any("systematic review" in q for q in queries)
+    assert any("lessons learned" in q for q in queries)
+    assert any("limitations" in q for q in queries)
 
 
 @pytest.mark.asyncio
