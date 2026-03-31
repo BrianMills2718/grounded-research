@@ -227,26 +227,33 @@ def _build_tyler_verification_queries(
     original_query: str,
     time_sensitivity: str,
 ) -> list[str]:
-    """Construct Tyler-literal neutral/supporting/authoritative verification queries."""
+    """Construct Tyler-literal verification queries.
+
+    Tyler V1 spec §Stage 5: "generate counterfactual queries aimed at
+    refuting the leading claim" with patterns: "[topic] limitations",
+    "[claim] contradicted by".
+    """
     neutral_query = _build_neutral_verification_question(
         dispute=dispute,
         claim_entries=claim_entries,
         original_query=original_query,
     )
     weaker_claim = _select_weaker_claim_for_verification(claim_entries)
-    authoritative_query = _build_authoritative_verification_query(
-        dispute=dispute,
-        claim_entries=claim_entries,
-        relevant_original_sources=relevant_original_sources,
-        original_query=original_query,
-    )
+    leading_claim = _select_leading_claim_for_refutation(claim_entries)
 
+    # Tyler spec: counterfactual queries include limitations + contradicted-by
     queries = [
         neutral_query,
-        _build_weaker_position_support_query(weaker_claim.statement if weaker_claim else neutral_query),
-        authoritative_query,
+        _build_limitations_query(dispute, claim_entries, original_query),
+        _build_refutation_query(leading_claim, neutral_query),
     ]
     if time_sensitivity == "time_sensitive":
+        authoritative_query = _build_authoritative_verification_query(
+            dispute=dispute,
+            claim_entries=claim_entries,
+            relevant_original_sources=relevant_original_sources,
+            original_query=original_query,
+        )
         queries.append(_build_dated_verification_query(authoritative_query))
     return queries
 
@@ -310,6 +317,42 @@ def _select_weaker_claim_for_verification(
 def _build_weaker_position_support_query(statement: str) -> str:
     """Generate a query seeking evidence for the currently weaker position."""
     return f"{_strip_terminal_punctuation(statement)} evidence study report"
+
+
+def _select_leading_claim_for_refutation(
+    claim_entries: list[ClaimLedgerEntry],
+) -> ClaimLedgerEntry | None:
+    """Choose the best-supported claim so refutation queries can target it."""
+    if not claim_entries:
+        return None
+    return max(claim_entries, key=_claim_support_score)
+
+
+def _build_limitations_query(
+    dispute: DisputeQueueEntry,
+    claim_entries: list[ClaimLedgerEntry],
+    original_query: str,
+) -> str:
+    """Tyler V1 spec counterfactual pattern: '[topic] limitations'."""
+    topic = _strip_terminal_punctuation(dispute.description or "")
+    if topic.lower().startswith("whether "):
+        topic = _normalize_whether_predicate(topic[8:])
+    if not topic and claim_entries:
+        topic = _strip_terminal_punctuation(claim_entries[0].statement)
+    if not topic:
+        topic = _strip_terminal_punctuation(original_query)
+    return f"{topic} limitations"
+
+
+def _build_refutation_query(
+    leading_claim: ClaimLedgerEntry | None,
+    fallback_query: str,
+) -> str:
+    """Tyler V1 spec counterfactual pattern: '[claim] contradicted by'."""
+    if leading_claim:
+        statement = _strip_terminal_punctuation(leading_claim.statement)
+        return f"{statement} contradicted by"
+    return f"{_strip_terminal_punctuation(fallback_query)} contradicted by"
 
 
 def _extract_authoritative_domain(

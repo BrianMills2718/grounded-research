@@ -100,9 +100,10 @@ def test_build_tyler_verification_queries_matches_literal_query_roles() -> None:
         time_sensitivity="mixed",
     )
 
+    # Tyler V1 spec: neutral, [topic] limitations, [leading claim] contradicted by
     assert queries[0] == "Did employment change?"
-    assert queries[1] == "Employment declined after the pilot evidence study report"
-    assert queries[2] == "site:oecd.org employment change"
+    assert queries[1] == "employment change limitations"
+    assert queries[2] == "Employment stayed flat in the pilot contradicted by"
     assert len(queries) == 3
 
 
@@ -141,10 +142,11 @@ def test_build_tyler_verification_queries_adds_dated_search_only_when_time_sensi
         time_sensitivity="time_sensitive",
     )
 
+    # Tyler V1 spec: neutral, limitations, refutation, + dated authoritative for time_sensitive
     assert len(queries) == 4
     assert queries[0] == "What does the evidence show about how regulators interpret the new rule?"
-    assert queries[1] == "Regulators prefer a broad reading of the rule evidence study report"
-    assert queries[2] == "How regulators interpret the new rule official documentation peer reviewed analysis"
+    assert queries[1] == "How regulators interpret the new rule limitations"
+    assert queries[2] == "Regulators prefer a broad reading of the rule contradicted by"
     assert queries[3].endswith(" 2026")
 
 
