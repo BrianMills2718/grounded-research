@@ -695,7 +695,11 @@ async def verify_disputes_tyler_v1(
             dispute_lookup[dispute.id].status = DisputeStatus.RESOLVED
         for update in latest_assessment.updated_claim_statuses:
             if update.claim_id in claim_lookup:
-                claim_lookup[update.claim_id].status = update.new_status
+                claim = claim_lookup[update.claim_id]
+                # Tyler constraint #4: preserve initial status for lineage tracking
+                if claim.status_at_extraction is None:
+                    claim.status_at_extraction = claim.status
+                claim.status = update.new_status
 
     verification_result = VerificationResult(
         disputes_investigated=investigated,

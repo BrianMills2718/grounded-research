@@ -217,7 +217,12 @@ class AnalysisObject(BaseModel):
 
 
 class ClaimLedgerEntry(BaseModel):
-    """Tyler V1 canonical claim ledger entry."""
+    """Tyler V1 canonical claim ledger entry.
+
+    Tyler constraint #4: track lineage of thought changes. The
+    status_at_extraction field preserves the claim's initial status
+    at Stage 4 extraction so post-arbitration changes are traceable.
+    """
 
     id: str = Field(description="Format: C-{n}, globally unique across all models")
     statement: str = Field(description="Canonical statement — disambiguated and deduplicated")
@@ -225,6 +230,10 @@ class ClaimLedgerEntry(BaseModel):
     evidence_label: EvidenceLabel
     source_references: list[str] = Field(description="S-{n} IDs from evidence package")
     status: ClaimStatus
+    status_at_extraction: Optional[ClaimStatus] = Field(
+        default=None,
+        description="Claim status when first extracted at Stage 4. Preserved for lineage tracking.",
+    )
     supporting_models: list[str] = Field(description="Model aliases that agree with this claim")
     contesting_models: list[str] = Field(description="Model aliases that disagree")
     related_assumptions: list[str] = Field(description="A-{n} IDs of assumptions this claim depends on")
