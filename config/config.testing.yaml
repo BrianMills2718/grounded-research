@@ -54,6 +54,7 @@ budgets:
   analyst_min_successful: 2
   verification_max_turns: 10
   verification_max_disputes: 5
+  verification_max_queries_per_dispute: 3
   pipeline_max_budget_usd: 5.0
 
 # Each frame gives the analyst a distinct analytical lens on the same evidence.

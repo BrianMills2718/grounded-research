@@ -583,6 +583,8 @@ async def verify_disputes_tyler_v1(
 
     depth_cfg = get_depth_config()
     max_rounds = max(1, int(depth_cfg.get("arbitration_max_rounds", 1)))
+    # Tyler V1 spec §Stage 5: "Max 3 queries per disputed claim"
+    max_queries_per_dispute = int(get_budget("verification_max_queries_per_dispute"))
     budget_per_dispute = max_budget / len(actionable)
     llm_calls = 0
     warnings: list[VerificationWarning] = []
@@ -626,7 +628,13 @@ async def verify_disputes_tyler_v1(
                 original_query=original_query,
                 time_sensitivity=getattr(bundle.question, "time_sensitivity", "mixed"),
             )
-            search_budget[dispute.id] = search_budget.get(dispute.id, 0) + len(queries)
+            # Tyler V1: cap queries per dispute across all rounds
+            used = search_budget.get(dispute.id, 0)
+            remaining = max_queries_per_dispute - used
+            if remaining <= 0:
+                break
+            queries = queries[:remaining]
+            search_budget[dispute.id] = used + len(queries)
 
             new_sources, new_evidence, new_warnings = await _collect_fresh_evidence_for_dispute(
                 dispute_id=dispute.id,
