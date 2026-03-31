@@ -15,18 +15,16 @@ Every item is classified as one of:
 3. Repo-local prompt literalness for Stage 1 and Stage 2
 4. Tyler-style Stage 5 verification-query behavior
 5. Tyler-native report/synthesis path in the live runtime
-6. Tavily-backed shared search in the live runtime
+6. Tavily + Exa shared-provider search in the live runtime
 7. Archived legacy behavior kept out of the live runtime path
 
 ## Required: Still Open
 
-1. Exa provider parity
-   - Owner: `open_web_retrieval`
-2. Exact frontier-model role parity
+1. Exact frontier-model role parity
    - Owner: shared model availability + config policy
-3. Gemini strict-schema quality study
+2. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-4. Broader frozen Tyler-vs-legacy evaluation coverage
+3. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity

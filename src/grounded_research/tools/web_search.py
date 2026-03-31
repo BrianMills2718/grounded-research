@@ -34,6 +34,7 @@ def _provider_source_label(provider: str) -> str:
         "tavily": "Tavily Search",
         "brave": "Brave Search",
         "searxng": "SearxNG Search",
+        "exa": "Exa Search",
     }
     return labels[provider]
 
@@ -51,6 +52,11 @@ def _build_client(provider: str) -> OpenWebRetrievalClient:
         if not api_key:
             raise RuntimeError("BRAVE_SEARCH_API_KEY not set.")
         kwargs["brave_api_key"] = api_key
+    elif provider == "exa":
+        api_key = os.environ.get("EXA_API_KEY")
+        if not api_key:
+            raise RuntimeError("EXA_API_KEY not set.")
+        kwargs["exa_api_key"] = api_key
     elif provider == "searxng":
         base_url = os.environ.get("SEARXNG_BASE_URL")
         if not base_url:

@@ -94,3 +94,34 @@ def test_search_web_returns_empty_results_when_no_hits(monkeypatch: pytest.Monke
     payload = json.loads(asyncio.run(web_search.search_web("x")))
     assert payload["source"] == "Tavily Search"
     assert payload["results"] == []
+
+
+def test_search_web_supports_exa_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The shared wrapper should also normalize Exa through the same caller contract."""
+    hits = [
+        SimpleNamespace(
+            title="Exa title",
+            url="https://example.edu/exa",
+            snippet="Exa snippet",
+            raw_payload={},
+        ),
+    ]
+
+    class _Client:
+        def __init__(self, *, exa_api_key: str, tool_call_logger=None) -> None:
+            assert exa_api_key == "exa-test-key"
+
+        def search(self, query, *, trace_id=None, task=None):  # type: ignore[no-untyped-def]
+            assert query.providers == ("exa",)
+            return hits
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(web_search, "OpenWebRetrievalClient", _Client)
+    monkeypatch.setattr(web_search, "get_search_provider_config", lambda: {"provider": "exa", "locale": "en"})
+    monkeypatch.setenv("EXA_API_KEY", "exa-test-key")
+
+    payload = json.loads(asyncio.run(web_search.search_web("x")))
+    assert payload["source"] == "Exa Search"
+    assert payload["results"][0]["description"] == "Exa snippet"
