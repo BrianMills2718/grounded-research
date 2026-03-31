@@ -67,6 +67,51 @@ def _build_client(provider: str) -> OpenWebRetrievalClient:
     return OpenWebRetrievalClient(**kwargs)
 
 
+async def search_web_exa(
+    query: str,
+    count: int = 5,
+    *,
+    trace_id: str | None = None,
+    task: str = "collection.search.exa",
+) -> str:
+    """Search via Exa (semantic/neural) if EXA_API_KEY is available.
+
+    Tyler V1 §Stage 2: "Tavily (primary) + Exa (secondary, semantic/neural)."
+    Returns empty results gracefully if Exa is not configured.
+    """
+    api_key = os.environ.get("EXA_API_KEY")
+    if not api_key:
+        return json.dumps({"source": "Exa Search", "query": query, "results": []})
+
+    client = _build_client("exa")
+    try:
+        query_model = SearchQuery(
+            query=query,
+            providers=("exa",),
+            top_k=max(1, min(count, 10)),
+        )
+        hits = client.search(query_model, trace_id=trace_id, task=task)
+    except Exception:
+        return json.dumps({"source": "Exa Search", "query": query, "results": []})
+    finally:
+        client.close()
+
+    results: list[dict[str, str]] = []
+    for hit in hits[:count]:
+        payload = hit.raw_payload if isinstance(hit.raw_payload, Mapping) else {}
+        results.append({
+            "title": hit.title or "",
+            "url": hit.url,
+            "description": hit.snippet or "",
+            "age": str(payload.get("age", "")),
+        })
+
+    return json.dumps(
+        {"source": "Exa Search", "query": query, "results": results},
+        default=str,
+    )
+
+
 async def search_web(
     query: str,
     count: int = 10,

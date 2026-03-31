@@ -778,7 +778,7 @@ async def collect_evidence(
     Depth is controlled by num_queries × results_per_query for search
     breadth, and max_sources for how many pages to actually fetch.
     """
-    from grounded_research.tools.web_search import search_web
+    from grounded_research.tools.web_search import search_web, search_web_exa
     from grounded_research.tools.fetch_page import fetch_page, set_pages_dir
 
     config = load_config()
@@ -828,9 +828,14 @@ async def collect_evidence(
     url_sq_ids: dict[str, set[str]] = {}  # url → all sub-question IDs that found it
 
     async def _search_one(q: str) -> list[dict]:
-        """Search one query, return results with query tag."""
+        """Search one query via Tavily (primary) + Exa (secondary).
+
+        Tyler V1 §Stage 2: "Tavily (primary, structured JSON) + Exa
+        (secondary, semantic/neural)."
+        """
         results = []
         try:
+            # Primary: Tavily keyword search
             raw = await search_web(
                 q,
                 count=results_per_query,
@@ -841,6 +846,19 @@ async def collect_evidence(
             data = json.loads(raw)
             for r in data.get("results", []):
                 r["search_query"] = q
+                results.append(r)
+
+            # Secondary: Exa semantic search (graceful no-op if no API key)
+            exa_raw = await search_web_exa(
+                q,
+                count=max(3, results_per_query // 2),
+                trace_id=trace_id,
+                task="collection.search.exa",
+            )
+            exa_data = json.loads(exa_raw)
+            for r in exa_data.get("results", []):
+                r["search_query"] = q
+                r["search_provider"] = "exa"
                 results.append(r)
 
             if time_sensitivity == "time_sensitive":

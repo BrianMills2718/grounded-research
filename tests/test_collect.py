@@ -259,6 +259,8 @@ async def test_collect_evidence_logs_fetch_and_jina_fallback(
         )
 
     monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
+    async def _noop_exa(*a, **kw): return '{"results": []}'
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
 
     async def fake_score_source_quality(bundle, trace_id, max_budget):
         for source in bundle.sources:
@@ -343,6 +345,8 @@ async def test_collect_evidence_preserves_all_matching_sub_question_tags(
         )
 
     monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
+    async def _noop_exa(*a, **kw): return '{"results": []}'
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
 
     async def fake_score_source_quality(bundle, trace_id, max_budget):
         for source in bundle.sources:
@@ -415,6 +419,8 @@ async def test_collect_evidence_standard_mode_keeps_legacy_page_evidence(
 
     monkeypatch.setattr("grounded_research.collect.generate_search_queries", fake_generate_search_queries)
     monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
+    async def _noop_exa(*a, **kw): return '{"results": []}'
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
     monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
     monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
     monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
@@ -500,6 +506,8 @@ async def test_collect_evidence_deep_mode_uses_goal_driven_extraction(
 
     monkeypatch.setattr("grounded_research.collect.generate_search_queries", fake_generate_search_queries)
     monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
+    async def _noop_exa(*a, **kw): return '{"results": []}'
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
     monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
     monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
     monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
@@ -567,6 +575,8 @@ async def test_collect_evidence_deep_mode_logs_gap_and_falls_back_on_extraction_
 
     monkeypatch.setattr("grounded_research.collect.generate_search_queries", fake_generate_search_queries)
     monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
+    async def _noop_exa(*a, **kw): return '{"results": []}'
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
     monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
     monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
     monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
