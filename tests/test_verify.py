@@ -308,7 +308,7 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_without_compat_l
         return [source], [evidence], []
 
     async def fake_arbitrate(**kwargs):
-        from grounded_research.tyler_v1_models import ArbitrationAssessment, ClaimStatusUpdate
+        from grounded_research.tyler_v1_models import ArbitrationAssessment, ChangeBasicType, ClaimStatusUpdate, ConfidenceLevel
 
         return ArbitrationAssessment(
             dispute_id="D-1",
@@ -319,7 +319,8 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_without_compat_l
                 ClaimStatusUpdate(
                     claim_id="C-1",
                     new_status=TylerClaimStatus.VERIFIED,
-                    confidence_in_resolution="high",
+                    basis_for_change=ChangeBasicType.NEW_EVIDENCE,
+                    confidence_in_resolution=ConfidenceLevel.HIGH,
                     remaining_uncertainty=None,
                 )
             ],
@@ -423,7 +424,7 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
         return [], [], []
 
     async def fake_arbitrate(**kwargs):
-        from grounded_research.tyler_v1_models import ArbitrationAssessment, ClaimStatusUpdate
+        from grounded_research.tyler_v1_models import ArbitrationAssessment, ChangeBasicType, ClaimStatusUpdate, ConfidenceLevel
 
         return ArbitrationAssessment(
             dispute_id="D-1",
@@ -434,7 +435,8 @@ async def test_verify_disputes_tyler_v1_prefers_persisted_tyler_stage_inputs(
                 ClaimStatusUpdate(
                     claim_id="C-1",
                     new_status=TylerClaimStatus.UNRESOLVED,
-                    confidence_in_resolution="medium",
+                    basis_for_change=ChangeBasicType.NEW_EVIDENCE,
+                    confidence_in_resolution=ConfidenceLevel.MEDIUM,
                     remaining_uncertainty="Still open.",
                 )
             ],

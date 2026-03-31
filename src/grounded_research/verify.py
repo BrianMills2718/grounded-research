@@ -28,10 +28,12 @@ from grounded_research.models import (
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
     ArbitrationAssessment,
+    ChangeBasicType,
     ClaimExtractionResult as TylerClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus as TylerClaimStatus,
     ClaimStatusUpdate,
+    ConfidenceLevel,
     DisputeQueueEntry,
     DisputeStatus,
     ResolutionOutcome,
@@ -508,9 +510,10 @@ def _normalize_tyler_claim_status_updates(
         ClaimStatusUpdate(
             claim_id=claim_id,
             new_status=default_status,
+            basis_for_change=ChangeBasicType.NEW_EVIDENCE,
             confidence_in_resolution=assessment.updated_claim_statuses[0].confidence_in_resolution
             if assessment.updated_claim_statuses
-            else "medium",
+            else ConfidenceLevel.MEDIUM,
             remaining_uncertainty=assessment.new_evidence_summary
             if default_status is TylerClaimStatus.UNRESOLVED
             else None,
@@ -605,7 +608,8 @@ async def verify_disputes_tyler_v1(
                 ClaimStatusUpdate(
                     claim_id=claim.id,
                     new_status=TylerClaimStatus.UNRESOLVED,
-                    confidence_in_resolution="medium",
+                    basis_for_change=ChangeBasicType.NEW_EVIDENCE,
+                    confidence_in_resolution=ConfidenceLevel.MEDIUM,
                     remaining_uncertainty="Verification did not run.",
                 )
                 for claim in claim_entries
@@ -655,7 +659,8 @@ async def verify_disputes_tyler_v1(
                             ClaimStatusUpdate(
                                 claim_id=claim.id,
                                 new_status=TylerClaimStatus.UNRESOLVED,
-                                confidence_in_resolution="medium",
+                                basis_for_change=ChangeBasicType.NEW_EVIDENCE,
+                                confidence_in_resolution=ConfidenceLevel.MEDIUM,
                                 remaining_uncertainty=f"No fresh evidence discovered in round {round_idx}.",
                             )
                             for claim in claim_entries

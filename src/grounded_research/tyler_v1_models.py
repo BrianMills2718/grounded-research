@@ -283,11 +283,34 @@ class ClaimExtractionResult(BaseModel):
     stage_summary: StageSummary
 
 
+class ChangeBasicType(str, Enum):
+    """Tyler V1 anti-conformity constraint #9: allowed basis for claim changes."""
+
+    NEW_EVIDENCE = "new_evidence"
+    CORRECTED_ASSUMPTION = "corrected_assumption"
+    RESOLVED_CONTRADICTION = "resolved_contradiction"
+
+
 class ClaimStatusUpdate(BaseModel):
-    """Typed Stage 5 claim update."""
+    """Typed Stage 5 claim update.
+
+    Tyler V1 constraint #9: a claim may only change status when citing
+    new evidence, a corrected assumption, or a resolved contradiction.
+    """
 
     claim_id: str = Field(description="C-{n} of the claim being updated")
     new_status: ClaimStatus = Field(description="Post-verification status: verified, refuted, or unresolved")
+    basis_for_change: ChangeBasicType = Field(
+        default=ChangeBasicType.NEW_EVIDENCE,
+        description=(
+            "Why this claim's status changed. Must be one of: "
+            "new_evidence (fresh evidence found), "
+            "corrected_assumption (an assumption was wrong), "
+            "resolved_contradiction (a contradiction was resolved). "
+            "Anti-conformity rule: status changes are NOT allowed based on "
+            "persuasiveness or authority alone."
+        ),
+    )
     confidence_in_resolution: ConfidenceLevel = Field(description="TELEMETRY ONLY")
     remaining_uncertainty: Optional[str] = Field(default=None, description="What's still unknown after investigation")
 
