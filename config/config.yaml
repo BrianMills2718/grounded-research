@@ -144,9 +144,10 @@ analyst_success:
   require_counterargument: true
   require_claim_evidence_ids: true
   require_counterargument_evidence_ids: true
+# Tyler V1 §Stage 3 validation: "claims must have at least 3 entries"
   min_claims_by_depth:
-    standard: 1
-    deep: 2
+    standard: 3
+    deep: 3
     thorough: 3
 
 tyler_literal_parity:

@@ -525,6 +525,10 @@ async def generate_search_queries_tyler_v1(
         if guidance and guidance.lower() != q.lower():
             _add(f"{q} {guidance}")
 
+        # Tyler V1 §Stage 2: "hard cap: 4 queries per sub-question (named constant)"
+        _MAX_QUERIES_PER_SUB_QUESTION = 4
+        generated = generated[:_MAX_QUERIES_PER_SUB_QUESTION]
+
         queries_per_sq[sub_question.id] = len(generated)
         for query in generated:
             query_to_sq[query] = sub_question.id

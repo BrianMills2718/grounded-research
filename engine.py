@@ -254,11 +254,20 @@ async def run_pipeline(
             f"({tyler_stage_4_result.statistics.decision_critical_disputes} decision-critical)"
         )
 
-        # --- User steering (preference/ambiguity disputes) ---
+        # --- User steering (preference/ambiguity/other disputes) ---
+        # Tyler V1 §Stage 6a: check the UPDATED dispute queue (post-Stage 5 if it
+        # ran), filter for preference_weighted, spec_ambiguity, or other types that
+        # are decision-critical and still unresolved.
+        current_dispute_queue = (
+            state.tyler_stage_5_result.updated_dispute_queue
+            if state.tyler_stage_5_result is not None
+            else tyler_stage_4_result.dispute_queue
+        )
         preference_disputes = [
             d
-            for d in tyler_stage_4_result.dispute_queue
-            if d.type.value in {"preference_weighted", "spec_ambiguity"}
+            for d in current_dispute_queue
+            if d.type.value in {"preference_weighted", "spec_ambiguity", "other"}
+            and d.decision_critical
             and d.status.value == "unresolved"
         ]
         if preference_disputes and sys.stdin.isatty():
