@@ -234,6 +234,14 @@ class ClaimLedgerEntry(BaseModel):
         default=None,
         description="Claim status when first extracted at Stage 4. Preserved for lineage tracking.",
     )
+    is_provisional: bool = Field(
+        default=True,
+        description=(
+            "Tyler constraint #8: separate working notes from locked decisions. "
+            "True at Stage 4 extraction. Set to False after Stage 5 verification "
+            "completes for claims that were investigated."
+        ),
+    )
     supporting_models: list[str] = Field(description="Model aliases that agree with this claim")
     contesting_models: list[str] = Field(description="Model aliases that disagree")
     related_assumptions: list[str] = Field(description="A-{n} IDs of assumptions this claim depends on")

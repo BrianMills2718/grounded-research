@@ -700,6 +700,8 @@ async def verify_disputes_tyler_v1(
                 if claim.status_at_extraction is None:
                     claim.status_at_extraction = claim.status
                 claim.status = update.new_status
+                # Tyler constraint #8: mark as non-provisional after investigation
+                claim.is_provisional = False
 
     verification_result = VerificationResult(
         disputes_investigated=investigated,
