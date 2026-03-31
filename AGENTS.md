@@ -3,6 +3,19 @@
 This file is the canonical operating guide for this project. `AGENTS.md` must
 mirror it exactly. Edit this file first, then resync `AGENTS.md`.
 
+## Tyler Literal Compliance — THE Priority
+
+The V1 spec is Tyler's. The authoritative source is
+`2026_0325_tyler_feedback/` (4 files: Build Plan, Design, Schemas, Prompts).
+Every implementation decision must be checked against that spec. When in doubt,
+build what Tyler literally asked for. Document deviations explicitly — do not
+silently substitute.
+
+Config split: `config/config.yaml` has Tyler-literal model assignments.
+`config/config.testing.yaml` has cheap models for iteration. Tests auto-use
+testing config. `--config testing` or `GROUNDED_RESEARCH_CONFIG=testing` for
+CLI.
+
 ## Purpose
 
 Build an adjudication-centered grounded research system.

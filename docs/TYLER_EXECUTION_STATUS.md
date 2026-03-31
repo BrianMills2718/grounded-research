@@ -12,15 +12,23 @@ Every item is classified as one of:
 
 1. Tyler-native Stage 1-6 runtime contracts
 2. Tyler-native Stage 1-6 export/handoff surfaces
-3. Repo-local prompt literalness for Stage 1 and Stage 2
-4. Tyler-style Stage 5 verification-query behavior
+3. Repo-local prompt literalness for Stage 1 through Stage 6
+4. Tyler-style Stage 5 verification-query behavior (counterfactual patterns)
 5. Tyler-native report/synthesis path in the live runtime
 6. Tavily + Exa shared-provider search in the live runtime
 7. Archived legacy behavior kept out of the live runtime path
+8. Tyler-literal model assignments in default config (GPT-5.4, Claude Opus 4.6, Gemini 2.5 Pro)
+9. Cheap testing config split (`config/config.testing.yaml`)
+10. Deterministic URL lookup table for source quality scoring (Tyler §Stage 2)
+11. String-template query generation (Tyler §Stage 2: "not a model call")
+12. Evidence label numeric weights (Tyler §Design #5: 1.0/0.8/0.5/0.3)
+13. Verification query budget enforcement (Tyler §Stage 5: max 3 queries/dispute)
+14. Tyler-literal quality_tier → numeric score mapping (1.0/0.7/0.5/0.3)
 
 ## Required: Still Open
 
-1. Exact frontier-model role parity
+1. Frontier-model runtime validation
+   - Models are configured correctly but haven't been tested in a live run
    - Owner: shared model availability + config policy
 2. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
