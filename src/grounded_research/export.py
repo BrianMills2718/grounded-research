@@ -223,10 +223,10 @@ async def generate_tyler_synthesis_report(
                 "id": source.id,
                 "title": source.title,
                 "quality_score": {
-                    "authoritative": 0.9,
-                    "reliable": 0.75,
+                    "authoritative": 1.0,
+                    "reliable": 0.7,
                     "unknown": 0.5,
-                    "unreliable": 0.2,
+                    "unreliable": 0.3,
                 }.get(source.quality_tier, 0.5),
                 "source_type": source.source_type,
                 "contribution_summary": (

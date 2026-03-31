@@ -558,12 +558,15 @@ def _current_source_type_to_tyler_source_type(source_type: str) -> str:
 
 
 def _current_quality_tier_to_tyler_score(quality_tier: str) -> float:
-    """Project current qualitative source tiers into Tyler's numeric score."""
+    """Map quality tiers to Tyler V1 numeric scores.
+
+    Tyler spec: "1.0 official docs → 0.3 generic blog. Unknown = 0.5."
+    """
     return {
-        "authoritative": 0.9,
-        "reliable": 0.75,
+        "authoritative": 1.0,
+        "reliable": 0.7,
         "unknown": 0.5,
-        "unreliable": 0.2,
+        "unreliable": 0.3,
     }.get(quality_tier, 0.5)
 
 

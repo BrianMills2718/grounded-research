@@ -419,10 +419,10 @@ def _build_additional_sources(
             url=source.url,
             title=source.title,
             quality_score={
-                "authoritative": 0.9,
-                "reliable": 0.75,
+                "authoritative": 1.0,
+                "reliable": 0.7,
                 "unknown": 0.5,
-                "unreliable": 0.2,
+                "unreliable": 0.3,
             }.get(source.quality_tier, 0.5),
             key_findings=evidence_by_source.get(source.id, []),
             retrieved_for_dispute=dispute_id,

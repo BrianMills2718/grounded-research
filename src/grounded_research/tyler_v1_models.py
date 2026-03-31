@@ -18,12 +18,30 @@ from pydantic import BaseModel, Field
 
 
 class EvidenceLabel(str, Enum):
-    """Hierarchy from Tyler V1 DESIGN constraint #5."""
+    """Hierarchy from Tyler V1 DESIGN constraint #5.
+
+    Numeric weights per Tyler spec: vendor-documented (1.0) >
+    empirically-observed (0.8) > model-self-characterization (0.5) >
+    speculative-inference (0.3).
+    """
 
     VENDOR_DOCUMENTED = "vendor_documented"
     EMPIRICALLY_OBSERVED = "empirically_observed"
     MODEL_SELF_CHARACTERIZATION = "model_self_characterization"
     SPECULATIVE_INFERENCE = "speculative_inference"
+
+    @property
+    def weight(self) -> float:
+        """Tyler V1 numeric weight for this evidence tier."""
+        return _EVIDENCE_LABEL_WEIGHTS[self]
+
+
+_EVIDENCE_LABEL_WEIGHTS: dict["EvidenceLabel", float] = {
+    EvidenceLabel.VENDOR_DOCUMENTED: 1.0,
+    EvidenceLabel.EMPIRICALLY_OBSERVED: 0.8,
+    EvidenceLabel.MODEL_SELF_CHARACTERIZATION: 0.5,
+    EvidenceLabel.SPECULATIVE_INFERENCE: 0.3,
+}
 
 
 class DisputeType(str, Enum):
