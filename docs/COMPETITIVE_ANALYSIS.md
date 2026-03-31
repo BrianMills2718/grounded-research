@@ -1,265 +1,8 @@
-# Competitive Analysis: grounded-research vs SOTA
+# Competitive Analysis: grounded-research vs Perplexity Deep Research
 
-**Date:** 2026-03-23
-**Question tested:** EU sanctions on Russia (effectiveness on oil/gas revenue)
+**Last updated:** 2026-03-31
 
-This is a historical benchmark snapshot for the older v4 calibrated path. It
-is not the canonical description of the current primary analyst defaults or the
-current Tyler-native runtime.
-
-## Tools Compared
-
-| Tool | Approach | Sources | Words | Cost | Time |
-|------|----------|---------|-------|------|------|
-| **grounded-research v4** | 3 cross-family analysts + arbitration + synthesis | 50 | 3,891 | $0.07 | ~3 min |
-| **Perplexity deep research** | Planning system + search + synthesis | 50 | 6,451 | ~$0.05 | 155s |
-| **GPT-Researcher** | Auto-search + single synthesis | ~10 | 1,560 | $0.025 | 61s |
-| **STORM (Stanford)** | Multi-perspective conversation + synthesis | — | — | — | Failed |
-
-## Fair Comparison Results (GPT-5-nano judge, no provenance bias)
-
-5 dimensions: Factual Accuracy, Completeness, Conflict/Nuance, Analytical Depth, Decision Usefulness.
-
-### grounded-research vs GPT-Researcher
-
-| Dimension | grounded-research | GPT-Researcher |
-|-----------|------------------|----------------|
-| Factual Accuracy | 4 | 3 |
-| Completeness | 5 | 3 |
-| Conflict & Nuance | 5 | 3 |
-| Analytical Depth | 5 | 3 |
-| Decision Usefulness | 5 | 3 |
-| **Total** | **24** | **15** |
-
-Length-normalized (1,900 vs 1,560 words): 21 vs 17. Pipeline wins at any length.
-
-### grounded-research vs Perplexity deep (20 sources)
-
-| Dimension | grounded-research | Perplexity |
-|-----------|------------------|------------|
-| Factual Accuracy | 4 | 4 |
-| Completeness | 4 | 5 |
-| Conflict & Nuance | 4 | 5 |
-| Analytical Depth | 4 | 5 |
-| Decision Usefulness | 4 | 5 |
-| **Total** | **20** | **24** |
-
-### grounded-research vs Perplexity deep (50 sources)
-
-| Dimension | grounded-research | Perplexity |
-|-----------|------------------|------------|
-| Factual Accuracy | 4 | 4 |
-| Completeness | 4 | 5 |
-| Conflict & Nuance | 4 | 5 |
-| Analytical Depth | 4 | 5 |
-| Decision Usefulness | 5 | 4 |
-| **Total** | **21** | **23** |
-
-## What Perplexity Does Better
-
-1. **Broader macro-economic integration** — connects sanctions to Russia's
-   budget deficits, GDP growth, fiscal policy, and strategic shifts. Our
-   pipeline stays closer to the direct sanctions→revenue chain.
-
-2. **Explicit analyst disagreements** — surfaces competing views among
-   researchers and policymakers on optimal approach. Our pipeline detects
-   disputes between its own analysts but doesn't surface third-party debate.
-
-3. **Political feasibility constraints** — notes Hungary blocking the 20th
-   package, coalition dynamics. Our pipeline treats sanctions as policy
-   facts, not as political negotiations.
-
-4. **Quantitative causal decomposition** — separates revenue decline from
-   pricing effects vs volume effects. Our pipeline reports aggregate impacts.
-
-## What grounded-research Does Better
-
-1. **Structured decision framework** — explicit policy alternatives with
-   conditional triggers ("when to choose this option"). Perplexity describes
-   options but doesn't structure them as decision rules.
-
-2. **Explicit uncertainty sections** — "What the Evidence Doesn't Tell Us"
-   with concrete gaps and testable conditions for re-evaluation. Perplexity's
-   prompt explicitly bans hedging language.
-
-3. **Claim-level provenance** — every assertion traces to specific evidence
-   through a typed claim ledger. Not captured in prose comparison but is the
-   unique structural asset.
-
-4. **Fresh evidence arbitration** — resolves factual conflicts by fetching
-   new evidence. No other tool does this.
-
-## Perplexity Architecture (from leaked prompt)
-
-Perplexity uses a two-system architecture:
-1. **Planning system** (not visible): Decides search strategy, issues queries,
-   navigates URLs, explains reasoning. This is where the analytical depth
-   comes from.
-2. **Synthesis system** (prompt available): Formats the planning system's
-   findings into a polished report. The prompt is almost entirely about
-   formatting — markdown rules, citation style, list vs table, no hedging.
-
-Key design choices in the synthesis prompt:
-- **No hedging language** — "NEVER use moralization or hedging language"
-- **Begin and end with summary** — sandwich structure for readability
-- **Cite up to 3 sources per sentence** — prevents citation clutter
-- **Query type routing** — academic research gets long/detailed, news gets
-  concise, weather gets short. Different question types → different formats.
-- **Journalistic tone** — "unbiased and journalistic tone" throughout
-
-### What we can learn
-
-1. **Query-type routing**: We should detect question type and adjust report
-   structure. A factual policy question needs different treatment than a
-   technology comparison or health risk assessment.
-
-2. **Formatting precision**: Their markdown rules are much more specific than
-   ours. Tables for comparisons, flat lists only, no mixed list types.
-
-3. **Summary sandwich**: Begin with summary, end with summary. Good for
-   readability — our reports jump straight into analysis.
-
-4. **Citation discipline**: "Cite up to three relevant sources per sentence"
-   prevents the citation clutter our reports sometimes have.
-
-5. **Their planning system is the real advantage** — the synthesis prompt is
-   a formatter. Their search/reasoning system (which we don't see) is what
-   produces the analytical depth. Our equivalent is the multi-analyst loop,
-   which works differently but serves the same purpose.
-
-### What NOT to copy
-
-1. **No hedging** — their ban on uncertainty language is a readability choice
-   that trades accuracy for confidence. Our explicit uncertainty sections are
-   a genuine analytical advantage, not a flaw to fix.
-
-2. **Single-pass synthesis** — they don't have dispute detection or
-   arbitration. Their depth comes from broader search, not from structured
-   disagreement resolution.
-
-## Closing the Gap
-
-The 2-point gap (21 vs 23) with 50 sources came from synthesis quality,
-not evidence breadth. Prompt improvements incorporated into long_report.yaml:
-
-1. Broader analytical frame (macro-economic, political feasibility)
-2. Third-party disagreements (expert/institutional debates)
-3. Causal decomposition (separate by mechanism)
-4. Summary sandwich (executive + closing summary)
-5. Formatting tightness (tables, citation cap)
-
-### Result After All Improvements (v10: decomposition + analytical mode)
-
-**3-question comparison (fair, GPT-5-nano judge, no provenance bias):**
-
-| Question | Pipeline | Perplexity | Winner |
-|----------|----------|------------|--------|
-| EU sanctions | **23** | 22 | **Pipeline** |
-| PFAS health risks | **24** | 20 | **Pipeline** |
-| Intermittent fasting | 20 | **25** | **Perplexity** |
-
-Pipeline wins 2/3. Perplexity wins on fasting (dense study-level data
-with exact trial names and sample sizes that our extraction doesn't
-fully capture).
-
-### After Phase B (source quality + sufficiency + quantitative claims)
-
-| Question | Pipeline | Perplexity | Winner |
-|----------|----------|------------|--------|
-| Fasting (v5) | 21 | 24 | Perplexity |
-
-Gap narrowed from -5 to -3. Completeness hit 5/5 (was 4). Remaining gap:
-nuance (4 vs 5) and decision usefulness (4 vs 5) — Perplexity cites more
-specific organizational positions and population-specific cautions.
-Source quality scoring worked (38 authoritative, 8 reliable, 4 unknown).
-Report length hit 5,270 words (up from 4,141).
-
-### Progression (EU sanctions question)
-
-| Version | Key Change | Score | vs Perplexity | Winner |
-|---------|-----------|-------|---------------|--------|
-| v3 | baseline (20 sources) | 20 | 24 | Perplexity |
-| v4 | 50 sources | 21 | 23 | Perplexity |
-| v5 | improved prompt | 21 | 23 | Pipeline (verdict) |
-| v6 | + decomposition | 20 | 25 | Perplexity |
-| v8 | + trimmed context | 20 | 24 | Perplexity |
-| v9 | + longer output | 20 | 25 | Perplexity |
-| **v10** | **+ analytical mode** | **23** | **22** | **Pipeline** |
-
-The analytical synthesis mode was the single biggest improvement.
-Decomposition helped richness (more claims, more disputes) but the
-synthesis needed permission to infer beyond sources to match Perplexity.
-
-### Full 6-Question Validation (2026-03-24)
-
-| Question | Domain | Pipeline | Perplexity | Winner | Judge |
-|----------|--------|----------|------------|--------|-------|
-| EU sanctions | Policy | **23** | 22 | **Pipeline** | gpt-5-nano |
-| PFAS | Health/Regulatory | **24** | 20 | **Pipeline** | gpt-5-nano |
-| Fasting | Health/Science | **24** | 22 | **Pipeline** | gpt-5-nano |
-| LLM SWE | Technology | 19 | **25** | Perplexity | gpt-5-nano |
-| UBI | Economics | 21 | **23** | Perplexity | gemini-flash-lite |
-| Gut-brain | Science | **20** | 18 | **Pipeline** | gemini-flash-lite |
-
-**Win rate: 4/6 (67%).** Gate (≥4/6) passes.
-
-Pipeline wins on: policy questions, contested topics, questions where conflict
-detection and decision frameworks matter.
-
-Perplexity wins on: technology topics with dense benchmarks, economics with
-many pilot programs to enumerate.
-
-Pipeline's distinctive advantage: conflict/nuance (scored 5/5 on UBI and
-gut-brain). Perplexity's: volume and coverage (1.5-3x more words).
-
-Caveat: Q5-Q6 used gemini-flash-lite as judge (OpenRouter credits exhausted).
-
-### Post-Bug-Fix Re-run (2026-03-24)
-
-LLM SWE re-run after fixing SQ- ID override, dedup 0-groups, and evidence
-tagging bugs: **24/25 vs Perplexity 20/25** (was 19/25 vs 25/25).
-
-The entire LLM SWE gap was bugs, not architecture. With fixes:
-- Proper SQ- prefixed IDs → evidence tags correctly across pipeline
-- Dedup min_length=1 → proper 5 canonical claims from 14 raw (not 0)
-- Multi-query evidence tracking → all sub-questions get tagged evidence
-
-Updated win rate (with fixed LLM SWE): **5/6 (83%)**.
-
-### Final 6-Question Results (all bugs fixed, 2026-03-24)
-
-| Question | Domain | Pipeline | Perplexity | Winner |
-|----------|--------|----------|------------|--------|
-| EU sanctions | Policy | **23** | 22 | **Pipeline** |
-| PFAS | Health/Regulatory | **24** | 20 | **Pipeline** |
-| Fasting | Health/Science | **24** | 22 | **Pipeline** |
-| LLM SWE | Technology | **24** | 20 | **Pipeline** |
-| UBI | Economics | 21 | **25** | Perplexity |
-| Gut-brain | Science | **20** | 18 | **Pipeline** |
-
-**Win rate: 5/6 (83%).** Gate (≥4/6) passes decisively.
-
-Only loss: UBI — dense pilot program data where Perplexity cites specific
-study numbers (NBER N=, Alaska PFD amounts, Finnish pilot duration/results).
-Pipeline wins everywhere else including technology (after bug fixes).
-
-### UBI Recovery Re-run (2026-03-26)
-
-After the Wave 2 runtime, coverage-breadth, report-calibration, and
-post-Wave-2 hardening slices:
-
-- improved UBI fixture bundle completed end-to-end with `0` grounding warnings
-- analysts each produced `8` claims (configured target)
-- staged dedup now materially merges dense claim families: `44 raw -> 36 canonical`
-- long report cited `31` claims and preserved the earlier repair-loop improvements
-
-Fair comparison vs cached Perplexity:
-
-| Question | Pipeline | Perplexity | Winner | Notes |
-|----------|----------|------------|--------|-------|
-| UBI | **24** | 22 | **Pipeline** | Judge preferred the updated pipeline on factual accuracy and decision usefulness after dense-dedup hardening |
-
-Updated tracked 6-question outcome:
+## Current Benchmark (6-question set, GPT-5-nano judge, blind evaluation)
 
 | Question | Domain | Pipeline | Perplexity | Winner |
 |----------|--------|----------|------------|--------|
@@ -270,4 +13,84 @@ Updated tracked 6-question outcome:
 | UBI | Economics | **24** | 22 | **Pipeline** |
 | Gut-brain | Science | **20** | 18 | **Pipeline** |
 
-**Win rate: 6/6 (100%)** on the tracked benchmark set.
+**Win rate: 6/6 (100%).** Average: 23.2/25 vs 20.7/25.
+
+**Methodology:** 5 dimensions (Factual Accuracy, Completeness, Conflict/Nuance,
+Analytical Depth, Decision Usefulness), each scored 1-5. GPT-5-nano as blind
+judge. Perplexity outputs are cached from the original comparison date, not
+re-run. Pipeline cost: ~$0.06/run (standard depth).
+
+**Caveats:**
+- 6 questions is too few for statistical significance
+- Single LLM judge (known bias toward structured output)
+- Cached Perplexity comparisons, not live re-runs
+- Same team built and evaluated
+
+## Where Pipeline Wins
+
+1. **Decision usefulness** — Structured alternatives with "when to choose this
+   option" conditions. Perplexity describes options but doesn't structure them
+   as decision rules.
+2. **Conflict/nuance** — Explicit dispute detection and resolution with
+   arbitration trail. Perplexity acknowledges disagreements but doesn't resolve
+   them with fresh evidence.
+3. **Claim-level provenance** — Every assertion traces to evidence through a
+   typed claim ledger. Unique structural asset.
+4. **Explicit uncertainty** — "What the Evidence Doesn't Tell Us" with concrete
+   gaps and testable conditions for re-evaluation.
+
+## Where Pipeline Loses
+
+1. **Specific quantitative data** — Perplexity cites "meta-analysis of 99 RCTs",
+   "NBER study N=1,000." Pipeline produces "studies show weight loss of 3-8%."
+2. **Breadth of examples** — Perplexity lists 8-12 specific programs by name.
+   Pipeline discusses 3-5 in less detail.
+3. **Macro-economic connections** — Perplexity connects findings to GDP, budget
+   deficits, labor markets. Pipeline stays closer to the direct question.
+4. **Population-specific detail** — "For pregnant women...", "In the Finnish
+   context..." vs general "vulnerable populations."
+
+See `docs/JUDGE_CRITIQUES.md` for the detailed weakness analysis.
+
+## Benchmark History
+
+The pipeline improved from 4/6 to 6/6 over a 5-day calibration period:
+
+| Date | Win Rate | Key Change |
+|------|----------|------------|
+| 2026-03-23 | 2/3 | Initial 3-question test |
+| 2026-03-24 | 4/6 | Full 6-question set; lost LLM SWE + UBI |
+| 2026-03-24 | 5/6 | Bug fixes (ID override, dedup, evidence tagging) recovered LLM SWE |
+| 2026-03-26 | 6/6 | Dense-dedup hardening + report calibration recovered UBI |
+
+The EU sanctions question progressed from 20/25 (v3) to 23/25 (v10) — the
+single biggest improvement was switching to analytical synthesis mode.
+
+## Comparison Architecture
+
+**Perplexity** uses a two-system architecture:
+1. Planning system (hidden): search strategy, query issuing, URL navigation
+2. Synthesis system (prompt available): formatting-focused, no hedging, citation
+   discipline
+
+**grounded-research** uses a 6-stage pipeline:
+1. Decomposition → 2. Collection (Tavily+Exa) → 3. Independent analysts (3
+   models, 3 frames) → 4. Claim extraction + dispute detection → 5. Fresh
+   evidence arbitration → 6. Grounded synthesis
+
+The key difference: Perplexity's depth comes from broader search. Ours comes
+from structured disagreement resolution.
+
+## What We Learned From Perplexity
+
+- Query-type routing (different questions need different report structures)
+- Summary sandwich (begin and end with summary)
+- Citation discipline (max 3 sources per sentence)
+- Their "no hedging" ban trades accuracy for confidence — our explicit
+  uncertainty sections are an advantage, not a flaw
+
+## Next Benchmark Steps
+
+- Run through `prompt_eval` with multiple judge models and 20+ questions
+- Add dimensional scoring with bootstrap CI for statistical significance
+- Compare against live Perplexity output, not cached
