@@ -1,0 +1,184 @@
+# Research depth: "standard" (fast, $0.06), "deep" (thorough, $0.15-0.25),
+# "thorough" (exhaustive, $0.50-1.00). Controls source count, claim targets,
+# synthesis length, and arbitration rounds. CLI: --depth deep
+depth: "standard"
+
+# OpenRouter cheap models — use when Gemini daily quota is exhausted.
+# Slower than direct Gemini but works when rate-limited.
+models:
+  decomposition: "openrouter/google/gemini-2.5-flash"
+  analyst: "openrouter/openai/gpt-5.4-mini"
+  evidence_extraction: "openrouter/google/gemini-2.5-flash"
+  claim_extraction: "openrouter/google/gemini-2.5-flash"
+  deduplication: "openrouter/openai/gpt-5-nano"
+  dispute_classification: "openrouter/google/gemini-2.5-flash"
+  arbitration: "openrouter/openai/gpt-5-nano"
+  synthesis: "openrouter/google/gemini-2.5-flash"
+  source_scoring: "openrouter/google/gemini-2.5-flash"
+
+model_fallbacks:
+  decomposition: ["openrouter/openai/gpt-5-nano"]
+  analyst:
+    - "openrouter/openai/gpt-5.4-mini"
+    - "openrouter/openai/gpt-5.4-nano"
+  evidence_extraction: ["openrouter/openai/gpt-5-nano"]
+  claim_extraction: ["openrouter/openai/gpt-5-nano"]
+  deduplication: ["openrouter/openai/gpt-5-nano"]
+  dispute_classification: ["openrouter/openai/gpt-5-nano"]
+  arbitration: ["openrouter/openai/gpt-5-nano"]
+  synthesis: ["openrouter/openai/gpt-5-nano"]
+  source_scoring: ["openrouter/openai/gpt-5-nano"]
+
+# Closest-available Tyler Stage 3 mapping.
+# Tyler specified:
+#   A = GPT-5.4 (step-back abstraction)
+#   B = Gemini 3.1 Pro (structured decomposition)
+#   C = Claude Opus 4.6 (verification-first)
+# The current shared registry does not expose Claude Opus 4.6, so the primary
+# trio uses the strongest locally available structured-output-safe substitutes.
+# DeepSeek is removed from the primary path because live Tyler-native runs
+# showed schema instability on `AnalysisObject`.
+analyst_models:
+  - "openrouter/openai/gpt-5.4-mini"       # Analyst A
+  - "openrouter/google/gemini-2.5-flash"   # Analyst B
+  - "openrouter/openai/gpt-5.4-nano"       # Analyst C
+
+budgets:
+  analyst_max_calls: 3
+  analyst_min_successful: 2
+  verification_max_turns: 10
+  verification_max_disputes: 5
+  verification_max_queries_per_dispute: 3
+  pipeline_max_budget_usd: 5.0
+
+# Each frame gives the analyst a distinct analytical lens on the same evidence.
+# This is the core differentiator — not just different models, different methods.
+analyst_frames:
+  - "step_back_abstraction"       # Analyst A — principle-first landscape analysis
+  - "structured_decomposition"    # Analyst B — explicit sub-question-by-sub-question analysis
+  - "verification_first"          # Analyst C — challenge claims against evidence and assumptions
+
+collection:
+  search_provider: "tavily"
+  search_locale: "en"
+  num_queries: 15
+  results_per_query: 10
+  max_sources: 50
+  ranking:
+    preferred_domain_patterns:
+      - ".gov"
+      - ".edu"
+      - "nber.org"
+      - "worldbank.org"
+      - "imf.org"
+      - "oecd.org"
+      - "poverty-action.org"
+      - "givedirectly.org"
+      - "stanford.edu"
+      - "wiley.com"
+      - "springer.com"
+      - "sciencedirect.com"
+      - "ncbi.nlm.nih.gov"
+    deprioritized_domain_patterns:
+      - "wikipedia.org"
+      - "coursehero.com"
+      - "substack.com"
+      - "medium.com"
+      - "blogspot.com"
+      - "wordpress.com"
+      - "youtube.com"
+      - "reddit.com"
+      - "twitter.com"
+      - "facebook.com"
+      - "linkedin.com"
+      - "trendingworld.info"
+    preferred_title_terms:
+      - "systematic review"
+      - "meta-analysis"
+      - "working paper"
+      - "randomized"
+      - "experiment"
+      - "pilot"
+      - "evidence"
+      - "evaluation"
+      - "review"
+    deprioritized_title_terms:
+      - "study guide"
+      - "opinion"
+      - "explainer"
+      - "map"
+    pdf_bonus: 3
+    preferred_domain_bonus: 5
+    deprioritized_domain_penalty: 6
+    preferred_title_bonus: 2
+    deprioritized_title_penalty: 3
+    quality_tier_bonus:
+      authoritative: 8
+      reliable: 3
+      unknown: 0
+      unreliable: -6
+
+evidence_policy:
+  default_time_sensitivity: "mixed"
+  recency_weight: 0.5
+  compression_threshold: 80
+  synthesis_evidence_cap: 30
+  structured_content_truncation_chars: 500
+  long_report_content_truncation_chars: 400
+
+deduplication:
+  staged_trigger_claims: 20
+  bucket_max_claims: 12
+  max_doc_frequency_ratio: 0.45
+  min_shared_informative_tokens: 1
+
+phase_concurrency:
+  claim_extraction_max_concurrency: 1
+  evidence_extraction_max_concurrency: 2
+
+analysis_coverage:
+  analyst_retry_on_undercoverage: true
+  analyst_retry_min_evidence_items: 25
+  analyst_retry_min_claim_ratio: 0.75
+  analyst_retry_max_attempts: 1
+
+analyst_success:
+  require_claim: true
+  require_recommendation: true
+  require_counterargument: true
+  require_claim_evidence_ids: true
+  require_counterargument_evidence_ids: true
+  min_claims_by_depth:
+    standard: 1
+    deep: 2
+    thorough: 3
+
+tyler_literal_parity:
+  stage4_retry_on_empty_claims: true
+  stage4_retry_model: "openrouter/google/gemini-2.5-flash"
+  stage4_retry_fallback_models:
+    - "openrouter/openai/gpt-5-nano"
+  stage6_repair_on_underfilled_fields: true
+  stage6_repair_attempts: 1
+  stage6_min_tradeoffs: 1
+  stage6_min_preserved_alternatives: 1
+
+runtime_reliability:
+  use_run_local_observability_db: true
+
+# Synthesis mode controls how far the LONG REPORT goes beyond the claim ledger.
+# The claim ledger, trace.json, and handoff.json always have full provenance
+# regardless of this setting — they are always grounded.
+#
+# "grounded": long report only renders claims from the ledger
+# "analytical": long report synthesizes inferences and estimates beyond what
+#   any single source states, marked with [analytical inference]. The underlying
+#   claim ledger remains fully grounded — the report is a rendering, not the
+#   source of truth.
+synthesis_mode: "analytical"
+
+export_policy:
+  sectioned_synthesis_min_word_target: 9000
+  sectioned_synthesis_max_distinction_sections: 4
+  sectioned_synthesis_enabled_depths:
+    - "thorough"
