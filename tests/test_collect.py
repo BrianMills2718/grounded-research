@@ -45,9 +45,9 @@ async def test_generate_search_queries_subquestions_include_parent_topic_context
 ) -> None:
     """Sub-question query generation must keep the parent topic explicit."""
     # mock-ok: verifies local prompt wiring and anchoring around the external LLM boundary.
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
         assert task == "query_generation"
-        assert timeout == 120
+        assert "timeout" not in kwargs
         assert "Parent question:" in messages[1]["content"]
         assert "Required topic anchors:" in messages[1]["content"]
         assert "Universal Basic Income" in messages[1]["content"]

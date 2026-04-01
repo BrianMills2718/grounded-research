@@ -327,32 +327,16 @@ def get_tyler_literal_parity_config() -> dict[str, Any]:
 def get_runtime_reliability_config() -> dict[str, Any]:
     """Get benchmark/runtime reliability policy with config overrides.
 
-    These settings exist to make long benchmark and evaluation runs complete
-    predictably. They are operational policy, not prompt logic.
+    Request-level timeouts removed — observe hangs, don't kill.
+    See docs/plans/llm_call_observability.md.
     """
     cfg = load_config()
     configured = cfg.get("runtime_reliability", {})
     defaults: dict[str, Any] = {
         "use_run_local_observability_db": True,
-        "timeout_policy": "allow",
-        "request_timeouts_s": {
-            "decomposition": 120,
-            "query_generation": 120,
-            "analyst": 180,
-            "claim_extraction": 240,
-            "deduplication": 180,
-            "dispute_classification": 180,
-            "verification_query_generation": 120,
-            "arbitration": 240,
-            "synthesis": 240,
-            "long_report": 300,
-        },
     }
     if isinstance(configured, dict):
-        request_timeouts = configured.get("request_timeouts_s", {})
-        if isinstance(request_timeouts, dict):
-            defaults["request_timeouts_s"].update(request_timeouts)
-        defaults.update({k: v for k, v in configured.items() if k != "request_timeouts_s"})
+        defaults.update(configured)
     return defaults
 
 

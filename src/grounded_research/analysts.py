@@ -18,7 +18,6 @@ from grounded_research.config import (
     load_config,
 )
 from grounded_research.models import EvidenceBundle, Stage3AttemptTrace
-from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import normalize_tyler_analysis_object
 from grounded_research.tyler_v1_models import AnalysisObject, DecompositionResult as TylerDecompositionResult, EvidencePackage as TylerEvidencePackage
 
@@ -102,7 +101,6 @@ async def _call_tyler_analyst_once(
         response_model=AnalysisObject,
         task="analyst_reasoning_tyler_v1",
         trace_id=trace_id,
-        timeout=get_request_timeout("analyst"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("analyst"),
     )

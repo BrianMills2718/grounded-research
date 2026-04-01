@@ -22,7 +22,6 @@ from grounded_research.tyler_v1_models import (
     ClaimExtractionResult as TylerClaimExtractionResult,
     DecompositionResult as TylerDecompositionResult,
 )
-from grounded_research.runtime_policy import get_request_timeout
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -126,7 +125,6 @@ async def canonicalize_tyler_v1(
             response_model=TylerClaimExtractionResult,
             task="claim_extraction_tyler_v1_retry",
             trace_id=f"{trace_id}/claim_extraction_tyler_v1_retry",
-            timeout=get_request_timeout("claim_extraction"),
             max_budget=max_budget,
             fallback_models=retry_fallback_models if retry_fallback_models else get_fallback_models("claim_extraction"),
         )
@@ -139,7 +137,6 @@ async def canonicalize_tyler_v1(
             response_model=TylerClaimExtractionResult,
             task="claim_extraction_tyler_v1",
             trace_id=f"{trace_id}/claim_extraction_tyler_v1",
-            timeout=get_request_timeout("claim_extraction"),
             max_budget=max_budget,
             fallback_models=get_fallback_models("claim_extraction"),
         )

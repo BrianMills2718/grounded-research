@@ -44,7 +44,6 @@ from grounded_research.tyler_v1_models import (
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
-from grounded_research.runtime_policy import get_request_timeout
 
 
 @dataclass(frozen=True)
@@ -457,7 +456,6 @@ async def arbitrate_dispute_tyler_v1(
         response_model=ArbitrationAssessment,
         task="dispute_arbitration_tyler_v1",
         trace_id=f"{trace_id}/arb/{dispute.id}",
-        timeout=get_request_timeout("arbitration"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("arbitration"),
     )

@@ -151,13 +151,13 @@ def test_build_tyler_verification_queries_adds_dated_search_only_when_time_sensi
 
 
 @pytest.mark.asyncio
-async def test_arbitrate_dispute_tyler_v1_passes_configured_timeout(
+async def test_arbitrate_dispute_tyler_v1_calls_without_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Live Tyler Stage 5 arbitration should use the configured finite timeout."""
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+    """Stage 5 arbitration should NOT pass a timeout kwarg (observe, don't kill)."""
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
         assert task == "dispute_arbitration_tyler_v1"
-        assert timeout == 240
+        assert "timeout" not in kwargs, "timeout should not be passed — observe, don't kill"
         return response_model(
             dispute_id="D-1",
             resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,

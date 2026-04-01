@@ -40,7 +40,6 @@ from grounded_research.models import (
     ResearchQuestion,
     SourceRecord,
 )
-from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_models import (
     DecompositionResult as TylerDecompositionResult,
     EvidenceLabel,
@@ -320,7 +319,6 @@ async def _extract_goal_driven_evidence(
         response_model=ExtractionResult,
         task="evidence_extraction",
         trace_id=f"{trace_id}/extract/{source.id}",
-        timeout=get_request_timeout("evidence_extraction"),
         max_budget=0.2,
         fallback_models=get_fallback_models("evidence_extraction"),
     )
@@ -442,7 +440,6 @@ async def generate_search_queries(
                 response_model=SearchQueries,
                 task="query_generation",
                 trace_id=f"{trace_id}/queries/{sq_id}",
-                timeout=get_request_timeout("query_generation"),
                 max_budget=max_budget / len(sub_questions),
                 fallback_models=get_fallback_models("analyst"),
             )
@@ -472,7 +469,6 @@ async def generate_search_queries(
         response_model=SearchQueries,
         task="query_generation",
         trace_id=f"{trace_id}/queries",
-        timeout=get_request_timeout("query_generation"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("analyst"),
     )
@@ -651,7 +647,6 @@ async def build_tyler_evidence_package(
                 response_model=FindingExtractionResult,
                 task="finding_extraction_tyler_v1",
                 trace_id=f"{trace_id}/stage2/{sub_question.id}/{source.id}",
-                timeout=get_request_timeout("evidence_extraction"),
                 max_budget=max_budget / max(1, len(grouped_items)),
                 fallback_models=get_fallback_models("evidence_extraction"),
             )

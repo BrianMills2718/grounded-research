@@ -26,7 +26,6 @@ from grounded_research.models import (
     PipelineState,
     TylerDownstreamHandoff,
 )
-from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import render_tyler_synthesis_markdown
 from grounded_research.tyler_v1_models import SynthesisReport, VerificationResult
 
@@ -312,7 +311,6 @@ async def generate_tyler_synthesis_report(
             response_model=SynthesisReport,
             task="synthesis_tyler_v1",
             trace_id=f"{trace_id}/synthesis_tyler_v1{suffix}",
-            timeout=get_request_timeout("synthesis"),
             max_budget=max_budget,
             fallback_models=get_fallback_models("synthesis"),
         )

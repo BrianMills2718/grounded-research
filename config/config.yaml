@@ -160,22 +160,11 @@ tyler_literal_parity:
   stage6_min_tradeoffs: 1
   stage6_min_preserved_alternatives: 1
 
+# Request-level timeouts removed — observe hangs, don't kill calls.
+# See docs/plans/llm_call_observability.md for rationale.
+# The llm_client safety timeout (300s dead-connection detector) still applies.
 runtime_reliability:
   use_run_local_observability_db: true
-  timeout_policy: "allow"
-  request_timeouts_s:
-    decomposition: 120
-    query_generation: 120
-    source_scoring: 180
-    analyst: 180
-    evidence_extraction: 180
-    claim_extraction: 240
-    deduplication: 180
-    dispute_classification: 180
-    verification_query_generation: 120
-    arbitration: 240
-    synthesis: 240
-    long_report: 300
 
 # Synthesis mode controls how far the LONG REPORT goes beyond the claim ledger.
 # The claim ledger, trace.json, and handoff.json always have full provenance

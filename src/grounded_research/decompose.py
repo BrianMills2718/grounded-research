@@ -11,7 +11,6 @@ from pathlib import Path
 
 from grounded_research.config import get_fallback_models, get_model
 from grounded_research.models import DecompositionValidation
-from grounded_research.runtime_policy import get_request_timeout
 from grounded_research.tyler_v1_adapters import normalize_tyler_decomposition_ids
 from grounded_research.tyler_v1_models import DecompositionResult
 
@@ -44,7 +43,6 @@ async def decompose_question_tyler_v1(
         response_model=DecompositionResult,
         task="question_decomposition_tyler_v1",
         trace_id=f"{trace_id}/decompose_tyler_v1",
-        timeout=get_request_timeout("decomposition"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("decomposition"),
     )
@@ -88,7 +86,6 @@ async def validate_decomposition(
         response_model=DecompositionValidation,
         task="decomposition_validation",
         trace_id=f"{trace_id}/validate_decomp",
-        timeout=get_request_timeout("decomposition"),
         max_budget=max_budget,
         fallback_models=get_fallback_models("decomposition"),
     )

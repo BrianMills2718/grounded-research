@@ -175,9 +175,9 @@ async def test_canonicalize_tyler_v1_retries_empty_stage4_result(
     # mock-ok: verifies local retry/fail-loud logic around an external LLM call.
     calls: list[tuple[str, str]] = []
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
         calls.append((task, model))
-        assert timeout == 240
+        assert "timeout" not in kwargs
         if task == "claim_extraction_tyler_v1":
             return response_model.model_validate(
                 {
@@ -265,7 +265,7 @@ async def test_canonicalize_tyler_v1_fails_loud_on_persistent_empty_stage4(
 ) -> None:
     """Stage 4 should fail loud if both the primary call and retry remain empty."""
     # mock-ok: verifies local fail-loud guard around an external LLM call.
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
         return response_model.model_validate(
             {
                 "claim_ledger": [],
@@ -312,7 +312,7 @@ async def test_canonicalize_tyler_v1_retries_stage4_after_schema_failure(
     # mock-ok: verifies local retry behavior after an external LLM schema failure.
     calls: list[tuple[str, str]] = []
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
         calls.append((task, model))
         if task == "claim_extraction_tyler_v1":
             raise ValueError("dispute_queue missing; assumption_set contains dispute objects")
@@ -380,9 +380,9 @@ async def test_canonicalize_tyler_v1_live_path_requires_only_tyler_stage3_inputs
     """The live Stage 4 path should work from Tyler Stage 3 artifacts alone."""
     analyses, alias_mapping = _tyler_stage4_analysis_objects()
 
-    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, timeout):
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
         assert task == "claim_extraction_tyler_v1"
-        assert timeout == 240
+        assert "timeout" not in kwargs
         return response_model.model_validate(
             {
                 "claim_ledger": [
