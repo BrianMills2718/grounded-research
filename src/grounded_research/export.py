@@ -83,10 +83,15 @@ def _validate_tyler_synthesis_report(
     report: SynthesisReport,
     *,
     unresolved_dispute_ids: set[str],
+    claim_ledger: list | None = None,
     min_tradeoffs: int,
     min_preserved_alternatives: int,
 ) -> list[str]:
-    """Return repair feedback for underfilled Tyler Stage 6 outputs."""
+    """Return repair feedback for underfilled Tyler Stage 6 outputs.
+
+    Includes zombie check per Tyler V1 spec: preserved alternatives must
+    not reference refuted claims.
+    """
     errors: list[str] = []
     if len(report.decision_relevant_tradeoffs) < min_tradeoffs:
         errors.append(
@@ -102,6 +107,21 @@ def _validate_tyler_synthesis_report(
         errors.append(
             "disagreement_map is missing unresolved disputes: " + ", ".join(missing_unresolved)
         )
+
+    # Tyler V1 zombie check: preserved alternatives must not cite refuted claims.
+    if claim_ledger is not None:
+        refuted_ids = {
+            c.id for c in claim_ledger
+            if hasattr(c, "status") and str(getattr(c.status, "value", c.status)) == "refuted"
+        }
+        for alt in report.preserved_alternatives:
+            zombie_refs = [cid for cid in alt.supporting_claims if cid in refuted_ids]
+            if zombie_refs:
+                errors.append(
+                    f"ZOMBIE: preserved alternative '{alt.alternative[:60]}...' cites refuted "
+                    f"claim(s): {', '.join(zombie_refs)}. Remove refuted alternatives or update claims."
+                )
+
     return errors
 
 
@@ -323,6 +343,7 @@ async def generate_tyler_synthesis_report(
             repair_feedback = _validate_tyler_synthesis_report(
                 report,
                 unresolved_dispute_ids=unresolved_dispute_ids,
+                claim_ledger=stage_5_result.updated_claim_ledger,
                 min_tradeoffs=int(parity_policy.get("stage6_min_tradeoffs", 1)),
                 min_preserved_alternatives=int(
                     parity_policy.get("stage6_min_preserved_alternatives", 1)

@@ -1070,6 +1070,15 @@ async def collect_evidence(
                     error_message=str(page_data.get("error", "")),
                 )
                 return url, None
+            # Staleness detection per Tyler feedback
+            from grounded_research.evidence_utils import detect_staleness
+            content_for_staleness = str(page_data.get("notes", "")) + " " + str(page_data.get("key_section", ""))
+            staleness_warnings = detect_staleness(content_for_staleness, url=url)
+            if staleness_warnings:
+                page_data["staleness_warnings"] = staleness_warnings
+                import logging as _log
+                _log.getLogger(__name__).info("Staleness detected for %s: %s", url[:60], staleness_warnings)
+
             _tool_call_finished(
                 call_id=call_id,
                 started_at=started_at,

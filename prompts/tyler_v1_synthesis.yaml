@@ -60,6 +60,20 @@ messages:
       - Return exactly one JSON object that fits the provided response schema.
       - Do not wrap JSON in markdown fences.
       - Do not add extra headings, commentary, or keys.
+      - If information is insufficient, express that through the schema fields rather than guessing.
+      - Keep working notes internal. Output only locked structured results.
+
+      DECISION PROTOCOL (applies at every stage):
+      - Independence first
+      - Claims over prose
+      - No social framing
+      - No unlabeled claims
+      - Preserve lineage
+      - Do not convert unresolved conflict into polished certainty
+
+      REASONING REQUIREMENT:
+      Explain how you got from input to conclusion. The reasoning field is not optional boilerplate —
+      it is the primary observability mechanism for this pipeline. Show your work.
 
   - role: user
     content: |
