@@ -100,13 +100,17 @@ Three mechanisms, in order:
 
 ## Acceptance Criteria
 
-1. grounded-research pipeline runs with `LLM_CLIENT_TIMEOUT_POLICY=ban`
-   and no `timeout=` kwargs
-2. When a call takes >60s, a warning is logged (visible in terminal)
-3. When a call takes >120s, a louder warning is logged
-4. Pipeline completes end-to-end even when individual calls take 90-180s
-5. Budget cap still enforced
-6. Partial trace still saved on Ctrl+C / abort
+- [ ] grounded-research pipeline runs with `LLM_CLIENT_TIMEOUT_POLICY=ban` and no `timeout=` kwargs
+- [ ] All `timeout=` kwargs removed from LLM call sites in decompose.py, collect.py, analysts.py, canonicalize.py, verify.py, export.py
+- [ ] `runtime_reliability.request_timeouts_s` config section removed from both config files
+- [ ] `get_request_timeout()` helper removed from runtime_policy.py
+- [ ] `CallMonitor` added to llm_client that logs warnings at configurable thresholds (60s info, 120s warning, 300s error) without cancelling calls
+- [ ] When a call takes >60s, a warning is logged (visible in terminal)
+- [ ] When a call takes >120s, a louder warning is logged
+- [ ] Pipeline completes end-to-end even when individual calls take 90-180s
+- [ ] Budget cap (`pipeline_max_budget_usd`) still enforced as the real safety net
+- [ ] Partial trace still saved on Ctrl+C / abort
+- [ ] Safety timeout (300s dead-connection detector) preserved in llm_client
 
 ## Implementation Order
 

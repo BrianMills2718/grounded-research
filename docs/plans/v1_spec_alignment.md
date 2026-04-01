@@ -157,6 +157,16 @@ Use it to drive the first execution wave in this order:
 
 Provider changes, taxonomy renames, and production-model swaps come later.
 
+## Acceptance Criteria
+
+- [ ] Prompt layer hardened with Tyler's frame-specific failure modes, conservative merge rules, anti-conformity anchoring, and stage-specific instructions (G1)
+- [ ] Dedicated claim-extraction stage implemented after analyst generation, separate from analyst-produced claims (G2)
+- [ ] Dedup safeguards strengthened: prompt carries scope/timeframe/threshold/causal-direction/hidden-assumption blocking rules, with code-level validation and retry on zero-group or bad-group outcomes (G3)
+- [ ] Anti-conformity enforced at schema/validator layer: arbitration/update schema requires explicit basis types, and cited basis is validated against the claim update (G4)
+- [ ] Analyst anonymization mechanically enforced: post-analyst scrub/validation step removes model self-identification phrases before canonicalization (G5)
+- [ ] All Wave 1 gaps (G1-G5) verified against Tyler's V1 spec in `2026_0325_tyler_feedback/`
+- [ ] No regression in existing benchmark results after Wave 1 changes
+
 ## Execution Plan
 
 The executable plan for Wave 1 lives in:
