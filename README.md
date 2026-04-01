@@ -88,7 +88,7 @@ All operational policy in `config/config.yaml`:
 
 ## Architecture
 
-- 19 YAML prompt templates in `prompts/`
+- 9 YAML prompt templates in `prompts/` (Tyler-literal)
 - All LLM calls via [llm_client](https://github.com/BrianMills2718/llm_client)
 - Web search via [open_web_retrieval](https://github.com/BrianMills2718/open_web_retrieval)
 - 21 top-level test modules covering phase-boundary contracts and Tyler-native runtime slices

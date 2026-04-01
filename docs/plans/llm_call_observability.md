@@ -1,8 +1,8 @@
 # Plan: Replace Timeouts with Call Observability
 
-**Status:** Planned
+**Status:** Phase 1 Complete (grounded-research), Phase 2 PR open (llm_client#18)
 **Owner:** shared infrastructure (llm_client) + grounded-research consumer
-**Date:** 2026-03-31
+**Date:** 2026-03-31 (Phase 1 completed 2026-04-01)
 
 ## Problem
 
