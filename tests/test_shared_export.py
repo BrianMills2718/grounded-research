@@ -112,3 +112,59 @@ class TestLoadHandoffClaimsSynthetic:
 
         claims = load_handoff_claims(path)
         assert claims[0].confidence.score == 0.5  # default
+
+
+class TestLoadHandoffClaimsStageFormat:
+    """Test load_handoff_claims with stage-based (testing config) format."""
+
+    def test_stage_based_format(self, tmp_path: Path) -> None:
+        handoff = {
+            "stage_5_verification_result": {
+                "updated_claim_ledger": [
+                    {
+                        "id": "C-1",
+                        "statement": "Test claim.",
+                        "status": "supported",
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-abc123"],
+                        "supporting_models": ["gemini-flash"],
+                        "contesting_models": [],
+                        "is_provisional": True,
+                    }
+                ],
+                "updated_dispute_queue": [],
+            },
+        }
+        path = tmp_path / "handoff.json"
+        path.write_text(json.dumps(handoff))
+
+        claims = load_handoff_claims(path)
+        assert len(claims) == 1
+        assert claims[0].id == "C-1"
+        assert claims[0].confidence.score == 0.8  # empirically_observed=0.8, supported=0.8, min=0.8
+        assert claims[0].status == "supported"
+        assert claims[0].source_system == "grounded-research"
+
+    def test_contested_claim_capped_at_status(self, tmp_path: Path) -> None:
+        """A contested claim gets status confidence even if evidence_label is higher."""
+        handoff = {
+            "stage_5_verification_result": {
+                "updated_claim_ledger": [
+                    {
+                        "id": "C-1",
+                        "statement": "Contested claim.",
+                        "status": "contested",
+                        "evidence_label": "vendor_documented",
+                        "source_references": [],
+                        "supporting_models": [],
+                        "contesting_models": [],
+                        "is_provisional": True,
+                    }
+                ],
+            },
+        }
+        path = tmp_path / "handoff.json"
+        path.write_text(json.dumps(handoff))
+
+        claims = load_handoff_claims(path)
+        assert claims[0].confidence.score == 0.5  # contested caps at 0.5, not vendor_documented 1.0

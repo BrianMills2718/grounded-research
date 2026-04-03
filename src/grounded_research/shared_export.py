@@ -82,56 +82,30 @@ def evidence_to_shared(item: EvidenceItem, source_id: str) -> SharedEvidenceItem
     )
 
 
-def load_handoff_claims(handoff_path: str | Path) -> list[ClaimRecord]:
-    """Load claims from a grounded-research handoff.json into shared ClaimRecords.
-
-    The handoff.json uses a simplified serialization format with
-    claim_ledger.claims[] containing {id, statement, status, confidence,
-    analyst_sources, evidence_ids, source_raw_claim_ids, status_reason}.
-    This function bridges that actual format to shared ClaimRecords.
-    """
-    import json
-
-    handoff_path = Path(handoff_path)
-    data = json.loads(handoff_path.read_text())
-
+def _load_handoff_v1(data: dict) -> list[ClaimRecord]:
+    """Load Tyler V1 format: claim_ledger.claims[] with confidence string."""
     claim_ledger = data.get("claim_ledger", {})
     raw_claims = claim_ledger.get("claims", [])
-
-    # Build source lookup for evidence enrichment
-    sources_by_id = {s["id"]: s for s in data.get("sources", [])}
     evidence_by_id = {e["id"]: e for e in data.get("evidence", [])}
 
     records: list[ClaimRecord] = []
     for raw in raw_claims:
-        # Map confidence string to score
         confidence_str = str(raw.get("confidence", "medium")).lower()
         confidence_weights = {"high": 0.8, "medium": 0.5, "low": 0.2}
         score = confidence_weights.get(confidence_str, 0.5)
 
-        confidence = ConfidenceScore(
-            score=score,
-            source="adjudication",
-        )
-
-        # Map status
+        confidence = ConfidenceScore(score=score, source="adjudication")
         status_str = str(raw.get("status", "initial")).lower()
 
-        # Collect source IDs from evidence
         source_ids = []
         for eid in raw.get("evidence_ids", []):
             ev = evidence_by_id.get(eid)
             if ev and ev.get("source_id"):
                 source_ids.append(ev["source_id"])
-        # Deduplicate while preserving order
         seen: set[str] = set()
-        unique_source_ids = []
-        for sid in source_ids:
-            if sid not in seen:
-                seen.add(sid)
-                unique_source_ids.append(sid)
+        unique_source_ids = [s for s in source_ids if not (s in seen or seen.add(s))]  # type: ignore[func-returns-value]
 
-        record = ClaimRecord(
+        records.append(ClaimRecord(
             id=raw["id"],
             statement=raw["statement"],
             claim_type="fact_claim",
@@ -142,10 +116,80 @@ def load_handoff_claims(handoff_path: str | Path) -> list[ClaimRecord]:
             contesting_models=[],
             is_provisional=True,
             source_system="grounded-research",
-        )
-        records.append(record)
-
+        ))
     return records
+
+
+def _load_handoff_stage_based(data: dict) -> list[ClaimRecord]:
+    """Load stage-based format: stage_5_verification_result.updated_claim_ledger[].
+
+    Produced by the testing config and newer pipeline variants. Claim status
+    ("supported", "contested", "unverified") drives confidence; evidence_label
+    provides an additional signal via EVIDENCE_LABEL_WEIGHTS.
+    """
+    status_confidence: dict[str, float] = {
+        "supported": 0.8,
+        "corroborated": 0.9,
+        "contested": 0.5,
+        "unverified": 0.3,
+        "refuted": 0.1,
+        "initial": 0.5,
+    }
+
+    s5 = data.get("stage_5_verification_result", {})
+    raw_claims = s5.get("updated_claim_ledger", [])
+
+    records: list[ClaimRecord] = []
+    for raw in raw_claims:
+        status_str = str(raw.get("status", "unverified")).lower()
+        label = str(raw.get("evidence_label", "")).lower()
+        label_score = EVIDENCE_LABEL_WEIGHTS.get(label)
+
+        # Take the minimum: evidence_label gives the source quality ceiling,
+        # status gives the adjudication floor — a "contested" claim can't
+        # exceed medium confidence regardless of evidence quality.
+        status_score = status_confidence.get(status_str, 0.5)
+        score = min(label_score, status_score) if label_score is not None else status_score
+
+        confidence = ConfidenceScore(
+            score=score,
+            source="adjudication",
+            evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,  # type: ignore[arg-type]
+        )
+
+        records.append(ClaimRecord(
+            id=raw["id"],
+            statement=raw["statement"],
+            claim_type="fact_claim",
+            status=status_str,  # type: ignore[arg-type]
+            confidence=confidence,
+            source_ids=list(raw.get("source_references", [])),
+            supporting_models=list(raw.get("supporting_models", [])),
+            contesting_models=list(raw.get("contesting_models", [])),
+            is_provisional=bool(raw.get("is_provisional", True)),
+            source_system="grounded-research",
+        ))
+    return records
+
+
+def load_handoff_claims(handoff_path: str | Path) -> list[ClaimRecord]:
+    """Load claims from a grounded-research handoff.json into shared ClaimRecords.
+
+    Handles two formats:
+    - Tyler V1: claim_ledger.claims[] with confidence string ("high"/"medium"/"low")
+    - Stage-based: stage_5_verification_result.updated_claim_ledger[] with status field
+    """
+    import json
+
+    handoff_path = Path(handoff_path)
+    data = json.loads(handoff_path.read_text())
+
+    if "claim_ledger" in data and data["claim_ledger"].get("claims"):
+        return _load_handoff_v1(data)
+    elif "stage_5_verification_result" in data:
+        return _load_handoff_stage_based(data)
+    else:
+        return []
 
 
 __all__ = [
