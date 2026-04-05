@@ -34,8 +34,10 @@ from grounded_research.tyler_v1_models import (
     ClaimStatus as TylerClaimStatus,
     ClaimStatusUpdate,
     ConfidenceLevel,
+    DecompositionResult,
     DisputeQueueEntry,
     DisputeStatus,
+    EvidencePackage,
     ResolutionOutcome,
     Source as TylerSource,
     VerificationResult,
@@ -44,6 +46,15 @@ from grounded_research.tyler_v1_models import (
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
+
+try:
+    from data_contracts import boundary, BoundaryModel  # type: ignore[import-untyped]
+except ImportError:
+    def boundary(*args, **kwargs):  # type: ignore[misc]
+        def decorator(fn):  # type: ignore[misc]
+            return fn
+        return decorator
+    from pydantic import BaseModel as BoundaryModel  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -520,6 +531,12 @@ def _normalize_tyler_claim_status_updates(
     ]
 
 
+@boundary(
+    name="grounded-research.arbitration",
+    version="0.1.0",
+    producer="grounded-research",
+    consumers=["grounded_research.pipeline"],
+)
 async def verify_disputes_tyler_v1(
     *,
     stage_4_result: TylerClaimExtractionResult,
