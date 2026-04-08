@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import random
+
 import pytest
 
-from grounded_research.canonicalize import canonicalize_tyler_v1
+from grounded_research.canonicalize import (
+    _randomize_stage4_analysis_order,
+    canonicalize_tyler_v1,
+)
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
@@ -165,6 +170,186 @@ def _tyler_stage4_analysis_objects() -> tuple[list[AnalysisObject], dict[str, st
             ),
         ),
     ], {"Alpha": "A", "Beta": "B"}
+
+
+def test_randomize_stage4_analysis_order_preserves_aliases_without_mutating_input() -> None:
+    """Stage 4 shuffling should reorder a copy, not mutate the caller-owned list."""
+    stage_3_results, _alias_mapping = _tyler_stage4_analysis_objects()
+
+    randomized = _randomize_stage4_analysis_order(stage_3_results, rng=random.Random(1))
+
+    assert [analysis.model_alias for analysis in randomized] == ["B", "A"]
+    assert sorted(analysis.model_alias for analysis in randomized) == ["A", "B"]
+    assert [analysis.model_alias for analysis in stage_3_results] == ["A", "B"]
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_tyler_v1_randomizes_stage4_prompt_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 prompt rendering should consume the randomized analyst order."""
+    captured_orders: list[list[str]] = []
+
+    def fake_render_prompt(*args, **kwargs):
+        captured_orders.append([entry["model_alias"] for entry in kwargs["stage_3_results"]])
+        return [{"role": "user", "content": "prompt"}]
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model.model_validate(
+            {
+                "claim_ledger": [],
+                "assumption_set": [],
+                "dispute_queue": [],
+                "statistics": {
+                    "total_claims": 0,
+                    "total_assumptions": 0,
+                    "total_disputes": 0,
+                    "disputes_by_type": {},
+                    "decision_critical_disputes": 0,
+                    "claims_per_model": {},
+                },
+                "stage_summary": {
+                    "stage_name": "Stage 4",
+                    "goal": "goal",
+                    "key_findings": ["empty"],
+                    "decisions_made": ["returned empty"],
+                    "outcome": "outcome",
+                    "reasoning": "reasoning",
+                },
+            }
+        ), {}
+
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr(
+        "grounded_research.canonicalize._randomize_stage4_analysis_order",
+        lambda stage_3_results: [stage_3_results[1], stage_3_results[0]],
+    )
+    monkeypatch.setattr(
+        "grounded_research.canonicalize.get_tyler_literal_parity_config",
+        lambda: {"stage4_retry_on_empty_claims": False},
+    )
+
+    stage_3_results, alias_mapping = _tyler_stage4_analysis_objects()
+    await canonicalize_tyler_v1(
+        _tyler_stage4_bundle(),
+        tyler_stage_1_result=_tyler_stage4_stage1_result(),
+        tyler_stage_3_results=stage_3_results,
+        tyler_stage_3_alias_mapping=alias_mapping,
+        trace_id="trace-randomized",
+        max_budget=0.5,
+    )
+
+    assert captured_orders == [["B", "A"]]
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_tyler_v1_rerenders_retry_from_fresh_randomized_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retry calls should re-render Stage 4 input instead of reusing fixed-order messages."""
+    captured_orders: list[list[str]] = []
+    randomized_orders = iter((["B", "A"], ["A", "B"]))
+
+    def fake_render_prompt(*args, **kwargs):
+        captured_orders.append([entry["model_alias"] for entry in kwargs["stage_3_results"]])
+        return [{"role": "user", "content": "prompt"}]
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        task = kwargs["task"]
+        if task == "claim_extraction_tyler_v1":
+            return response_model.model_validate(
+                {
+                    "claim_ledger": [],
+                    "assumption_set": [],
+                    "dispute_queue": [],
+                    "statistics": {
+                        "total_claims": 0,
+                        "total_assumptions": 0,
+                        "total_disputes": 0,
+                        "disputes_by_type": {},
+                        "decision_critical_disputes": 0,
+                        "claims_per_model": {},
+                    },
+                    "stage_summary": {
+                        "stage_name": "Stage 4",
+                        "goal": "goal",
+                        "key_findings": ["empty"],
+                        "decisions_made": ["returned empty"],
+                        "outcome": "outcome",
+                        "reasoning": "reasoning",
+                    },
+                }
+            ), {}
+        return response_model.model_validate(
+            {
+                "claim_ledger": [
+                    {
+                        "id": "C-1",
+                        "statement": "Redis achieved lower p99 latency than PostgreSQL for session reads.",
+                        "source_models": ["A"],
+                        "evidence_label": "empirically_observed",
+                        "source_references": ["S-1"],
+                        "status": "supported",
+                        "supporting_models": ["A"],
+                        "contesting_models": ["B"],
+                        "related_assumptions": [],
+                    }
+                ],
+                "assumption_set": [],
+                "dispute_queue": [],
+                "statistics": {
+                    "total_claims": 1,
+                    "total_assumptions": 0,
+                    "total_disputes": 0,
+                    "disputes_by_type": {},
+                    "decision_critical_disputes": 0,
+                    "claims_per_model": {"A": 1},
+                },
+                "stage_summary": {
+                    "stage_name": "Stage 4",
+                    "goal": "goal",
+                    "key_findings": ["k1", "k2", "k3"],
+                    "decisions_made": ["d1"],
+                    "outcome": "outcome",
+                    "reasoning": "reasoning",
+                },
+            }
+        ), {}
+
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr(
+        "grounded_research.canonicalize._randomize_stage4_analysis_order",
+        lambda stage_3_results: [
+            next_alias for alias in next(randomized_orders)
+            for next_alias in stage_3_results
+            if next_alias.model_alias == alias
+        ],
+    )
+    monkeypatch.setattr(
+        "grounded_research.canonicalize.get_tyler_literal_parity_config",
+        lambda: {
+            "stage4_retry_on_empty_claims": True,
+            "stage4_retry_model": "openrouter/google/gemini-2.5-flash",
+            "stage4_retry_fallback_models": None,
+        },
+    )
+
+    stage_3_results, alias_mapping = _tyler_stage4_analysis_objects()
+    result = await canonicalize_tyler_v1(
+        _tyler_stage4_bundle(),
+        tyler_stage_1_result=_tyler_stage4_stage1_result(),
+        tyler_stage_3_results=stage_3_results,
+        tyler_stage_3_alias_mapping=alias_mapping,
+        trace_id="trace-retry",
+        max_budget=0.5,
+    )
+
+    assert [claim.id for claim in result.claim_ledger] == ["C-1"]
+    assert captured_orders == [["B", "A"], ["A", "B"]]
 
 
 @pytest.mark.asyncio
@@ -432,4 +617,3 @@ async def test_canonicalize_tyler_v1_live_path_requires_only_tyler_stage3_inputs
 
     assert len(result.claim_ledger) == 1
     assert result.claim_ledger[0].id == "C-1"
-

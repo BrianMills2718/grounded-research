@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+import random
 
 from grounded_research.config import (
     get_fallback_models,
@@ -47,6 +48,44 @@ def _summarize_stage4_exception(exc: Exception) -> str:
     return " | ".join(lines[:8])[:1200]
 
 
+def _randomize_stage4_analysis_order(
+    stage_3_results: list["AnalysisObject"],
+    *,
+    rng: random.Random | random.SystemRandom | None = None,
+) -> list["AnalysisObject"]:
+    """Shuffle Stage 3 analyst presentation order for Tyler Stage 4.
+
+    Tyler requires the analyst order to be randomized before each Stage 4 call
+    to reduce primacy bias. This helper returns a reordered copy so caller-owned
+    Stage 3 artifacts stay stable for tracing and later phases.
+    """
+    shuffled = list(stage_3_results)
+    if len(shuffled) > 1:
+        shuffler = rng or random.SystemRandom()
+        shuffler.shuffle(shuffled)
+    return shuffled
+
+
+def _render_stage4_messages(
+    *,
+    original_query: str,
+    tyler_stage1: TylerDecompositionResult,
+    stage_3_results: list["AnalysisObject"],
+) -> tuple[list[dict[str, object]], list["AnalysisObject"]]:
+    """Build Stage 4 prompt messages from a freshly randomized analyst order."""
+    from llm_client import render_prompt
+
+    randomized_stage3 = _randomize_stage4_analysis_order(stage_3_results)
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "tyler_v1_stage4.yaml"),
+        original_query=original_query,
+        stage_1=tyler_stage1.model_dump(mode="json"),
+        stage_3_results=[analysis.model_dump(mode="json") for analysis in randomized_stage3],
+        response_schema_json=TylerClaimExtractionResult.model_json_schema(),
+    )
+    return messages, randomized_stage3
+
+
 async def _get_tyler_stage1_result(
     *,
     original_query: str,
@@ -79,7 +118,7 @@ async def canonicalize_tyler_v1(
     max_budget: float = 1.0,
 ) -> TylerClaimExtractionResult:
     """Run Tyler's literal Stage 4 contract and return only the canonical artifact."""
-    from llm_client import acall_llm_structured, render_prompt
+    from llm_client import acall_llm_structured
 
     original_query = bundle.question.text if bundle.question else ""
     tyler_stage1 = tyler_stage_1_result or await _get_tyler_stage1_result(
@@ -92,18 +131,14 @@ async def canonicalize_tyler_v1(
         raise ValueError("Tyler Stage 4 requires at least 2 Tyler Stage 3 analysis objects.")
     alias_mapping = dict(tyler_stage_3_alias_mapping)
     stage4_input_assertions = _tyler_stage4_assertion_count(tyler_stage3_results)
-
-    messages = render_prompt(
-        str(_PROJECT_ROOT / "prompts" / "tyler_v1_stage4.yaml"),
-        original_query=original_query,
-        stage_1=tyler_stage1.model_dump(mode="json"),
-        stage_3_results=[analysis.model_dump(mode="json") for analysis in tyler_stage3_results],
-        response_schema_json=TylerClaimExtractionResult.model_json_schema(),
-    )
     parity_policy = get_tyler_literal_parity_config()
 
     async def _run_stage4_retry(issue_summary: str) -> TylerClaimExtractionResult:
-        retry_messages = list(messages)
+        retry_messages, _randomized_retry_stage3 = _render_stage4_messages(
+            original_query=original_query,
+            tyler_stage1=tyler_stage1,
+            stage_3_results=tyler_stage3_results,
+        )
         retry_messages.append(
             {
                 "role": "user",
@@ -130,6 +165,11 @@ async def canonicalize_tyler_v1(
         )
         return retry_result
 
+    messages, _randomized_stage3 = _render_stage4_messages(
+        original_query=original_query,
+        tyler_stage1=tyler_stage1,
+        stage_3_results=tyler_stage3_results,
+    )
     try:
         result, _meta = await acall_llm_structured(
             get_model("claim_extraction"),
@@ -174,4 +214,3 @@ async def canonicalize_tyler_v1(
                 f"after retry despite {stage4_input_assertions} upstream assertions."
             )
     return normalized
-

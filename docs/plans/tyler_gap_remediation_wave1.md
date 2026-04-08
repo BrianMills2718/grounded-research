@@ -107,9 +107,17 @@ Status:
 Rows:
 - `S4-ORDER-RANDOMIZATION-001`
 
+Execution surface:
+
+- `docs/plans/tyler_remediation_phase2_stage4_randomization.md`
+- `docs/notebooks/38_tyler_remediation_phase2_stage4_randomization.ipynb`
+
 Pass if:
 - Stage 4 prompt order is randomized per call
 - tests prove the shuffle happens without breaking alias integrity
+
+Status:
+- Completed on 2026-04-08
 
 ### Phase 3: Stage 6 Synthesis-Context Corrections
 
