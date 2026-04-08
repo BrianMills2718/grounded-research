@@ -75,6 +75,8 @@ Current implementation frontier:
     populate the canonical gap ledger
   - treat the resulting high-severity local divergences as the next
     implementation frontier because the ledger has now confirmed them
+  - keep the next remediation order explicit in
+    `docs/plans/tyler_gap_remediation_wave1.md`
   - expand the frozen comparison set beyond the current `2` matched cases
   - land remaining shared provider/model parity work
   - preserve the new shared Tavily-backed search path as the quality-first default

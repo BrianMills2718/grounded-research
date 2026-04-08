@@ -168,6 +168,8 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
   `docs/plans/tyler_spec_gap_audit_wave1.md`
+- active remediation planner:
+  `docs/plans/tyler_gap_remediation_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
 - the active audit has already identified real local divergences in Stage 1,

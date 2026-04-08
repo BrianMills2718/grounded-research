@@ -160,6 +160,8 @@ Deliverables:
 - `docs/plans/tyler_spec_gap_audit_wave1.md`
 - `docs/notebooks/33_tyler_spec_gap_audit_wave1.ipynb`
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
+- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/notebooks/34_tyler_gap_remediation_wave1.ipynb`
 
 Pass if:
 
