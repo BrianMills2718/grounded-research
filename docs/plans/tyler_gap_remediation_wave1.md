@@ -88,6 +88,11 @@ Rows:
 - `S5-ROUND-CAP-001`
 - `S5-ORDER-RANDOMIZATION-001`
 
+Execution surface:
+
+- `docs/plans/tyler_remediation_phase1_stage56_orchestration.md`
+- `docs/notebooks/37_tyler_remediation_phase1_stage56_orchestration.ipynb`
+
 Pass if:
 - Stage 6a reads the post-Stage-5 queue when Stage 5 runs
 - preference/spec/other disputes actually surface to the user path
