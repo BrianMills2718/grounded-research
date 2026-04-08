@@ -24,21 +24,21 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status (2026-03-30)
+## Current Status (2026-04-08)
 
-**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational.**
+**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational, but the April 2026 clause-by-clause Tyler audit found additional live code/spec gaps.**
 
 See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
 See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
 
-### Current Execution Topology (2026-03-28)
+### Current Execution Topology (2026-04-08)
 
 When invoked with a question (`python engine.py "question"`):
 
 ```
 Question → decompose_with_validation_tyler_v1() → Tyler Stage 1 `DecompositionResult`
-    ↓ (validation may still trigger one retry)
+    ↓ (this validation/retry path is currently a known Tyler divergence; see gap ledger)
 Sub-questions → generate_search_queries() per Tyler `Q-*` → shared web search (`tavily` default) → fetch pages (parallel)
     ↓
 score_source_quality() → quality tiers on sources
@@ -50,9 +50,9 @@ compress_evidence() if > threshold → reduced bundle
 run_analysts_tyler_v1() → Tyler Stage 3 `AnalysisObject[]` + `stage3_attempts`
     ↓ (evidence leakage check on Tyler Stage 3 text)
 canonicalize_tyler_v1() → Tyler Stage 4 `ClaimExtractionResult`
-    ↓ (user steering: preference/ambiguity disputes, TTY only)
+    ↓ (current Stage 6a sequencing is a known Tyler divergence; see gap ledger)
 verify_disputes_tyler_v1() → Tyler Stage 5 `VerificationResult`
-    ↓ (position shuffling, ADR-0004 invariant: fresh evidence required)
+    ↓ (Stage 5 prompt-order randomization is currently a known Tyler divergence; see gap ledger)
 generate_tyler_synthesis_report() → Tyler SynthesisReport (canonical structured export)
     ↓
 render_long_report() → markdown from Tyler Stage 6
@@ -82,12 +82,13 @@ Current operational notes:
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
 - repo-local Tyler runtime migration, prompt-quality recovery, and canonical
-  cutover are complete
-- the remaining explicit gap is a slight divergence from the dense-dedup anchor
-  plus shared-infra/provider-model differences outside this repo
+  cutover landed, but they are no longer sufficient to claim repo-local Tyler
+  closure
+- the April 2026 clause-by-clause audit found real additional local gaps in
+  Stage 1, Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6
 - there is no active repo-local compatibility-deletion wave left in `main`;
-  the next meaningful work is benchmark/eval comparison and shared-infra
-  follow-through
+  the current frontier is the evidence-backed gap ledger plus the remediation
+  waves it implies
 - canonical successful exports now center Tyler Stage 6 plus Tyler-native
   downstream handoff artifacts; legacy structured-report and handoff surfaces
   are no longer part of the live runtime path
@@ -170,8 +171,8 @@ Current open work is intentionally narrow:
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
 - the active audit has already identified real local divergences in Stage 1,
-  Stage 2, Stage 3, and Stage 5, so the previous "repo-local work complete"
-  story is no longer accurate
+  Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6, so the previous
+  "repo-local work complete" story is no longer accurate
 - completed provider-cutover wave:
   `docs/plans/tavily_integration_wave1.md`
 - there is currently no active repo-local implementation wave

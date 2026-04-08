@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-03-30
+**Last updated:** 2026-04-08
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
@@ -39,7 +39,7 @@ recovery wave are complete. The Tyler runtime is mechanically stable end-to-end,
 now beats cached Perplexity on the tracked UBI case, and still trails the saved
 dense-dedup anchor slightly.
 
-Current state after the completed recovery wave:
+Current state after the completed recovery wave and the April 2026 clause-by-clause audit:
 
 - `output/tyler_literal_parity_ubi_reanchor_v8/` beats cached Perplexity on the
   tracked UBI comparison
@@ -53,8 +53,10 @@ reopening local contract work.
 
 Current stop line:
 
-- do not reopen repo-local Tyler contract work without a new benchmark-triggered
-  grounded-research-specific diagnosis
+- do not reopen repo-local compatibility-deletion work or invent new local
+  runtime families
+- do reopen repo-local Tyler remediation work when the gap ledger confirms a
+  concrete local divergence
 - treat remaining provider/model/search-stack differences as shared-infra work
   in `llm_client`, `prompt_eval`, or `open_web_retrieval`
 
@@ -72,7 +74,7 @@ Current implementation frontier:
   - run a clause-by-clause code-vs-spec audit against Tyler's packet and
     populate the canonical gap ledger
   - treat the resulting high-severity local divergences as the next
-    implementation frontier if the ledger confirms them
+    implementation frontier because the ledger has now confirmed them
   - expand the frozen comparison set beyond the current `2` matched cases
   - land remaining shared provider/model parity work
   - preserve the new shared Tavily-backed search path as the quality-first default
@@ -170,8 +172,9 @@ The next 24 hours of work should be treated as three explicit buckets:
 
 1. `grounded-research`
    - preserve the saved dense-dedup and Tyler-literal benchmark anchors
-   - keep active docs and commit-map references aligned with the now-complete
-     canonical cutover
+   - keep active docs aligned with the canonical Tyler gap ledger
+   - plan and execute the next local remediation waves from verified ledger
+     rows only
    - do not add new local runtime branches or legacy fallbacks
 2. shared evaluation
    - compare Tyler-literal against calibrated legacy in `prompt_eval`

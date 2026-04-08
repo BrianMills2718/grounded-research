@@ -12,11 +12,11 @@ as conclusively literal.
 
 ## Executive Verdict
 
-The live Tyler-native prompt package is **repo-locally literal for the active
-runtime surfaces**, with one explicit Tyler-internal ambiguity in Stage 2
-finding extraction. It is also quality-recovered enough to beat cached
-Perplexity on the tracked UBI case, while still differing from the prior
-benchmark-optimal dense-dedup path.
+The live Tyler-native prompt package is **not fully closed by this document
+alone**. Earlier prompt-literalness waves landed, but the April 2026
+clause-by-clause audit found additional prompt/orchestrator divergences that
+are now tracked in the canonical gap ledger. This file should be read as
+historical prompt-focused context, not as the final authority on open gaps.
 
 Current state:
 
@@ -71,7 +71,7 @@ prompt-quality repairs.
 
 ## Current Conclusion
 
-Repo-local prompt literalness is now complete enough to classify honestly:
+Prompt-focused status can be classified honestly as:
 
 1. Tyler-native prompt/runtime quality now beats cached Perplexity on the
    tracked UBI benchmark

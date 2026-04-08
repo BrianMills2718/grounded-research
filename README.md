@@ -2,6 +2,10 @@
 
 Multi-analyst research platform that beats cached Perplexity Deep Research on the tracked 6-question benchmark set in the shipped calibrated path, and whose Tyler-native path now also beats cached Perplexity on the tracked UBI case. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
 
+> Current Tyler code-vs-spec status is tracked in
+> [docs/TYLER_SPEC_GAP_LEDGER.md](/home/brian/projects/grounded-research/docs/TYLER_SPEC_GAP_LEDGER.md),
+> not in this summary README.
+
 ## Results
 
 Blind evaluation (GPT-5-nano judge, citation format ignored):
@@ -58,17 +62,22 @@ Each run produces:
 - `summary.md` — Tyler-native structured summary
 - `trace.json` — full pipeline state with provenance
 - `handoff.json` — Tyler-native downstream handoff artifact
-- `tyler_stage_1.json` — Tyler Stage 1 decomposition artifact
-- `tyler_stage_2.json` — Tyler Stage 2 evidence package artifact
-- `collected_bundle.json` — raw evidence bundle (reusable)
+
+Stage-specific Tyler artifacts are persisted inside `trace.json`. They are not
+currently written as separate `tyler_stage_*.json` files by the live export
+path.
 
 ## Key features
 
-- **Question decomposition** with typed sub-questions, falsification targets, and validation with retry
-- **Distinct analyst roles**: currently configured to the closest available Tyler role mapping
-  (`gpt-5.4-mini`, `gemini-2.5-flash`, `gpt-5.4-nano`) with three reasoning frames
+- **Question decomposition** with typed sub-questions and falsification targets
+  (current validation/retry behavior is a known Tyler divergence tracked in the gap ledger)
+- **Distinct analyst roles**: currently configured to the closest available
+  Tyler role mapping in `config/config.yaml`; exact Tyler role-model parity is
+  still tracked as an open gap
 - **3 reasoning frames**: verification-first, structured decomposition, step-back abstraction
-- **LLM source quality scoring**: authoritative / reliable / unknown / unreliable
+- **Source quality scoring**: current runtime still uses a simpler
+  quality-tier-based pipeline than Tyler's full authority/freshness/staleness
+  scoring recipe
 - **Dispute detection** with severity classification and deterministic routing
 - **Fresh evidence arbitration** for decision-critical factual conflicts
 - **Configurable synthesis**: analytical mode (inferences beyond sources, marked) or grounded mode (ledger-only)

@@ -37,8 +37,9 @@ Question → Decomposition (Stage 1)
 
 ### Config Split
 
-- `config/config.yaml` — **Tyler-literal model assignments** (GPT-5.4, Claude
-  Opus 4.6, Gemini 2.5 Pro). This is what you specified.
+- `config/config.yaml` — current best-effort Tyler-oriented model assignments.
+  Exact Tyler role-model parity is still tracked as an open gap in the
+  canonical ledger.
 - `config/config.testing.yaml` — Cheap models for fast iteration (Gemini 2.5
   Flash direct API, ~$0.01/run).
 

@@ -10,10 +10,11 @@ Define the smallest remaining work required to say, precisely and defensibly,
 that `grounded-research` has faithfully executed Tyler's V1 plan.
 
 This plan exists because repo-local runtime cutover is already complete, but a
-few Tyler-required gaps remain:
+clause-by-clause audit has now shown that several Tyler-required local and
+shared gaps still remain:
 
-- repo-local prompt literalness is now closed, with one documented Tyler
-  Stage 2 schema/prompt ambiguity
+- earlier prompt-literalness and parity waves landed, but the canonical gap
+  ledger now overrules any stale "closure" claims
 - frozen eval evidence now covers two matched Tyler-vs-legacy cases, but it is
   still narrow directional evidence rather than broad proof
 - Tyler-specified provider/model parity still depends on shared infrastructure
@@ -46,9 +47,8 @@ This plan does not reopen:
 This remainder plan is complete only if:
 
 1. repo-local docs say exactly what is still local work vs shared-infra work,
-2. repo-local prompt literalness is closed by a line-by-line audit and patch,
-   with any remaining conflict documented as an explicit Tyler-internal
-   ambiguity,
+2. every verified local Tyler divergence is captured in the canonical gap
+   ledger and grouped into explicit remediation waves,
 3. the frozen Tyler-vs-legacy comparison set is no longer a single-case story,
 4. remaining provider/model parity gaps are explicitly named as external
    dependencies rather than implied local TODOs.
@@ -179,8 +179,8 @@ Failure modes:
 Repo-local:
 
 1. clause-by-clause Tyler gap audit ledger is now partially populated and has
-   already identified real local divergences in Stage 1, Stage 2, Stage 3, and
-   Stage 5
+   already identified real local divergences in Stage 1, Stage 2, Stage 3,
+   Stage 4, Stage 5, and Stage 6
 2. the canonical gap list now lives in `docs/TYLER_SPEC_GAP_LEDGER.md`
 
 Shared infra:
@@ -197,14 +197,15 @@ Evaluation:
 Faithful Tyler execution can be claimed only if:
 
 - repo-local runtime and export contracts are Tyler-native,
-- remaining prompt-literalness uncertainty is closed or justified explicitly,
 - the live codebase has been audited clause by clause against Tyler's packet,
+- all verified local divergences have either been fixed or left as explicit
+  open items in the ledger,
 - frozen eval evidence is broader than a single shared case,
 - all remaining non-local differences are explicitly assigned to shared infra.
 
 Until then, the accurate claim is:
 
-- repo-local Tyler runtime parity is complete,
+- repo-local Tyler runtime migration is complete,
 - faithful Tyler execution is still in progress.
 
 ## Canonical Status Surface

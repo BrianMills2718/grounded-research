@@ -5,8 +5,9 @@ This note answers one narrow question:
 > Is the current `grounded-research` runtime implementing Tyler's
 > `tyler_response_20260326/` prompts and schemas literally?
 
-Answer: **repo-local live runtime parity is implemented, and repo-local quality
-recovery is materially successful, but full Tyler closure is still not
+Answer: **the repo-local Tyler migration landed and quality recovery was
+materially successful, but the April 2026 clause-by-clause audit found several
+remaining local and shared divergences, so full Tyler closure is still not
 complete**.
 
 **Audit note (2026-04-08):** This document predates the clause-by-clause gap
@@ -44,16 +45,18 @@ good, benchmarked, or methodologically similar.
 
 ## Executive Verdict
 
-Repo-local literal parity is now present in the live runtime for Stage 1
-through Stage 6.
+Repo-local Tyler-native stage contracts are present in the live runtime for
+Stage 1 through Stage 6.
 
 Remaining non-literal gaps are now narrower:
 
-1. one explicit Tyler-internal Stage 2 prompt/schema ambiguity remains
+1. the active gap ledger now records additional concrete local divergences in
+   Stage 1, Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6
+2. one explicit Tyler-internal Stage 2 prompt/schema ambiguity remains
    documented locally
-2. benchmark-optimal dense-dedup output still differs slightly from the
+3. benchmark-optimal dense-dedup output still differs slightly from the
    Tyler-native path
-3. Tyler's provider/model/search assumptions are not wired literally in this
+4. Tyler's provider/model/search assumptions are not wired literally in this
    repo because they belong in shared infrastructure
 
 ## Stage-By-Stage Audit

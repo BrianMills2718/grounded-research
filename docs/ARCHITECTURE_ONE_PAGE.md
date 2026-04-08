@@ -26,8 +26,10 @@ Current runtime note:
 - the live runtime now also persists Tyler-native Stage 1-6 artifacts
 - legacy structured-report and handoff outputs are gone from the live runtime
 - Stage 1/3 projections are also gone from the live runtime path
-- repo-local compatibility-deletion work is complete; remaining differences
-  from Tyler's intended stack are benchmark/eval or shared-infra concerns
+- repo-local compatibility-deletion work is complete
+- the April 2026 clause-by-clause audit then found additional live
+  Tyler-divergent behavior in orchestration, routing, and synthesis assembly;
+  those gaps are tracked in `docs/TYLER_SPEC_GAP_LEDGER.md`
 
 ## System Boundary
 
