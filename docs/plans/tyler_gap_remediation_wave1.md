@@ -126,6 +126,11 @@ Rows:
 - `S6-COMPACTION-001`
 - `S6-MODEL-POLICY-001`
 
+Execution surface:
+
+- `docs/plans/tyler_remediation_phase3_stage6_synthesis.md`
+- `docs/notebooks/39_tyler_remediation_phase3_stage6_synthesis.ipynb`
+
 Pass if:
 - Stage 5 additional sources enter synthesis context
 - synthesis compaction follows an explicit Tyler-inspired priority rule
