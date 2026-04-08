@@ -25,6 +25,7 @@ from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
     SourceRecord,
+    Stage5QueryPlan,
 )
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
@@ -82,7 +83,7 @@ def _freshness_for_time_sensitivity(time_sensitivity: str) -> str:
 
 async def _collect_fresh_evidence_for_dispute(
     dispute_id: str,
-    queries: list[str],
+    queries: list[Stage5QueryPlan],
     bundle: EvidenceBundle,
     trace_id: str,
  ) -> tuple[list[SourceRecord], list[EvidenceItem], list[VerificationWarning]]:
@@ -112,15 +113,20 @@ async def _collect_fresh_evidence_for_dispute(
         ))
         return disputes_new_sources, disputes_new_evidence, warnings
 
-    for query in queries:
+    for query_plan in queries:
         if len(disputes_new_sources) >= max_sources_per_dispute:
             break
 
         try:
             raw_results = await search_web(
-                query,
+                query_plan.query_text,
                 count=max_results_per_query,
                 freshness=freshness,
+                provider_override=query_plan.provider,
+                search_depth=query_plan.search_depth,
+                result_detail=query_plan.result_detail,
+                detail_budget=query_plan.detail_budget,
+                domains_allow=query_plan.domains_allow,
                 trace_id=f"{trace_id}/search/{dispute_id}",
                 task="verification.search",
             )
@@ -130,7 +136,7 @@ async def _collect_fresh_evidence_for_dispute(
             warnings.append(VerificationWarning(
                 code="verification_search_failed",
                 message=f"Search failed for dispute {dispute_id}: {exc}",
-                context={"dispute_id": dispute_id, "query": query},
+                context={"dispute_id": dispute_id, "query": query_plan.query_text},
             ))
             continue
 
@@ -138,7 +144,7 @@ async def _collect_fresh_evidence_for_dispute(
             warnings.append(VerificationWarning(
                 code="verification_no_results",
                 message=f"No search results for dispute {dispute_id}.",
-                context={"dispute_id": dispute_id, "query": query},
+                context={"dispute_id": dispute_id, "query": query_plan.query_text},
             ))
             continue
 
@@ -168,7 +174,7 @@ async def _collect_fresh_evidence_for_dispute(
                         source_id=source.id,
                         content=source_note,
                         content_type="summary",
-                        relevance_note=f"Search snippet for query: {query}",
+                        relevance_note=f"Search snippet for query: {query_plan.query_text}",
                         extraction_method="upstream",
                     ))
 
@@ -239,12 +245,12 @@ def _build_tyler_verification_queries(
     relevant_original_sources: list[TylerSource],
     original_query: str,
     time_sensitivity: str,
-) -> list[str]:
+) -> list[Stage5QueryPlan]:
     """Construct Tyler-literal verification queries.
 
-    Tyler V1 spec §Stage 5: "generate counterfactual queries aimed at
-    refuting the leading claim" with patterns: "[topic] limitations",
-    "[claim] contradicted by".
+    Tyler V1 spec Stage 5 uses deterministic orchestrator templates:
+    neutral question, support query for the weaker position,
+    authoritative-source query, and optional dated authoritative query.
     """
     neutral_query = _build_neutral_verification_question(
         dispute=dispute,
@@ -252,22 +258,36 @@ def _build_tyler_verification_queries(
         original_query=original_query,
     )
     weaker_claim = _select_weaker_claim_for_verification(claim_entries)
-    leading_claim = _select_leading_claim_for_refutation(claim_entries)
+    authoritative_query = _build_authoritative_verification_query(
+        dispute=dispute,
+        claim_entries=claim_entries,
+        original_query=original_query,
+    )
+    authoritative_domains = _build_authoritative_domain_filters(relevant_original_sources)
 
-    # Tyler spec: counterfactual queries include limitations + contradicted-by
     queries = [
-        neutral_query,
-        _build_limitations_query(dispute, claim_entries, original_query),
-        _build_refutation_query(leading_claim, neutral_query),
+        Stage5QueryPlan(
+            query_role="neutral_question",
+            query_text=neutral_query,
+        ),
+        Stage5QueryPlan(
+            query_role="weaker_position_support",
+            query_text=_build_weaker_position_support_query(weaker_claim, neutral_query),
+        ),
+        Stage5QueryPlan(
+            query_role="authoritative_source",
+            query_text=authoritative_query,
+            domains_allow=authoritative_domains,
+        ),
     ]
     if time_sensitivity == "time_sensitive":
-        authoritative_query = _build_authoritative_verification_query(
-            dispute=dispute,
-            claim_entries=claim_entries,
-            relevant_original_sources=relevant_original_sources,
-            original_query=original_query,
+        queries.append(
+            Stage5QueryPlan(
+                query_role="dated_authoritative",
+                query_text=_build_dated_verification_query(authoritative_query),
+                domains_allow=authoritative_domains,
+            )
         )
-        queries.append(_build_dated_verification_query(authoritative_query))
     return queries
 
 
@@ -327,45 +347,17 @@ def _select_weaker_claim_for_verification(
     return min(claim_entries, key=_claim_support_score)
 
 
-def _select_leading_claim_for_refutation(
-    claim_entries: list[ClaimLedgerEntry],
-) -> ClaimLedgerEntry | None:
-    """Choose the best-supported claim so refutation queries can target it."""
-    if not claim_entries:
-        return None
-    return max(claim_entries, key=_claim_support_score)
-
-
-def _build_limitations_query(
-    dispute: DisputeQueueEntry,
-    claim_entries: list[ClaimLedgerEntry],
-    original_query: str,
-) -> str:
-    """Tyler V1 spec counterfactual pattern: '[topic] limitations'."""
-    topic = _strip_terminal_punctuation(dispute.description or "")
-    if topic.lower().startswith("whether "):
-        topic = _normalize_whether_predicate(topic[8:])
-    if not topic and claim_entries:
-        topic = _strip_terminal_punctuation(claim_entries[0].statement)
-    if not topic:
-        topic = _strip_terminal_punctuation(original_query)
-    return f"{topic} limitations"
-
-
-def _build_refutation_query(
-    leading_claim: ClaimLedgerEntry | None,
+def _build_weaker_position_support_query(
+    weaker_claim: ClaimLedgerEntry | None,
     fallback_query: str,
 ) -> str:
-    """Tyler V1 spec counterfactual pattern: '[claim] contradicted by'."""
-    if leading_claim:
-        statement = _strip_terminal_punctuation(leading_claim.statement)
-        return f"{statement} contradicted by"
-    return f"{_strip_terminal_punctuation(fallback_query)} contradicted by"
+    """Build the Tyler support query for the less-supported position."""
+    if weaker_claim:
+        return _strip_terminal_punctuation(weaker_claim.statement)
+    return _strip_terminal_punctuation(fallback_query)
 
 
-def _extract_authoritative_domain(
-    relevant_original_sources: list[TylerSource],
-) -> str | None:
+def _extract_authoritative_domain(relevant_original_sources: list[TylerSource]) -> str | None:
     """Pick the strongest known domain for authoritative-source targeting."""
     ranked_sources = sorted(
         relevant_original_sources,
@@ -382,15 +374,23 @@ def _extract_authoritative_domain(
     return None
 
 
+def _build_authoritative_domain_filters(
+    relevant_original_sources: list[TylerSource],
+) -> tuple[str, ...]:
+    """Return authoritative-domain filters for Stage 5 shared search execution."""
+    domain = _extract_authoritative_domain(relevant_original_sources)
+    if domain:
+        return (domain,)
+    return ()
+
+
 def _build_authoritative_verification_query(
     *,
     dispute: DisputeQueueEntry,
     claim_entries: list[ClaimLedgerEntry],
-    relevant_original_sources: list[TylerSource],
     original_query: str,
 ) -> str:
-    """Target the most authoritative source class available for the dispute."""
-    domain = _extract_authoritative_domain(relevant_original_sources)
+    """Build the authoritative-source query text without embedding provider filters."""
     topic = _strip_terminal_punctuation(dispute.description or "")
     if topic.lower().startswith("whether "):
         topic = _normalize_whether_predicate(topic[8:])
@@ -398,8 +398,6 @@ def _build_authoritative_verification_query(
         topic = _strip_terminal_punctuation(claim_entries[0].statement)
     if not topic:
         topic = _strip_terminal_punctuation(original_query)
-    if domain:
-        return f"site:{domain} {topic}"
     if dispute.type.value == "empirical":
         return f"{topic} official report primary study"
     return f"{topic} official documentation peer reviewed analysis"

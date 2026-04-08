@@ -18,6 +18,7 @@ from grounded_research.models import (
     EvidenceItem,
     ResearchQuestion,
     SourceRecord,
+    Stage5QueryPlan,
 )
 from grounded_research.verify import (
     _collect_fresh_evidence_for_dispute,
@@ -103,10 +104,13 @@ def test_build_tyler_verification_queries_matches_literal_query_roles() -> None:
         time_sensitivity="mixed",
     )
 
-    # Tyler V1 spec: neutral, [topic] limitations, [leading claim] contradicted by
-    assert queries[0] == "Did employment change?"
-    assert queries[1] == "employment change limitations"
-    assert queries[2] == "Employment stayed flat in the pilot contradicted by"
+    assert queries[0].query_role == "neutral_question"
+    assert queries[0].query_text == "Did employment change?"
+    assert queries[1].query_role == "weaker_position_support"
+    assert queries[1].query_text == "Employment declined after the pilot"
+    assert queries[2].query_role == "authoritative_source"
+    assert queries[2].query_text == "employment change official report primary study"
+    assert queries[2].domains_allow == ("oecd.org",)
     assert len(queries) == 3
 
 
@@ -145,12 +149,15 @@ def test_build_tyler_verification_queries_adds_dated_search_only_when_time_sensi
         time_sensitivity="time_sensitive",
     )
 
-    # Tyler V1 spec: neutral, limitations, refutation, + dated authoritative for time_sensitive
     assert len(queries) == 4
-    assert queries[0] == "What does the evidence show about how regulators interpret the new rule?"
-    assert queries[1] == "How regulators interpret the new rule limitations"
-    assert queries[2] == "Regulators prefer a broad reading of the rule contradicted by"
-    assert queries[3].endswith(" 2026")
+    assert queries[0].query_role == "neutral_question"
+    assert queries[0].query_text == "What does the evidence show about how regulators interpret the new rule?"
+    assert queries[1].query_role == "weaker_position_support"
+    assert queries[1].query_text == "Regulators prefer a broad reading of the rule"
+    assert queries[2].query_role == "authoritative_source"
+    assert queries[2].query_text == "How regulators interpret the new rule official documentation peer reviewed analysis"
+    assert queries[3].query_role == "dated_authoritative"
+    assert queries[3].query_text.endswith(" 2026")
 
 
 @pytest.mark.asyncio
@@ -317,11 +324,13 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verification-time search should propagate trace metadata for observability."""
-    captured: dict[str, str | None] = {}
+    captured: dict[str, object] = {}
 
-    async def fake_search_web(query: str, count: int = 10, freshness: str = "none", *, trace_id=None, task=None):
+    async def fake_search_web(query: str, count: int = 10, freshness: str = "none", *, trace_id=None, task=None, **kwargs):
         captured["trace_id"] = trace_id
         captured["task"] = task
+        captured["query"] = query
+        captured.update(kwargs)
         return json.dumps({"results": []})
 
     monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
@@ -335,13 +344,24 @@ async def test_collect_fresh_evidence_uses_verification_search_trace_metadata(
 
     _sources, _evidence, warnings = await _collect_fresh_evidence_for_dispute(
         dispute_id="D-1",
-        queries=["test query"],
+        queries=[
+            Stage5QueryPlan(
+                query_role="authoritative_source",
+                query_text="test query",
+                domains_allow=("epa.gov",),
+            )
+        ],
         bundle=bundle,
         trace_id="trace-root",
     )
 
     assert captured["trace_id"] == "trace-root/search/D-1"
     assert captured["task"] == "verification.search"
+    assert captured["provider_override"] == "tavily"
+    assert captured["search_depth"] == "advanced"
+    assert captured["result_detail"] == "chunks"
+    assert captured["detail_budget"] == 3
+    assert captured["domains_allow"] == ("epa.gov",)
     assert any(w.code == "verification_no_results" for w in warnings)
 
 

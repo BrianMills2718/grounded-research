@@ -67,6 +67,13 @@ Stage2QueryRole = Literal[
     "contrarian_falsification",
     "semantic_description",
 ]
+Stage5QueryProvider = Literal["tavily"]
+Stage5QueryRole = Literal[
+    "neutral_question",
+    "weaker_position_support",
+    "authoritative_source",
+    "dated_authoritative",
+]
 SearchDepthHint = Literal["basic", "advanced"]
 ResultDetailHint = Literal["summary", "chunks"]
 SearchCorpusHint = Literal["general", "news", "academic"]
@@ -157,6 +164,41 @@ class Stage2QueryPlan(BaseModel):
     corpus: SearchCorpusHint = Field(
         default="general",
         description="Provider-agnostic corpus/category hint for this query.",
+    )
+
+
+class Stage5QueryPlan(BaseModel):
+    """Typed Stage 5 search-plan entry for one verification query.
+
+    Tyler's Stage 5 search behavior depends on the query role plus structured
+    shared-provider controls like advanced depth, chunk retrieval, and optional
+    authoritative-domain filters. Making this explicit keeps the live path
+    testable and prevents string-only overclaims.
+    """
+
+    provider: Stage5QueryProvider = Field(
+        default="tavily",
+        description="Shared provider used for Tyler Stage 5 targeted verification.",
+    )
+    query_role: Stage5QueryRole = Field(description="Tyler Stage 5 verification-query role.")
+    query_text: str = Field(min_length=1, description="Rendered query text to send to the provider.")
+    search_depth: SearchDepthHint = Field(
+        default="advanced",
+        description="Provider-agnostic depth hint for Stage 5 targeted verification.",
+    )
+    result_detail: ResultDetailHint = Field(
+        default="chunks",
+        description="Stage 5 requests richer chunk-level evidence, not summary-only snippets.",
+    )
+    detail_budget: int = Field(
+        default=3,
+        ge=1,
+        le=3,
+        description="Chunk budget per result for Stage 5 verification retrieval.",
+    )
+    domains_allow: tuple[str, ...] = Field(
+        default=(),
+        description="Optional authoritative-domain filters to pass as structured search controls.",
     )
 
 
