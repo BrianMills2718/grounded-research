@@ -53,17 +53,18 @@ Compared local surfaces:
 
 **Source section:** Stage 2 query diversification system/user prompt.
 
-**Current status:** Very close to literal.
+**Current status:** Patched and now literal in the live runtime.
 
 | Surface | Finding | Classification | Action |
 |---|---|---|---|
-| System body | Local prompt matches Tyler's query rules and provider-role split closely | Identical enough | leave unless exact textual diff is cheap |
-| User body | Local prompt matches Tyler's four query roles and ordering closely | Identical enough | leave unless exact textual diff is cheap |
-| Budget note / orchestrator note | Tyler source includes budget/orchestrator commentary outside the prompt body; local runtime enforces query count in code rather than prompt text | Spec ambiguity | document in audit; no prompt patch required unless runtime mismatch appears |
+| System body | Missing prompt surface was added and now matches Tyler's query rules and provider-role split | Patch applied | keep active prompt file as canonical |
+| User body | Active prompt now matches Tyler's four query roles and ordering | Patch applied | keep active prompt file as canonical |
+| Budget note / orchestrator note | Tyler source includes budget/orchestrator commentary outside the prompt body; local runtime enforces query count in code rather than prompt text | Spec ambiguity | documented; runtime now uses the literal prompt plus typed query-plan routing |
 
 **Notes:**
 
-- This surface appears to need little or no substantive patching.
+- This surface required a real runtime patch because the active prompt file was
+  not yet wired as the live Stage 2 query surface when this audit began.
 
 ### Stage 2: Finding Extraction
 
@@ -101,7 +102,7 @@ live path in `verify.py`.
 Stage classification after audit:
 
 1. Stage 1 decomposition: patched
-2. Stage 2 query diversification: literal enough, no substantive patch beyond exact wording confirmation
+2. Stage 2 query diversification: patched and now active in the live runtime
 3. Stage 2 finding extraction: patched, with one explicit Tyler-internal schema/prompt ambiguity preserved in docs
 4. Stage 5 neutral verification queries: rewritten live builder, tested, dead prompt surface deleted
 

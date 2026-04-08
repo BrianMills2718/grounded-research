@@ -16,8 +16,10 @@ If the ledger identifies a specific local divergence, the ledger is the
 canonical source of truth.
 
 The repo-local runtime now runs Tyler-native Stage 1 through Stage 6 contracts
-and persists those artifacts in pipeline state. The remaining gap is not stage
-contract wiring. It is benchmark quality and explicit shared-infra boundaries.
+and persists those artifacts in pipeline state. After the first five local
+remediation waves, the remaining gap is no longer known local Stage 1-6
+orchestration debt. It is explicit shared-infra parity, model/runtime parity,
+and broader evaluation coverage.
 
 Full Tyler closure is still not complete because:
 
@@ -50,8 +52,8 @@ Stage 1 through Stage 6.
 
 Remaining non-literal gaps are now narrower:
 
-1. the active gap ledger now records additional concrete local divergences in
-   Stage 1, Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6
+1. the active gap ledger remains canonical and records both fixed and still-open
+   Tyler rows clause by clause
 2. one explicit Tyler-internal Stage 2 prompt/schema ambiguity remains
    documented locally
 3. benchmark-optimal dense-dedup output still differs slightly from the
@@ -70,7 +72,7 @@ Remaining non-literal gaps are now narrower:
 | Stage 4 claim extraction | single Tyler `ClaimExtractionResult` artifact containing `claim_ledger`, `assumption_set`, `dispute_queue`, and `statistics` | Tyler Stage 4 prompt/schema runs in the live runtime and serializes into `PipelineState.tyler_stage_4_result`; old Stage 4 compatibility protocols are removed from `main` | Yes (runtime) |
 | Stage 5 arbitration | `ArbitrationAssessment`, `ClaimStatusUpdate`, `VerificationResult` with post-verification statuses `verified/refuted/unresolved` | Tyler Stage 5 runs in the live runtime and serializes into `PipelineState.tyler_stage_5_result`; old current-shape Stage 5 protocol surfaces are removed from `main` | Yes (runtime) |
 | Stage 6 report | Tyler `SynthesisReport` 3-tier schema with `process_summary`, `disagreement_map`, `claim_ledger_excerpt`, `evidence_trail`, etc. | Tyler Stage 6 runs in the live runtime and serializes into `PipelineState.tyler_stage_6_result`; markdown renders directly from Tyler Stage 6 and legacy `FinalReport` export has been removed | Yes (runtime) |
-| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6; repo-local quality recovery improved the tracked UBI case materially, but a small gap to the dense-dedup anchor remains | Runtime-active, locally recovered, not benchmark-identical |
+| Prompt package | Tyler literal prompts by stage and frame | Tyler-native prompt surfaces are active for Stages 1-6, including the restored Stage 2 query-diversification prompt; repo-local quality recovery and remediation removed the known local prompt/orchestrator gaps | Runtime-active, locally remediated, not benchmark-identical |
 
 ## Current Prompt Inventory vs Tyler Prompt Inventory
 
@@ -93,7 +95,8 @@ The live runtime now uses Tyler-stage prompt files or Tyler-literal
 deterministic orchestration for the remaining surfaces:
 
 - Stage 1 decomposition was re-audited and patched
-- Stage 2 query diversification was re-audited and confirmed literal
+- Stage 2 query diversification now has a real prompt file and live model call,
+  not deterministic string-template generation
 - Stage 2 finding extraction was re-audited and patched
 - Stage 5 verification query generation now uses a Tyler-literal deterministic
   builder in `verify.py`

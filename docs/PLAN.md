@@ -37,11 +37,13 @@ See `docs/COMPETITIVE_ANALYSIS.md` for SOTA comparison results.
 When invoked with a question (`python engine.py "question"`):
 
 ```
-Question → decompose_with_validation_tyler_v1() → Tyler Stage 1 `DecompositionResult`
-    ↓ (this validation/retry path is currently a known Tyler divergence; see gap ledger)
-Sub-questions → generate_search_queries() per Tyler `Q-*` → shared web search (`tavily` default) → fetch pages (parallel)
+Question → decompose_question_tyler_v1() → Tyler Stage 1 `DecompositionResult`
     ↓
-score_source_quality() → quality tiers on sources
+Sub-questions → generate_search_queries_tyler_v1() → typed Stage 2 query plans by `query_role`
+    ↓
+shared web search (`tavily` / `exa` by plan) → fetch pages (parallel)
+    ↓
+score_source_quality() → deterministic authority/freshness/staleness `quality_score`
     ↓
 Tyler Stage 2 `EvidencePackage` + sufficiency check per sub-question → gaps added
     ↓
@@ -50,9 +52,10 @@ compress_evidence() if > threshold → reduced bundle
 run_analysts_tyler_v1() → Tyler Stage 3 `AnalysisObject[]` + `stage3_attempts`
     ↓ (evidence leakage check on Tyler Stage 3 text)
 canonicalize_tyler_v1() → Tyler Stage 4 `ClaimExtractionResult`
-    ↓ (current Stage 6a sequencing is a known Tyler divergence; see gap ledger)
 verify_disputes_tyler_v1() → Tyler Stage 5 `VerificationResult`
-    ↓ (Stage 5 prompt-order randomization is currently a known Tyler divergence; see gap ledger)
+    ↓
+collect_stage6a_user_guidance() when Tyler-routed disputes remain after Stage 5
+    ↓
 generate_tyler_synthesis_report() → Tyler SynthesisReport (canonical structured export)
     ↓
 render_long_report() → markdown from Tyler Stage 6
@@ -71,6 +74,12 @@ Current operational notes:
   `thorough`)
 - raw-question collection uses shared-provider search via `open_web_retrieval`
   with Tavily as the quality-first default, not a bespoke workflow engine
+- Stage 1 no longer runs a separate validation/retry layer in the live path;
+  Tyler's prompt-level self-check is the local mitigation
+- Stage 2 query diversification is now a lightweight model call that emits
+  typed query plans and routes by query role instead of dual-provider fan-out
+- Stage 2 final source scoring is now deterministic authority/freshness/
+  staleness blending, not tier-only scoring
 - `deep` and `thorough` now add goal-driven evidence extraction on persisted
   page text, while `standard` keeps the cheaper notes/key-section path
 - deeper modes now allow multi-round arbitration when earlier rounds remain
@@ -81,11 +90,10 @@ Current operational notes:
   explicit finite request timeouts for long runs
 - tracked 6-question benchmark currently favors the pipeline over cached
   Perplexity deep research
-- repo-local Tyler runtime migration, prompt-quality recovery, and canonical
-  cutover landed, but they are no longer sufficient to claim repo-local Tyler
-  closure
-- the April 2026 clause-by-clause audit found real additional local gaps in
-  Stage 1, Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6
+- repo-local Tyler runtime migration, prompt-quality recovery, canonical
+  cutover, and the first five local remediation phases are landed
+- the remaining Tyler gaps are now explicit shared-infra or evaluation lanes,
+  not known unresolved local Stage 1-6 contract/orchestration debt
 - there is no active repo-local compatibility-deletion wave left in `main`;
   the current frontier is the evidence-backed gap ledger plus the remediation
   waves it implies

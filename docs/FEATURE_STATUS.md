@@ -32,19 +32,19 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 8 | Check coverage of decomposition | DEFER | **DONE** | `DecompositionValidation.coverage_ok` + `coverage_gaps` in validation pass. |
-| 9 | Flag directional bias | DEFER | **DONE** | `DecompositionValidation.bias_flags` in validation pass. |
-| 10 | Check granularity | DEFER | **DONE** | `DecompositionValidation.granularity_issues` in validation pass. |
+| 8 | Check coverage of decomposition | DEFER | **DONE** | Historical only. A temporary `DecompositionValidation` layer once checked coverage, but the live Tyler path deleted Stage 1v after the April 2026 audit because Tyler V1 removed this stage. |
+| 9 | Flag directional bias | DEFER | **DONE** | Historical only. Bias flags existed in the removed validation layer; the live Tyler path now relies on the Stage 1 prompt's self-check instead of a separate Stage 1v pass. |
+| 10 | Check granularity | DEFER | **DONE** | Historical only. Granularity checks lived in the removed validation layer and are no longer part of the live Tyler runtime. |
 | 11 | Assess falsification target quality | DEFER | SKIP | Intentionally skipped as low-value meta-validation. |
-| 12 | Issue verdict (proceed/caveats/revise) | DEFER | **DONE** | Tyler-native decomposition validation retries once on `revise`. |
+| 12 | Issue verdict (proceed/caveats/revise) | DEFER | **DONE** | Historical only. A temporary retry verdict existed in the removed validation layer; the live Tyler path no longer issues a separate Stage 1v verdict. |
 
 ## STAGE 2 — BROAD RETRIEVAL & EVIDENCE NORMALIZATION
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | `generate_search_queries()` now generates focused queries per sub-question when decomposition is available, and the Tyler-native path uses `generate_search_queries_tyler_v1()` for explicit per-sub-question query diversification. |
+| 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | The live Tyler path now uses `generate_search_queries_tyler_v1()` as a lightweight structured model call that emits typed query plans per sub-question and query role. |
 | 14 | Optional Grok/Reddit real-time scan | DEFER | SKIP | Separate search-provider integration, not treated as a core pipeline feature. |
-| 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py`: LLM batch scoring (authoritative/reliable/unknown/unreliable). Per Brian's critique: LLM, not URL lookup. |
+| 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py` now computes deterministic Tyler-style `quality_score` from authority lookup, freshness blending, authority-floor logic, and staleness penalties. |
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
 | 17 | Echo detection across sources | DEFER | SKIP | Intentionally skipped; judged not worth building in v1. |
 | 18 | Conflict-aware compression | SIMPLIFY | **DONE** | `compress.py`: priority-based compression preserving authoritative sources, sub-question coverage, and diversity. |
@@ -82,7 +82,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | 35 | Search for both supporting & disconfirming evidence | KEEP | **DONE** | Fresh evidence fetched via the shared-provider search tool during arbitration; Tavily is now the quality-first default. |
 | 36 | Schema-driven single-turn critique per dispute | KEEP | **DONE** | Tyler Stage 5 arbitration emits structured `ArbitrationAssessment` inside `VerificationResult`. |
 | 37 | Update claim statuses in ledger | KEEP | **DONE** | Tyler `ClaimStatusUpdate`s are applied to the Stage 4 ledger to produce the Stage 5 updated ledger. |
-| 38 | Shuffle analyst positions to prevent primacy bias | CUT | **DONE** | `verify.py` shuffles claim order with fixed seed per dispute before arbitration. |
+| 38 | Shuffle analyst positions to prevent primacy bias | CUT | **DONE** | `verify.py` now randomizes analyst-position order per dispute before arbitration prompt rendering. |
 | 39 | Enforce budget controls | SIMPLIFY | **DONE** | `max_disputes`, `max_turns` in config. No novelty detection. |
 
 ## STAGE 6a — USER-STEERING INTERRUPT

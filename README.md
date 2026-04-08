@@ -72,14 +72,14 @@ written as separate `tyler_stage_*.json` sidecars by the live export path.
 ## Key features
 
 - **Question decomposition** with typed sub-questions and falsification targets
-  (current validation/retry behavior is a known Tyler divergence tracked in the gap ledger)
+  (the live Tyler path now uses prompt-level self-check only; the separate
+  validation/retry layer was removed after the audit)
 - **Distinct analyst roles**: currently configured to the closest available
   Tyler role mapping in `config/config.yaml`; exact Tyler role-model parity is
   still tracked as an open gap
 - **3 reasoning frames**: verification-first, structured decomposition, step-back abstraction
-- **Source quality scoring**: current runtime still uses a simpler
-  quality-tier-based pipeline than Tyler's full authority/freshness/staleness
-  scoring recipe
+- **Source quality scoring**: deterministic Tyler-style authority/freshness/
+  staleness blending on the live Stage 2 path
 - **Dispute detection** with severity classification and deterministic routing
 - **Fresh evidence arbitration** for decision-critical factual conflicts
 - **Configurable synthesis**: analytical mode (inferences beyond sources, marked) or grounded mode (ledger-only)

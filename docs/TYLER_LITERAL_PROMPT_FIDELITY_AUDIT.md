@@ -7,8 +7,9 @@ likely explain the current benchmark regression.
 
 **Audit note (2026-04-08):** This document predates the clause-by-clause gap
 ledger. Where it conflicts with `docs/TYLER_SPEC_GAP_LEDGER.md`, trust the
-ledger. In particular, Stage 2 query diversification should no longer be read
-as conclusively literal.
+ledger. The ledger now records the missing live Stage 2 query-diversification
+surface as fixed, so this file should be read as historical prompt-focused
+context rather than the canonical closure claim.
 
 ## Executive Verdict
 

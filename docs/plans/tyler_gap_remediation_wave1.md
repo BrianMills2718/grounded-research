@@ -3,7 +3,7 @@
 `docs/PLAN.md` remains the canonical repo-level plan. This file turns the
 verified Tyler gap ledger into an execution-ready remediation sequence.
 
-**Status:** Planned
+**Status:** Completed
 **Type:** design
 **Priority:** High
 **Blocked By:** `docs/TYLER_SPEC_GAP_LEDGER.md`
@@ -179,6 +179,9 @@ Note:
 - this phase may branch if shared Tavily/Exa control gaps materially block a
   clean local implementation
 
+Status:
+- Completed on 2026-04-08
+
 ---
 
 ## Verification
@@ -214,3 +217,6 @@ This plan is complete when:
 - the local rows above have child implementation waves,
 - each wave has explicit acceptance criteria,
 - and the remaining shared-infra-blocked rows stay outside `grounded-research`.
+
+Completed on 2026-04-08. All five local child remediation waves landed. The
+remaining Tyler work is now either shared-infra-owned or evaluation-owned.

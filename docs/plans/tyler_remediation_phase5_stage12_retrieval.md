@@ -3,7 +3,7 @@
 `docs/TYLER_SPEC_GAP_LEDGER.md` is the canonical evidence source. This child
 wave executes the remaining verified local Stage 1 and Stage 2 Tyler gaps.
 
-**Status:** Planned
+**Status:** Completed
 **Type:** implementation
 **Priority:** Critical
 **Blocked By:** `docs/TYLER_SPEC_GAP_LEDGER.md`
@@ -238,3 +238,33 @@ This plan is complete when:
 3. The listed ledger rows are updated.
 4. The remaining Stage 2 shared-infra gaps are still explicit and still
    outside `grounded-research`.
+
+---
+
+## Outcome
+
+Completed on 2026-04-08.
+
+Landed behavior:
+
+1. deleted the live Stage 1 validation/retry path and removed
+   `prompts/validate_decomposition.yaml`
+2. cut question-entry execution over to `decompose_question_tyler_v1()`
+3. added `prompts/tyler_v1_query_diversification.yaml` plus dedicated
+   `models.query_diversification` config
+4. replaced deterministic Stage 2 string templates with a lightweight
+   structured query-diversification call that emits typed `Stage2QueryPlan`
+   objects
+5. routed Stage 2 queries by query role/provider instead of dual-provider
+   fan-out
+6. replaced tier-only final scoring with deterministic authority/freshness/
+   staleness scoring and persisted the result on `SourceRecord.quality_score`
+7. updated ledger rows `S1-VALIDATION-001`, `S2-QUERY-MODEL-001`,
+   `S2-ROUTING-001`, `S2-QUALITY-001`, `DOC-S2-QUERY-001`, and
+   `DOC-S2-QUERY-002` to `verified_fixed`
+
+## Verification Results
+
+- `./.venv/bin/python -m py_compile engine.py src/grounded_research/decompose.py src/grounded_research/collect.py src/grounded_research/source_quality.py src/grounded_research/tools/web_search.py src/grounded_research/models.py tests/test_tyler_v1_stage1_runtime.py tests/test_tyler_v1_stage2_runtime.py tests/test_collect.py tests/test_source_quality.py tests/test_web_search.py`
+- `./.venv/bin/python -m pytest tests/test_tyler_v1_stage1_runtime.py tests/test_tyler_v1_stage2_runtime.py tests/test_collect.py tests/test_source_quality.py tests/test_web_search.py -q`
+- `./.venv/bin/python -m pytest tests/test_engine_fixture_loading.py tests/test_phase_boundaries.py tests/test_engine.py -q`

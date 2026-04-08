@@ -38,39 +38,26 @@ Every item is classified as one of:
 16. Stage 6 context-compaction parity
 17. Stage 6 non-dominant synthesis-model policy
 18. Default Stage 3 B/C frame-model mapping
+19. Stage 1 no-validation parity
+20. Stage 2 model-driven query diversification
+21. Stage 2 Tavily/Exa routing-by-query-type
+22. Stage 2 literal quality-score pipeline
+23. Stage 5 exact verification-query role parity
 
 ## Required: Still Open
 
-1. Stage 1 no-validation parity
-   - Tyler removed the validation stage, but live code still validates and retries decomposition.
-   - Owner: `grounded-research`
-2. Stage 2 model-driven query diversification
-   - Tyler specifies a lightweight model call, but live code uses deterministic string templates.
-   - Owner: `grounded-research`
-3. Stage 2 Tavily/Exa routing-by-query-type
-   - Tyler specifies query-type routing, but live code currently sends every query through Tavily + Exa.
-   - Owner: `grounded-research`
-4. Stage 2 literal quality-score pipeline
-   - Tyler specifies authority + freshness + staleness scoring, but live code still uses a simpler quality-tier map.
-   - Owner: `grounded-research`
-5. Stage 3 exact B/C frame-model parity
-   - Tyler assigns Gemini to structured decomposition and Claude Opus to verification-first; live config currently flips those.
-   - Owner: `grounded-research`
-6. Stage 5 exact verification-query role parity
-   - Tyler requires weaker-position support plus authoritative-source queries; live builder still uses limitations/refutation patterns.
-   - Owner: `grounded-research`
-7. Stage 2 Tavily search-depth parity
+1. Stage 2 Tavily search-depth parity
    - Tyler uses Tavily `basic` for default Stage 2 queries, but shared search is hardcoded to `advanced` and cannot yet express the routing table.
    - Owner: `open_web_retrieval`
-8. Stage 2 Exa routing/control parity
+2. Stage 2 Exa routing/control parity
    - Tyler expects semantic/deep routing plus Exa-specific `systemPrompt` and academic category controls, but shared Exa search cannot yet express those knobs.
    - Owner: `open_web_retrieval`
-9. Frontier-model runtime validation
+3. Frontier-model runtime validation
    - Models are configured approximately but haven't been tested in a fully literal live run.
    - Owner: shared model availability + config policy
-10. Gemini strict-schema quality study
+4. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-11. Broader frozen Tyler-vs-legacy evaluation coverage
+5. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity
