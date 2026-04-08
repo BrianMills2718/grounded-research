@@ -50,7 +50,8 @@ Every item is classified as one of:
 ## Required: Still Open
 
 1. Frontier-model runtime validation
-   - Models are configured approximately but haven't been tested in a fully literal live run.
+   - First literal production-config fixture run completed on 2026-04-08 and proved the intended primary models are callable end to end, but it did not close cleanly: Analyst C (`openrouter/anthropic/claude-opus-4.6`) failed the Stage 3 source-citation quality floor and the pipeline only completed because `analyst_min_successful=2`.
+   - Evidence: `output/tyler_frontier_runtime_validation_wave1/trace.json`, `summary.md`, and run-local `llm_observability.db`
    - Owner: shared model availability + config policy
 2. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`

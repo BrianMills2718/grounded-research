@@ -218,6 +218,7 @@ Repo-local:
 Shared infra:
 
 1. frontier-model role parity in production config / availability
+   - narrowed on 2026-04-08 by `output/tyler_frontier_runtime_validation_wave1`: the configured primary models are callable on a literal run, but the Claude Opus Stage 3 analyst still fails the citation quality floor
 2. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
 
 Evaluation:
