@@ -9,7 +9,7 @@ infrastructure surfaces.
 |---|---|---|
 | Runtime durability defaults and trace-query support for long structured calls | `llm_client` | merged on `llm_client/main` via Plan 21 |
 | Frozen Tyler-vs-legacy saved-output comparison path | `prompt_eval` | merged on `prompt_eval/main` via Plan 11 |
-| Gemini strict-schema quality study | `llm_client` + `prompt_eval` | not closed yet; remains an explicit shared follow-up rather than a local repo TODO |
+| Gemini strict-schema quality study | `llm_client` + `prompt_eval` | active shared work exists on `llm_client` branch `gemini-schema-study` (`8e34664`): Plan 26 recorded the direct-vs-OpenRouter evidence and Plan 27 replaced the hardcoded direct-Gemini `budget_tokens=0` default with shared config; still pending merge and any follow-on `prompt_eval` use |
 | Exact frontier-model role parity from Tyler's original stack | shared model availability + config surfaces | three literal production-config runs are now recorded; the first exposed a Claude Opus Stage 3 citation-floor failure, while the next two passed, so the remaining issue is intermittent frontier reliability rather than a clean repo-local defect |
 
 ## Boundary Rule

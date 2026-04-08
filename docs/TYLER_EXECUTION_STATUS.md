@@ -55,6 +55,12 @@ Every item is classified as one of:
    - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
    - Owner: shared model availability + config policy
 2. Gemini strict-schema quality study
+   - Shared study harness and direct-Gemini transport fix are now landed on `llm_client` branch `gemini-schema-study` at commit `8e34664`.
+   - Current evidence from Plan 26/27 is narrower and better than before:
+     - `openrouter/google/gemini-2.5-pro`: `5/5` Tyler-like schema cases succeeded via `native_schema`
+     - direct `gemini/gemini-2.5-pro`: `5/5` failed with provider-side `Budget 0 is invalid` under the old shared default
+     - direct `gemini/gemini-2.5-pro`: `5/5` succeeded via `native_schema` after the shared direct-Gemini thinking-budget policy fix
+   - Honest status: the row is no longer an uninstrumented unknown, but it is not closed in `grounded-research` until the shared `llm_client` branch is merged and, if needed, reflected in `prompt_eval`.
    - Owner: `llm_client` + `prompt_eval`
 3. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
