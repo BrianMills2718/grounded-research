@@ -169,6 +169,9 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_spec_gap_audit_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
+- the active audit has already identified real local divergences in Stage 1,
+  Stage 2, Stage 3, and Stage 5, so the previous "repo-local work complete"
+  story is no longer accurate
 - completed provider-cutover wave:
   `docs/plans/tavily_integration_wave1.md`
 - there is currently no active repo-local implementation wave

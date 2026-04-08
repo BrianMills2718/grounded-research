@@ -71,6 +71,8 @@ Current implementation frontier:
 - the next concrete work is:
   - run a clause-by-clause code-vs-spec audit against Tyler's packet and
     populate the canonical gap ledger
+  - treat the resulting high-severity local divergences as the next
+    implementation frontier if the ledger confirms them
   - expand the frozen comparison set beyond the current `2` matched cases
   - land remaining shared provider/model parity work
   - preserve the new shared Tavily-backed search path as the quality-first default

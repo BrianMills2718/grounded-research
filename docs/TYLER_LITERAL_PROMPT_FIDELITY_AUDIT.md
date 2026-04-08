@@ -5,6 +5,11 @@
 literal Tyler prompt implementations or still adapted simplifications that
 likely explain the current benchmark regression.
 
+**Audit note (2026-04-08):** This document predates the clause-by-clause gap
+ledger. Where it conflicts with `docs/TYLER_SPEC_GAP_LEDGER.md`, trust the
+ledger. In particular, Stage 2 query diversification should no longer be read
+as conclusively literal.
+
 ## Executive Verdict
 
 The live Tyler-native prompt package is **repo-locally literal for the active

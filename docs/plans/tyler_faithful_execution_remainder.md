@@ -178,7 +178,10 @@ Failure modes:
 
 Repo-local:
 
-1. clause-by-clause Tyler gap audit ledger is not populated yet
+1. clause-by-clause Tyler gap audit ledger is now partially populated and has
+   already identified real local divergences in Stage 1, Stage 2, Stage 3, and
+   Stage 5
+2. the canonical gap list now lives in `docs/TYLER_SPEC_GAP_LEDGER.md`
 
 Shared infra:
 

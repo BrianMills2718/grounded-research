@@ -9,6 +9,11 @@ Answer: **repo-local live runtime parity is implemented, and repo-local quality
 recovery is materially successful, but full Tyler closure is still not
 complete**.
 
+**Audit note (2026-04-08):** This document predates the clause-by-clause gap
+ledger. It should not be read as overruling `docs/TYLER_SPEC_GAP_LEDGER.md`.
+If the ledger identifies a specific local divergence, the ledger is the
+canonical source of truth.
+
 The repo-local runtime now runs Tyler-native Stage 1 through Stage 6 contracts
 and persists those artifacts in pipeline state. The remaining gap is not stage
 contract wiring. It is benchmark quality and explicit shared-infra boundaries.
