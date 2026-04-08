@@ -10,7 +10,7 @@ infrastructure surfaces.
 | Runtime durability defaults and trace-query support for long structured calls | `llm_client` | merged on `llm_client/main` via Plan 21 |
 | Frozen Tyler-vs-legacy saved-output comparison path | `prompt_eval` | merged on `prompt_eval/main` via Plan 11 |
 | Gemini strict-schema quality study | `llm_client` + `prompt_eval` | not closed yet; remains an explicit shared follow-up rather than a local repo TODO |
-| Exact frontier-model role parity from Tyler's original stack | shared model availability + config surfaces | first literal production-config run is now recorded in `output/tyler_frontier_runtime_validation_wave1`, but the row stays open because the Claude Opus Stage 3 analyst failed the source-citation quality floor on that run |
+| Exact frontier-model role parity from Tyler's original stack | shared model availability + config surfaces | three literal production-config runs are now recorded; the first exposed a Claude Opus Stage 3 citation-floor failure, while the next two passed, so the remaining issue is intermittent frontier reliability rather than a clean repo-local defect |
 
 ## Boundary Rule
 

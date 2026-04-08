@@ -5,7 +5,7 @@ that the production frontier stack is callable on a literal run, but it left
 the row open because the Claude Opus Stage 3 analyst failed the citation
 quality floor once. This wave determines whether that failure is reproducible.
 
-**Status:** Active
+**Status:** Completed
 **Type:** validation
 **Priority:** High
 **Blocked By:** live provider/model availability
@@ -85,3 +85,25 @@ Establish whether the Stage 3 Claude Opus citation-floor failure is:
 - `./.venv/bin/python engine.py --fixture output/full_run/collected_bundle.json --output-dir output/tyler_frontier_runtime_validation_wave2_repeat`
 - `./.venv/bin/python engine.py --fixture "output/what_are_palantir_technologies'_major_us/collected_bundle.json" --output-dir output/tyler_frontier_runtime_validation_wave2_palantir`
 
+## Outcome
+
+Completed on 2026-04-08.
+
+Results:
+
+1. the repeat run on `output/full_run/collected_bundle.json` passed cleanly
+2. the second saved Palantir fixture also passed cleanly
+3. both additional runs used the same intended primary models as Wave 1
+
+This means the Wave 1 Claude Opus Stage 3 citation-floor failure is **not**
+straightforwardly reproducible. The open row narrows to an intermittent
+frontier reliability issue.
+
+## Verification Results
+
+- `./.venv/bin/python engine.py --fixture output/full_run/collected_bundle.json --output-dir output/tyler_frontier_runtime_validation_wave2_repeat`
+- `./.venv/bin/python engine.py --fixture "output/what_are_palantir_technologies'_major_us/collected_bundle.json" --output-dir output/tyler_frontier_runtime_validation_wave2_palantir`
+- `python` stdlib `sqlite3` queries against both run-local `llm_observability.db`
+- artifact inspection:
+  - `output/tyler_frontier_runtime_validation_wave2_repeat/trace.json`
+  - `output/tyler_frontier_runtime_validation_wave2_palantir/trace.json`

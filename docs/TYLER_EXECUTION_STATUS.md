@@ -50,8 +50,9 @@ Every item is classified as one of:
 ## Required: Still Open
 
 1. Frontier-model runtime validation
-   - First literal production-config fixture run completed on 2026-04-08 and proved the intended primary models are callable end to end, but it did not close cleanly: Analyst C (`openrouter/anthropic/claude-opus-4.6`) failed the Stage 3 source-citation quality floor and the pipeline only completed because `analyst_min_successful=2`.
-   - Evidence: `output/tyler_frontier_runtime_validation_wave1/trace.json`, `summary.md`, and run-local `llm_observability.db`
+   - Three literal production-config fixture runs are now recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
+   - Honest classification: the row is narrowed to an intermittent frontier reliability issue, not an untested config and not a closed guarantee.
+   - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
    - Owner: shared model availability + config policy
 2. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
