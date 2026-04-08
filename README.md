@@ -62,10 +62,12 @@ Each run produces:
 - `summary.md` — Tyler-native structured summary
 - `trace.json` — full pipeline state with provenance
 - `handoff.json` — Tyler-native downstream handoff artifact
+- `tyler_stage_1.json` — Tyler Stage 1 decomposition artifact (raw-question path)
+- `tyler_stage_2.json` — Tyler Stage 2 evidence package artifact (raw-question path)
+- `collected_bundle.json` — raw evidence bundle (raw-question path)
 
-Stage-specific Tyler artifacts are persisted inside `trace.json`. They are not
-currently written as separate `tyler_stage_*.json` files by the live export
-path.
+Stage 3-6 artifacts are persisted inside `trace.json`. They are not currently
+written as separate `tyler_stage_*.json` sidecars by the live export path.
 
 ## Key features
 
