@@ -3,7 +3,7 @@
 `docs/PLAN.md` remains the canonical repo-level plan. This file is the first
 child implementation wave under `tyler_gap_remediation_wave1.md`.
 
-**Status:** Planned
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
@@ -157,3 +157,23 @@ This wave is complete when:
 - the ledger/status surface can truthfully downgrade or close them,
 - and the next remediation child wave can start on Stage 4 or Stage 6 with
   the orchestration path no longer lying about Stage 6a / Stage 5 behavior.
+
+## Outcome
+
+Completed on 2026-04-08.
+
+Implemented:
+
+1. `engine.py` now runs Stage 6a after Stage 5 and selects steering disputes
+   from the latest dispute queue.
+2. Stage 6a now includes Tyler-routed `deferred_to_user` disputes in addition
+   to still-`unresolved` preference/spec/other decision-critical disputes.
+3. `verify.py` clamps Stage 5 rounds to a hard maximum of `2`.
+4. `verify.py` randomizes dispute `model_positions` before rendering the Stage
+   5 arbitration prompt.
+
+Verified with:
+
+- `./.venv/bin/python -m pytest tests/test_verify.py tests/test_engine.py tests/test_engine_fixture_loading.py -q`
+- `./.venv/bin/python -m py_compile engine.py src/grounded_research/verify.py tests/test_verify.py tests/test_engine.py`
+- `./.venv/bin/python -m pytest tests/test_phase_boundaries.py -q`

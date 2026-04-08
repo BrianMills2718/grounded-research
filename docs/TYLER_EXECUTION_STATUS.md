@@ -30,6 +30,9 @@ Every item is classified as one of:
 8. Evidence label numeric weights (Tyler §Design #5: 1.0/0.8/0.5/0.3)
 9. Verification query budget enforcement (Tyler §Stage 5: max 3 queries/dispute)
 10. Tyler-literal quality_tier → numeric score mapping (1.0/0.7/0.5/0.3)
+11. Stage 5 hard round cap
+12. Stage 5 prompt-order randomization
+13. Stage 6a user-steering sequencing against the post-Stage-5 queue
 
 ## Required: Still Open
 
@@ -51,39 +54,30 @@ Every item is classified as one of:
 6. Stage 5 exact verification-query role parity
    - Tyler requires weaker-position support plus authoritative-source queries; live builder still uses limitations/refutation patterns.
    - Owner: `grounded-research`
-7. Stage 5 hard round cap
-   - Tyler caps Stage 5 at 2 total rounds, but the `thorough` depth profile currently allows 3.
-   - Owner: `grounded-research`
-8. Stage 4 prompt-order randomization
+7. Stage 4 prompt-order randomization
    - Tyler requires Analyst A/B/C presentation order to be randomized before claim extraction; live code keeps a fixed order.
    - Owner: `grounded-research`
-9. Stage 5 prompt-order randomization
-   - Tyler requires analyst-position order to be randomized per dispute before arbitration; live code forwards the stored order unchanged.
-   - Owner: `grounded-research`
-10. Stage 6a user-steering sequencing
-   - Tyler says steering happens after Stage 5 against the updated dispute queue; live pipeline runs it earlier and can skip the routed disputes entirely.
-   - Owner: `grounded-research`
-11. Stage 6 evidence-context completeness
+8. Stage 6 evidence-context completeness
    - Tyler expects synthesis to see dispute-resolving evidence, including Stage 5 targeted sources; live prompt assembly drops Stage 5 additional sources from `top_sources`.
    - Owner: `grounded-research`
-12. Stage 6 context-compaction parity
+9. Stage 6 context-compaction parity
    - Tyler specifies a pre-synthesis ~80K-character compaction step with ordered retention; live code only does ingest-time evidence-item compression.
    - Owner: `grounded-research`
-13. Stage 6 non-dominant synthesis-model policy
+10. Stage 6 non-dominant synthesis-model policy
    - Tyler leaves the exact synthesis model TBD, but the default must not reuse the model that dominated earlier stages.
    - Owner: `grounded-research`
-14. Stage 2 Tavily search-depth parity
+11. Stage 2 Tavily search-depth parity
    - Tyler uses Tavily `basic` for default Stage 2 queries, but shared search is hardcoded to `advanced` and cannot yet express the routing table.
    - Owner: `open_web_retrieval`
-15. Stage 2 Exa routing/control parity
+12. Stage 2 Exa routing/control parity
    - Tyler expects semantic/deep routing plus Exa-specific `systemPrompt` and academic category controls, but shared Exa search cannot yet express those knobs.
    - Owner: `open_web_retrieval`
-16. Frontier-model runtime validation
+13. Frontier-model runtime validation
    - Models are configured approximately but haven't been tested in a fully literal live run.
    - Owner: shared model availability + config policy
-17. Gemini strict-schema quality study
+14. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-18. Broader frozen Tyler-vs-legacy evaluation coverage
+15. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity

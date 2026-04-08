@@ -9,6 +9,7 @@ evidence support.
 from __future__ import annotations
 
 import json
+import random
 
 import pytest
 
@@ -20,6 +21,7 @@ from grounded_research.models import (
 )
 from grounded_research.verify import (
     _collect_fresh_evidence_for_dispute,
+    _randomize_dispute_model_positions,
     _build_tyler_verification_queries,
     arbitrate_dispute_tyler_v1,
     verify_disputes_tyler_v1,
@@ -34,6 +36,7 @@ from grounded_research.tyler_v1_models import (
     DisputeType,
     EvidencePackage,
     EvidenceLabel,
+    ModelPosition,
     ResearchPlan,
     ResolutionOutcome,
     Source as TylerSource,
@@ -217,6 +220,96 @@ async def test_arbitrate_dispute_tyler_v1_calls_without_timeout(
 
     assert result.dispute_id == "D-1"
     assert result.resolution is ResolutionOutcome.EVIDENCE_INSUFFICIENT
+
+
+def test_randomize_dispute_model_positions_preserves_content_and_changes_order() -> None:
+    """Stage 5 should shuffle analyst positions without changing the dispute payload."""
+    dispute = DisputeQueueEntry(
+        id="D-1",
+        type=DisputeType.EMPIRICAL,
+        description="Conflicting evidence about the same factual question.",
+        claims_involved=["C-1", "C-2"],
+        model_positions=[
+            ModelPosition(model_alias="A", position="Position A"),
+            ModelPosition(model_alias="B", position="Position B"),
+            ModelPosition(model_alias="C", position="Position C"),
+        ],
+        decision_critical=True,
+        decision_critical_rationale="Could change answer.",
+        status=DisputeStatus.UNRESOLVED,
+        resolution_routing="stage_5_evidence",
+    )
+
+    randomized = _randomize_dispute_model_positions(dispute, rng=random.Random(0))
+
+    assert [entry["model_alias"] for entry in randomized["model_positions"]] == ["A", "C", "B"]
+    assert sorted(entry["model_alias"] for entry in randomized["model_positions"]) == ["A", "B", "C"]
+    assert [position.model_alias for position in dispute.model_positions] == ["A", "B", "C"]
+
+
+@pytest.mark.asyncio
+async def test_arbitrate_dispute_tyler_v1_passes_randomized_positions_to_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 5 prompt rendering should consume the randomized dispute payload."""
+    captured: dict[str, object] = {}
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
+        return response_model(
+            dispute_id="D-1",
+            resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+            updated_claim_statuses=[],
+            new_evidence_summary="No fresh evidence materially changed the claim.",
+            reasoning="No fresh evidence materially changed the claim.",
+        ), {}
+
+    def fake_render_prompt(*args, **kwargs):
+        captured["dispute"] = kwargs["dispute"]
+        return [{"role": "user", "content": "prompt"}]
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+    monkeypatch.setattr(
+        "grounded_research.verify._randomize_dispute_model_positions",
+        lambda dispute: {
+            **dispute.model_dump(mode="json"),
+            "model_positions": [
+                {"model_alias": "C", "position": "Position C"},
+                {"model_alias": "A", "position": "Position A"},
+                {"model_alias": "B", "position": "Position B"},
+            ],
+        },
+    )
+
+    dispute = DisputeQueueEntry(
+        id="D-1",
+        type=DisputeType.EMPIRICAL,
+        description="Conflicting evidence about the same factual question.",
+        claims_involved=["C-1", "C-2"],
+        model_positions=[
+            ModelPosition(model_alias="A", position="Position A"),
+            ModelPosition(model_alias="B", position="Position B"),
+            ModelPosition(model_alias="C", position="Position C"),
+        ],
+        decision_critical=True,
+        decision_critical_rationale="Could change answer.",
+        status=DisputeStatus.UNRESOLVED,
+        resolution_routing="stage_5_evidence",
+    )
+
+    await arbitrate_dispute_tyler_v1(
+        original_query="What is the evidence?",
+        dispute=dispute,
+        claim_ledger_entries=[],
+        relevant_original_sources=[],
+        new_evidence=[],
+        trace_id="trace-1",
+        max_budget=0.5,
+    )
+
+    prompt_dispute = captured["dispute"]
+    assert isinstance(prompt_dispute, dict)
+    assert [entry["model_alias"] for entry in prompt_dispute["model_positions"]] == ["C", "A", "B"]
 
 
 @pytest.mark.asyncio
@@ -408,6 +501,133 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_without_compat_l
     assert verification_result.disputes_investigated[0].resolution is ResolutionOutcome.CLAIM_SUPPORTED
     assert llm_calls == 1
     assert warnings == []
+
+
+@pytest.mark.asyncio
+async def test_verify_disputes_tyler_v1_caps_rounds_at_two(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 5 must not exceed Tyler's two-round arbitration ceiling."""
+    monkeypatch.setattr("grounded_research.verify.get_depth_config", lambda: {"arbitration_max_rounds": 5})
+    monkeypatch.setattr(
+        "grounded_research.verify.get_budget",
+        lambda name: 6 if name == "verification_max_queries_per_dispute" else 1,
+    )
+
+    async def fake_collect(dispute_id, queries, bundle, trace_id):
+        source = SourceRecord(url=f"https://example.com/{dispute_id}", title="Fresh source")
+        evidence = EvidenceItem(
+            source_id=source.id,
+            content="Fresh evidence",
+            content_type="text",
+            relevance_note="fresh",
+            extraction_method="llm",
+        )
+        return [source], [evidence], []
+
+    call_count = {"count": 0}
+
+    async def fake_arbitrate(**kwargs):
+        call_count["count"] += 1
+        from grounded_research.tyler_v1_models import ArbitrationAssessment, ChangeBasicType, ClaimStatusUpdate, ConfidenceLevel
+
+        return ArbitrationAssessment(
+            dispute_id="D-1",
+            new_evidence_summary="Still inconclusive.",
+            reasoning="Still inconclusive.",
+            resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+            updated_claim_statuses=[
+                ClaimStatusUpdate(
+                    claim_id="C-1",
+                    new_status=TylerClaimStatus.UNRESOLVED,
+                    basis_for_change=ChangeBasicType.NEW_EVIDENCE,
+                    confidence_in_resolution=ConfidenceLevel.MEDIUM,
+                    remaining_uncertainty="Still inconclusive.",
+                )
+            ],
+        )
+
+    monkeypatch.setattr("grounded_research.verify._collect_fresh_evidence_for_dispute", fake_collect)
+    monkeypatch.setattr("grounded_research.verify.arbitrate_dispute_tyler_v1", fake_arbitrate)
+
+    stage_4_result = TylerClaimExtractionResult(
+        claim_ledger=[
+            ClaimLedgerEntry(
+                id="C-1",
+                statement="Employment stayed flat.",
+                source_models=["A"],
+                evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+                source_references=["S-1"],
+                status=TylerClaimStatus.CONTESTED,
+                supporting_models=["A"],
+                contesting_models=["B"],
+                related_assumptions=[],
+            )
+        ],
+        assumption_set=[],
+        dispute_queue=[
+            DisputeQueueEntry(
+                id="D-1",
+                type=DisputeType.EMPIRICAL,
+                description="Whether employment changed.",
+                claims_involved=["C-1"],
+                model_positions=[],
+                decision_critical=True,
+                decision_critical_rationale="Could change answer.",
+                status=DisputeStatus.UNRESOLVED,
+                resolution_routing="stage_5_evidence",
+            )
+        ],
+        statistics={
+            "total_claims": 1,
+            "total_assumptions": 0,
+            "total_disputes": 1,
+            "disputes_by_type": {"empirical": 1},
+            "decision_critical_disputes": 1,
+            "claims_per_model": {"A": 1},
+        },
+        stage_summary={
+            "stage_name": "Stage 4",
+            "goal": "goal",
+            "key_findings": ["k1", "k2", "k3"],
+            "decisions_made": ["d1"],
+            "outcome": "outcome",
+            "reasoning": "reasoning",
+        },
+    )
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="Should cities adopt UBI pilots?"),
+        sources=[SourceRecord(id="S-1", url="https://example.com/source", title="Source")],
+        evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Base evidence", content_type="text")],
+        gaps=[],
+    )
+    stage_2_result = EvidencePackage(
+        sub_question_evidence=[],
+        total_queries_used=0,
+        queries_per_sub_question={"Q-1": 0, "Q-2": 0},
+        stage_summary=StageSummary(
+            stage_name="Stage 2",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
+
+    verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
+        stage_4_result=stage_4_result,
+        bundle=bundle,
+        stage_2_result=stage_2_result,
+        trace_id="trace-1",
+        max_disputes=1,
+        max_budget=0.5,
+    )
+
+    assert warnings == []
+    assert verification_result.rounds_used == 2
+    assert llm_calls == 2
+    assert call_count["count"] == 2
 
 
 @pytest.mark.asyncio

@@ -99,6 +99,9 @@ Pass if:
 - Stage 5 never exceeds 2 rounds
 - arbitration prompt input order is randomized per dispute
 
+Status:
+- Completed on 2026-04-08
+
 ### Phase 2: Stage 4 Extraction-Order Correction
 
 Rows:

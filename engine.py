@@ -60,6 +60,36 @@ def _load_fixture_sidecars(
     return tyler_stage_1_result, tyler_stage_2_result
 
 
+def _select_stage6a_steering_disputes(
+    dispute_queue: list["DisputeQueueEntry"],
+) -> list["DisputeQueueEntry"]:
+    """Return the Tyler Stage 6a disputes that still require user steering.
+
+    Tyler routes preference/ambiguity/other decision-critical disputes to the
+    user after the latest dispute state is known. The selection helper stays
+    pure so tests can verify the exact live filter independently of the full
+    pipeline.
+    """
+    from grounded_research.tyler_v1_models import DisputeStatus, DisputeType
+
+    allowed_types = {
+        DisputeType.PREFERENCE_WEIGHTED,
+        DisputeType.SPEC_AMBIGUITY,
+        DisputeType.OTHER,
+    }
+    allowed_statuses = {
+        DisputeStatus.UNRESOLVED,
+        DisputeStatus.DEFERRED_TO_USER,
+    }
+    return [
+        dispute
+        for dispute in dispute_queue
+        if dispute.type in allowed_types
+        and dispute.decision_critical
+        and dispute.status in allowed_statuses
+    ]
+
+
 async def run_pipeline(
     fixture_path: Path,
     output_dir: Path,
@@ -254,35 +284,6 @@ async def run_pipeline(
             f"({tyler_stage_4_result.statistics.decision_critical_disputes} decision-critical)"
         )
 
-        # --- User steering (preference/ambiguity/other disputes) ---
-        # Tyler V1 §Stage 6a: check the UPDATED dispute queue (post-Stage 5 if it
-        # ran), filter for preference_weighted, spec_ambiguity, or other types that
-        # are decision-critical and still unresolved.
-        current_dispute_queue = (
-            state.tyler_stage_5_result.updated_dispute_queue
-            if state.tyler_stage_5_result is not None
-            else tyler_stage_4_result.dispute_queue
-        )
-        preference_disputes = [
-            d
-            for d in current_dispute_queue
-            if d.type.value in {"preference_weighted", "spec_ambiguity", "other"}
-            and d.decision_critical
-            and d.status.value == "unresolved"
-        ]
-        if preference_disputes and sys.stdin.isatty():
-            print(f"\n[Steering] {len(preference_disputes)} preference/ambiguity disputes found.")
-            for d in preference_disputes[:2]:  # max 2 questions
-                print(f"\n  {d.id} [{d.type.value}]: {d.description[:120]}...")
-                print(f"  Claims: {d.claims_involved}")
-                try:
-                    answer = input("  Your guidance (or Enter to skip): ").strip()
-                    if answer:
-                        state.user_guidance_notes.append(f"{d.id}: {answer}")
-                        print(f"  → Recorded.")
-                except (EOFError, KeyboardInterrupt):
-                    print(f"  → Skipped.")
-
         # --- Phase 4: Verification ---
         phase_start = datetime.now(timezone.utc)
         state.current_phase = "adjudicate"
@@ -320,6 +321,28 @@ async def run_pipeline(
         ))
         for ar in tyler_stage_5_result.disputes_investigated:
             print(f"  {ar.dispute_id} → {ar.resolution.value}")
+
+        # --- User steering (preference/ambiguity/other disputes) ---
+        # Tyler V1 §Stage 6a must inspect the latest dispute queue after Stage 5
+        # has had a chance to resolve or defer disputes.
+        current_dispute_queue = (
+            tyler_stage_5_result.updated_dispute_queue
+            if tyler_stage_5_result is not None
+            else tyler_stage_4_result.dispute_queue
+        )
+        preference_disputes = _select_stage6a_steering_disputes(current_dispute_queue)
+        if preference_disputes and sys.stdin.isatty():
+            print(f"\n[Steering] {len(preference_disputes)} preference/ambiguity disputes found.")
+            for d in preference_disputes[:2]:  # max 2 questions
+                print(f"\n  {d.id} [{d.type.value}]: {d.description[:120]}...")
+                print(f"  Claims: {d.claims_involved}")
+                try:
+                    answer = input("  Your guidance (or Enter to skip): ").strip()
+                    if answer:
+                        state.user_guidance_notes.append(f"{d.id}: {answer}")
+                        print(f"  → Recorded.")
+                except (EOFError, KeyboardInterrupt):
+                    print(f"  → Skipped.")
 
         # --- Phase 5: Export ---
         phase_start = datetime.now(timezone.utc)

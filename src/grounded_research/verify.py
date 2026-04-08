@@ -13,6 +13,7 @@ fail-loud invariants for evidence-backed arbitration.
 from __future__ import annotations
 
 import json
+import random
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -438,6 +439,26 @@ def _build_additional_sources(
     ]
 
 
+def _randomize_dispute_model_positions(
+    dispute: DisputeQueueEntry,
+    *,
+    rng: random.Random | random.SystemRandom | None = None,
+) -> dict[str, object]:
+    """Shuffle analyst positions for Stage 5 arbitration without mutating the dispute.
+
+    Tyler requires per-dispute order randomization to reduce prompt-order bias.
+    Returning a prompt payload keeps the live path side-effect free while
+    allowing tests to inject a deterministic RNG.
+    """
+    dispute_payload = dispute.model_dump(mode="json")
+    model_positions = list(dispute_payload.get("model_positions", []))
+    if len(model_positions) > 1:
+        shuffler = rng or random.SystemRandom()
+        shuffler.shuffle(model_positions)
+        dispute_payload["model_positions"] = model_positions
+    return dispute_payload
+
+
 async def arbitrate_dispute_tyler_v1(
     *,
     original_query: str,
@@ -451,10 +472,11 @@ async def arbitrate_dispute_tyler_v1(
     """Run Tyler's literal Stage 5 arbitration prompt for one dispute."""
     from llm_client import acall_llm_structured, render_prompt
 
+    randomized_dispute = _randomize_dispute_model_positions(dispute)
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_arbitration.yaml"),
         original_query=original_query,
-        dispute=dispute.model_dump(mode="json"),
+        dispute=randomized_dispute,
         claim_ledger=[claim.model_dump(mode="json") for claim in claim_ledger_entries],
         relevant_original_sources=[source.model_dump(mode="json") for source in relevant_original_sources],
         new_evidence=[source.model_dump(mode="json") for source in new_evidence],
@@ -549,6 +571,12 @@ async def verify_disputes_tyler_v1(
 ) -> tuple[VerificationResult, list[VerificationWarning], int]:
     """Run Tyler's Stage 5 artifact without depending on deleted ledger projections."""
     original_query = bundle.question.text if bundle.question else ""
+    if stage_2_result is None:
+        raise ValueError(
+            "Tyler Stage 5 requires a canonical Tyler Stage 2 EvidencePackage. "
+            "Pass `stage_2_result` from the live pipeline or fixture artifacts "
+            "instead of rebuilding it from the legacy EvidenceBundle."
+        )
     if stage_1_result is not None:
         tyler_stage1 = stage_1_result
     else:
@@ -558,12 +586,6 @@ async def verify_disputes_tyler_v1(
             question=original_query,
             trace_id=f"{trace_id}/stage1_for_verify",
             max_budget=max_budget * 0.1,
-        )
-    if stage_2_result is None:
-        raise ValueError(
-            "Tyler Stage 5 requires a canonical Tyler Stage 2 EvidencePackage. "
-            "Pass `stage_2_result` from the live pipeline or fixture artifacts "
-            "instead of rebuilding it from the legacy EvidenceBundle."
         )
     claim_lookup = {claim.id: claim.model_copy(deep=True) for claim in stage_4_result.claim_ledger}
     dispute_lookup = {dispute.id: dispute.model_copy(deep=True) for dispute in stage_4_result.dispute_queue}
@@ -595,7 +617,7 @@ async def verify_disputes_tyler_v1(
         return empty, [], 0
 
     depth_cfg = get_depth_config()
-    max_rounds = max(1, int(depth_cfg.get("arbitration_max_rounds", 1)))
+    max_rounds = min(2, max(1, int(depth_cfg.get("arbitration_max_rounds", 1))))
     # Tyler V1 spec §Stage 5: "Max 3 queries per disputed claim"
     max_queries_per_dispute = int(get_budget("verification_max_queries_per_dispute"))
     budget_per_dispute = max_budget / len(actionable)
