@@ -319,6 +319,10 @@ def get_tyler_literal_parity_config() -> dict[str, Any]:
         "stage6_repair_attempts": 1,
         "stage6_min_tradeoffs": 1,
         "stage6_min_preserved_alternatives": 1,
+        "stage6_compaction_char_limit": 80000,
+        "stage6_noncritical_claim_chars": 180,
+        "stage6_non_dispute_source_summary_chars": 140,
+        "stage6_top_sources_cap": 12,
     }
     defaults.update(configured)
     return defaults

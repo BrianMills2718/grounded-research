@@ -3,7 +3,7 @@
 `docs/PLAN.md` remains the canonical repo-level plan. This file is the third
 child implementation wave under `tyler_gap_remediation_wave1.md`.
 
-**Status:** Planned
+**Status:** Completed
 **Type:** implementation
 **Priority:** High
 **Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
@@ -155,3 +155,22 @@ This wave is complete when:
 - tests prove the live synthesis path now follows Tyler's context and model
   policy requirements,
 - and the next local remediation wave can move to Stage 3 or Stage 1/2.
+
+## Outcome
+
+Completed on 2026-04-08.
+
+Implemented:
+
+1. `export.py` now assembles Stage 6 `top_sources` from both Stage 2 bundle
+   sources and Stage 5 additional verification sources.
+2. Stage 6 now applies Tyler-style char-count compaction to lower-priority
+   synthesis inputs when the prompt payload exceeds the configured threshold.
+3. Stage 6 now chooses a non-dominant synthesis model when a configured
+   alternate exists, and fails loud if no non-dominant option is available.
+
+Verified with:
+
+- `./.venv/bin/python -m pytest tests/test_export.py -q`
+- `./.venv/bin/python -m py_compile src/grounded_research/export.py tests/test_export.py`
+- `./.venv/bin/python -m pytest tests/test_phase_boundaries.py tests/test_export.py -q`

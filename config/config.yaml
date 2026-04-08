@@ -159,6 +159,10 @@ tyler_literal_parity:
   stage6_repair_attempts: 1
   stage6_min_tradeoffs: 1
   stage6_min_preserved_alternatives: 1
+  stage6_compaction_char_limit: 80000
+  stage6_noncritical_claim_chars: 180
+  stage6_non_dispute_source_summary_chars: 140
+  stage6_top_sources_cap: 12
 
 # Request-level timeouts removed — observe hangs, don't kill calls.
 # See docs/plans/llm_call_observability.md for rationale.

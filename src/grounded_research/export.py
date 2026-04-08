@@ -13,6 +13,8 @@ the live export path so the repo keeps one canonical output contract.
 
 from __future__ import annotations
 
+from collections import Counter
+import json
 import logging
 from pathlib import Path
 
@@ -20,6 +22,7 @@ from grounded_research.config import (
     get_fallback_models,
     get_model,
     get_tyler_literal_parity_config,
+    load_config,
 )
 from grounded_research.models import (
     EvidenceBundle,
@@ -31,6 +34,199 @@ from grounded_research.tyler_v1_models import SynthesisReport, VerificationResul
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _LOG = logging.getLogger(__name__)
+
+
+def _truncate_text(text: str, max_chars: int) -> str:
+    """Trim verbose synthesis context while preserving readable intent."""
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    if max_chars <= 3:
+        return text[:max_chars]
+    return text[: max_chars - 3].rstrip() + "..."
+
+
+def _build_stage6_top_sources(
+    *,
+    bundle: EvidenceBundle,
+    verification_result: VerificationResult,
+    top_sources_cap: int,
+    non_dispute_summary_chars: int,
+) -> list[dict[str, object]]:
+    """Assemble Tyler Stage 6 source context from both Stage 2 and Stage 5.
+
+    Tyler expects synthesis to see sources that contributed to dispute
+    resolution, including the targeted verification sources discovered in
+    Stage 5. This helper merges both inventories into one prompt-facing source
+    summary surface.
+    """
+    investigated_dispute_ids = {
+        assessment.dispute_id for assessment in verification_result.disputes_investigated
+    }
+    claim_ids_by_source: dict[str, list[str]] = {}
+    for claim in verification_result.updated_claim_ledger:
+        for source_id in claim.source_references:
+            claim_ids_by_source.setdefault(source_id, []).append(claim.id)
+
+    disputes_by_source: dict[str, list[str]] = {}
+    for dispute in verification_result.updated_dispute_queue:
+        if dispute.id not in investigated_dispute_ids:
+            continue
+        for claim_id in dispute.claims_involved:
+            for claim in verification_result.updated_claim_ledger:
+                if claim.id != claim_id:
+                    continue
+                for source_id in claim.source_references:
+                    disputes_by_source.setdefault(source_id, []).append(dispute.id)
+
+    top_sources: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
+
+    for source in bundle.sources:
+        contribution_claims = list(dict.fromkeys(claim_ids_by_source.get(source.id, [])))
+        resolved_disputes = list(dict.fromkeys(disputes_by_source.get(source.id, [])))
+        if not contribution_claims and not resolved_disputes:
+            continue
+        top_sources.append(
+            {
+                "id": source.id,
+                "title": source.title,
+                "quality_score": {
+                    "authoritative": 1.0,
+                    "reliable": 0.7,
+                    "unknown": 0.5,
+                    "unreliable": 0.3,
+                }.get(source.quality_tier, 0.5),
+                "source_type": source.source_type,
+                "contribution_summary": (
+                    f"Supports claims {', '.join(contribution_claims[:4])}"
+                    if contribution_claims
+                    else "Contributed to dispute resolution."
+                ),
+                "conflicts_resolved": resolved_disputes,
+            }
+        )
+        seen_ids.add(source.id)
+
+    for source in verification_result.additional_sources:
+        if source.source_id in seen_ids:
+            continue
+        resolved_disputes = [source.retrieved_for_dispute] if source.retrieved_for_dispute in investigated_dispute_ids else []
+        contribution_summary = "; ".join(source.key_findings[:2]) or "Retrieved during Stage 5 targeted verification."
+        if not resolved_disputes:
+            contribution_summary = _truncate_text(contribution_summary, non_dispute_summary_chars)
+        top_sources.append(
+            {
+                "id": source.source_id,
+                "title": source.title,
+                "quality_score": source.quality_score,
+                "source_type": "verification_additional",
+                "contribution_summary": contribution_summary,
+                "conflicts_resolved": resolved_disputes,
+            }
+        )
+        seen_ids.add(source.source_id)
+
+    return top_sources[:top_sources_cap]
+
+
+def _compact_stage6_prompt_inputs(
+    *,
+    original_query: str,
+    stage_6_user_input: str,
+    decision_critical_claims: list[dict[str, object]],
+    noncritical_claims: list[dict[str, object]],
+    assumption_set: list[dict[str, object]],
+    dispute_queue: list[dict[str, object]],
+    top_sources: list[dict[str, object]],
+    evidence_gaps: list[str],
+    all_stage_summaries: list[dict[str, object]],
+    char_limit: int,
+    noncritical_claim_chars: int,
+    non_dispute_summary_chars: int,
+) -> dict[str, object]:
+    """Apply Tyler's Stage 6 char-budget compaction policy when needed."""
+    payload: dict[str, object] = {
+        "original_query": original_query,
+        "stage_6_user_input": stage_6_user_input,
+        "decision_critical_claims": decision_critical_claims,
+        "noncritical_claims": noncritical_claims,
+        "assumption_set": assumption_set,
+        "dispute_queue": dispute_queue,
+        "top_sources": top_sources,
+        "evidence_gaps": evidence_gaps,
+        "all_stage_summaries": all_stage_summaries,
+    }
+    if len(json.dumps(payload, default=str)) <= char_limit:
+        return payload
+
+    compacted_noncritical_claims = [
+        {
+            "id": claim["id"],
+            "statement": _truncate_text(str(claim["statement"]), noncritical_claim_chars),
+            "status": claim["status"],
+        }
+        for claim in noncritical_claims
+    ]
+    compacted_top_sources = [
+        {
+            **source,
+            "contribution_summary": (
+                source["contribution_summary"]
+                if source.get("conflicts_resolved")
+                else _truncate_text(str(source["contribution_summary"]), non_dispute_summary_chars)
+            ),
+        }
+        for source in top_sources
+    ]
+    compacted_stage_summaries = [
+        {
+            "stage_name": summary["stage_name"],
+            "goal": _truncate_text(str(summary["goal"]), 120),
+            "key_findings": [_truncate_text(str(item), 120) for item in list(summary["key_findings"])[:3]],
+            "decisions_made": [_truncate_text(str(item), 120) for item in list(summary["decisions_made"])[:2]],
+            "outcome": _truncate_text(str(summary["outcome"]), 160),
+            "reasoning": _truncate_text(str(summary["reasoning"]), 200),
+        }
+        for summary in all_stage_summaries
+    ]
+    return {
+        **payload,
+        "noncritical_claims": compacted_noncritical_claims,
+        "top_sources": compacted_top_sources,
+        "all_stage_summaries": compacted_stage_summaries,
+    }
+
+
+def _select_stage6_synthesis_model(state: PipelineState) -> tuple[str, list[str] | None]:
+    """Choose a non-dominant synthesis model for Tyler Stage 6 when possible."""
+    config = load_config()
+    model_counts: Counter[str] = Counter()
+    for task in ("decomposition", "evidence_extraction", "claim_extraction", "arbitration"):
+        model_counts[get_model(task)] += 1
+    if state.stage3_attempts:
+        for attempt in state.stage3_attempts:
+            if attempt.succeeded:
+                model_counts[attempt.model] += 1
+    else:
+        for model in config.get("analyst_models", []):
+            model_counts[str(model)] += 1
+
+    dominant_count = max(model_counts.values(), default=0)
+    dominant_models = {model for model, count in model_counts.items() if count == dominant_count}
+    synthesis_model = get_model("synthesis")
+    fallback_models = list(get_fallback_models("synthesis") or [])
+    if synthesis_model not in dominant_models:
+        return synthesis_model, fallback_models or None
+
+    for candidate in fallback_models:
+        if candidate not in dominant_models:
+            remaining = [model for model in fallback_models if model != candidate and model not in dominant_models]
+            return candidate, remaining or None
+
+    raise ValueError(
+        "Tyler Stage 6 requires a non-dominant synthesis model, but the configured "
+        "primary/fallback synthesis models are all dominant earlier-stage models."
+    )
 
 
 def validate_tyler_grounding(
@@ -219,44 +415,14 @@ async def generate_tyler_synthesis_report(
             }
         )
 
-    additional_source_ids = {source.source_id: source for source in stage_5_result.additional_sources}
-    top_sources: list[dict[str, object]] = []
-    for source in state.evidence_bundle.sources:
-        contribution_claims = [
-            claim.id
-            for claim in stage_5_result.updated_claim_ledger
-            if source.id in claim.source_references
-        ]
-        resolved_disputes = [
-            dispute.id
-            for dispute in stage_5_result.updated_dispute_queue
-            if dispute.status is not None and dispute.id in {
-                assessment.dispute_id for assessment in stage_5_result.disputes_investigated
-            }
-            and source.id in additional_source_ids
-        ]
-        if not contribution_claims and source.id not in additional_source_ids:
-            continue
-        top_sources.append(
-            {
-                "id": source.id,
-                "title": source.title,
-                "quality_score": {
-                    "authoritative": 1.0,
-                    "reliable": 0.7,
-                    "unknown": 0.5,
-                    "unreliable": 0.3,
-                }.get(source.quality_tier, 0.5),
-                "source_type": source.source_type,
-                "contribution_summary": (
-                    f"Supports claims {', '.join(contribution_claims[:4])}"
-                    if contribution_claims
-                    else "Retrieved during Stage 5 targeted verification."
-                ),
-                "conflicts_resolved": resolved_disputes,
-            }
-        )
-    top_sources = top_sources[:12]
+    top_sources = _build_stage6_top_sources(
+        bundle=state.evidence_bundle,
+        verification_result=stage_5_result,
+        top_sources_cap=int(parity_policy.get("stage6_top_sources_cap", 12)),
+        non_dispute_summary_chars=int(
+            parity_policy.get("stage6_non_dispute_source_summary_chars", 140)
+        ),
+    )
 
     evidence_gaps = list(
         dict.fromkeys(
@@ -296,8 +462,7 @@ async def generate_tyler_synthesis_report(
 
     user_clarifications = "\n".join(state.user_guidance_notes)
 
-    messages = render_prompt(
-        str(_PROJECT_ROOT / "prompts" / "tyler_v1_synthesis.yaml"),
+    compacted_inputs = _compact_stage6_prompt_inputs(
         original_query=state.question.text,
         stage_6_user_input=user_clarifications,
         decision_critical_claims=[claim.model_dump(mode="json") for claim in decision_critical_claims],
@@ -307,6 +472,24 @@ async def generate_tyler_synthesis_report(
         top_sources=top_sources,
         evidence_gaps=evidence_gaps,
         all_stage_summaries=all_stage_summaries,
+        char_limit=int(parity_policy.get("stage6_compaction_char_limit", 80000)),
+        noncritical_claim_chars=int(parity_policy.get("stage6_noncritical_claim_chars", 180)),
+        non_dispute_summary_chars=int(
+            parity_policy.get("stage6_non_dispute_source_summary_chars", 140)
+        ),
+    )
+
+    messages = render_prompt(
+        str(_PROJECT_ROOT / "prompts" / "tyler_v1_synthesis.yaml"),
+        original_query=compacted_inputs["original_query"],
+        stage_6_user_input=compacted_inputs["stage_6_user_input"],
+        decision_critical_claims=compacted_inputs["decision_critical_claims"],
+        noncritical_claims=compacted_inputs["noncritical_claims"],
+        assumption_set=compacted_inputs["assumption_set"],
+        dispute_queue=compacted_inputs["dispute_queue"],
+        top_sources=compacted_inputs["top_sources"],
+        evidence_gaps=compacted_inputs["evidence_gaps"],
+        all_stage_summaries=compacted_inputs["all_stage_summaries"],
         response_schema_json=SynthesisReport.model_json_schema(),
     )
 
@@ -315,6 +498,7 @@ async def generate_tyler_synthesis_report(
         for dispute in stage_5_result.updated_dispute_queue
         if dispute.status is not None and dispute.status.value == "unresolved"
     }
+    synthesis_model, synthesis_fallback_models = _select_stage6_synthesis_model(state)
 
     async def _generate_once(feedback: list[str], suffix: str) -> SynthesisReport:
         prompt_messages = messages
@@ -326,13 +510,13 @@ async def generate_tyler_synthesis_report(
                 }
             ]
         report, _meta = await acall_llm_structured(
-            get_model("synthesis"),
+            synthesis_model,
             prompt_messages,
             response_model=SynthesisReport,
             task="synthesis_tyler_v1",
             trace_id=f"{trace_id}/synthesis_tyler_v1{suffix}",
             max_budget=max_budget,
-            fallback_models=get_fallback_models("synthesis"),
+            fallback_models=synthesis_fallback_models,
         )
         return report
 

@@ -34,6 +34,9 @@ Every item is classified as one of:
 12. Stage 5 prompt-order randomization
 13. Stage 6a user-steering sequencing against the post-Stage-5 queue
 14. Stage 4 prompt-order randomization
+15. Stage 6 evidence-context completeness
+16. Stage 6 context-compaction parity
+17. Stage 6 non-dominant synthesis-model policy
 
 ## Required: Still Open
 
@@ -55,27 +58,18 @@ Every item is classified as one of:
 6. Stage 5 exact verification-query role parity
    - Tyler requires weaker-position support plus authoritative-source queries; live builder still uses limitations/refutation patterns.
    - Owner: `grounded-research`
-7. Stage 6 evidence-context completeness
-   - Tyler expects synthesis to see dispute-resolving evidence, including Stage 5 targeted sources; live prompt assembly drops Stage 5 additional sources from `top_sources`.
-   - Owner: `grounded-research`
-8. Stage 6 context-compaction parity
-   - Tyler specifies a pre-synthesis ~80K-character compaction step with ordered retention; live code only does ingest-time evidence-item compression.
-   - Owner: `grounded-research`
-9. Stage 6 non-dominant synthesis-model policy
-   - Tyler leaves the exact synthesis model TBD, but the default must not reuse the model that dominated earlier stages.
-   - Owner: `grounded-research`
-10. Stage 2 Tavily search-depth parity
+7. Stage 2 Tavily search-depth parity
    - Tyler uses Tavily `basic` for default Stage 2 queries, but shared search is hardcoded to `advanced` and cannot yet express the routing table.
    - Owner: `open_web_retrieval`
-11. Stage 2 Exa routing/control parity
+8. Stage 2 Exa routing/control parity
    - Tyler expects semantic/deep routing plus Exa-specific `systemPrompt` and academic category controls, but shared Exa search cannot yet express those knobs.
    - Owner: `open_web_retrieval`
-12. Frontier-model runtime validation
+9. Frontier-model runtime validation
    - Models are configured approximately but haven't been tested in a fully literal live run.
    - Owner: shared model availability + config policy
-13. Gemini strict-schema quality study
+10. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-14. Broader frozen Tyler-vs-legacy evaluation coverage
+11. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity

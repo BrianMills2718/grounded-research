@@ -20,14 +20,18 @@ from grounded_research.models import (
     PipelineState,
     ResearchQuestion,
     SourceRecord,
+    Stage3AttemptTrace,
 )
 from grounded_research.tyler_v1_models import (
+    AdditionalSource,
     ClaimExtractionResult as TylerClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus as TylerClaimStatus,
     ConfidenceAssessment,
     DecompositionResult,
     DisagreementMapEntry,
+    DisputeQueueEntry,
+    DisputeStatus,
     DisputeType,
     EvidenceLabel,
     EvidencePackage,
@@ -122,6 +126,52 @@ def _tyler_report() -> SynthesisReport:
     )
 
 
+def _stage1_result_for_export() -> DecompositionResult:
+    return DecompositionResult(
+        core_question="What is the evidence?",
+        sub_questions=[
+            TylerSubQuestion(id="Q-1", question="Q1", type="empirical", research_priority="high", search_guidance="docs"),
+            TylerSubQuestion(id="Q-2", question="Q2", type="interpretive", research_priority="medium", search_guidance="critiques"),
+        ],
+        optimization_axes=["speed vs rigor"],
+        research_plan=ResearchPlan(
+            what_to_verify=["claim"],
+            critical_source_types=["official docs"],
+            falsification_targets=["contradiction"],
+        ),
+        stage_summary=_stage_summary("Stage 1"),
+    )
+
+
+def _stage4_result_for_export() -> TylerClaimExtractionResult:
+    return TylerClaimExtractionResult(
+        claim_ledger=[
+            ClaimLedgerEntry(
+                id="C-1",
+                statement="Claim",
+                source_models=["A"],
+                evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                source_references=["S-1"],
+                status=TylerClaimStatus.VERIFIED,
+                supporting_models=["A"],
+                contesting_models=[],
+                related_assumptions=[],
+            )
+        ],
+        assumption_set=[],
+        dispute_queue=[],
+        statistics={
+            "total_claims": 1,
+            "total_assumptions": 0,
+            "total_disputes": 0,
+            "disputes_by_type": {},
+            "decision_critical_disputes": 0,
+            "claims_per_model": {"A": 1},
+        },
+        stage_summary=_stage_summary("Stage 4"),
+    )
+
+
 def _stage5_result_for_report() -> VerificationResult:
     return VerificationResult(
         disputes_investigated=[],
@@ -211,6 +261,7 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
     monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
     monkeypatch.setattr("grounded_research.export.get_model", lambda task: "test-model")
     monkeypatch.setattr("grounded_research.export.get_fallback_models", lambda task: None)
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
 
     state = PipelineState(
         run_id="run-1",
@@ -300,6 +351,293 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
 
 
 @pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_includes_stage5_additional_sources_in_top_sources(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 6 prompt context should include dispute-resolving Stage 5 sources."""
+    captured: dict[str, object] = {}
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            executive_recommendation="Recommendation.",
+            conditions_of_validity=["Condition."],
+            decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
+            disagreement_map=[],
+            preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
+            key_assumptions=[],
+            confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
+            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
+            evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
+            evidence_gaps=[],
+            reasoning="Reasoning",
+            stage_summary=_stage_summary("Stage 6").model_dump(mode="json"),
+        ), {}
+
+    def fake_render_prompt(*args, **kwargs):
+        captured["top_sources"] = kwargs["top_sources"]
+        return [{"role": "user", "content": "prompt"}]
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
+
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[SourceRecord(id="S-1", url="https://example.com", title="Source", quality_tier="authoritative")],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=_stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=VerificationResult(
+            disputes_investigated=[],
+            additional_sources=[
+                AdditionalSource(
+                    source_id="S-9",
+                    url="https://example.com/fresh",
+                    title="Fresh verification source",
+                    quality_score=0.88,
+                    key_findings=["Fresh evidence resolved the dispute."],
+                    retrieved_for_dispute="D-1",
+                )
+            ],
+            updated_claim_ledger=[
+                ClaimLedgerEntry(
+                    id="C-1",
+                    statement="Claim",
+                    source_models=["A"],
+                    evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                    source_references=["S-1"],
+                    status=TylerClaimStatus.VERIFIED,
+                    supporting_models=["A"],
+                    contesting_models=[],
+                    related_assumptions=[],
+                )
+            ],
+            updated_dispute_queue=[],
+            search_budget={},
+            rounds_used=1,
+            stage_summary=_stage_summary("Stage 5"),
+        ),
+    )
+
+    await generate_tyler_synthesis_report(state, trace_id="trace-root")
+
+    top_sources = captured["top_sources"]
+    assert isinstance(top_sources, list)
+    source_ids = {source["id"] for source in top_sources}
+    assert "S-9" in source_ids
+
+
+@pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_over_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 6 should compact low-priority context once the char budget is exceeded."""
+    captured: dict[str, object] = {}
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            executive_recommendation="Recommendation.",
+            conditions_of_validity=["Condition."],
+            decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
+            disagreement_map=[],
+            preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
+            key_assumptions=[],
+            confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
+            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
+            evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
+            evidence_gaps=[],
+            reasoning="Reasoning",
+            stage_summary=_stage_summary("Stage 6").model_dump(mode="json"),
+        ), {}
+
+    def fake_render_prompt(*args, **kwargs):
+        captured["noncritical_claims"] = kwargs["noncritical_claims"]
+        return [{"role": "user", "content": "prompt"}]
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
+    monkeypatch.setattr(
+        "grounded_research.export.get_tyler_literal_parity_config",
+        lambda: {
+            "stage6_repair_on_underfilled_fields": False,
+            "stage6_compaction_char_limit": 1,
+            "stage6_noncritical_claim_chars": 20,
+            "stage6_non_dispute_source_summary_chars": 40,
+            "stage6_top_sources_cap": 12,
+        },
+    )
+
+    long_statement = "This is a very long noncritical claim statement that should be compacted before synthesis."
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[SourceRecord(id="S-1", url="https://example.com", title="Source", quality_tier="authoritative")],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=_stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=VerificationResult(
+            disputes_investigated=[],
+            additional_sources=[],
+            updated_claim_ledger=[
+                ClaimLedgerEntry(
+                    id="C-1",
+                    statement="Decision-critical claim",
+                    source_models=["A"],
+                    evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                    source_references=["S-1"],
+                    status=TylerClaimStatus.VERIFIED,
+                    supporting_models=["A"],
+                    contesting_models=[],
+                    related_assumptions=[],
+                ),
+                ClaimLedgerEntry(
+                    id="C-2",
+                    statement=long_statement,
+                    source_models=["A"],
+                    evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                    source_references=["S-1"],
+                    status=TylerClaimStatus.SUPPORTED,
+                    supporting_models=["A"],
+                    contesting_models=[],
+                    related_assumptions=[],
+                ),
+            ],
+            updated_dispute_queue=[
+                DisputeQueueEntry(
+                    id="D-1",
+                    type=DisputeType.EMPIRICAL,
+                    description="Decision dispute",
+                    claims_involved=["C-1"],
+                    model_positions=[],
+                    decision_critical=True,
+                    decision_critical_rationale="critical",
+                    status=DisputeStatus.RESOLVED,
+                    resolution_routing="stage_5_evidence",
+                )
+            ],
+            search_budget={},
+            rounds_used=1,
+            stage_summary=_stage_summary("Stage 5"),
+        ),
+    )
+
+    await generate_tyler_synthesis_report(state, trace_id="trace-root")
+
+    noncritical_claims = captured["noncritical_claims"]
+    assert isinstance(noncritical_claims, list)
+    assert set(noncritical_claims[0].keys()) == {"id", "statement", "status"}
+    assert noncritical_claims[0]["statement"].endswith("...")
+
+
+@pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_uses_non_dominant_synthesis_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 6 should switch away from a dominant earlier-stage model when possible."""
+    captured: dict[str, object] = {}
+
+    async def fake_acall_llm_structured(model, *args, **kwargs):
+        captured["model"] = model
+        response_model = kwargs["response_model"]
+        return response_model(
+            executive_recommendation="Recommendation.",
+            conditions_of_validity=["Condition."],
+            decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
+            disagreement_map=[],
+            preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
+            key_assumptions=[],
+            confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
+            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
+            evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
+            evidence_gaps=[],
+            reasoning="Reasoning",
+            stage_summary=_stage_summary("Stage 6").model_dump(mode="json"),
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+    monkeypatch.setattr(
+        "grounded_research.export.get_model",
+        lambda task: {
+            "decomposition": "openrouter/openai/gpt-5.4",
+            "evidence_extraction": "openrouter/openai/gpt-5.4",
+            "claim_extraction": "openrouter/openai/gpt-5.4",
+            "arbitration": "openrouter/anthropic/claude-opus-4.6",
+            "synthesis": "openrouter/openai/gpt-5.4",
+        }[task],
+    )
+    monkeypatch.setattr(
+        "grounded_research.export.get_fallback_models",
+        lambda task: ["openrouter/anthropic/claude-opus-4.6"] if task == "synthesis" else None,
+    )
+    monkeypatch.setattr(
+        "grounded_research.export.load_config",
+        lambda: {"analyst_models": ["openrouter/openai/gpt-5.4"] * 3},
+    )
+
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[SourceRecord(id="S-1", url="https://example.com", title="Source", quality_tier="authoritative")],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=_stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=_stage5_result_for_report(),
+        stage3_attempts=[
+            Stage3AttemptTrace(
+                analyst_label="Alpha",
+                model_alias="A",
+                model="openrouter/openai/gpt-5.4",
+                frame="step_back_abstraction",
+                succeeded=True,
+                claim_count=1,
+            )
+        ],
+    )
+
+    await generate_tyler_synthesis_report(state, trace_id="trace-root")
+
+    assert captured["model"] == "openrouter/anthropic/claude-opus-4.6"
+
+
+@pytest.mark.asyncio
 async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fields(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -333,6 +671,7 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
     monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
     monkeypatch.setattr("grounded_research.export.get_model", lambda task: "test-model")
     monkeypatch.setattr("grounded_research.export.get_fallback_models", lambda task: None)
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
 
     state = PipelineState(
         run_id="run-1",
@@ -445,6 +784,7 @@ async def test_generate_tyler_synthesis_report_redecomposes_from_question_when_m
     monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
     monkeypatch.setattr("grounded_research.export.get_model", lambda task: "test-model")
     monkeypatch.setattr("grounded_research.export.get_fallback_models", lambda task: None)
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
 
     state = PipelineState(
         run_id="run-1",
