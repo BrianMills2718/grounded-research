@@ -37,6 +37,7 @@ Every item is classified as one of:
 15. Stage 6 evidence-context completeness
 16. Stage 6 context-compaction parity
 17. Stage 6 non-dominant synthesis-model policy
+18. Default Stage 3 B/C frame-model mapping
 
 ## Required: Still Open
 

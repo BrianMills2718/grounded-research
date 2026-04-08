@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
+import yaml
 
 from grounded_research.analysts import run_analysts_tyler_v1
 from grounded_research.config import load_config
@@ -222,10 +224,15 @@ async def test_run_analysts_tyler_v1_enforces_quality_floor_on_canonical_outputs
 
 def test_tyler_stage3_primary_config_matches_recovery_contract() -> None:
     """The primary Stage 3 config should stay aligned with the recovery plan."""
-    cfg = load_config()
+    config_path = Path(__file__).resolve().parent.parent / "config" / "config.yaml"
+    cfg = yaml.safe_load(config_path.read_text())
 
-    # Testing config uses all-Gemini for speed; just verify 3 models + 3 frames exist
     assert len(cfg["analyst_models"]) == 3
+    assert cfg["analyst_models"] == [
+        "openrouter/openai/gpt-5.4",
+        "openrouter/google/gemini-2.5-pro",
+        "openrouter/anthropic/claude-opus-4.6",
+    ]
     assert cfg["analyst_frames"] == [
         "step_back_abstraction",
         "structured_decomposition",

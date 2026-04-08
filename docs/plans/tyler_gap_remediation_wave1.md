@@ -144,9 +144,17 @@ Status:
 Rows:
 - `S3-FRAME-MODEL-001`
 
+Execution surface:
+
+- `docs/plans/tyler_remediation_phase4_stage3_model_assignment.md`
+- `docs/notebooks/40_tyler_remediation_phase4_stage3_model_assignment.ipynb`
+
 Pass if:
 - B/C frame-model mapping matches Tyler's requested assignment as far as the
   currently configured models allow
+
+Status:
+- Completed on 2026-04-08
 
 ### Phase 5: Stage 1/2 Retrieval And Scoring Corrections
 

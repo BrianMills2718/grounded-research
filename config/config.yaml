@@ -35,8 +35,8 @@ model_fallbacks:
 # Tyler specified cross-family diversity as a non-negotiable constraint.
 analyst_models:
   - "openrouter/openai/gpt-5.4"                    # Analyst A — step-back abstraction (Tyler: GPT-5.4)
-  - "openrouter/anthropic/claude-opus-4.6"          # Analyst B — structured decomposition (Tyler: Claude Opus 4.6)
-  - "openrouter/google/gemini-2.5-pro"              # Analyst C — verification-first (Tyler: Gemini 3.1 Pro)
+  - "openrouter/google/gemini-2.5-pro"              # Analyst B — structured decomposition (Tyler: Gemini 3.1 Pro)
+  - "openrouter/anthropic/claude-opus-4.6"          # Analyst C — verification-first (Tyler: Claude Opus 4.6)
 
 # Tyler Build Plan §Stage 5: max 3 queries per disputed claim, max 2 rounds.
 budgets:
