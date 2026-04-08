@@ -218,8 +218,6 @@ Repo-local:
 Shared infra:
 
 1. frontier-model role parity in production config / availability
-2. Exa retrieval-instruction / `systemPrompt` parity remains the only
-   unresolved Stage 2 shared retrieval-control gap
 2. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
 
 Evaluation:

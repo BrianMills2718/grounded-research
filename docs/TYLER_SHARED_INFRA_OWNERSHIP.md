@@ -7,7 +7,6 @@ infrastructure surfaces.
 
 | Gap | Owner | Current surface |
 |---|---|---|
-| Exa provider-control parity Tyler assumed for Stage 2 | `open_web_retrieval` | shared Exa adapter now supports deep routing and academic category hints, but still lacks a first-class retrieval-instruction / `systemPrompt` surface |
 | Runtime durability defaults and trace-query support for long structured calls | `llm_client` | merged on `llm_client/main` via Plan 21 |
 | Frozen Tyler-vs-legacy saved-output comparison path | `prompt_eval` | merged on `prompt_eval/main` via Plan 11 |
 | Gemini strict-schema quality study | `llm_client` + `prompt_eval` | not closed yet; remains an explicit shared follow-up rather than a local repo TODO |
@@ -24,4 +23,5 @@ gaps. The only justified local work after repo-local cutover is:
 
 Shared retrieval controls for search depth, chunk budget, corpus/category, and
 structured domain filters are already shipped in `open_web_retrieval` via Plan
-#15 and are no longer a blocker by themselves.
+#15, and generic retrieval-instruction support is shipped via Plan #16. These
+are no longer blockers by themselves.

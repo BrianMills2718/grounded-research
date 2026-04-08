@@ -45,18 +45,16 @@ Every item is classified as one of:
 23. Stage 5 exact verification-query role parity
 24. Stage 5 structured search-parameter execution
 25. Stage 2 Tavily search-depth parity
+26. Stage 2 Exa routing/control parity
 
 ## Required: Still Open
 
-1. Stage 2 Exa routing/control parity
-   - Shared Exa search now supports deep routing and academic category hints, but it still cannot express Tyler's source-preference `systemPrompt` / retrieval-instruction surface.
-   - Owner: `open_web_retrieval`
-2. Frontier-model runtime validation
+1. Frontier-model runtime validation
    - Models are configured approximately but haven't been tested in a fully literal live run.
    - Owner: shared model availability + config policy
-3. Gemini strict-schema quality study
+2. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-4. Broader frozen Tyler-vs-legacy evaluation coverage
+3. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity
