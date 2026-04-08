@@ -3,6 +3,10 @@
 Date: 2026-03-31
 Audited against: `2026_0325_tyler_feedback/` (Build Plan, Design, Schemas, Prompts)
 
+> Historical snapshot. This audit predates the April 2026 clause-by-clause
+> code/spec re-audit. When this document conflicts with the live evidence
+> ledger, trust [TYLER_SPEC_GAP_LEDGER.md](/home/brian/projects/grounded-research/docs/TYLER_SPEC_GAP_LEDGER.md).
+
 ## Methodology
 
 Line-by-line comparison of Tyler's V1_SCHEMAS.md against

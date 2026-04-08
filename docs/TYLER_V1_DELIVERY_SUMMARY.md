@@ -3,6 +3,11 @@
 **Date:** 2026-03-31
 **Repo:** https://github.com/BrianMills2718/grounded-research
 
+> Historical delivery summary. It overstates parity relative to the current
+> clause-by-clause audit. For current code-vs-spec truth, use
+> [TYLER_SPEC_GAP_LEDGER.md](/home/brian/projects/grounded-research/docs/TYLER_SPEC_GAP_LEDGER.md)
+> and [TYLER_EXECUTION_STATUS.md](/home/brian/projects/grounded-research/docs/TYLER_EXECUTION_STATUS.md).
+
 ## What Was Built
 
 Your complete V1 specification is implemented: all 6 stages, all schemas, all
