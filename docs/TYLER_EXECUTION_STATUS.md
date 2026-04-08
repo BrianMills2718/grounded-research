@@ -37,18 +37,24 @@ Every item is classified as one of:
 3. Stage 2 Tavily/Exa routing-by-query-type
    - Tyler specifies query-type routing, but live code currently sends every query through Tavily + Exa.
    - Owner: `grounded-research`
-4. Stage 3 exact B/C frame-model parity
+4. Stage 2 literal quality-score pipeline
+   - Tyler specifies authority + freshness + staleness scoring, but live code still uses a simpler quality-tier map.
+   - Owner: `grounded-research`
+5. Stage 3 exact B/C frame-model parity
    - Tyler assigns Gemini to structured decomposition and Claude Opus to verification-first; live config currently flips those.
    - Owner: `grounded-research`
-5. Stage 5 exact verification-query role parity
+6. Stage 5 exact verification-query role parity
    - Tyler requires weaker-position support plus authoritative-source queries; live builder still uses limitations/refutation patterns.
    - Owner: `grounded-research`
-6. Frontier-model runtime validation
+7. Stage 6 non-dominant synthesis-model policy
+   - Tyler leaves the exact synthesis model TBD, but the default must not reuse the model that dominated earlier stages.
+   - Owner: `grounded-research`
+8. Frontier-model runtime validation
    - Models are configured approximately but haven't been tested in a fully literal live run.
    - Owner: shared model availability + config policy
-7. Gemini strict-schema quality study
+9. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-8. Broader frozen Tyler-vs-legacy evaluation coverage
+10. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity
