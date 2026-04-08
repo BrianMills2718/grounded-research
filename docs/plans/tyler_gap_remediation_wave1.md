@@ -152,6 +152,13 @@ Each phase needs:
 2. at least one phase-boundary or CLI-path check
 3. ledger/status doc update if the row status changes
 
+If a phase is blocked mainly by tangled local verification or function-boundary
+issues in `verify.py` / `export.py`, use:
+
+- `docs/plans/post_audit_maintainability_wave1.md`
+
+Do not open broader cleanup outside that limited scope.
+
 ---
 
 ## Failure Modes

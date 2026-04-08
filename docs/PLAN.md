@@ -172,6 +172,8 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_audit_governance_wave1.md`
 - active remediation planner:
   `docs/plans/tyler_gap_remediation_wave1.md`
+- planned remediation-support maintainability wave:
+  `docs/plans/post_audit_maintainability_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
 - canonical failure-analysis / prevention surface:
