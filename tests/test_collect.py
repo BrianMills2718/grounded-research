@@ -148,6 +148,7 @@ async def test_collect_evidence_routes_tyler_query_plans_by_provider_role(
                 result_detail="chunks",
                 detail_budget=3,
                 corpus="academic",
+                retrieval_instruction="Prioritize sources aligned with this guidance: official reports and evaluations.",
             ),
         ], {"Q-1": 2}
 
@@ -214,6 +215,7 @@ async def test_collect_evidence_routes_tyler_query_plans_by_provider_role(
     assert exa_calls[0]["result_detail"] == "chunks"
     assert exa_calls[0]["detail_budget"] == 3
     assert exa_calls[0]["corpus"] == "academic"
+    assert exa_calls[0]["retrieval_instruction"] == "Prioritize sources aligned with this guidance: official reports and evaluations."
     assert len(bundle.sources) == 2
 
 

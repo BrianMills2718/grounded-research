@@ -93,6 +93,8 @@ async def test_generate_search_queries_tyler_v1_returns_routed_query_plans(
     ]
     assert all(plan.search_depth == "basic" for plan in query_plans if plan.provider == "tavily")
     assert all(plan.result_detail == "chunks" for plan in query_plans if plan.provider == "exa")
+    exa_plan = next(plan for plan in query_plans if plan.provider == "exa")
+    assert exa_plan.retrieval_instruction == "Prioritize sources aligned with this guidance: official reports and evaluations."
 
 
 @pytest.mark.asyncio

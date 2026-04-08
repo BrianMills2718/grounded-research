@@ -79,6 +79,7 @@ async def search_web_exa(
     result_detail: ResultDetail | None = None,
     detail_budget: int | None = None,
     corpus: SearchCorpus | None = None,
+    retrieval_instruction: str | None = None,
     domains_allow: Sequence[str] = (),
     domains_deny: Sequence[str] = (),
     trace_id: str | None = None,
@@ -103,6 +104,7 @@ async def search_web_exa(
             result_detail=result_detail,
             detail_budget=detail_budget,
             corpus=corpus,
+            retrieval_instruction=retrieval_instruction,
             domains_allow=tuple(domains_allow),
             domains_deny=tuple(domains_deny),
         )

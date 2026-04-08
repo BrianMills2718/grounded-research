@@ -566,6 +566,7 @@ async def generate_search_queries_tyler_v1(
                     result_detail="chunks",
                     detail_budget=3,
                     corpus="academic" if "review" in sub_question.search_guidance.lower() or "academic" in sub_question.search_guidance.lower() else "general",
+                    retrieval_instruction=_build_exa_retrieval_instruction(sub_question.search_guidance),
                 )
             )
 
@@ -610,6 +611,14 @@ def _current_source_to_evidence_label(source_type: str) -> EvidenceLabel:
     if source_type in {"platform_transparency", "social_media"}:
         return EvidenceLabel.MODEL_SELF_CHARACTERIZATION
     return EvidenceLabel.SPECULATIVE_INFERENCE
+
+
+def _build_exa_retrieval_instruction(search_guidance: str) -> str | None:
+    """Derive deterministic Stage 2 Exa retrieval guidance from Tyler search guidance."""
+    guidance = search_guidance.strip()
+    if not guidance:
+        return None
+    return f"Prioritize sources aligned with this guidance: {guidance}."
 
 
 async def build_tyler_evidence_package(
@@ -923,6 +932,7 @@ async def collect_evidence(
                         result_detail=query_plan.result_detail,
                         detail_budget=query_plan.detail_budget,
                         corpus=query_plan.corpus,
+                        retrieval_instruction=query_plan.retrieval_instruction,
                         trace_id=trace_id,
                         task="collection.search.exa",
                     )

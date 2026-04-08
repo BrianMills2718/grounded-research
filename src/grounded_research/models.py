@@ -165,6 +165,10 @@ class Stage2QueryPlan(BaseModel):
         default="general",
         description="Provider-agnostic corpus/category hint for this query.",
     )
+    retrieval_instruction: str | None = Field(
+        default=None,
+        description="Optional provider-level retrieval guidance for providers that support it.",
+    )
 
 
 class Stage5QueryPlan(BaseModel):

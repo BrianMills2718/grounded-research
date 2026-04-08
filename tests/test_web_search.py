@@ -105,6 +105,43 @@ def test_search_web_forwards_shared_retrieval_controls(monkeypatch: pytest.Monke
     assert payload["results"] == []
 
 
+def test_search_web_exa_forwards_retrieval_instruction(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Exa wrapper should forward generic retrieval guidance."""
+    captured: dict[str, object] = {}
+
+    class _Client:
+        def __init__(self, *, exa_api_key: str, tool_call_logger=None) -> None:
+            assert exa_api_key == "test-key"
+
+        def search(self, query, *, trace_id=None, task=None):  # type: ignore[no-untyped-def]
+            captured["query"] = query
+            return []
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(web_search, "OpenWebRetrievalClient", _Client)
+    monkeypatch.setenv("EXA_API_KEY", "test-key")
+
+    payload = json.loads(
+        asyncio.run(
+            web_search.search_web_exa(
+                "semantic query",
+                5,
+                search_depth="advanced",
+                result_detail="chunks",
+                detail_budget=3,
+                corpus="academic",
+                retrieval_instruction="Prioritize peer-reviewed research.",
+            )
+        )
+    )
+
+    query = captured["query"]
+    assert query.retrieval_instruction == "Prioritize peer-reviewed research."
+    assert payload["results"] == []
+
+
 def test_search_web_raises_when_provider_secret_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     """Missing provider credentials should fail loud for the configured provider."""
     monkeypatch.setattr(web_search, "get_search_provider_config", lambda: {"provider": "tavily", "locale": "en"})
