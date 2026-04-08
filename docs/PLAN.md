@@ -168,13 +168,20 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
   `docs/plans/tyler_spec_gap_audit_wave1.md`
+- active audit-governance wave:
+  `docs/plans/tyler_audit_governance_wave1.md`
 - active remediation planner:
   `docs/plans/tyler_gap_remediation_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
+- canonical failure-analysis / prevention surface:
+  `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
 - the active audit has already identified real local divergences in Stage 1,
   Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6, so the previous
   "repo-local work complete" story is no longer accurate
+- the new governance layer exists because earlier Tyler parity waves completed
+  real migration and prompt work but still overclaimed clause-level closure
+  before the ledger existed
 - completed provider-cutover wave:
   `docs/plans/tavily_integration_wave1.md`
 - there is currently no active repo-local implementation wave

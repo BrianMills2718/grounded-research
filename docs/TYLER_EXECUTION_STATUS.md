@@ -7,6 +7,11 @@ for open gaps is:
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
 
+For the review-process root-cause analysis and the controls that now prevent
+future parity overclaims, use:
+
+- `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
+
 Every item is classified as one of:
 
 - **Required**: Tyler explicitly asked for it or the spec clearly depends on it.

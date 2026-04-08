@@ -73,6 +73,8 @@ Current implementation frontier:
 - the next concrete work is:
   - run a clause-by-clause code-vs-spec audit against Tyler's packet and
     populate the canonical gap ledger
+  - keep the new Tyler audit-governance layer active so future status claims
+    cannot outrun the evidence in the ledger
   - treat the resulting high-severity local divergences as the next
     implementation frontier because the ledger has now confirmed them
   - keep the next remediation order explicit in
@@ -175,6 +177,8 @@ The next 24 hours of work should be treated as three explicit buckets:
 1. `grounded-research`
    - preserve the saved dense-dedup and Tyler-literal benchmark anchors
    - keep active docs aligned with the canonical Tyler gap ledger
+   - keep failure-analysis and prevention controls aligned with the active
+     audit and remediation state
    - plan and execute the next local remediation waves from verified ledger
      rows only
    - do not add new local runtime branches or legacy fallbacks

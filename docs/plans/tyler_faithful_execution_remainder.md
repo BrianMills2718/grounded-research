@@ -52,8 +52,38 @@ This remainder plan is complete only if:
 3. the frozen Tyler-vs-legacy comparison set is no longer a single-case story,
 4. remaining provider/model parity gaps are explicitly named as external
    dependencies rather than implied local TODOs.
+5. the repo has a documented governance layer explaining why earlier Tyler
+   review waves overclaimed closure and what controls now prevent recurrence.
 
 ## Phases
+
+### Phase 0: Install Audit Governance
+
+**Status:** Active
+
+Scope:
+
+- root-cause analysis for previous Tyler review failures
+- finding intake, classification, and remediation-opening rules
+- authority-doc controls for future parity claims
+
+Deliverables:
+
+- `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
+- `docs/plans/tyler_audit_governance_wave1.md`
+- `docs/notebooks/35_tyler_audit_governance_wave1.ipynb`
+
+Pass if:
+
+- the repo can explain what went wrong previously,
+- new Tyler findings have one documented workflow,
+- closure claims are now explicitly gated on ledger evidence.
+
+Failure modes:
+
+- the ledger exists but findings still enter the repo as prose-only claims,
+- status docs keep competing with the ledger,
+- remediation waves open without exact row references.
 
 ### Phase 1: Close Repo-Local Prompt Literalness
 
@@ -200,6 +230,8 @@ Faithful Tyler execution can be claimed only if:
 
 - repo-local runtime and export contracts are Tyler-native,
 - the live codebase has been audited clause by clause against Tyler's packet,
+- the review-governance layer documents prior misses and current prevention
+  controls,
 - all verified local divergences have either been fixed or left as explicit
   open items in the ledger,
 - frozen eval evidence is broader than a single shared case,
