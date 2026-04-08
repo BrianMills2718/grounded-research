@@ -164,6 +164,11 @@ Rows:
 - `S2-ROUTING-001`
 - `S2-QUALITY-001`
 
+Execution surface:
+
+- `docs/plans/tyler_remediation_phase5_stage12_retrieval.md`
+- `docs/notebooks/41_tyler_remediation_phase5_stage12_retrieval.ipynb`
+
 Pass if:
 - Stage 1 validation stage is removed locally
 - Stage 2 query diversification is model-driven
