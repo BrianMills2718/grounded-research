@@ -12,7 +12,8 @@ from grounded_research.collect import (
     _select_diverse,
     generate_search_queries,
 )
-from grounded_research.models import EvidenceItem
+from grounded_research.models import EvidenceItem, Stage2QueryPlan
+from grounded_research.tyler_v1_models import DecompositionResult, ResearchPlan, StageSummary, SubQuestion
 
 
 def test_extract_topic_anchors_builds_phrase_and_acronym() -> None:
@@ -83,6 +84,137 @@ async def test_generate_search_queries_subquestions_include_parent_topic_context
     assert queries[1] == "UBI pilot employment effects Finland Alaska"
     assert query_to_sq[queries[0]] == "SQ-1"
     assert query_to_sq[queries[1]] == "SQ-1"
+
+
+def _tyler_stage1_result() -> DecompositionResult:
+    return DecompositionResult(
+        core_question="What is the current evidence?",
+        sub_questions=[
+            SubQuestion(
+                id="Q-1",
+                question="What did pilot A show?",
+                type="empirical",
+                research_priority="high",
+                search_guidance="official reports and evaluations",
+            ),
+            SubQuestion(
+                id="Q-2",
+                question="How should mixed findings be interpreted?",
+                type="interpretive",
+                research_priority="medium",
+                search_guidance="reviews and critiques",
+            )
+        ],
+        optimization_axes=["employment vs broader welfare"],
+        research_plan=ResearchPlan(
+            what_to_verify=["employment effect"],
+            critical_source_types=["official docs", "academic"],
+            falsification_targets=["contradictory RCT result", "N/A"],
+        ),
+        stage_summary=StageSummary(
+            stage_name="Stage 1: Intake & Decomposition",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
+
+
+@pytest.mark.asyncio
+async def test_collect_evidence_routes_tyler_query_plans_by_provider_role(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Tyler Stage 2 should route Tavily and Exa queries by typed query plan."""
+
+    async def fake_generate_search_queries_tyler_v1(*args, **kwargs):
+        return [
+            Stage2QueryPlan(
+                provider="tavily",
+                query_role="keyword_rewrite",
+                query_text="pilot A employment effect",
+                sub_question_id="Q-1",
+                search_depth="basic",
+                result_detail="summary",
+                corpus="general",
+            ),
+            Stage2QueryPlan(
+                provider="exa",
+                query_role="semantic_description",
+                query_text="A detailed evaluation of pilot A with direct labor-market outcomes.",
+                sub_question_id="Q-1",
+                search_depth="advanced",
+                result_detail="chunks",
+                detail_budget=3,
+                corpus="academic",
+            ),
+        ], {"Q-1": 2}
+
+    tavily_calls: list[dict[str, object]] = []
+    exa_calls: list[dict[str, object]] = []
+
+    async def fake_search_web(query: str, count: int = 10, freshness: str = "none", **kwargs):
+        tavily_calls.append({"query": query, "freshness": freshness, **kwargs})
+        return (
+            '{"results": [{"title": "Pilot result", "url": "https://example.com/pilot", '
+            '"description": "Search snippet", "age": "1 day", "score": 0.9, '
+            '"published_at": "2026-01-01T00:00:00+00:00"}]}'
+        )
+
+    async def fake_search_web_exa(query: str, count: int = 5, **kwargs):
+        exa_calls.append({"query": query, **kwargs})
+        return (
+            '{"results": [{"title": "Pilot semantic result", "url": "https://example.com/semantic", '
+            '"description": "Semantic snippet", "age": "", "published_at": "2026-01-02T00:00:00+00:00"}]}'
+        )
+
+    async def fake_score_source_quality(bundle, trace_id, max_budget, source_text_by_id=None):
+        for source in bundle.sources:
+            source.quality_tier = "authoritative"
+            source.quality_score = 0.91
+
+    async def fake_fetch_page(url: str, question: str = "") -> str:
+        return (
+            '{"url": "https://example.com/pilot", "content_type": "text/html", '
+            '"char_count": 321, "notes": "Page summary long enough to be included as evidence.", '
+            '"key_section": "Key section long enough to be included as evidence and clearly relevant."}'
+        )
+
+    monkeypatch.setattr("grounded_research.collect.generate_search_queries_tyler_v1", fake_generate_search_queries_tyler_v1)
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web", fake_search_web)
+    monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", fake_search_web_exa)
+    monkeypatch.setattr("grounded_research.source_quality.score_source_quality", fake_score_source_quality)
+    monkeypatch.setattr("grounded_research.collect.load_config", lambda: {"collection": {}})
+    monkeypatch.setattr("grounded_research.collect.get_depth_config", lambda: {
+        "evidence_extraction_enabled": False,
+        "evidence_extraction_max_sources": 0,
+        "evidence_extraction_items_per_source": 0,
+        "evidence_extraction_max_chars": 0,
+    })
+    monkeypatch.setattr("grounded_research.collect.get_phase_concurrency_config", lambda: {})
+    monkeypatch.setattr("grounded_research.tools.fetch_page.set_pages_dir", lambda path: None)
+    monkeypatch.setattr("grounded_research.tools.fetch_page.fetch_page", fake_fetch_page)
+    monkeypatch.setattr("grounded_research.collect.log_tool_call", lambda record: None)
+
+    bundle, query_counts = await collect_evidence(
+        question="What is the current evidence?",
+        trace_id="trace-routed",
+        max_sources=2,
+        max_budget=0.1,
+        tyler_stage_1_result=_tyler_stage1_result(),
+        sub_questions=[sq.model_dump(mode="json") for sq in _tyler_stage1_result().sub_questions],
+        return_query_counts=True,
+    )
+
+    assert query_counts == {"Q-1": 2}
+    assert tavily_calls[0]["search_depth"] == "basic"
+    assert tavily_calls[0]["result_detail"] == "summary"
+    assert exa_calls[0]["search_depth"] == "advanced"
+    assert exa_calls[0]["result_detail"] == "chunks"
+    assert exa_calls[0]["detail_budget"] == 3
+    assert exa_calls[0]["corpus"] == "academic"
+    assert len(bundle.sources) == 2
 
 
 def test_score_search_result_prefers_authoritative_pdf_sources() -> None:
@@ -262,7 +394,7 @@ async def test_collect_evidence_logs_fetch_and_jina_fallback(
     async def _noop_exa(*a, **kw): return '{"results": []}'
     monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
 
-    async def fake_score_source_quality(bundle, trace_id, max_budget):
+    async def fake_score_source_quality(bundle, trace_id, max_budget, source_text_by_id=None):
         for source in bundle.sources:
             source.quality_tier = "authoritative"
 
@@ -348,7 +480,7 @@ async def test_collect_evidence_preserves_all_matching_sub_question_tags(
     async def _noop_exa(*a, **kw): return '{"results": []}'
     monkeypatch.setattr("grounded_research.tools.web_search.search_web_exa", _noop_exa)
 
-    async def fake_score_source_quality(bundle, trace_id, max_budget):
+    async def fake_score_source_quality(bundle, trace_id, max_budget, source_text_by_id=None):
         for source in bundle.sources:
             source.quality_tier = "authoritative"
 
@@ -403,7 +535,7 @@ async def test_collect_evidence_standard_mode_keeps_legacy_page_evidence(
             '"age": "1 day"}]}'
         )
 
-    async def fake_score_source_quality(bundle, trace_id, max_budget):
+    async def fake_score_source_quality(bundle, trace_id, max_budget, source_text_by_id=None):
         for source in bundle.sources:
             source.quality_tier = "authoritative"
 
@@ -470,7 +602,7 @@ async def test_collect_evidence_deep_mode_uses_goal_driven_extraction(
             '"age": "1 day"}]}'
         )
 
-    async def fake_score_source_quality(bundle, trace_id, max_budget):
+    async def fake_score_source_quality(bundle, trace_id, max_budget, source_text_by_id=None):
         for source in bundle.sources:
             source.quality_tier = "authoritative"
 
@@ -558,7 +690,7 @@ async def test_collect_evidence_deep_mode_logs_gap_and_falls_back_on_extraction_
             '"age": "1 day"}]}'
         )
 
-    async def fake_score_source_quality(bundle, trace_id, max_budget):
+    async def fake_score_source_quality(bundle, trace_id, max_budget, source_text_by_id=None):
         for source in bundle.sources:
             source.quality_tier = "authoritative"
 

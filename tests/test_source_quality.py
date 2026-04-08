@@ -116,6 +116,52 @@ class TestScoreSourceQuality:
         assert bundle.sources[0].quality_tier == "authoritative"
         assert bundle.sources[1].quality_tier == "unknown"
         assert bundle.sources[2].quality_tier == "reliable"
+        assert bundle.sources[0].quality_score is not None
+        assert bundle.sources[1].quality_score is not None
+        assert bundle.sources[2].quality_score is not None
+
+    def test_quality_score_applies_freshness_and_staleness_modifiers(self) -> None:
+        """Final Stage 2 quality score should not collapse to tier mapping alone."""
+        from datetime import datetime, timedelta, timezone
+
+        from grounded_research.models import EvidenceBundle, SourceRecord
+
+        bundle = EvidenceBundle(
+            question={"text": "test", "sub_questions": []},
+            sources=[
+                SourceRecord(
+                    id="S-001",
+                    url="https://example.com/v1/docs",
+                    title="Old Docs",
+                    source_type="web_search",
+                    published_at=datetime.now(timezone.utc) - timedelta(days=3650),
+                ),
+                SourceRecord(
+                    id="S-002",
+                    url="https://epa.gov/report",
+                    title="EPA Report",
+                    source_type="government_db",
+                    published_at=datetime.now(timezone.utc) - timedelta(days=5),
+                ),
+            ],
+            evidence=[],
+        )
+
+        asyncio.run(
+            score_source_quality(
+                bundle,
+                trace_id="test",
+                source_text_by_id={
+                    "S-001": "This page has moved. Deprecated. Use v3 instead.",
+                    "S-002": "Current official report issued this year.",
+                },
+            )
+        )
+
+        assert bundle.sources[0].quality_score is not None
+        assert bundle.sources[1].quality_score is not None
+        assert bundle.sources[0].quality_score < 0.5
+        assert bundle.sources[1].quality_score > bundle.sources[0].quality_score
 
     def test_empty_bundle(self) -> None:
         """No crash on empty sources."""

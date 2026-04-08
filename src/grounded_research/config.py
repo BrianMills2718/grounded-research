@@ -258,6 +258,40 @@ def get_phase_concurrency_config() -> dict[str, int]:
     return defaults
 
 
+def get_source_quality_config() -> dict[str, Any]:
+    """Get deterministic Stage 2 source-quality policy.
+
+    Tyler's Stage 2 final score is a deterministic blend of authority,
+    freshness, and staleness modifiers. The values live in config so the
+    policy is inspectable and adjustable without hidden code constants.
+    """
+    cfg = load_config()
+    configured = cfg.get("source_quality", {})
+    defaults: dict[str, Any] = {
+        "default_topic": "default",
+        "half_life_days": {
+            "ai_models": 365,
+            "software": 730,
+            "medicine": 1825,
+            "economics": 3285,
+            "physics": 4745,
+            "default": 1095,
+        },
+        "temporal_weight": {
+            "ai_models": 0.5,
+            "software": 0.4,
+            "default": 0.2,
+            "physics": 0.05,
+        },
+        "authority_floor": 0.4,
+        "deprecation_penalty": 0.3,
+        "stale_year_penalty": 0.15,
+        "current_versions": {},
+    }
+    defaults.update(configured)
+    return defaults
+
+
 def get_analysis_coverage_config() -> dict[str, int | float | bool]:
     """Get analyst coverage policy with config overrides.
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
+from collections.abc import Sequence
 from typing import Literal
 
 from llm_client.observability import log_tool_call
@@ -14,6 +15,9 @@ from open_web_retrieval.exceptions import OpenWebRetrievalError
 from grounded_research.config import get_search_provider_config
 
 Freshness = Literal["pd", "pw", "pm", "py", "none"]
+SearchDepth = Literal["basic", "advanced"]
+ResultDetail = Literal["summary", "chunks"]
+SearchCorpus = Literal["general", "news", "academic", "company", "pdf", "github", "people", "personal_site", "financial_report"]
 
 
 def _freshness_days(freshness: Freshness) -> int | None:
@@ -71,6 +75,12 @@ async def search_web_exa(
     query: str,
     count: int = 5,
     *,
+    search_depth: SearchDepth | None = None,
+    result_detail: ResultDetail | None = None,
+    detail_budget: int | None = None,
+    corpus: SearchCorpus | None = None,
+    domains_allow: Sequence[str] = (),
+    domains_deny: Sequence[str] = (),
     trace_id: str | None = None,
     task: str = "collection.search.exa",
 ) -> str:
@@ -89,6 +99,12 @@ async def search_web_exa(
             query=query,
             providers=("exa",),
             top_k=max(1, min(count, 10)),
+            search_depth=search_depth,
+            result_detail=result_detail,
+            detail_budget=detail_budget,
+            corpus=corpus,
+            domains_allow=tuple(domains_allow),
+            domains_deny=tuple(domains_deny),
         )
         hits = client.search(query_model, trace_id=trace_id, task=task)
     except Exception:
@@ -104,6 +120,8 @@ async def search_web_exa(
             "url": hit.url,
             "description": hit.snippet or "",
             "age": str(payload.get("age", "")),
+            "score": payload.get("score"),
+            "published_at": hit.published_at.isoformat() if hit.published_at else None,
         })
 
     return json.dumps(
@@ -117,6 +135,13 @@ async def search_web(
     count: int = 10,
     freshness: Freshness = "none",
     *,
+    provider_override: str | None = None,
+    search_depth: SearchDepth | None = None,
+    result_detail: ResultDetail | None = None,
+    detail_budget: int | None = None,
+    corpus: SearchCorpus | None = None,
+    domains_allow: Sequence[str] = (),
+    domains_deny: Sequence[str] = (),
     trace_id: str | None = None,
     task: str = "collection.search",
 ) -> str:
@@ -129,7 +154,7 @@ async def search_web(
         raise ValueError("query is required")
 
     provider_cfg = get_search_provider_config()
-    provider = provider_cfg["provider"]
+    provider = provider_override or provider_cfg["provider"]
     locale = provider_cfg["locale"]
     effective_count = max(1, min(count, 20))
     query_model = SearchQuery(
@@ -138,6 +163,12 @@ async def search_web(
         top_k=effective_count,
         recency_days=_freshness_days(freshness),
         locale=locale,
+        search_depth=search_depth,
+        result_detail=result_detail,
+        detail_budget=detail_budget,
+        corpus=corpus,
+        domains_allow=tuple(domains_allow),
+        domains_deny=tuple(domains_deny),
     )
     client = _build_client(provider)
     try:
@@ -163,12 +194,15 @@ async def search_web(
     results: list[dict[str, str]] = []
     for hit in hits[:effective_count]:
         payload = hit.raw_payload if isinstance(hit.raw_payload, Mapping) else {}
+        published_at = getattr(hit, "published_at", None)
         results.append(
             {
                 "title": hit.title or "",
                 "url": hit.url,
                 "description": hit.snippet or "",
                 "age": str(payload.get("age", "")),
+                "score": payload.get("score"),
+                "published_at": published_at.isoformat() if published_at else None,
             },
         )
 

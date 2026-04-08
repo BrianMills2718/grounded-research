@@ -39,6 +39,7 @@ from grounded_research.models import (
     EvidenceItem,
     ResearchQuestion,
     SourceRecord,
+    Stage2QueryPlan,
 )
 from grounded_research.tyler_v1_models import (
     DecompositionResult as TylerDecompositionResult,
@@ -478,59 +479,100 @@ async def generate_search_queries(
 async def generate_search_queries_tyler_v1(
     stage_1_result: TylerDecompositionResult,
     trace_id: str,
+    *,
+    time_sensitivity: str = "mixed",
     max_budget: float = 0.5,
-) -> tuple[list[str], dict[str, str], dict[str, int]]:
+) -> tuple[list[Stage2QueryPlan], dict[str, int]]:
     """Generate Tyler-native Stage 2 query variants per sub-question.
 
-    Tyler V1 spec §Stage 2: "Generate 3-5 query variants per sub-question
-    (formal/colloquial, academic/practitioner, broad/narrow) — string
-    templates, not a model call."
-
-    No LLM call. Deterministic string templates only.
+    Tyler V1 Stage 2 uses a lightweight model call to generate 3 Tavily query
+    variants plus 1 optional Exa semantic variant per sub-question.
     """
-    query_to_sq: dict[str, str] = {}
+    from llm_client import acall_llm_structured, render_prompt
+    from pydantic import BaseModel, Field
+
+    class QueryDiversificationResult(BaseModel):
+        """LLM-facing Tyler Stage 2 query diversification output."""
+
+        keyword_rewrite: str = Field(description="Concise keyword-oriented Tavily query.")
+        practitioner_rewrite: str = Field(description="Practitioner-signal Tavily query.")
+        contrarian_falsification: str = Field(description="Disconfirming Tavily query.")
+        semantic_description: str = Field(
+            default="",
+            description="Optional Exa semantic-description query for high-priority or concept-heavy retrieval.",
+        )
+        reasoning: str = Field(
+            description="Brief explanation of how the variants differ in retrieval strategy.",
+        )
+
     queries_per_sq: dict[str, int] = {}
-    all_queries: list[str] = []
+    query_plans: list[Stage2QueryPlan] = []
+    tavily_corpus = "news" if time_sensitivity == "time_sensitive" else "general"
 
     for sub_question in stage_1_result.sub_questions:
-        q = sub_question.question.strip().rstrip("?").strip()
-        guidance = (sub_question.search_guidance or "").strip()
+        messages = render_prompt(
+            str(_PROJECT_ROOT / "prompts" / "tyler_v1_query_diversification.yaml"),
+            sub_question=sub_question.model_dump(mode="json"),
+            response_schema_json=QueryDiversificationResult.model_json_schema(),
+        )
+        result, _meta = await acall_llm_structured(
+            get_model("query_diversification"),
+            messages,
+            response_model=QueryDiversificationResult,
+            task="query_diversification_tyler_v1",
+            trace_id=f"{trace_id}/stage2_queries/{sub_question.id}",
+            max_budget=max_budget / max(1, len(stage_1_result.sub_questions)),
+            fallback_models=get_fallback_models("query_diversification"),
+        )
 
-        generated: list[str] = []
-        seen: set[str] = set()
+        per_sub_question_plans = [
+            Stage2QueryPlan(
+                provider="tavily",
+                query_role="keyword_rewrite",
+                query_text=result.keyword_rewrite.strip(),
+                sub_question_id=sub_question.id,
+                search_depth="basic",
+                result_detail="summary",
+                corpus=tavily_corpus,  # type: ignore[arg-type]
+            ),
+            Stage2QueryPlan(
+                provider="tavily",
+                query_role="practitioner_rewrite",
+                query_text=result.practitioner_rewrite.strip(),
+                sub_question_id=sub_question.id,
+                search_depth="basic",
+                result_detail="summary",
+                corpus=tavily_corpus,  # type: ignore[arg-type]
+            ),
+            Stage2QueryPlan(
+                provider="tavily",
+                query_role="contrarian_falsification",
+                query_text=result.contrarian_falsification.strip(),
+                sub_question_id=sub_question.id,
+                search_depth="basic",
+                result_detail="summary",
+                corpus=tavily_corpus,  # type: ignore[arg-type]
+            ),
+        ]
+        semantic_query = result.semantic_description.strip()
+        if sub_question.research_priority == "high" and semantic_query:
+            per_sub_question_plans.append(
+                Stage2QueryPlan(
+                    provider="exa",
+                    query_role="semantic_description",
+                    query_text=semantic_query,
+                    sub_question_id=sub_question.id,
+                    search_depth="advanced",
+                    result_detail="chunks",
+                    detail_budget=3,
+                    corpus="academic" if "review" in sub_question.search_guidance.lower() or "academic" in sub_question.search_guidance.lower() else "general",
+                )
+            )
 
-        def _add(query: str) -> None:
-            query = query.strip()
-            if query and query not in seen:
-                generated.append(query)
-                seen.add(query)
+        query_plans.extend([plan for plan in per_sub_question_plans if plan.query_text])
+        queries_per_sq[sub_question.id] = len([plan for plan in per_sub_question_plans if plan.query_text])
 
-        # 1. KEYWORD: extract core topic words
-        _add(q)
-
-        # 2. FORMAL/ACADEMIC: add academic signal
-        _add(f"{q} systematic review OR meta-analysis OR study")
-
-        # 3. PRACTITIONER: add practitioner signals
-        _add(f"{q} lessons learned OR we found that OR case study")
-
-        # 4. CONTRARIAN/FALSIFICATION: Tyler counterfactual pattern
-        _add(f"{q} limitations OR contradicted OR failure OR criticism")
-
-        # 5. If search_guidance provides extra keywords, use them
-        if guidance and guidance.lower() != q.lower():
-            _add(f"{q} {guidance}")
-
-        # Tyler V1 §Stage 2: "hard cap: 4 queries per sub-question (named constant)"
-        _MAX_QUERIES_PER_SUB_QUESTION = 4
-        generated = generated[:_MAX_QUERIES_PER_SUB_QUESTION]
-
-        queries_per_sq[sub_question.id] = len(generated)
-        for query in generated:
-            query_to_sq[query] = sub_question.id
-            all_queries.append(query)
-
-    return all_queries, query_to_sq, queries_per_sq
+    return query_plans, queries_per_sq
 
 
 def _current_source_type_to_tyler_source_type(source_type: str) -> str:
@@ -547,17 +589,16 @@ def _current_source_type_to_tyler_source_type(source_type: str) -> str:
     return mapping.get(source_type, "blog")
 
 
-def _current_quality_tier_to_tyler_score(quality_tier: str) -> float:
-    """Map quality tiers to Tyler V1 numeric scores.
-
-    Tyler spec: "1.0 official docs → 0.3 generic blog. Unknown = 0.5."
-    """
+def _fallback_tyler_quality_score(source: SourceRecord) -> float:
+    """Provide a stable Tyler score when older fixtures lack final quality_score."""
+    if source.quality_score is not None:
+        return source.quality_score
     return {
         "authoritative": 1.0,
         "reliable": 0.7,
         "unknown": 0.5,
         "unreliable": 0.3,
-    }.get(quality_tier, 0.5)
+    }.get(source.quality_tier, 0.5)
 
 
 def _current_source_to_evidence_label(source_type: str) -> EvidenceLabel:
@@ -666,7 +707,7 @@ async def build_tyler_evidence_package(
                     url=source.url,
                     title=source.title,
                     source_type=_current_source_type_to_tyler_source_type(source.source_type),
-                    quality_score=_current_quality_tier_to_tyler_score(source.quality_tier),
+                    quality_score=_fallback_tyler_quality_score(source),
                     publication_date=source.published_at.date().isoformat() if source.published_at else None,
                     retrieval_date=source.retrieved_at.date().isoformat(),
                     key_findings=findings,
@@ -803,12 +844,16 @@ async def collect_evidence(
     sq_label = f" across {len(sub_questions)} sub-questions" if sub_questions else ""
     print(f"  Generating search queries{sq_label}...")
     query_counts_by_sub_question: dict[str, int] = {}
+    query_to_sq: dict[str, str] = {}
+    query_plans: list[Stage2QueryPlan] = []
     if tyler_stage_1_result is not None:
-        queries, query_to_sq, query_counts_by_sub_question = await generate_search_queries_tyler_v1(
+        query_plans, query_counts_by_sub_question = await generate_search_queries_tyler_v1(
             tyler_stage_1_result,
             trace_id,
+            time_sensitivity=time_sensitivity,
             max_budget=max_budget * 0.1,
         )
+        queries = [plan.query_text for plan in query_plans]
     else:
         queries, query_to_sq = await generate_search_queries(
             question, trace_id,
@@ -822,59 +867,94 @@ async def collect_evidence(
     # Search all queries in parallel, then deduplicate by URL
     url_sq_ids: dict[str, set[str]] = {}  # url → all sub-question IDs that found it
 
-    async def _search_one(q: str) -> list[dict]:
-        """Search one query via Tavily (primary) + Exa (secondary).
-
-        Tyler V1 §Stage 2: "Tavily (primary, structured JSON) + Exa
-        (secondary, semantic/neural)."
-        """
+    async def _search_one(query_plan: Stage2QueryPlan | str) -> list[dict]:
+        """Search one routed query plan through the configured shared wrappers."""
         results = []
         try:
-            # Primary: Tavily keyword search
-            raw = await search_web(
-                q,
-                count=results_per_query,
-                freshness=freshness,
-                trace_id=trace_id,
-                task="collection.search",
-            )
-            data = json.loads(raw)
-            for r in data.get("results", []):
-                r["search_query"] = q
-                results.append(r)
-
-            # Secondary: Exa semantic search (graceful no-op if no API key)
-            exa_raw = await search_web_exa(
-                q,
-                count=max(3, results_per_query // 2),
-                trace_id=trace_id,
-                task="collection.search.exa",
-            )
-            exa_data = json.loads(exa_raw)
-            for r in exa_data.get("results", []):
-                r["search_query"] = q
-                r["search_provider"] = "exa"
-                results.append(r)
-
-            if time_sensitivity == "time_sensitive":
-                raw_unfiltered = await search_web(
-                    q,
-                    count=3,
-                    freshness="none",
+            if isinstance(query_plan, Stage2QueryPlan):
+                if query_plan.provider == "tavily":
+                    raw = await search_web(
+                        query_plan.query_text,
+                        count=results_per_query,
+                        freshness=freshness,
+                        search_depth=query_plan.search_depth,
+                        result_detail=query_plan.result_detail,
+                        detail_budget=query_plan.detail_budget,
+                        corpus=query_plan.corpus,
+                        trace_id=trace_id,
+                        task="collection.search",
+                    )
+                    data = json.loads(raw)
+                    for r in data.get("results", []):
+                        if float(r.get("score") or 0.0) <= 0.7:
+                            continue
+                        r["search_query"] = query_plan.query_text
+                        r["query_role"] = query_plan.query_role
+                        r["sub_question_id"] = query_plan.sub_question_id
+                        r["search_provider"] = "tavily"
+                        results.append(r)
+                    if time_sensitivity == "time_sensitive":
+                        raw_unfiltered = await search_web(
+                            query_plan.query_text,
+                            count=3,
+                            freshness="none",
+                            search_depth=query_plan.search_depth,
+                            result_detail=query_plan.result_detail,
+                            detail_budget=query_plan.detail_budget,
+                            corpus=query_plan.corpus,
+                            trace_id=trace_id,
+                            task="collection.search",
+                        )
+                        data_unfiltered = json.loads(raw_unfiltered)
+                        for r in data_unfiltered.get("results", []):
+                            if float(r.get("score") or 0.0) <= 0.7:
+                                continue
+                            r["search_query"] = query_plan.query_text
+                            r["query_role"] = query_plan.query_role
+                            r["sub_question_id"] = query_plan.sub_question_id
+                            r["search_provider"] = "tavily"
+                            r["recency_note"] = "unfiltered_complement"
+                            results.append(r)
+                else:
+                    exa_raw = await search_web_exa(
+                        query_plan.query_text,
+                        count=max(3, results_per_query // 2),
+                        search_depth=query_plan.search_depth,
+                        result_detail=query_plan.result_detail,
+                        detail_budget=query_plan.detail_budget,
+                        corpus=query_plan.corpus,
+                        trace_id=trace_id,
+                        task="collection.search.exa",
+                    )
+                    exa_data = json.loads(exa_raw)
+                    for r in exa_data.get("results", []):
+                        r["search_query"] = query_plan.query_text
+                        r["query_role"] = query_plan.query_role
+                        r["sub_question_id"] = query_plan.sub_question_id
+                        r["search_provider"] = "exa"
+                        results.append(r)
+            else:
+                raw = await search_web(
+                    query_plan,
+                    count=results_per_query,
+                    freshness=freshness,
                     trace_id=trace_id,
                     task="collection.search",
                 )
-                data_unfiltered = json.loads(raw_unfiltered)
-                for r in data_unfiltered.get("results", []):
-                    r["search_query"] = q
-                    r["recency_note"] = "unfiltered_complement"
+                data = json.loads(raw)
+                for r in data.get("results", []):
+                    r["search_query"] = query_plan
                     results.append(r)
         except Exception as e:
             import logging
-            logging.getLogger(__name__).warning("Search failed for '%s': %s", q[:50], e)
+            query_text = query_plan.query_text if isinstance(query_plan, Stage2QueryPlan) else query_plan
+            logging.getLogger(__name__).warning("Search failed for '%s': %s", query_text[:50], e)
         return results
 
-    all_raw_results = await asyncio.gather(*[_search_one(q) for q in queries])
+    if tyler_stage_1_result is not None:
+        all_raw_results = await asyncio.gather(*[_search_one(plan) for plan in query_plans])
+    else:
+        all_raw_results = await asyncio.gather(*[_search_one(q) for q in queries])
 
     # Flatten and deduplicate
     all_search_results: list[dict] = []
@@ -884,7 +964,9 @@ async def collect_evidence(
             url = r.get("url", "")
             if not url:
                 continue
-            sq_id = query_to_sq.get(r.get("search_query", ""))
+            sq_id = r.get("sub_question_id")
+            if sq_id is None:
+                sq_id = query_to_sq.get(r.get("search_query", ""))
             if sq_id:
                 url_sq_ids.setdefault(url, set()).add(sq_id)
             if url not in seen_urls:
@@ -905,6 +987,7 @@ async def collect_evidence(
                     title=result.get("title", ""),
                     source_type="web_search",
                     quality_tier="reliable",
+                    published_at=_parse_search_result_published_at(result.get("published_at")),
                     retrieved_at=datetime.now(timezone.utc),
                     recency_score=_estimate_recency(result.get("age", "")),
                 )
@@ -952,6 +1035,7 @@ async def collect_evidence(
             title=title,
             source_type="web_search",
             quality_tier=result.get("prefetch_quality_tier", "reliable"),
+            published_at=_parse_search_result_published_at(result.get("published_at")),
             retrieved_at=datetime.now(timezone.utc),
             recency_score=recency_score,
         )
@@ -1204,6 +1288,22 @@ async def collect_evidence(
         imported_from="web_search",
     )
 
+    from grounded_research.source_quality import score_source_quality
+
+    source_text_by_id = {
+        source_map[url].id: (
+            f"{str((page_data or {}).get('notes', ''))}\n{str((page_data or {}).get('key_section', ''))}"
+        ).strip()
+        for url, page_data in fetch_results
+        if page_data is not None and url in source_map
+    }
+    await score_source_quality(
+        bundle,
+        f"{trace_id}/final_bundle",
+        max_budget=max_budget * 0.05,
+        source_text_by_id=source_text_by_id,
+    )
+
     tier_counts = {}
     for s in bundle.sources:
         tier_counts[s.quality_tier] = tier_counts.get(s.quality_tier, 0) + 1
@@ -1212,6 +1312,16 @@ async def collect_evidence(
     if return_query_counts:
         return bundle, query_counts_by_sub_question
     return bundle
+
+
+def _parse_search_result_published_at(value: object) -> datetime | None:
+    """Parse normalized search-result publication timestamps when available."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def _select_diverse(results: list[dict], max_items: int) -> list[dict]:

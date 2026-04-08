@@ -8,6 +8,7 @@ depth: "standard"
 models:
   decomposition: "gemini/gemini-2.5-flash"
   analyst: "gemini/gemini-2.5-flash"
+  query_diversification: "gemini/gemini-2.5-flash"
   evidence_extraction: "gemini/gemini-2.5-flash"
   claim_extraction: "gemini/gemini-2.5-flash"
   deduplication: "gemini/gemini-2.5-flash"
@@ -21,6 +22,7 @@ model_fallbacks:
   analyst:
     - "gemini/gemini-2.5-flash"
     - "gemini/gemini-2.5-flash-lite"
+  query_diversification: ["gemini/gemini-2.5-flash-lite"]
   evidence_extraction: ["gemini/gemini-2.5-flash-lite"]
   claim_extraction: ["gemini/gemini-2.5-flash-lite"]
   deduplication: ["gemini/gemini-2.5-flash-lite"]
@@ -126,6 +128,25 @@ evidence_policy:
   synthesis_evidence_cap: 30
   structured_content_truncation_chars: 500
   long_report_content_truncation_chars: 400
+
+source_quality:
+  default_topic: "default"
+  half_life_days:
+    ai_models: 365
+    software: 730
+    medicine: 1825
+    economics: 3285
+    physics: 4745
+    default: 1095
+  temporal_weight:
+    ai_models: 0.5
+    software: 0.4
+    default: 0.2
+    physics: 0.05
+  authority_floor: 0.4
+  deprecation_penalty: 0.3
+  stale_year_penalty: 0.15
+  current_versions: {}
 
 deduplication:
   staged_trigger_claims: 20

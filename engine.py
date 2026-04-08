@@ -429,35 +429,25 @@ async def run_pipeline_from_question(
 ) -> PipelineState:
     """Run the full pipeline starting from a question (collects evidence automatically)."""
     from grounded_research.collect import collect_evidence_tyler_v1
-    from grounded_research.decompose import decompose_with_validation_tyler_v1
+    from grounded_research.decompose import decompose_question_tyler_v1
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
     runtime_policy = configure_run_runtime(run_id, output_dir)
 
-    # --- Decompose question into sub-questions (with validation) ---
+    # --- Decompose question into Tyler Stage 1 sub-questions ---
     print(f"=== Question Decomposition ===")
     print(f"Raw question: {question}")
     if runtime_policy["db_path"]:
         print(f"Observability DB: {runtime_policy['db_path']}")
     print()
 
-    tyler_stage_1_result, validation = await decompose_with_validation_tyler_v1(
-        question, trace_id,
-    )
+    tyler_stage_1_result = await decompose_question_tyler_v1(question, trace_id)
     print(f"  Core question: {tyler_stage_1_result.core_question[:80]}...")
     print(f"  Sub-questions: {len(tyler_stage_1_result.sub_questions)}")
     for sq in tyler_stage_1_result.sub_questions:
         print(f"    [{sq.type}] {sq.question[:70]}...")
     print(f"  Optimization axes: {tyler_stage_1_result.optimization_axes}")
-    if validation:
-        print(f"  Validation: {validation.verdict}")
-        if validation.coverage_gaps:
-            print(f"    Coverage gaps: {validation.coverage_gaps}")
-        if validation.bias_flags:
-            print(f"    Bias flags: {validation.bias_flags}")
-        if validation.granularity_issues:
-            print(f"    Granularity: {validation.granularity_issues}")
     print()
 
     # --- Collect evidence with sub-question-driven search ---

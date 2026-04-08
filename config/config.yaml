@@ -8,6 +8,7 @@ depth: "standard"
 models:
   decomposition: "openrouter/google/gemini-2.5-pro"        # Tyler: Gemini 3.1 Pro
   analyst: "openrouter/openai/gpt-5.4"                     # Tyler: per-analyst override below
+  query_diversification: "openrouter/google/gemini-2.5-pro"  # Tyler: lightweight model call
   evidence_extraction: "openrouter/google/gemini-2.5-pro"  # Tyler: same as decomposition
   claim_extraction: "openrouter/openai/gpt-5.4"            # Tyler: GPT-5.4 (best structured output)
   deduplication: "openrouter/openai/gpt-5.4"               # Tyler: part of Stage 4
@@ -23,6 +24,7 @@ model_fallbacks:
     - "openrouter/openai/gpt-5.4-mini"
     - "openrouter/anthropic/claude-sonnet-4.6"
     - "openrouter/google/gemini-2.5-flash"
+  query_diversification: ["openrouter/google/gemini-2.5-flash"]
   evidence_extraction: ["openrouter/google/gemini-2.5-flash"]
   claim_extraction: ["openrouter/anthropic/claude-opus-4.6"]   # Tyler: fallback Claude Opus
   deduplication: ["openrouter/google/gemini-2.5-flash"]
@@ -121,6 +123,25 @@ evidence_policy:
   synthesis_evidence_cap: 30
   structured_content_truncation_chars: 500
   long_report_content_truncation_chars: 400
+
+source_quality:
+  default_topic: "default"
+  half_life_days:
+    ai_models: 365
+    software: 730
+    medicine: 1825
+    economics: 3285
+    physics: 4745
+    default: 1095
+  temporal_weight:
+    ai_models: 0.5
+    software: 0.4
+    default: 0.2
+    physics: 0.05
+  authority_floor: 0.4
+  deprecation_penalty: 0.3
+  stale_year_penalty: 0.15
+  current_versions: {}
 
 deduplication:
   staged_trigger_claims: 20

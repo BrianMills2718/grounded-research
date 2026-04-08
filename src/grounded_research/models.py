@@ -60,33 +60,16 @@ SourceType = Literal[
 ]
 
 QualityTier = Literal["authoritative", "reliable", "unknown", "unreliable"]
-
-DecompositionVerdict = Literal["proceed", "revise"]
-
-
-class DecompositionValidation(BaseModel):
-    """Validation of Tyler Stage 1 decomposition quality and coverage."""
-
-    coverage_ok: bool = Field(description="Do the sub-questions collectively cover the full research question?")
-    coverage_gaps: list[str] = Field(
-        default_factory=list,
-        description="Aspects of the question that no sub-question addresses.",
-    )
-    bias_flags: list[str] = Field(
-        default_factory=list,
-        description="Sub-questions with leading or directional framing that assumes an answer.",
-    )
-    granularity_issues: list[str] = Field(
-        default_factory=list,
-        description="Sub-questions that are too broad, too narrow, or redundant with each other.",
-    )
-    verdict: DecompositionVerdict = Field(
-        description="proceed = decomposition is good enough. revise = re-decompose with guidance.",
-    )
-    revision_guidance: str = Field(
-        default="",
-        description="If verdict is revise, specific guidance on what to fix.",
-    )
+Stage2QueryProvider = Literal["tavily", "exa"]
+Stage2QueryRole = Literal[
+    "keyword_rewrite",
+    "practitioner_rewrite",
+    "contrarian_falsification",
+    "semantic_description",
+]
+SearchDepthHint = Literal["basic", "advanced"]
+ResultDetailHint = Literal["summary", "chunks"]
+SearchCorpusHint = Literal["general", "news", "academic"]
 
 
 PipelinePhase = Literal[
@@ -118,6 +101,15 @@ class SourceRecord(BaseModel):
     title: str = Field(default="", description="Human-readable title when available.")
     source_type: SourceType = "other"
     quality_tier: QualityTier = "unknown"
+    quality_score: float | None = Field(
+        default=None,
+        ge=0.1,
+        le=1.0,
+        description=(
+            "Final deterministic source-quality score used by Tyler Stage 2. "
+            "Computed from authority lookup plus freshness/staleness adjustments."
+        ),
+    )
     published_at: datetime | None = Field(
         default=None,
         description="Publication date of the source material. None if unknown.",
@@ -139,6 +131,32 @@ class SourceRecord(BaseModel):
     upstream_source_id: str | None = Field(
         default=None,
         description="Original ID from the upstream system (e.g., research_v3 Source.id).",
+    )
+
+
+class Stage2QueryPlan(BaseModel):
+    """Typed Stage 2 search-plan entry for one routed query variant.
+
+    Tyler's Stage 2 routing depends on query role, provider, and shared
+    retrieval controls. This model makes those decisions explicit and testable
+    instead of burying them in string-only orchestration.
+    """
+
+    provider: Stage2QueryProvider = Field(description="Which shared provider should execute this query.")
+    query_role: Stage2QueryRole = Field(description="Tyler Stage 2 diversification role for this query.")
+    query_text: str = Field(min_length=1, description="Rendered query text to send to the provider.")
+    sub_question_id: str = Field(description="Tyler `Q-*` sub-question ID this query serves.")
+    search_depth: SearchDepthHint = Field(description="Provider-agnostic depth hint for shared retrieval.")
+    result_detail: ResultDetailHint = Field(description="Requested result-detail level for this query.")
+    detail_budget: int | None = Field(
+        default=None,
+        ge=1,
+        le=3,
+        description="Optional shared detail budget for chunk/highlight retrieval.",
+    )
+    corpus: SearchCorpusHint = Field(
+        default="general",
+        description="Provider-agnostic corpus/category hint for this query.",
     )
 
 

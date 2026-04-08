@@ -1,4 +1,4 @@
-"""Tests for Tyler-native Stage 2 runtime migration."""
+"""Tests for Tyler-native Stage 2 runtime behavior."""
 
 from __future__ import annotations
 
@@ -57,25 +57,42 @@ def _tyler_decomposition() -> DecompositionResult:
 
 
 @pytest.mark.asyncio
-async def test_generate_search_queries_tyler_v1_returns_mapped_variants() -> None:
-    """Tyler V1 spec: string templates, not LLM calls. No mocking needed."""
-    queries, query_to_sq, query_counts = await generate_search_queries_tyler_v1(
+async def test_generate_search_queries_tyler_v1_returns_routed_query_plans(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Tyler Stage 2 should emit typed query plans from the lightweight prompt."""
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            keyword_rewrite="pilot A employment effect",
+            practitioner_rewrite="pilot A lessons learned",
+            contrarian_falsification="pilot A limitations contradiction",
+            semantic_description="A detailed evaluation of pilot A with direct labor-market outcomes.",
+            reasoning="Distinct keyword, practitioner, contrarian, and semantic retrieval vectors.",
+        ), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+
+    query_plans, query_counts = await generate_search_queries_tyler_v1(
         _tyler_decomposition(),
         trace_id="test/trace",
     )
 
-    # 2 sub-questions, each generates 4-5 template variants
-    assert len(queries) >= 8
-    # Each query maps to a sub-question ID
-    for q in queries:
-        assert query_to_sq[q] in ("Q-1", "Q-2")
-    # Both sub-questions have queries
-    assert query_counts["Q-1"] >= 4
-    assert query_counts["Q-2"] >= 4
-    # Verify template patterns present
-    assert any("systematic review" in q for q in queries)
-    assert any("lessons learned" in q for q in queries)
-    assert any("limitations" in q for q in queries)
+    assert query_counts["Q-1"] == 4
+    assert query_counts["Q-2"] == 3
+    assert [plan.provider for plan in query_plans if plan.sub_question_id == "Q-1"] == [
+        "tavily", "tavily", "tavily", "exa",
+    ]
+    assert [plan.query_role for plan in query_plans if plan.sub_question_id == "Q-1"] == [
+        "keyword_rewrite",
+        "practitioner_rewrite",
+        "contrarian_falsification",
+        "semantic_description",
+    ]
+    assert all(plan.search_depth == "basic" for plan in query_plans if plan.provider == "tavily")
+    assert all(plan.result_detail == "chunks" for plan in query_plans if plan.provider == "exa")
 
 
 @pytest.mark.asyncio
