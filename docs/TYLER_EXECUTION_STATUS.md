@@ -70,12 +70,15 @@ Every item is classified as one of:
 14. Stage 2 Tavily search-depth parity
    - Tyler uses Tavily `basic` for default Stage 2 queries, but shared search is hardcoded to `advanced` and cannot yet express the routing table.
    - Owner: `open_web_retrieval`
-15. Frontier-model runtime validation
+15. Stage 2 Exa routing/control parity
+   - Tyler expects semantic/deep routing plus Exa-specific `systemPrompt` and academic category controls, but shared Exa search cannot yet express those knobs.
+   - Owner: `open_web_retrieval`
+16. Frontier-model runtime validation
    - Models are configured approximately but haven't been tested in a fully literal live run.
    - Owner: shared model availability + config policy
-16. Gemini strict-schema quality study
+17. Gemini strict-schema quality study
    - Owner: `llm_client` + `prompt_eval`
-17. Broader frozen Tyler-vs-legacy evaluation coverage
+18. Broader frozen Tyler-vs-legacy evaluation coverage
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity
