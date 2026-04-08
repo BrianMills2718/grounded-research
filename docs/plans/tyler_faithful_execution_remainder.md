@@ -145,11 +145,40 @@ Failure modes:
 - repo docs still imply shared-infra work belongs here
 - “faithful Tyler execution” is declared without naming these external blockers
 
+### Phase 4: Clause-By-Clause Spec Gap Audit
+
+**Status:** Active
+
+Scope:
+
+- Tyler packet clause inventory
+- live code-vs-spec ledger
+- remediation ownership for every verified gap
+
+Deliverables:
+
+- `docs/plans/tyler_spec_gap_audit_wave1.md`
+- `docs/notebooks/33_tyler_spec_gap_audit_wave1.ipynb`
+- `docs/TYLER_SPEC_GAP_LEDGER.md`
+
+Pass if:
+
+- every future "spec violation" claim has a Tyler clause, a local surface, and
+  a classification
+- open gaps are grouped into local, shared-infra, extension, stale-doc, or
+  Tyler-ambiguity buckets
+
+Failure modes:
+
+- prose-only accusations
+- findings without code evidence
+- mixing local and shared-infra owners in the same remediation wave
+
 ## Current Known Gaps
 
 Repo-local:
 
-1. none
+1. clause-by-clause Tyler gap audit ledger is not populated yet
 
 Shared infra:
 
@@ -166,6 +195,7 @@ Faithful Tyler execution can be claimed only if:
 
 - repo-local runtime and export contracts are Tyler-native,
 - remaining prompt-literalness uncertainty is closed or justified explicitly,
+- the live codebase has been audited clause by clause against Tyler's packet,
 - frozen eval evidence is broader than a single shared case,
 - all remaining non-local differences are explicitly assigned to shared infra.
 

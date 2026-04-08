@@ -69,6 +69,8 @@ Current implementation frontier:
 - the first two frozen `prompt_eval` Tyler-literal vs calibrated-legacy
   comparisons are now complete
 - the next concrete work is:
+  - run a clause-by-clause code-vs-spec audit against Tyler's packet and
+    populate the canonical gap ledger
   - expand the frozen comparison set beyond the current `2` matched cases
   - land remaining shared provider/model parity work
   - preserve the new shared Tavily-backed search path as the quality-first default

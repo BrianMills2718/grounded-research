@@ -165,6 +165,10 @@ Current open work is intentionally narrow:
   runtime-contract ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
+- active audit wave:
+  `docs/plans/tyler_spec_gap_audit_wave1.md`
+- canonical gap ledger:
+  `docs/TYLER_SPEC_GAP_LEDGER.md`
 - completed provider-cutover wave:
   `docs/plans/tavily_integration_wave1.md`
 - there is currently no active repo-local implementation wave
