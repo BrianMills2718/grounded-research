@@ -81,7 +81,7 @@ Minimum evidence:
 - [x] review current app config
 - [x] review current shared registry surface
 - [x] confirm external model existence
-- [ ] decide whether the next step is shared registry wiring or documented hold
+- [x] decide whether the next step is shared registry wiring or documented hold
 
 ## Current Finding
 
@@ -99,3 +99,21 @@ It is:
 - decide whether to wire the exact Gemini 3.x Pro surface into the shared
   registry and validate it, or explicitly hold the substitution as a shared
   constraint
+
+## Progress Note (2026-04-09)
+
+The first shared follow-through slice is now active:
+
+- `llm_client` branch: `gemini31-model-parity`
+- PR: `#28`
+- shared result:
+  - `openrouter/google/gemini-3.1-pro-preview` added to the packaged registry
+  - Tyler-like structured-output study passed `5/5` via `native_schema`
+
+So the next app-local step is now explicit:
+
+- merge `llm_client` PR #28
+- then switch `grounded-research` config from
+  `openrouter/google/gemini-2.5-pro` to
+  `openrouter/google/gemini-3.1-pro-preview`
+- then rerun the targeted Tyler validation lane

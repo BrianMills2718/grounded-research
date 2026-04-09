@@ -53,8 +53,8 @@ Every item is classified as one of:
 1. Exact Tyler Gemini model-version parity
    - Tyler names Gemini 3.1 Pro for decomposition, evidence extraction/source scoring, and the Stage 3 structured-decomposition analyst.
    - The live config still substitutes `openrouter/google/gemini-2.5-pro`.
-   - This is no longer a vague availability note: OpenRouter currently exposes `google/gemini-3.1-pro-preview`, but the shared `llm_client` model registry and current `grounded-research` config have not yet been updated and validated for this exact Tyler parity lane.
-   - Evidence: `config/config.yaml`; `llm_client/data/default_model_registry.json`; `docs/TYLER_SPEC_GAP_LEDGER.md` row `S3-MODEL-VERSION-001`
+   - This is no longer a vague availability note: OpenRouter currently exposes `google/gemini-3.1-pro-preview`, and shared follow-through is now active on `llm_client` PR #28. That branch adds the model to the packaged registry and records a `5/5` native-schema Tyler-like validation result, but exact Tyler model-version parity is not closed here until the shared PR lands and `grounded-research` switches config.
+   - Evidence: `config/config.yaml`; `docs/TYLER_SPEC_GAP_LEDGER.md` row `S3-MODEL-VERSION-001`; `llm_client` PR #28
    - Owner: shared model registry + config policy
 
 2. Frontier-model runtime validation

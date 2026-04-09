@@ -219,7 +219,7 @@ Shared infra:
 
 1. exact Tyler Gemini model-version parity in shared registry/config surfaces
    - Tyler names Gemini 3.1 Pro, while the live config still uses `openrouter/google/gemini-2.5-pro`
-   - OpenRouter now exposes `google/gemini-3.1-pro-preview`, so the remaining gap is a concrete shared registry/config follow-through item
+   - OpenRouter now exposes `google/gemini-3.1-pro-preview`, and shared follow-through is active on `llm_client` PR #28
    - this is now narrowed to a concrete shared registry/config gap rather than a vague availability note
 2. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
    - closed on 2026-04-09 when `llm_client` PR #27 merged to `main` at `e9a0cbf`: the proven issue was a direct-Gemini transport/config problem, and the shared direct-Gemini thinking-budget policy fix is now landed

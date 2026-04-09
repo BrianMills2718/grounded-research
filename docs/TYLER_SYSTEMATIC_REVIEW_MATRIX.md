@@ -31,7 +31,7 @@ This matrix exists to make the review itself mechanical:
 | R5 | Stage 2 | Tavily depth behavior from consumer boundary | request-body or adapter verification | `S2-TAVILY-DEPTH-001` | done | ledger only |
 | R6 | Stage 2 | Exa retrieval instruction/control behavior | request-body or adapter verification | `S2-EXA-CONTROLS-001` | done | ledger only |
 | R7 | Stage 3 | frame/model assignment | static review + config/runtime test | `S3-FRAME-MODEL-001` | done | ledger only |
-| R8 | Stage 3 | exact Tyler model-version parity | config review + shared ownership review | `S3-MODEL-VERSION-001` | active | `docs/plans/tyler_shared_model_version_parity_wave1.md` |
+| R8 | Stage 3 | exact Tyler model-version parity | config review + shared ownership review | `S3-MODEL-VERSION-001` | active | `llm_client` PR #28 + `docs/plans/tyler_shared_model_version_parity_wave1.md` |
 | R9 | Stage 4 | analyst-order randomization | behavior test | `S4-ORDER-RANDOMIZATION-001` | done | ledger only |
 | R10 | Stage 5 | query roles | runtime test | `S5-QUERY-ROLES-001` | done | ledger only |
 | R11 | Stage 5 | search parameter execution | runtime/provider verification | `S5-SEARCH-PARAMS-001` | done | ledger only |
