@@ -217,12 +217,11 @@ Repo-local:
 
 Shared infra:
 
-1. exact Tyler Gemini model-version parity in shared registry/config surfaces
-   - Tyler names Gemini 3.1 Pro, while the live config still uses `openrouter/google/gemini-2.5-pro`
-   - OpenRouter now exposes `google/gemini-3.1-pro-preview`, and shared follow-through is active on `llm_client` PR #28
-   - this is now narrowed to a concrete shared registry/config gap rather than a vague availability note
-2. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
+1. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
    - closed on 2026-04-09 when `llm_client` PR #27 merged to `main` at `e9a0cbf`: the proven issue was a direct-Gemini transport/config problem, and the shared direct-Gemini thinking-budget policy fix is now landed
+2. exact Tyler Gemini model-version parity in shared registry/config surfaces
+   - closed on 2026-04-09 when `llm_client` PR #28 merged to `main` at `37623ec` and `grounded-research` completed `docs/plans/tyler_exact_model_version_switch_wave1.md`
+   - the live config now uses `openrouter/google/gemini-3.1-pro-preview` on Tyler's named Gemini roles and the raw-question validation run proved those stages used it on the live path
 3. frontier model-output variability / policy handling
    - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, but the remaining issue is now a stochastic Claude Opus Stage 3 citation-floor miss governed by the explicit frontier model-policy threshold
 
@@ -233,7 +232,7 @@ Evaluation:
 
 Next active shared closure:
 
-1. `docs/plans/tyler_shared_model_version_parity_wave1.md`
+1. frontier runtime/model-policy follow-through only if the explicit threshold is crossed
 
 ## Acceptance Rule
 

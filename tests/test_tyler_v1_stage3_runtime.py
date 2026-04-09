@@ -230,7 +230,7 @@ def test_tyler_stage3_primary_config_matches_recovery_contract() -> None:
     assert len(cfg["analyst_models"]) == 3
     assert cfg["analyst_models"] == [
         "openrouter/openai/gpt-5.4",
-        "openrouter/google/gemini-2.5-pro",
+        "openrouter/google/gemini-3.1-pro-preview",
         "openrouter/anthropic/claude-opus-4.6",
     ]
     assert cfg["analyst_frames"] == [

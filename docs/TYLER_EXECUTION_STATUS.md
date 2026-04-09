@@ -47,17 +47,18 @@ Every item is classified as one of:
 25. Stage 2 Tavily search-depth parity
 26. Stage 2 Exa routing/control parity
 27. Gemini strict-schema study and direct-Gemini thinking-budget fix landed in shared infra (`llm_client/main` via PR #27 / `e9a0cbf`)
+28. Exact Tyler Gemini model-version parity
+   - Shared registry parity landed in `llm_client/main` via PR #28 / `37623ec`.
+   - The live config now points Tyler's named Gemini roles at `openrouter/google/gemini-3.1-pro-preview`.
+   - Raw-question validation run `output/tyler_exact_model_version_switch_wave1_palantir` completed successfully and its run-local observability DB proves:
+     - `question_decomposition_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
+     - `finding_extraction_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
+     - Analyst B `analyst_reasoning_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
+     - `query_diversification_tyler_v1` intentionally remained on `openrouter/google/gemini-2.5-pro`
 
 ## Required: Still Open
 
-1. Exact Tyler Gemini model-version parity
-   - Tyler names Gemini 3.1 Pro for decomposition, evidence extraction/source scoring, and the Stage 3 structured-decomposition analyst.
-   - The live config still substitutes `openrouter/google/gemini-2.5-pro`.
-   - This is no longer a vague availability note: OpenRouter currently exposes `google/gemini-3.1-pro-preview`, and shared follow-through is now active on `llm_client` PR #28. That branch adds the model to the packaged registry and records a `5/5` native-schema Tyler-like validation result, but exact Tyler model-version parity is not closed here until the shared PR lands and `grounded-research` switches config.
-   - Evidence: `config/config.yaml`; `docs/TYLER_SPEC_GAP_LEDGER.md` row `S3-MODEL-VERSION-001`; `llm_client` PR #28
-   - Owner: shared model registry + config policy
-
-2. Frontier-model runtime validation
+1. Frontier-model runtime validation
    - Three literal production-config fixture runs are now recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
    - Frontier Reliability Wave 3 narrowed the issue further: the failed run was a clean Claude Opus Stage 3 call with one uncited claim (`C-16`), not a transport/schema/runtime error. The same stack passed on the next PFAS repeat and on the Palantir run.
    - Honest classification: this is now best described as a model-output variability / model-policy limitation, not an untested config, not a generic runtime failure, and not a closed guarantee.

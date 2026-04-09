@@ -1,6 +1,6 @@
 # Tyler Shared Model Version Parity Wave 1
 
-**Status:** Active
+**Status:** Completed
 **Type:** shared-parity plan
 **Priority:** Medium
 **Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
@@ -82,38 +82,30 @@ Minimum evidence:
 - [x] review current shared registry surface
 - [x] confirm external model existence
 - [x] decide whether the next step is shared registry wiring or documented hold
+- [x] land shared registry parity
+- [x] switch app config and validate the live path
 
-## Current Finding
+## Historical Finding
 
-Current state is already narrower than before:
+This wave started from a narrowed but still-open state:
 
 - Tyler names Gemini 3.1 Pro
-- `grounded-research` still uses `openrouter/google/gemini-2.5-pro`
-- OpenRouter currently exposes `google/gemini-3.1-pro-preview`
-- `llm_client` shared default model registry does not yet expose a Gemini 3 Pro
-  / 3.1 Pro entry
+- `grounded-research` still used `openrouter/google/gemini-2.5-pro`
+- OpenRouter already exposed `google/gemini-3.1-pro-preview`
+- `llm_client` had not yet exposed a Gemini 3.1 Pro surface in the packaged
+  registry
 
-So the next step is no longer “investigate generic availability.”
-It is:
+## Completion Note (2026-04-09)
 
-- decide whether to wire the exact Gemini 3.x Pro surface into the shared
-  registry and validate it, or explicitly hold the substitution as a shared
-  constraint
+This lane is now closed:
 
-## Progress Note (2026-04-09)
-
-The first shared follow-through slice is now active:
-
-- `llm_client` branch: `gemini31-model-parity`
-- PR: `#28`
-- shared result:
-  - `openrouter/google/gemini-3.1-pro-preview` added to the packaged registry
-  - Tyler-like structured-output study passed `5/5` via `native_schema`
-
-So the next app-local step is now explicit:
-
-- merge `llm_client` PR #28
-- then switch `grounded-research` config from
-  `openrouter/google/gemini-2.5-pro` to
-  `openrouter/google/gemini-3.1-pro-preview`
-- then rerun the targeted Tyler validation lane
+- `llm_client` PR #28 merged to `main` as `37623ec`
+- `openrouter/google/gemini-3.1-pro-preview` is now in the packaged registry
+- the Tyler-like structured-output study recorded `5/5` `native_schema`
+  successes in `docs/reviews/2026-04-09-openrouter-gemini31-pro-validation.json`
+- `grounded-research` consumed the shared model surface in
+  `docs/plans/tyler_exact_model_version_switch_wave1.md`
+- raw-question validation run
+  `output/tyler_exact_model_version_switch_wave1_palantir` completed and proved
+  the switched Stage 1, Stage 2 extraction/scoring, and Stage 3 Analyst B roles
+  used `openrouter/google/gemini-3.1-pro-preview`

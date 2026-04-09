@@ -193,8 +193,10 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_systematic_review_wave2.md`
 - compact review tracker:
   `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
-- active shared exact-model follow-through:
+- completed shared exact-model follow-through:
   `docs/plans/tyler_shared_model_version_parity_wave1.md`
+- completed app-local exact-model switch wave:
+  `docs/plans/tyler_exact_model_version_switch_wave1.md`
 - canonical failure-analysis / prevention surface:
   `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
 - the active audit has already identified real local divergences in Stage 1,

@@ -191,6 +191,7 @@ Completed in this wave so far:
   - `docs/TYLER_EXECUTION_STATUS.md`
   - `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`
   - `docs/plans/tyler_faithful_execution_remainder.md`
-- exact Tyler model-version row narrowed from vague availability language to a
-  concrete shared registry/config gap with a dedicated follow-up plan:
-  - `docs/plans/tyler_shared_model_version_parity_wave1.md`
+- exact Tyler model-version row is now closed:
+  - `llm_client` PR #28 merged the shared registry surface
+  - `docs/plans/tyler_exact_model_version_switch_wave1.md` completed the
+    application config switch and raw-question validation run
