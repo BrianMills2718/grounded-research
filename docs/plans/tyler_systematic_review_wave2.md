@@ -166,7 +166,7 @@ Minimum verification for the wave:
 - [x] Phase 1: freeze review inventory
 - [ ] Phase 2: local structure review
 - [ ] Phase 3: behavior review
-- [ ] Phase 4: docs and status review
+- [x] Phase 4: docs and status review
 - [ ] Phase 5: shared boundary review
 - [ ] Phase 6: remediation output
 
@@ -178,3 +178,19 @@ When this wave is complete, the repo should have one compact answer to:
 - what evidence supports each claim,
 - what is still open,
 - and what exact remediation wave comes next.
+
+## Progress Note (2026-04-09)
+
+Completed in this wave so far:
+
+- active doc-truth lane closed
+- stale active surfaces corrected:
+  - `README.md`
+  - `docs/FEATURE_STATUS.md`
+  - `docs/ROADMAP.md`
+  - `docs/TYLER_EXECUTION_STATUS.md`
+  - `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`
+  - `docs/plans/tyler_faithful_execution_remainder.md`
+- exact Tyler model-version row narrowed from vague availability language to a
+  concrete shared registry/config gap with a dedicated follow-up plan:
+  - `docs/plans/tyler_shared_model_version_parity_wave1.md`

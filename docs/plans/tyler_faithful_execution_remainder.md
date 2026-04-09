@@ -217,10 +217,14 @@ Repo-local:
 
 Shared infra:
 
-1. frontier-model role parity in production config / availability
-   - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, but the remaining issue is now an intermittent Claude Opus Stage 3 citation-floor failure rather than an untested stack
+1. exact Tyler Gemini model-version parity in shared registry/config surfaces
+   - Tyler names Gemini 3.1 Pro, while the live config still uses `openrouter/google/gemini-2.5-pro`
+   - OpenRouter now exposes `google/gemini-3.1-pro-preview`, so the remaining gap is a concrete shared registry/config follow-through item
+   - this is now narrowed to a concrete shared registry/config gap rather than a vague availability note
 2. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
    - closed on 2026-04-09 when `llm_client` PR #27 merged to `main` at `e9a0cbf`: the proven issue was a direct-Gemini transport/config problem, and the shared direct-Gemini thinking-budget policy fix is now landed
+3. frontier model-output variability / policy handling
+   - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, but the remaining issue is now a stochastic Claude Opus Stage 3 citation-floor miss governed by the explicit frontier model-policy threshold
 
 Evaluation:
 
@@ -229,7 +233,7 @@ Evaluation:
 
 Next active shared closure:
 
-1. `docs/plans/tyler_shared_parity_closure_wave1.md`
+1. `docs/plans/tyler_shared_model_version_parity_wave1.md`
 
 ## Acceptance Rule
 

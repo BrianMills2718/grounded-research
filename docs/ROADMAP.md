@@ -281,15 +281,15 @@ grounded-research's role is producing the claim ledger that feeds the chain.
 
 | Phase | What | Status |
 |-------|------|--------|
-| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; current primary runtime defaults are the closest available Tyler-role mapping |
+| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; the live Stage 3 family/role mapping now matches Tyler's intended A/B/C assignment, with only the exact Gemini 3.1 Pro model-version row still open |
 | 0 | Domain model, contracts, trace | Done |
 | 1 | Evidence ingest | Done — Brave + Jina fallback, parallel fetch |
 | 2 | Independent analysts | Done — 3 models × 3 frames |
 | 3 | Canonicalization | Done — extraction, dedup, disputes |
 | 4 | Verification & arbitration | Done — fresh evidence, fail-loud |
 | 5 | Export | Done — analytical + grounded modes |
-| A | Question decomposition | Done — typed sub-questions, validation |
-| B | Source quality | Done — LLM scoring, sufficiency, compression |
+| A | Question decomposition | Done — typed sub-questions and prompt-level self-check; the separate validation stage was later removed for Tyler parity |
+| B | Source quality | Done — deterministic source scoring, sufficiency, compression |
 | C | Model resilience | Done — fallback chains |
 | D | User steering | Done — preference dispute prompts |
 | F | Deferred features | Done — 6 of 9 promoted, 3 skipped |

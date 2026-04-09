@@ -74,16 +74,17 @@ written as separate `tyler_stage_*.json` sidecars by the live export path.
 - **Question decomposition** with typed sub-questions and falsification targets
   (the live Tyler path now uses prompt-level self-check only; the separate
   validation/retry layer was removed after the audit)
-- **Distinct analyst roles**: currently configured to the closest available
-  Tyler role mapping in `config/config.yaml`; exact Tyler role-model parity is
-  still tracked as an open gap
+- **Distinct analyst roles**: the live default Stage 3 family/role mapping now
+  matches Tyler's requested A/B/C assignment; the remaining exact gap is the
+  Gemini 3.1 Pro model-version substitution, which is tracked as shared parity
 - **3 reasoning frames**: verification-first, structured decomposition, step-back abstraction
 - **Source quality scoring**: deterministic Tyler-style authority/freshness/
   staleness blending on the live Stage 2 path
 - **Dispute detection** with severity classification and deterministic routing
 - **Fresh evidence arbitration** for decision-critical factual conflicts
 - **Configurable synthesis**: analytical mode (inferences beyond sources, marked) or grounded mode (ledger-only)
-- **Model fallback chains** on all LLM calls
+- **Model fallback chains** on all LLM calls, with the primary Tyler-intended
+  stack kept unless the frontier model-policy threshold is crossed
 - **User steering** for preference/ambiguity disputes (interactive TTY)
 - **Full provenance** always available in trace.json regardless of report mode
 

@@ -1,12 +1,13 @@
 # Feature Status: v1 Scorecard vs Current Implementation
 
 **Source:** `v1_Pruning_Scorecard.xlsx`
-**Assessed:** 2026-03-28
+**Assessed:** 2026-04-09
 
 **Scope note:** This tracks the original pruning scorecard (52 features).
 Tyler's V1 spec has additional requirements not in the scorecard — see
 `docs/plans/v1_spec_alignment.md` for the gap analysis. A feature marked
-DONE here may only partially satisfy the richer V1 contract.
+DONE here may only partially satisfy the richer V1 contract. For the strict
+Tyler clause-by-clause truth surface, defer to `docs/TYLER_SPEC_GAP_LEDGER.md`.
 
 ## Legend
 
@@ -45,7 +46,7 @@ DONE here may only partially satisfy the richer V1 contract.
 | 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | The live Tyler path now uses `generate_search_queries_tyler_v1()` as a lightweight structured model call that emits typed query plans per sub-question and query role. |
 | 14 | Optional Grok/Reddit real-time scan | DEFER | SKIP | Separate search-provider integration, not treated as a core pipeline feature. |
 | 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py` now computes deterministic Tyler-style `quality_score` from authority lookup, freshness blending, authority-floor logic, and staleness penalties. |
-| 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | `fetch_page()` extracts key_section + notes per source. `EvidenceItem` has content_type and extraction_method. No explicit "tier labels" on findings. |
+| 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | Tyler Stage 2 finding extraction is prompt-driven and the live Stage 2 surfaces carry explicit `quality_tier` / numeric quality scoring through source and evidence normalization. |
 | 17 | Echo detection across sources | DEFER | SKIP | Intentionally skipped; judged not worth building in v1. |
 | 18 | Conflict-aware compression | SIMPLIFY | **DONE** | `compress.py`: priority-based compression preserving authoritative sources, sub-question coverage, and diversity. |
 | 19 | Check evidence sufficiency | KEEP | **DONE** | Per-sub-question coverage check: flags sub-questions with < 2 evidence items as gaps. `EvidenceItem.sub_question_ids` preserves all matched sub-question tags for shared URLs. |
@@ -55,7 +56,7 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts_tyler_v1()` emits three Tyler `AnalysisObject`s with distinct frames. Current primary defaults use the closest available Tyler-role mapping (`gpt-5.4-mini`, `gemini-2.5-flash`, `gpt-5.4-nano`) after DeepSeek was removed for schema instability on the Tyler-native path. |
+| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts_tyler_v1()` emits three Tyler `AnalysisObject`s with distinct frames. The live primary defaults now use Tyler's intended family/role mapping: GPT-5.4, Gemini 2.5 Pro as a temporary substitute for Tyler's named Gemini 3.1 Pro, and Claude Opus 4.6. The remaining exact-model gap is tracked in `S3-MODEL-VERSION-001`. |
 | 22 | Require bottom-line recommendation | KEEP | **DONE** | Tyler Stage 3 `AnalysisObject.recommendation` is required. |
 | 23 | Require falsifiable claims with evidence references | KEEP | **DONE** | Tyler Stage 3 `claims[].source_references` and Stage 4 normalization keep source linkage explicit. |
 | 24 | Require explicit assumptions | KEEP | **DONE** | Tyler Stage 3 `assumptions` is required structured state. |
@@ -96,7 +97,7 @@ DONE here may only partially satisfy the richer V1 contract.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 42 | Context compaction | SIMPLIFY | **DONE** | `compress.py` reduces evidence to threshold. Evidence truncated to 400 chars in long_report prompt. |
+| 42 | Context compaction | SIMPLIFY | **DONE** | Stage 6 now applies Tyler-style pre-synthesis compaction with a configured character budget and priority ordering when prompt inputs exceed the limit. |
 | 43 | Self-preference bias guard | DEFER | SKIP | Tested with two judge models (Gemini + GPT-5-nano); no self-preference detected. |
 | 44 | Adapt synthesis by dispute resolution type | KEEP | **DONE** | `synthesis_mode` config: "analytical" (inferences beyond sources, marked) vs "grounded" (ledger-only). Disputes handled differently by mode. |
 | 45 | Tier A: Executive recommendation & tradeoffs | KEEP | **DONE** | Tyler `SynthesisReport.executive_recommendation` + `decision_relevant_tradeoffs`. Long report has verdict + alternatives sections. |

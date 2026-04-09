@@ -50,7 +50,14 @@ Every item is classified as one of:
 
 ## Required: Still Open
 
-1. Frontier-model runtime validation
+1. Exact Tyler Gemini model-version parity
+   - Tyler names Gemini 3.1 Pro for decomposition, evidence extraction/source scoring, and the Stage 3 structured-decomposition analyst.
+   - The live config still substitutes `openrouter/google/gemini-2.5-pro`.
+   - This is no longer a vague availability note: OpenRouter currently exposes `google/gemini-3.1-pro-preview`, but the shared `llm_client` model registry and current `grounded-research` config have not yet been updated and validated for this exact Tyler parity lane.
+   - Evidence: `config/config.yaml`; `llm_client/data/default_model_registry.json`; `docs/TYLER_SPEC_GAP_LEDGER.md` row `S3-MODEL-VERSION-001`
+   - Owner: shared model registry + config policy
+
+2. Frontier-model runtime validation
    - Three literal production-config fixture runs are now recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
    - Frontier Reliability Wave 3 narrowed the issue further: the failed run was a clean Claude Opus Stage 3 call with one uncited claim (`C-16`), not a transport/schema/runtime error. The same stack passed on the next PFAS repeat and on the Palantir run.
    - Honest classification: this is now best described as a model-output variability / model-policy limitation, not an untested config, not a generic runtime failure, and not a closed guarantee.

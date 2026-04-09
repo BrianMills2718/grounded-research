@@ -31,7 +31,7 @@ This matrix exists to make the review itself mechanical:
 | R5 | Stage 2 | Tavily depth behavior from consumer boundary | request-body or adapter verification | `S2-TAVILY-DEPTH-001` | done | ledger only |
 | R6 | Stage 2 | Exa retrieval instruction/control behavior | request-body or adapter verification | `S2-EXA-CONTROLS-001` | done | ledger only |
 | R7 | Stage 3 | frame/model assignment | static review + config/runtime test | `S3-FRAME-MODEL-001` | done | ledger only |
-| R8 | Stage 3 | exact Tyler model-version parity | config review + shared ownership review | `S3-MODEL-VERSION-001` | active | shared remediation or closure note |
+| R8 | Stage 3 | exact Tyler model-version parity | config review + shared ownership review | `S3-MODEL-VERSION-001` | active | `docs/plans/tyler_shared_model_version_parity_wave1.md` |
 | R9 | Stage 4 | analyst-order randomization | behavior test | `S4-ORDER-RANDOMIZATION-001` | done | ledger only |
 | R10 | Stage 5 | query roles | runtime test | `S5-QUERY-ROLES-001` | done | ledger only |
 | R11 | Stage 5 | search parameter execution | runtime/provider verification | `S5-SEARCH-PARAMS-001` | done | ledger only |
@@ -40,7 +40,7 @@ This matrix exists to make the review itself mechanical:
 | R14 | Stage 6b | source propagation and compaction | behavior test | `S6-EVIDENCE-CONTEXT-001`, `S6-COMPACTION-001` | done | ledger only |
 | R15 | Stage 6b | non-dominant synthesis model policy | static review + runtime test | `S6-MODEL-POLICY-001` | done | ledger only |
 | R16 | Shared runtime | frontier literal runtime reliability | fixture evidence + policy review | `STATUS-FRONTIER-RUNTIME-001` | active | policy + possible shared follow-through |
-| R17 | Docs | active status surfaces do not outrun ledger | doc review | `docs/TYLER_EXECUTION_STATUS.md`, `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`, `docs/plans/CLAUDE.md` | active | doc corrections |
+| R17 | Docs | active status surfaces do not outrun ledger | doc review | `docs/TYLER_EXECUTION_STATUS.md`, `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`, `docs/plans/CLAUDE.md`, `README.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md` | done | ledger only |
 | R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | pending | governance update if needed |
 
 ## Immediate Open Lanes
@@ -49,8 +49,7 @@ The currently open lanes are deliberately narrow:
 
 1. `R8` exact model-version parity
 2. `R16` frontier runtime/model-policy lane
-3. `R17` ongoing doc truthfulness check
-4. `R18` governance hardening only if this review exposes another process gap
+3. `R18` governance hardening only if this review exposes another process gap
 
 ## Review Rule
 
