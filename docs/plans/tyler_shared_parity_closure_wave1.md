@@ -117,6 +117,9 @@ As of 2026-04-09:
   (`gemini-schema-main-merge` at `e9a0cbf`)
 - focused verification on that branch passed:
   - `20 passed, 228 deselected`
+- PR #27 is mergeable, but `llm_client` has auto-merge disabled and main-push
+  guards enabled, so the remaining step is manual merge rather than another
+  local patch
 
 So the active remaining question after Gemini is no longer eval breadth. It is
 which shared Tyler item is next if PR #27 merges cleanly.
