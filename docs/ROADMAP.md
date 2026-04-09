@@ -1,36 +1,36 @@
 # Roadmap
 
-**Last updated:** 2026-04-08
+**Last updated:** 2026-04-09
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
 
-**v0.1.0 shipped.** 47/52 scorecard features implemented. Pipeline now beats
-cached Perplexity deep research on the tracked 6-question benchmark set,
-including the previously weak UBI question after the 2026-03-26 calibration
-passes. Cost: ~$0.06/run (standard),
-configurable depth modes (standard/deep/thorough).
+**v0.1.0 shipped.** The live repo is now Tyler-native on the local Stage 1-6
+runtime path, the three-case frozen-eval gate is satisfied for the current
+lane, and the remaining Tyler work is now narrow shared parity plus
+model-policy/availability follow-through rather than broad local contract debt.
 
-**Architecture complete:**
-- Question decomposition with validation and retry
-- Sub-question-driven search (50 sources, parallel fetch)
-- 3 independent analyst roles with distinct reasoning frames
-- Claim extraction, dedup, dispute detection with severity calibration
-- Fresh evidence arbitration for decision-critical disputes
-- Analytical + grounded synthesis modes (configurable)
-- LLM source quality scoring
-- Evidence sufficiency checking per sub-question
-- Conflict-aware compression
-- Model fallback chains on all call sites
-- User steering for preference/ambiguity disputes
-- Evidence-label leakage detection
-- Arbitration position shuffling
+Current operational reality:
 
-**What's NOT done:**
-- 4 features intentionally skipped (#11 falsification quality, #14 Grok/Reddit,
-  #17 echo detection, #43 self-preference guard)
-- 1 feature remains cut (#6 complexity assessment; #3 ambiguity and #38
-  shuffling were later un-cut and implemented)
+- Tyler-native Stage 1-6 runtime and export/handoff contracts are the live path
+- Stage 1 runs without a separate validation stage
+- Stage 2 uses model-driven query diversification and routed Tavily/Exa search
+- Stage 2 quality scoring is deterministic authority/freshness/staleness
+  scoring, not a generic LLM judge
+- Stage 4 and Stage 5 randomization protections are live
+- Stage 5 uses Tyler query roles plus structured search controls
+- Stage 6 steering, evidence propagation, compaction, and non-dominant
+  synthesis-model policy are live
+- Gemini strict-schema parity is landed in shared infra on `llm_client/main`
+- the remaining open Tyler rows are now:
+  - exact Tyler frontier model-version parity, and
+  - frontier model-output variability / policy handling
+
+What is intentionally not the current frontier:
+
+- new local runtime families
+- reopening compatibility-deletion work
+- broad benchmark expansion as a blocking prerequisite
 
 ## Tyler-Native Status
 
@@ -73,13 +73,16 @@ Current implementation frontier:
 - the next concrete work is:
   - run a clause-by-clause code-vs-spec audit against Tyler's packet and
     populate the canonical gap ledger
+  - use the new systematic review program and compact review matrix to
+    re-review each remaining lane with explicit evidence requirements
   - keep the new Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
   - treat the resulting high-severity local divergences as the next
     implementation frontier because the ledger has now confirmed them
   - keep the next remediation order explicit in
     `docs/plans/tyler_gap_remediation_wave1.md`
-  - expand the frozen comparison set beyond the current `2` matched cases
+  - keep the frozen comparison gate satisfied without treating broader eval as
+    the current blocker
   - land remaining shared provider/model parity work
   - preserve the new shared Tavily-backed search path as the quality-first default
   - keep the one Tyler-internal Stage 2 prompt/schema ambiguity documented rather than papered over

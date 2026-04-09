@@ -189,6 +189,10 @@ Current open work is intentionally narrow:
   `docs/plans/post_audit_maintainability_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
+- active systematic review program:
+  `docs/plans/tyler_systematic_review_wave2.md`
+- compact review tracker:
+  `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
 - canonical failure-analysis / prevention surface:
   `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
 - the active audit has already identified real local divergences in Stage 1,
