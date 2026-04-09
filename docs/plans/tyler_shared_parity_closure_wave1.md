@@ -103,10 +103,10 @@ Minimum verification:
 
 ## Todo List
 
-- [ ] Phase 1: reconcile current frontier
+- [x] Phase 1: reconcile current frontier
 - [ ] Phase 2: land Gemini shared fix
-- [ ] Phase 3: reconcile ownership docs
-- [ ] Phase 4: name the next remaining shared Tyler item
+- [x] Phase 3: reconcile ownership docs
+- [x] Phase 4: name the next remaining shared Tyler item
 
 ## Current Status
 
@@ -120,3 +120,7 @@ As of 2026-04-09:
 
 So the active remaining question after Gemini is no longer eval breadth. It is
 which shared Tyler item is next if PR #27 merges cleanly.
+
+Named next shared Tyler item:
+
+- `docs/plans/tyler_frontier_runtime_reliability_wave3.md`
