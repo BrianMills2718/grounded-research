@@ -51,7 +51,8 @@ Every item is classified as one of:
 
 1. Frontier-model runtime validation
    - Three literal production-config fixture runs are now recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
-   - Honest classification: the row is narrowed to an intermittent frontier reliability issue, not an untested config and not a closed guarantee.
+   - Frontier Reliability Wave 3 narrowed the issue further: the failed run was a clean Claude Opus Stage 3 call with one uncited claim (`C-16`), not a transport/schema/runtime error. The same stack passed on the next PFAS repeat and on the Palantir run.
+   - Honest classification: this is now best described as a model-output variability / model-policy limitation, not an untested config, not a generic runtime failure, and not a closed guarantee.
    - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
    - Owner: shared model availability + config policy
 2. Gemini strict-schema quality study

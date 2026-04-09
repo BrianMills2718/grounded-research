@@ -1,6 +1,6 @@
 # Tyler Frontier Runtime Reliability Wave 3
 
-**Status:** Active
+**Status:** Completed
 **Type:** shared-runtime investigation
 **Priority:** High
 **Parent plan:** `docs/plans/tyler_shared_parity_closure_wave1.md`
@@ -97,6 +97,33 @@ Minimum verification:
 
 ## Todo List
 
-- [ ] Phase 1: compare recorded runs
-- [ ] Phase 2: classify the remaining issue
-- [ ] Phase 3: open the correct next lane
+- [x] Phase 1: compare recorded runs
+- [x] Phase 2: classify the remaining issue
+- [x] Phase 3: open the correct next lane
+
+## Outcome
+
+The wave completed with a narrower, evidence-backed classification.
+
+Key finding:
+
+- the failed PFAS Wave 1 run was not a transport, schema, or retry defect
+- the raw Claude Opus Stage 3 response succeeded cleanly but included one claim
+  (`C-16`) with empty `source_references`
+- the local citation floor correctly rejected that analyst result
+- the next PFAS repeat and the Palantir run passed on the same intended
+  primary-model stack
+
+So the remaining frontier row is best classified as:
+
+- **model-output variability / model-policy limitation**
+
+not:
+
+- an untested configuration
+- a generic runtime reliability issue
+- a demonstrated `llm_client` transport defect
+
+Next owner:
+
+- shared model availability + config policy
