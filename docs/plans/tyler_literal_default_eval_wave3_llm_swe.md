@@ -1,6 +1,6 @@
 # Tyler Literal Default Eval Wave 3: LLM SWE
 
-**Status:** Planned
+**Status:** Completed
 **Type:** cross-repo evaluation
 **Priority:** High
 **Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
@@ -53,7 +53,7 @@ Out of scope:
 2. Generate the Tyler-literal side from:
    - `output/llm_swe_v3/collected_bundle.json`
    - current `main`
-   - dedicated output dir `output/tyler_literal_llm_swe_eval_wave3/`
+   - dedicated output dir `output/tyler_literal_llm_swe_eval_wave3_run4/`
 3. Save the eval result in:
    - `output/tyler_literal_default_eval_wave3_llm_swe/`
 4. Keep the legacy side eval-only; do not reopen any legacy runtime path.
@@ -100,7 +100,7 @@ Pass if:
 
 Deliverables:
 
-- `output/tyler_literal_llm_swe_eval_wave3/` with:
+- `output/tyler_literal_llm_swe_eval_wave3_run4/` with:
   - `report.md`
   - `summary.md`
   - `trace.json`
@@ -140,17 +140,17 @@ Pass if:
 
 Minimum verification:
 
-1. `python engine.py --fixture output/llm_swe_v3/collected_bundle.json --output-dir output/tyler_literal_llm_swe_eval_wave3` succeeds
+1. `python engine.py --fixture output/tyler_literal_llm_swe_eval_wave3_run4/fixture_bundle.json --output-dir output/tyler_literal_llm_swe_eval_wave3_run4` succeeds
 2. `./.venv/bin/python scripts/eval_tyler_variants.py --manifest config/eval_manifests/tyler_literal_default_eval_wave3_llm_swe.json --output-dir output/tyler_literal_default_eval_wave3_llm_swe --repeats 3` succeeds
 3. `./.venv/bin/python -m pytest tests/test_eval_tyler_variants.py -q`
 4. manifest hash verification passes
 
 ## Todo List
 
-- [ ] Phase 1: define the technical frozen pair
-- [ ] Phase 2: generate the Tyler-literal counterpart
-- [ ] Phase 3: freeze and score the pair
-- [ ] Phase 4: record the three-case conclusion
+- [x] Phase 1: define the technical frozen pair
+- [x] Phase 2: generate the Tyler-literal counterpart
+- [x] Phase 3: freeze and score the pair
+- [x] Phase 4: record the three-case conclusion
 
 ## 24h Execution Rule
 
@@ -158,3 +158,29 @@ This wave should continue until the `llm_swe` pair is generated, scored,
 documented, and committed, unless a real shared-infra/runtime blocker appears.
 Do not stop after selecting the case or after generating the report; the wave
 closes only after the frozen comparison and the docs are updated.
+
+## Outcome
+
+The wave completed successfully.
+
+Recorded result:
+
+- Tyler-literal mean: `0.9167`
+- calibrated legacy mean: `0.75`
+- difference: `+0.1667`
+- significant: `True`
+
+Artifacts:
+
+- Tyler: `output/tyler_literal_llm_swe_eval_wave3_run4/`
+- Legacy: `output/llm_swe_v3/`
+- Eval result: `output/tyler_literal_default_eval_wave3_llm_swe/`
+
+Important execution notes:
+
+- the first attempt exposed a real archived-fixture compatibility problem
+  (`SQ-*` legacy ids vs Tyler `Q-*` ids)
+- that was fixed in this wave by adding the one-shot migration utility
+  `scripts/migrate_legacy_fixture_to_tyler.py`
+- one intermediate rerun was temporarily blocked by OpenRouter credit
+  exhaustion before the final clean `run4` completed

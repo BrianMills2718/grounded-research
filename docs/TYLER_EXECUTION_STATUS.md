@@ -63,6 +63,11 @@ Every item is classified as one of:
    - Honest status: the row is no longer an uninstrumented unknown, but it is not closed in `grounded-research` until the shared `llm_client` branch is merged and, if needed, reflected in `prompt_eval`.
    - Owner: `llm_client` + `prompt_eval`
 3. Broader frozen Tyler-vs-legacy evaluation coverage
+   - Current frozen evidence now covers `3` matched cases:
+     - UBI: Tyler `0.85` vs legacy `0.6833`
+     - PFAS: Tyler `0.7333` vs legacy `0.4333`
+     - LLM SWE: Tyler `0.9167` vs legacy `0.75`
+   - Honest status: coverage is no longer just policy/public-health and no longer just two cases, but it is still narrow directional evidence rather than broad proof.
    - Owner: `prompt_eval` + saved benchmark artifacts
 
 ## Required: Explicit Tyler Ambiguity

@@ -15,8 +15,8 @@ shared gaps still remain:
 
 - earlier prompt-literalness and parity waves landed, but the canonical gap
   ledger now overrules any stale "closure" claims
-- frozen eval evidence now covers two matched Tyler-vs-legacy cases, but it is
-  still narrow directional evidence rather than broad proof
+- frozen eval evidence now covers three matched Tyler-vs-legacy cases, but it
+  is still narrow directional evidence rather than broad proof
 - Tyler-specified provider/model parity still depends on shared infrastructure
 
 ## Non-Goals
@@ -224,7 +224,7 @@ Shared infra:
 
 Evaluation:
 
-1. frozen Tyler-vs-legacy comparison now has two-case directional coverage only
+1. frozen Tyler-vs-legacy comparison now has three-case directional coverage only
 
 ## Acceptance Rule
 

@@ -210,10 +210,18 @@ Wave 2 outcome:
 3. the frozen-eval story is now two-case directional evidence, not one-case evidence
 4. the next eval frontier is breadth, not proof-of-concept
 
+Wave 3 outcome:
+
+1. `llm_swe` now exists as a third matched Tyler-vs-legacy frozen case
+2. Tyler-literal was again favored over archived calibrated legacy
+3. the frozen-eval story is now three-case directional evidence, not just a
+   two-case story
+4. the next eval frontier is still breadth, not proof-of-concept
+
 Next shared-eval frontier:
 
-- expand the frozen comparison set beyond one shared case as new Tyler-literal
-  benchmark anchors are saved
+- expand the frozen comparison set beyond the current three shared cases as new
+  Tyler-literal benchmark anchors are saved
 - keep archived calibrated legacy behavior as eval-time comparison only
 - do not reintroduce alternate runtime modes in `grounded-research`
 

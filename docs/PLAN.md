@@ -169,8 +169,12 @@ Current open work is intentionally narrow:
 - the second frozen shared-eval comparison is complete:
   `output/tyler_literal_default_eval_wave2_pfas/summary.md` again favored
   Tyler-literal over the archived calibrated legacy anchor on PFAS
+- the third frozen shared-eval comparison is complete:
+  `output/tyler_literal_default_eval_wave3_llm_swe/summary.md` again favored
+  Tyler-literal over the archived calibrated legacy anchor on the technical
+  `llm_swe` case
 - the remaining explicit uncertainty is evaluation breadth beyond the current
-  two-case frozen set plus shared-infra provider/model parity, not
+  three-case frozen set plus shared-infra provider/model parity, not
   runtime-contract ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
@@ -197,6 +201,8 @@ Current open work is intentionally narrow:
 - there is currently no active repo-local implementation wave
 - completed eval-expansion wave:
   `docs/plans/tyler_literal_default_eval_wave2.md`
+- completed technical-breadth eval wave:
+  `docs/plans/tyler_literal_default_eval_wave3_llm_swe.md`
 - supporting status notes:
   `docs/TYLER_FROZEN_EVAL_STATUS.md`,
   `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`,

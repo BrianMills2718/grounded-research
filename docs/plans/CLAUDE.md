@@ -51,6 +51,7 @@
 | [tavily_integration_wave1.md](tavily_integration_wave1.md) | Completed | Cut the application over from the Brave-specific search tool to the shared-provider search tool, with Tavily as the quality-first default. |
 | [tyler_prompt_literalness_wave1.md](tyler_prompt_literalness_wave1.md) | Historical completed wave | Prompt-literalness remediation wave landed, but the April 2026 clause-by-clause audit found remaining prompt/orchestrator deviations. Trust the active gap ledger over this wave summary. |
 | [tyler_literal_default_eval_wave2.md](tyler_literal_default_eval_wave2.md) | Completed | Frozen-eval expansion wave complete: a Tyler-literal PFAS counterpart was generated from the saved fixture, the PFAS pair was scored through `prompt_eval`, and the repo now records a two-case Tyler-vs-legacy conclusion. |
+| [tyler_literal_default_eval_wave3_llm_swe.md](tyler_literal_default_eval_wave3_llm_swe.md) | Completed | Technical-breadth frozen-eval wave complete: a Tyler-literal `llm_swe` counterpart was generated from the saved fixture, the pair was scored through `prompt_eval`, and the repo now records a three-case Tyler-vs-legacy conclusion. |
 | [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
 | [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |

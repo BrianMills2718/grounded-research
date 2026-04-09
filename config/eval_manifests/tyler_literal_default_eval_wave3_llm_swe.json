@@ -1,0 +1,54 @@
+{
+  "experiment_name": "tyler_literal_default_eval_wave3_llm_swe",
+  "question": "What are the current capabilities and limitations of large language models (LLMs) for autonomous software engineering tasks (from requirement gathering to deployment and maintenance), and how do these compare to human developers across various software development lifecycle (SDLC) stages?",
+  "variants": [
+    {
+      "name": "tyler_literal",
+      "label": "Tyler-literal LLM SWE fixture rerun",
+      "commit_anchor": "e96156d",
+      "artifact_dir": "output/tyler_literal_llm_swe_eval_wave3_run4",
+      "files": {
+        "report_md": {
+          "path": "output/tyler_literal_llm_swe_eval_wave3_run4/report.md",
+          "sha256": "defc541d5052352a61553bc40eccec0d901dc7c991e09f3e442ac83901e955ba"
+        },
+        "summary_md": {
+          "path": "output/tyler_literal_llm_swe_eval_wave3_run4/summary.md",
+          "sha256": "8209620a9ca45962f8503e38bc051fa3448a384402a9aa45aa0b46b855d1f082"
+        },
+        "trace_json": {
+          "path": "output/tyler_literal_llm_swe_eval_wave3_run4/trace.json",
+          "sha256": "26dd5d32125894c775d9040ea7ce45a657adb847e48a53cfd303a988520fc875"
+        },
+        "handoff_json": {
+          "path": "output/tyler_literal_llm_swe_eval_wave3_run4/handoff.json",
+          "sha256": "8146c351709458cddcda47e9eac606624c2e235c414750a2437ebc23fde91905"
+        }
+      }
+    },
+    {
+      "name": "calibrated_legacy",
+      "label": "Archived calibrated LLM SWE anchor",
+      "commit_anchor": "unknown_archive",
+      "artifact_dir": "output/llm_swe_v3",
+      "files": {
+        "report_md": {
+          "path": "output/llm_swe_v3/report.md",
+          "sha256": "99697c3bb9cb99c8a888fe1eb234169d9ea5c2f4de64cbb84a96bdd494cefb02"
+        },
+        "summary_md": {
+          "path": "output/llm_swe_v3/summary.md",
+          "sha256": "92a5bf9c03ee35e0ecd610fcc14450b3d44f3106f6e53a398e3c116d83aceb72"
+        },
+        "trace_json": {
+          "path": "output/llm_swe_v3/trace.json",
+          "sha256": "c3437a590d7d7ddfbca266dc4e77237ca76decf424f70af7e72ff2ed4c297f7f"
+        },
+        "handoff_json": {
+          "path": "output/llm_swe_v3/handoff.json",
+          "sha256": "22875d7569b4378b3e6cf1a6e5ed75cb4771727449444173f6c799c882ca84c2"
+        }
+      }
+    }
+  ]
+}
