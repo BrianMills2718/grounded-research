@@ -32,10 +32,15 @@ Current limits:
 - one case is now technical/non-public-health, but the set is still small
 - judge replicates estimate scoring noise, not task-distribution coverage
 
-## Next Eval Frontier
+## Current Gate
 
-The next evaluation work should:
+The current eval gate is satisfied for the active implementation lane.
 
-1. add additional matched frozen cases beyond the current three-case set,
-2. keep archived calibrated legacy behavior eval-only,
-3. continue using `prompt_eval`, not local alternate runtime modes.
+Use the frozen set for:
+
+1. regression checking,
+2. validating that Tyler-literal remains directionally stronger than archived
+   calibrated legacy,
+3. deciding whether a new implementation wave needs additional breadth.
+
+Further frozen-eval expansion is optional for now, not the default next task.

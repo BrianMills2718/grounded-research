@@ -62,14 +62,6 @@ Every item is classified as one of:
      - direct `gemini/gemini-2.5-pro`: `5/5` succeeded via `native_schema` after the shared direct-Gemini thinking-budget policy fix
    - Honest status: the row is no longer an uninstrumented unknown, but it is not closed in `grounded-research` until the shared `llm_client` branch is merged and, if needed, reflected in `prompt_eval`.
    - Owner: `llm_client` + `prompt_eval`
-3. Broader frozen Tyler-vs-legacy evaluation coverage
-   - Current frozen evidence now covers `3` matched cases:
-     - UBI: Tyler `0.85` vs legacy `0.6833`
-     - PFAS: Tyler `0.7333` vs legacy `0.4333`
-     - LLM SWE: Tyler `0.9167` vs legacy `0.75`
-   - Honest status: coverage is no longer just policy/public-health and no longer just two cases, but it is still narrow directional evidence rather than broad proof.
-   - Owner: `prompt_eval` + saved benchmark artifacts
-
 ## Required: Explicit Tyler Ambiguity
 
 1. Stage 2 shared output block vs `Finding` schema
@@ -99,3 +91,24 @@ Use this rule when making changes:
 3. document extensions as additive, not as if Tyler requested them
 4. do not move shared-infra work back into `grounded-research`
 5. if this status note and the ledger disagree, trust the ledger
+
+## Eval Gate: Satisfied For Current Lane
+
+Frozen Tyler-vs-legacy coverage is sufficient for the current implementation
+lane.
+
+Current evidence:
+
+- UBI: Tyler `0.85` vs legacy `0.6833`
+- PFAS: Tyler `0.7333` vs legacy `0.4333`
+- LLM SWE: Tyler `0.9167` vs legacy `0.75`
+
+Use this evidence as:
+
+- a regression gate,
+- directional proof that Tyler-literal is not underperforming archived
+  calibrated legacy,
+- and enough breadth for current implementation work.
+
+Do not treat broader frozen-eval expansion as the next default blocker unless a
+later implementation wave needs more coverage.

@@ -208,7 +208,7 @@ Wave 2 outcome:
 1. PFAS now exists as a second matched Tyler-vs-legacy frozen case
 2. Tyler-literal was again favored over archived calibrated legacy
 3. the frozen-eval story is now two-case directional evidence, not one-case evidence
-4. the next eval frontier is breadth, not proof-of-concept
+4. this wave closed the proof-of-concept gap at the time it landed
 
 Wave 3 outcome:
 
@@ -216,12 +216,13 @@ Wave 3 outcome:
 2. Tyler-literal was again favored over archived calibrated legacy
 3. the frozen-eval story is now three-case directional evidence, not just a
    two-case story
-4. the next eval frontier is still breadth, not proof-of-concept
+4. the current eval gate is now satisfied for the active implementation lane
 
-Next shared-eval frontier:
+Current evaluation policy:
 
-- expand the frozen comparison set beyond the current three shared cases as new
-  Tyler-literal benchmark anchors are saved
+- do not expand the frozen comparison set by default just to chase more breadth
+- add new matched cases only when a later implementation wave needs regression
+  coverage
 - keep archived calibrated legacy behavior as eval-time comparison only
 - do not reintroduce alternate runtime modes in `grounded-research`
 

@@ -173,8 +173,9 @@ Current open work is intentionally narrow:
   `output/tyler_literal_default_eval_wave3_llm_swe/summary.md` again favored
   Tyler-literal over the archived calibrated legacy anchor on the technical
   `llm_swe` case
-- the remaining explicit uncertainty is evaluation breadth beyond the current
-  three-case frozen set plus shared-infra provider/model parity, not
+- the current frozen-eval gate is satisfied for the active implementation lane;
+  broader eval is now optional unless a later regression wave needs it
+- the remaining explicit uncertainty is shared-infra provider/model parity, not
   runtime-contract ambiguity in this repo
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
@@ -203,6 +204,8 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_literal_default_eval_wave2.md`
 - completed technical-breadth eval wave:
   `docs/plans/tyler_literal_default_eval_wave3_llm_swe.md`
+- active shared-parity closure wave:
+  `docs/plans/tyler_shared_parity_closure_wave1.md`
 - supporting status notes:
   `docs/TYLER_FROZEN_EVAL_STATUS.md`,
   `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`,

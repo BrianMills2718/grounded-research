@@ -224,7 +224,12 @@ Shared infra:
 
 Evaluation:
 
-1. frozen Tyler-vs-legacy comparison now has three-case directional coverage only
+1. frozen Tyler-vs-legacy comparison now has three-case directional coverage
+   and is sufficient for the current implementation lane
+
+Next active shared closure:
+
+1. `docs/plans/tyler_shared_parity_closure_wave1.md`
 
 ## Acceptance Rule
 
