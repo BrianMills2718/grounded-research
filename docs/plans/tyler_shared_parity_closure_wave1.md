@@ -107,3 +107,16 @@ Minimum verification:
 - [ ] Phase 2: land Gemini shared fix
 - [ ] Phase 3: reconcile ownership docs
 - [ ] Phase 4: name the next remaining shared Tyler item
+
+## Current Status
+
+As of 2026-04-09:
+
+- the current eval gate is satisfied
+- the Gemini strict-schema shared lane is now in review as `llm_client` PR #27
+  (`gemini-schema-main-merge` at `e9a0cbf`)
+- focused verification on that branch passed:
+  - `20 passed, 228 deselected`
+
+So the active remaining question after Gemini is no longer eval breadth. It is
+which shared Tyler item is next if PR #27 merges cleanly.
