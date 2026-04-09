@@ -220,7 +220,7 @@ Shared infra:
 1. frontier-model role parity in production config / availability
    - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, but the remaining issue is now an intermittent Claude Opus Stage 3 citation-floor failure rather than an untested stack
 2. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
-   - narrowed on 2026-04-09 by Plan 26/27 on `llm_client` PR #27 (`gemini-schema-main-merge` at `e9a0cbf`): the main proven issue was a direct-Gemini transport/config problem, not a demonstrated native-schema quality failure on the Tyler-like case set
+   - closed on 2026-04-09 when `llm_client` PR #27 merged to `main` at `e9a0cbf`: the proven issue was a direct-Gemini transport/config problem, and the shared direct-Gemini thinking-budget policy fix is now landed
 
 Evaluation:
 

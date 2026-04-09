@@ -46,6 +46,7 @@ Every item is classified as one of:
 24. Stage 5 structured search-parameter execution
 25. Stage 2 Tavily search-depth parity
 26. Stage 2 Exa routing/control parity
+27. Gemini strict-schema study and direct-Gemini thinking-budget fix landed in shared infra (`llm_client/main` via PR #27 / `e9a0cbf`)
 
 ## Required: Still Open
 
@@ -55,14 +56,6 @@ Every item is classified as one of:
    - Honest classification: this is now best described as a model-output variability / model-policy limitation, not an untested config, not a generic runtime failure, and not a closed guarantee.
    - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
    - Owner: shared model availability + config policy
-2. Gemini strict-schema quality study
-   - Shared study harness and direct-Gemini transport fix are now staged for merge in `llm_client` PR #27 (`gemini-schema-main-merge` at `e9a0cbf`).
-   - Current evidence from Plan 26/27 is narrower and better than before:
-     - `openrouter/google/gemini-2.5-pro`: `5/5` Tyler-like schema cases succeeded via `native_schema`
-     - direct `gemini/gemini-2.5-pro`: `5/5` failed with provider-side `Budget 0 is invalid` under the old shared default
-     - direct `gemini/gemini-2.5-pro`: `5/5` succeeded via `native_schema` after the shared direct-Gemini thinking-budget policy fix
-   - Honest status: the row is no longer an uninstrumented unknown, but it is not closed in `grounded-research` until `llm_client` PR #27 is manually merged and, if needed, reflected in `prompt_eval`.
-   - Owner: `llm_client` + `prompt_eval`
 ## Required: Explicit Tyler Ambiguity
 
 1. Stage 2 shared output block vs `Finding` schema

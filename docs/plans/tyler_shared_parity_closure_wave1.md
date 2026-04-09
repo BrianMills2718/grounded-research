@@ -1,6 +1,6 @@
 # Tyler Shared Parity Closure Wave 1
 
-**Status:** Active
+**Status:** Completed
 **Type:** shared-infra closure
 **Priority:** High
 **Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
@@ -104,7 +104,7 @@ Minimum verification:
 ## Todo List
 
 - [x] Phase 1: reconcile current frontier
-- [ ] Phase 2: land Gemini shared fix
+- [x] Phase 2: land Gemini shared fix
 - [x] Phase 3: reconcile ownership docs
 - [x] Phase 4: name the next remaining shared Tyler item
 
@@ -113,16 +113,14 @@ Minimum verification:
 As of 2026-04-09:
 
 - the current eval gate is satisfied
-- the Gemini strict-schema shared lane is now in review as `llm_client` PR #27
-  (`gemini-schema-main-merge` at `e9a0cbf`)
-- focused verification on that branch passed:
+- the Gemini strict-schema shared lane is now merged on `llm_client/main` via
+  PR #27 (`e9a0cbf`)
+- focused verification on the landing branch passed:
   - `20 passed, 228 deselected`
-- PR #27 is mergeable, but `llm_client` has auto-merge disabled and main-push
-  guards enabled, so the remaining step is manual merge rather than another
-  local patch
 
-So the active remaining question after Gemini is no longer eval breadth. It is
-which shared Tyler item is next if PR #27 merges cleanly.
+So the active remaining question after Gemini is no longer eval breadth and no
+longer Gemini transport/schema uncertainty. It is the remaining frontier model
+variability / policy row.
 
 Named next shared Tyler item:
 
