@@ -39,16 +39,18 @@ This matrix exists to make the review itself mechanical:
 | R13 | Stage 6a | post-Stage-5 steering sequencing | behavior test | `S6A-STEERING-001` | done | ledger only |
 | R14 | Stage 6b | source propagation and compaction | behavior test | `S6-EVIDENCE-CONTEXT-001`, `S6-COMPACTION-001` | done | ledger only |
 | R15 | Stage 6b | non-dominant synthesis model policy | static review + runtime test | `S6-MODEL-POLICY-001` | done | ledger only |
-| R16 | Shared runtime | frontier literal runtime reliability | fixture evidence + policy review | `STATUS-FRONTIER-RUNTIME-001` | active | policy + possible shared follow-through |
+| R16 | Shared runtime | frontier literal runtime reliability | fixture evidence + policy review | `STATUS-FRONTIER-RUNTIME-001` | done | ledger only |
 | R17 | Docs | active status surfaces do not outrun ledger | doc review | `docs/TYLER_EXECUTION_STATUS.md`, `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`, `docs/plans/CLAUDE.md`, `README.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md` | done | ledger only |
-| R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | pending | governance update if needed |
+| R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | done | ledger only |
 
 ## Immediate Open Lanes
 
-The currently open lanes are deliberately narrow:
+The systematic review lanes are now exhausted.
 
-1. `R16` frontier runtime/model-policy lane
-2. `R18` governance hardening only if this review exposes another process gap
+Remaining work lives in the ledger, not in the review matrix:
+
+1. `STATUS-FRONTIER-RUNTIME-001` remains open as a policy-governed hold
+2. any future review reopening must start from a new ledger-backed finding
 
 ## Review Rule
 

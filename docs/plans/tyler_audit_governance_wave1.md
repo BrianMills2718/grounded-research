@@ -4,7 +4,7 @@
 governance layer for organizing Tyler findings, documenting prior review
 failure modes, and preventing future parity overclaims.
 
-**Status:** Active
+**Status:** Completed
 **Type:** design
 **Priority:** High
 **Blocked By:** `docs/TYLER_SPEC_GAP_LEDGER.md`
@@ -146,3 +146,15 @@ This wave is complete when:
 - the Tyler finding workflow is explicit,
 - prevention controls are installed in current docs,
 - and future remediation/status work has one clear governance path.
+
+## Completion Note
+
+This wave is now complete.
+
+The later exact-model closure work was reviewed against this governance layer
+and did not expose a new process failure:
+
+- the finding stayed ledger-backed end to end
+- the shared/local ownership split remained explicit
+- the row was not closed until shared evidence, config switch, and live runtime
+  validation all existed in the same change stream

@@ -181,7 +181,7 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
   `docs/plans/tyler_spec_gap_audit_wave1.md`
-- active audit-governance wave:
+- completed audit-governance wave:
   `docs/plans/tyler_audit_governance_wave1.md`
 - active remediation planner:
   `docs/plans/tyler_gap_remediation_wave1.md`
@@ -189,7 +189,7 @@ Current open work is intentionally narrow:
   `docs/plans/post_audit_maintainability_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
-- active systematic review program:
+- completed systematic review program:
   `docs/plans/tyler_systematic_review_wave2.md`
 - compact review tracker:
   `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
