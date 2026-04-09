@@ -127,3 +127,4 @@ not:
 Next owner:
 
 - shared model availability + config policy
+- execution surface: `docs/plans/tyler_frontier_model_policy_wave1.md`

@@ -54,6 +54,7 @@ Every item is classified as one of:
    - Three literal production-config fixture runs are now recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
    - Frontier Reliability Wave 3 narrowed the issue further: the failed run was a clean Claude Opus Stage 3 call with one uncited claim (`C-16`), not a transport/schema/runtime error. The same stack passed on the next PFAS repeat and on the Palantir run.
    - Honest classification: this is now best described as a model-output variability / model-policy limitation, not an untested config, not a generic runtime failure, and not a closed guarantee.
+   - Current policy: keep the Tyler-intended primary stack unless the same model-role pair fails the same quality floor in `2/3` identical reruns, or the same failure mode appears on `2` distinct fixtures, or a shared runtime defect is proven.
    - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
    - Owner: shared model availability + config policy
 ## Required: Explicit Tyler Ambiguity
