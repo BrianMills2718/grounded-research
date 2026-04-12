@@ -47,9 +47,10 @@ This matrix exists to make the review itself mechanical:
 
 The systematic review lanes are now exhausted.
 
-Remaining work lives in the ledger, not in the review matrix:
+Remaining tracking lives in the ledger, not in the review matrix:
 
-1. `STATUS-FRONTIER-RUNTIME-001` remains open as a policy-governed hold
+1. `STATUS-FRONTIER-RUNTIME-001` is an operational watch item under the
+   documented policy threshold
 2. any future review reopening must start from a new ledger-backed finding
 
 ## Review Rule

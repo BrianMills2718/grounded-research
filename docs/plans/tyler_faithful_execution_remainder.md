@@ -223,7 +223,8 @@ Shared infra:
    - closed on 2026-04-09 when `llm_client` PR #28 merged to `main` at `37623ec` and `grounded-research` completed `docs/plans/tyler_exact_model_version_switch_wave1.md`
    - the live config now uses `openrouter/google/gemini-3.1-pro-preview` on Tyler's named Gemini roles and the raw-question validation run proved those stages used it on the live path
 3. frontier model-output variability / policy handling
-   - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, but the remaining issue is now a stochastic Claude Opus Stage 3 citation-floor miss governed by the explicit frontier model-policy threshold
+   - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, and the remaining issue is now a stochastic Claude Opus Stage 3 citation-floor miss governed by the explicit frontier model-policy threshold
+   - this is now treated as an operational watch item, not an active implementation blocker
 
 Evaluation:
 
@@ -232,7 +233,7 @@ Evaluation:
 
 Next active shared closure:
 
-1. frontier runtime/model-policy follow-through only if the explicit threshold is crossed
+1. no active shared closure lane; reopen frontier runtime/model-policy follow-through only if the explicit threshold is crossed
 
 ## Acceptance Rule
 
@@ -247,10 +248,10 @@ Faithful Tyler execution can be claimed only if:
 - frozen eval evidence is broader than a single shared case,
 - all remaining non-local differences are explicitly assigned to shared infra.
 
-Until then, the accurate claim is:
+Current accurate claim:
 
-- repo-local Tyler runtime migration is complete,
-- faithful Tyler execution is still in progress.
+- the Tyler implementation lane is complete for the currently audited packet scope,
+- and one documented operational watch item remains on frontier-model variability.
 
 ## Canonical Status Surface
 

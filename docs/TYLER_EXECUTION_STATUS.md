@@ -56,15 +56,18 @@ Every item is classified as one of:
      - Analyst B `analyst_reasoning_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
      - `query_diversification_tyler_v1` intentionally remained on `openrouter/google/gemini-2.5-pro`
 
-## Required: Still Open
+## Required: Active Implementation Gaps
 
-1. Frontier-model runtime validation
-   - Three literal production-config fixture runs are now recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
-   - Frontier Reliability Wave 3 narrowed the issue further: the failed run was a clean Claude Opus Stage 3 call with one uncited claim (`C-16`), not a transport/schema/runtime error. The same stack passed on the next PFAS repeat and on the Palantir run.
-   - Honest classification: this is now best described as a model-output variability / model-policy limitation, not an untested config, not a generic runtime failure, and not a closed guarantee.
-   - Current policy: keep the Tyler-intended primary stack unless the same model-role pair fails the same quality floor in `2/3` identical reruns, or the same failure mode appears on `2` distinct fixtures, or a shared runtime defect is proven.
+None.
+
+## Operational Watch
+
+1. Frontier-model runtime / model-policy watch item
+   - Three literal production-config fixture runs are recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
+   - Frontier Reliability Wave 3 showed the miss was a clean model output with one uncited claim (`C-16`), not a transport, schema, or local orchestration defect.
+   - This is no longer treated as an active implementation blocker. It is a documented watch item governed by the explicit threshold in `docs/plans/tyler_frontier_model_policy_wave1.md`.
+   - Reopen only if the same model-role pair fails the same quality floor in `2/3` identical reruns, the same failure mode appears on `2` distinct fixtures, or a shared runtime defect is proven.
    - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
-   - Owner: shared model availability + config policy
 ## Required: Explicit Tyler Ambiguity
 
 1. Stage 2 shared output block vs `Finding` schema

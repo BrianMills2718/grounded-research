@@ -175,8 +175,9 @@ Current open work is intentionally narrow:
   `llm_swe` case
 - the current frozen-eval gate is satisfied for the active implementation lane;
   broader eval is now optional unless a later regression wave needs it
-- the remaining explicit uncertainty is shared-infra provider/model parity, not
-  runtime-contract ambiguity in this repo
+- there are currently no active implementation gaps in this repo; the only
+  remaining uncertainty is a policy-governed operational watch on frontier
+  model variability
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
@@ -212,7 +213,7 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_literal_default_eval_wave2.md`
 - completed technical-breadth eval wave:
   `docs/plans/tyler_literal_default_eval_wave3_llm_swe.md`
-- active shared-parity closure wave:
+- completed shared-parity closure wave:
   `docs/plans/tyler_shared_parity_closure_wave1.md`
 - supporting status notes:
   `docs/TYLER_FROZEN_EVAL_STATUS.md`,

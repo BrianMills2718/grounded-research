@@ -7,8 +7,9 @@
 
 **v0.1.0 shipped.** The live repo is now Tyler-native on the local Stage 1-6
 runtime path, the three-case frozen-eval gate is satisfied for the current
-lane, and the remaining Tyler work is now narrow shared parity plus
-model-policy/availability follow-through rather than broad local contract debt.
+lane, and no active Tyler implementation gaps remain in `grounded-research`.
+The only remaining item is a policy-governed operational watch on frontier
+model variability.
 
 Current operational reality:
 
@@ -22,9 +23,9 @@ Current operational reality:
 - Stage 6 steering, evidence propagation, compaction, and non-dominant
   synthesis-model policy are live
 - Gemini strict-schema parity is landed in shared infra on `llm_client/main`
-- the remaining open Tyler rows are now:
-  - exact Tyler frontier model-version parity, and
-  - frontier model-output variability / policy handling
+- the exact Tyler frontier model-version row is now closed
+- the remaining Tyler watch item is frontier model-output variability / policy
+  handling under the explicit threshold
 
 What is intentionally not the current frontier:
 
