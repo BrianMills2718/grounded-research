@@ -42,6 +42,7 @@ This matrix exists to make the review itself mechanical:
 | R16 | Shared runtime | frontier literal runtime reliability | fixture evidence + policy review | `STATUS-FRONTIER-RUNTIME-001` | done | ledger only |
 | R17 | Docs | active status surfaces do not outrun ledger | doc review | `docs/TYLER_EXECUTION_STATUS.md`, `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`, `docs/plans/CLAUDE.md`, `README.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md` | done | ledger only |
 | R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | done | ledger only |
+| R19 | Stage 6 | grounding reject-and-retry behavior | behavior check + runtime path review | `S6-GROUNDING-001` | active | ledger only |
 
 ## Immediate Open Lanes
 
@@ -55,7 +56,11 @@ The exhaustive Tyler packet audit reopened two previously closed lanes:
 2. `R7` — Stage 3 frame/model assignment packet conflict
    - The Build Plan and Prompt packet disagree about whether Claude Opus or
      Gemini owns `structured_decomposition` vs `verification_first`.
-3. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
+3. `R19` — Stage 6 grounding reject-and-retry behavior
+   - Tyler requires a post-synthesis reject-and-retry on grounding failure.
+   - The live runtime currently logs grounding failures as warnings after
+     synthesis instead of feeding them back into the repair loop.
+4. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
    documented policy threshold
 
 ## Review Rule

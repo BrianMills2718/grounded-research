@@ -66,6 +66,13 @@ Every item is classified as one of:
      `prompts/tyler_v1_query_diversification.yaml`.
    - Canonical row: `S2-QUERY-MODEL-001`
 
+2. Stage 6 grounding reject-and-retry
+   - Tyler's Schema packet says post-synthesis grounding failures should
+     reject and retry once.
+   - The live runtime validates grounding only after Stage 6 completes and
+     currently records failures as warnings while still writing the report.
+   - Canonical row: `S6-GROUNDING-001`
+
 ## Operational Watch
 
 1. Frontier-model runtime / model-policy watch item
@@ -80,6 +87,7 @@ Every item is classified as one of:
    - Tyler's shared output instructions imply a reasoning field everywhere.
    - Tyler's Stage 2 `Finding` schema does not include a reasoning field.
    - Current repo preserves Tyler's schema and documents the conflict explicitly.
+   - Canonical row: `AMB-S2-REASONING-001`
 
 2. Stage 3 frame assignment packet conflict
    - Tyler's Build Plan assigns Claude Opus to `structured_decomposition` and

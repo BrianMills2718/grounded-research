@@ -217,7 +217,10 @@ Repo-local:
 3. exhaustive packet audit has reopened a concrete Stage 2 local divergence:
    query variant generation is currently an LLM call, while Tyler's Build Plan
    and Prompt packet both specify orchestrator-expanded string templates
-4. exhaustive packet audit has narrowed a Stage 3 packet-level ambiguity:
+4. exhaustive packet audit has reopened a concrete Stage 6 local divergence:
+   Tyler's schema packet requires grounding failures to reject and retry once,
+   but the live runtime currently logs them as warnings after synthesis
+5. exhaustive packet audit has narrowed a Stage 3 packet-level ambiguity:
    Build Plan and Prompt packet disagree on the Claude/Gemini B/C frame
    assignment, and the repo currently follows the Prompt packet
 
