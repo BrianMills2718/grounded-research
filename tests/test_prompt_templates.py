@@ -15,46 +15,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
 
-def test_tyler_stage1_decompose_prompt_renders_literal_shared_protocol() -> None:
-    """Tyler Stage 1 prompt should render the literal shared-output protocol."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "tyler_v1_decompose.yaml"),
-        original_query="Should a city run a UBI pilot?",
-        response_schema_json={"type": "object", "properties": {}},
-    )
-
-    assert "Return exactly one JSON object that validates against the provided response schema." in messages[0]["content"]
-    assert "If information is insufficient, express that through the schema fields rather than guessing." in messages[0]["content"]
-    assert "DECISION PROTOCOL (applies at every stage):" in messages[0]["content"]
-    assert "REASONING REQUIREMENT:" in messages[0]["content"]
-    assert "Original user query repeated for context anchoring:" in messages[1]["content"]
-
-
-
-def test_tyler_stage2_extract_findings_prompt_renders_literal_shared_protocol() -> None:
-    """Tyler Stage 2 extraction prompt should render the shared protocol minus unsupported reasoning text."""
-    messages = render_prompt(
-        str(PROMPTS_DIR / "tyler_v1_extract_findings.yaml"),
-        original_query="Should a city run a UBI pilot?",
-        sub_question_id="Q-1",
-        sub_question_text="What happened in prior pilots?",
-        source_title="Pilot report",
-        source_url="https://example.com/report",
-        source_type="academic",
-        source_content="Recipients reported lower stress and similar labor participation.",
-        response_schema_json={"type": "object", "properties": {}},
-    )
-
-    assert "Return exactly one JSON object that validates against the provided response schema." in messages[0]["content"]
-    assert "Keep working notes internal. Output only locked structured results." in messages[0]["content"]
-    assert "DECISION PROTOCOL (applies at every stage):" in messages[0]["content"]
-    assert "REASONING REQUIREMENT:" not in messages[0]["content"]
-    assert "Research question repeated for context anchoring:" in messages[1]["content"]
-
-
-def test_tyler_analyst_prompt_renders_with_stage_inputs() -> None:
-    """Tyler Stage 3 prompt should render with canonical Stage 1/2 inputs."""
-    messages = render_prompt(
+def _render_stage3_prompt(*, reasoning_frame: str) -> list[dict[str, str]]:
+    """Render the Tyler Stage 3 analyst prompt for one explicit frame."""
+    return render_prompt(
         str(PROMPTS_DIR / "tyler_v1_analyst.yaml"),
         original_query="Should we adopt tool X for a latency-sensitive service?",
         stage_1={
@@ -121,15 +84,75 @@ def test_tyler_analyst_prompt_renders_with_stage_inputs() -> None:
             },
         },
         model_alias="A",
-        reasoning_frame="verification_first",
+        reasoning_frame=reasoning_frame,
         response_schema_json={"type": "object"},
     )
+
+
+def test_tyler_stage1_decompose_prompt_renders_literal_shared_protocol() -> None:
+    """Tyler Stage 1 prompt should render the literal shared-output protocol."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "tyler_v1_decompose.yaml"),
+        original_query="Should a city run a UBI pilot?",
+        response_schema_json={"type": "object", "properties": {}},
+    )
+
+    assert "Return exactly one JSON object that validates against the provided response schema." in messages[0]["content"]
+    assert "If information is insufficient, express that through the schema fields rather than guessing." in messages[0]["content"]
+    assert "DECISION PROTOCOL (applies at every stage):" in messages[0]["content"]
+    assert "REASONING REQUIREMENT:" in messages[0]["content"]
+    assert "Original user query repeated for context anchoring:" in messages[1]["content"]
+
+
+
+def test_tyler_stage2_extract_findings_prompt_renders_literal_shared_protocol() -> None:
+    """Tyler Stage 2 extraction prompt should render the shared protocol minus unsupported reasoning text."""
+    messages = render_prompt(
+        str(PROMPTS_DIR / "tyler_v1_extract_findings.yaml"),
+        original_query="Should a city run a UBI pilot?",
+        sub_question_id="Q-1",
+        sub_question_text="What happened in prior pilots?",
+        source_title="Pilot report",
+        source_url="https://example.com/report",
+        source_type="academic",
+        source_content="Recipients reported lower stress and similar labor participation.",
+        response_schema_json={"type": "object", "properties": {}},
+    )
+
+    assert "Return exactly one JSON object that validates against the provided response schema." in messages[0]["content"]
+    assert "Keep working notes internal. Output only locked structured results." in messages[0]["content"]
+    assert "DECISION PROTOCOL (applies at every stage):" in messages[0]["content"]
+    assert "REASONING REQUIREMENT:" not in messages[0]["content"]
+    assert "Research question repeated for context anchoring:" in messages[1]["content"]
+
+
+def test_tyler_analyst_prompt_renders_with_stage_inputs() -> None:
+    """Tyler Stage 3 prompt should render with canonical Stage 1/2 inputs."""
+    messages = _render_stage3_prompt(reasoning_frame="verification_first")
 
     assert len(messages) == 2
     assert "INDEPENDENCE PROTOCOL" in messages[0]["content"]
     assert "Your model alias: A" in messages[1]["content"]
     assert "DECOMPOSITION:" in messages[1]["content"]
     assert "EVIDENCE PACKAGE:" in messages[1]["content"]
+
+
+def test_tyler_analyst_prompt_renders_step_back_frame() -> None:
+    """Tyler Stage 3 Frame A block should render literally."""
+    messages = _render_stage3_prompt(reasoning_frame="step_back_abstraction")
+
+    assert "YOUR ANALYTICAL APPROACH: Step-Back Abstraction" in messages[0]["content"]
+    assert "Phase 1 — Abstraction:" in messages[0]["content"]
+    assert "general principles → specific evidence application → recommendation" in messages[0]["content"]
+
+
+def test_tyler_analyst_prompt_renders_structured_decomposition_frame() -> None:
+    """Tyler Stage 3 Frame B block should render literally."""
+    messages = _render_stage3_prompt(reasoning_frame="structured_decomposition")
+
+    assert "YOUR ANALYTICAL APPROACH: Structured Decomposition" in messages[0]["content"]
+    assert "Break this problem into its constituent components" in messages[0]["content"]
+    assert "Locate tension. Where components conflict" in messages[0]["content"]
 
 
 
@@ -326,5 +349,4 @@ def test_query_generation_prompt_renders_sub_question_mode() -> None:
     assert "generate exactly 4 queries" in messages[0]["content"]
     assert "Required topic anchors" in messages[1]["content"]
     assert "Universal Basic Income" in messages[1]["content"]
-
 

@@ -56,10 +56,9 @@ The exhaustive Tyler packet audit currently has two active review lanes:
      repair loop does not currently enforce.
 
 2. `R21` — Prompt packet exhaustive coverage
-   - the full prompt packet still has pending row-by-row coverage in
-     `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
-   - future prompt claims should only close once the rendered templates and
-     prompt-side constraints are checked against Tyler's packet
+   - the core prompt templates are now audited
+   - the remaining prompt work is narrowed to the developer-note appendix,
+     especially the orchestrator-variable and data-structure convention rows
 
 3. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
    documented policy threshold
