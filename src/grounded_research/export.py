@@ -129,12 +129,28 @@ def _build_stage6_top_sources(
     return top_sources[:top_sources_cap]
 
 
+def _build_stage6_user_response_map(
+    *,
+    dispute_queue: list[dict[str, object]],
+    user_clarifications: str,
+) -> dict[str, str]:
+    """Map Stage 6 user steering text onto the Tyler prompt variable surface."""
+    cleaned = user_clarifications.strip()
+    if not cleaned:
+        return {}
+    return {
+        str(dispute["id"]): cleaned
+        for dispute in dispute_queue
+        if str(dispute.get("status", "")) == "deferred_to_user"
+    }
+
+
 def _compact_stage6_prompt_inputs(
     *,
     original_query: str,
-    stage_6_user_input: str,
-    decision_critical_claims: list[dict[str, object]],
-    noncritical_claims: list[dict[str, object]],
+    claim_ledger: list[dict[str, object]],
+    decision_critical_claim_ids: set[str],
+    user_response_for_dispute: dict[str, str],
     assumption_set: list[dict[str, object]],
     dispute_queue: list[dict[str, object]],
     top_sources: list[dict[str, object]],
@@ -147,9 +163,9 @@ def _compact_stage6_prompt_inputs(
     """Apply Tyler's Stage 6 char-budget compaction policy when needed."""
     payload: dict[str, object] = {
         "original_query": original_query,
-        "stage_6_user_input": stage_6_user_input,
-        "decision_critical_claims": decision_critical_claims,
-        "noncritical_claims": noncritical_claims,
+        "claim_ledger": claim_ledger,
+        "decision_critical_claim_ids": decision_critical_claim_ids,
+        "user_response_for_dispute": user_response_for_dispute,
         "assumption_set": assumption_set,
         "dispute_queue": dispute_queue,
         "top_sources": top_sources,
@@ -159,14 +175,18 @@ def _compact_stage6_prompt_inputs(
     if len(json.dumps(payload, default=str)) <= char_limit:
         return payload
 
-    compacted_noncritical_claims = [
-        {
-            "id": claim["id"],
-            "statement": _truncate_text(str(claim["statement"]), noncritical_claim_chars),
-            "status": claim["status"],
-        }
-        for claim in noncritical_claims
-    ]
+    compacted_claim_ledger: list[dict[str, object]] = []
+    for claim in claim_ledger:
+        if str(claim["id"]) in decision_critical_claim_ids:
+            compacted_claim_ledger.append(claim)
+            continue
+        compacted_claim_ledger.append(
+            {
+                "id": claim["id"],
+                "statement": _truncate_text(str(claim["statement"]), noncritical_claim_chars),
+                "status": claim["status"],
+            }
+        )
     compacted_top_sources = [
         {
             **source,
@@ -191,7 +211,7 @@ def _compact_stage6_prompt_inputs(
     ]
     return {
         **payload,
-        "noncritical_claims": compacted_noncritical_claims,
+        "claim_ledger": compacted_claim_ledger,
         "top_sources": compacted_top_sources,
         "all_stage_summaries": compacted_stage_summaries,
     }
@@ -382,16 +402,14 @@ async def generate_tyler_synthesis_report(
         for claim in stage_5_result.updated_claim_ledger
         if claim.source_references
     }
-    decision_critical_claims = [
-        claim
+    claim_ledger = [
+        claim.model_dump(mode="json")
         for claim in stage_5_result.updated_claim_ledger
-        if claim.id in decision_critical_claim_ids and claim.id in grounded_claim_ids
+        if claim.id in grounded_claim_ids
     ]
-    noncritical_claims = [
-        claim
-        for claim in stage_5_result.updated_claim_ledger
-        if claim.id not in decision_critical_claim_ids and claim.id in grounded_claim_ids
-    ]
+    decision_critical_claim_ids = {
+        claim_id for claim_id in decision_critical_claim_ids if claim_id in grounded_claim_ids
+    }
 
     assessment_by_dispute = {
         assessment.dispute_id: assessment for assessment in stage_5_result.disputes_investigated
@@ -461,12 +479,16 @@ async def generate_tyler_synthesis_report(
     ]
 
     user_clarifications = "\n".join(state.user_guidance_notes)
+    user_response_for_dispute = _build_stage6_user_response_map(
+        dispute_queue=dispute_queue_context,
+        user_clarifications=user_clarifications,
+    )
 
     compacted_inputs = _compact_stage6_prompt_inputs(
         original_query=state.question.text,
-        stage_6_user_input=user_clarifications,
-        decision_critical_claims=[claim.model_dump(mode="json") for claim in decision_critical_claims],
-        noncritical_claims=[claim.model_dump(mode="json") for claim in noncritical_claims],
+        claim_ledger=claim_ledger,
+        decision_critical_claim_ids=decision_critical_claim_ids,
+        user_response_for_dispute=user_response_for_dispute,
         assumption_set=[assumption.model_dump(mode="json") for assumption in stage_4_result.assumption_set],
         dispute_queue=dispute_queue_context,
         top_sources=top_sources,
@@ -482,9 +504,9 @@ async def generate_tyler_synthesis_report(
     messages = render_prompt(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_synthesis.yaml"),
         original_query=compacted_inputs["original_query"],
-        stage_6_user_input=compacted_inputs["stage_6_user_input"],
-        decision_critical_claims=compacted_inputs["decision_critical_claims"],
-        noncritical_claims=compacted_inputs["noncritical_claims"],
+        claim_ledger=compacted_inputs["claim_ledger"],
+        decision_critical_claim_ids=compacted_inputs["decision_critical_claim_ids"],
+        user_response_for_dispute=compacted_inputs["user_response_for_dispute"],
         assumption_set=compacted_inputs["assumption_set"],
         dispute_queue=compacted_inputs["dispute_queue"],
         top_sources=compacted_inputs["top_sources"],

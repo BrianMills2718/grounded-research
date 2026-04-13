@@ -80,25 +80,24 @@ messages:
       Original query:
       {{ original_query }}
 
-      {% if stage_6_user_input %}
-      USER CLARIFICATIONS:
-      {{ stage_6_user_input }}
-      {% endif %}
-
       ---
 
       CLAIM LEDGER (decision-critical claims):
-      {% for claim in decision_critical_claims %}
+      {% for claim in claim_ledger %}
+      {% if claim.id in decision_critical_claim_ids %}
       [{{ claim.id }}] {{ claim.statement }}
         Status: {{ claim.status }} | Evidence: {{ claim.evidence_label }}
         Sources: {{ claim.source_references | join(", ") }}
         Supporting: {{ claim.supporting_models | join(", ") }} | Contesting: {{ claim.contesting_models | join(", ") }}
         Related assumptions: {{ claim.related_assumptions | join(", ") }}
+      {% endif %}
       {% endfor %}
 
-      NON-CRITICAL CLAIMS (for context):
-      {% for claim in noncritical_claims %}
+      NON-CRITICAL CLAIMS (for context, lower priority):
+      {% for claim in claim_ledger %}
+      {% if claim.id not in decision_critical_claim_ids %}
       [{{ claim.id }}] {{ claim.statement }} — Status: {{ claim.status }}
+      {% endif %}
       {% endfor %}
 
       ---
@@ -121,7 +120,7 @@ messages:
         Resolution: {{ dispute.resolution_details }}
         {% endif %}
         {% if dispute.status == "deferred_to_user" %}
-        User response: {{ stage_6_user_input }}
+        User response: {{ user_response_for_dispute.get(dispute.id, "") }}
         {% endif %}
         {% if dispute.status == "unresolved" %}
         Remaining uncertainty: {{ dispute.remaining_uncertainty }}

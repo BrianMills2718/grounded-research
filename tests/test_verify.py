@@ -272,6 +272,7 @@ async def test_arbitrate_dispute_tyler_v1_passes_randomized_positions_to_prompt(
 
     def fake_render_prompt(*args, **kwargs):
         captured["dispute"] = kwargs["dispute"]
+        captured["claim_ledger"] = kwargs["claim_ledger"]
         return [{"role": "user", "content": "prompt"}]
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
@@ -317,6 +318,85 @@ async def test_arbitrate_dispute_tyler_v1_passes_randomized_positions_to_prompt(
     prompt_dispute = captured["dispute"]
     assert isinstance(prompt_dispute, dict)
     assert [entry["model_alias"] for entry in prompt_dispute["model_positions"]] == ["C", "A", "B"]
+    prompt_claim_ledger = captured["claim_ledger"]
+    assert isinstance(prompt_claim_ledger, dict)
+    assert prompt_claim_ledger == {}
+
+
+@pytest.mark.asyncio
+async def test_arbitrate_dispute_tyler_v1_passes_claim_ledger_as_dict(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 5 should pass Tyler's dict-keyed claim ledger surface to the prompt."""
+    captured: dict[str, object] = {}
+
+    async def fake_acall_llm_structured(model, messages, response_model, task, trace_id, max_budget, fallback_models, **kwargs):
+        return response_model(
+            dispute_id="D-1",
+            resolution=ResolutionOutcome.EVIDENCE_INSUFFICIENT,
+            updated_claim_statuses=[],
+            new_evidence_summary="No fresh evidence materially changed the claim.",
+            reasoning="No fresh evidence materially changed the claim.",
+        ), {}
+
+    def fake_render_prompt(*args, **kwargs):
+        captured["claim_ledger"] = kwargs["claim_ledger"]
+        return [{"role": "user", "content": "prompt"}]
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+
+    dispute = DisputeQueueEntry(
+        id="D-1",
+        type=DisputeType.EMPIRICAL,
+        description="Conflicting evidence about the same factual question.",
+        claims_involved=["C-1", "C-2"],
+        model_positions=[],
+        decision_critical=True,
+        decision_critical_rationale="Could change answer.",
+        status=DisputeStatus.UNRESOLVED,
+        resolution_routing="stage_5_evidence",
+    )
+    claim_ledger = [
+        ClaimLedgerEntry(
+            id="C-1",
+            statement="Claim 1",
+            source_models=["A"],
+            evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+            source_references=["S-1"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["A"],
+            contesting_models=["B"],
+            related_assumptions=[],
+        ),
+        ClaimLedgerEntry(
+            id="C-2",
+            statement="Claim 2",
+            source_models=["B"],
+            evidence_label=EvidenceLabel.EMPIRICALLY_OBSERVED,
+            source_references=["S-2"],
+            status=TylerClaimStatus.CONTESTED,
+            supporting_models=["B"],
+            contesting_models=["A"],
+            related_assumptions=[],
+        ),
+    ]
+
+    await arbitrate_dispute_tyler_v1(
+        original_query="What is the evidence?",
+        dispute=dispute,
+        claim_ledger_entries=claim_ledger,
+        relevant_original_sources=[],
+        new_evidence=[],
+        trace_id="trace-1",
+        max_budget=0.5,
+    )
+
+    prompt_claim_ledger = captured["claim_ledger"]
+    assert isinstance(prompt_claim_ledger, dict)
+    assert sorted(prompt_claim_ledger) == ["C-1", "C-2"]
+    assert prompt_claim_ledger["C-1"]["statement"] == "Claim 1"
+    assert prompt_claim_ledger["C-2"]["statement"] == "Claim 2"
 
 
 @pytest.mark.asyncio
@@ -507,10 +587,44 @@ async def test_verify_disputes_tyler_v1_updates_stage5_artifact_without_compat_l
             reasoning="reasoning",
         ),
     )
+    stage_1_result = DecompositionResult(
+        core_question="Should cities adopt UBI pilots?",
+        sub_questions=[
+            SubQuestion(
+                id="Q-1",
+                question="What happened to employment?",
+                type="empirical",
+                research_priority="high",
+                search_guidance="pilot outcomes",
+            ),
+            SubQuestion(
+                id="Q-2",
+                question="What are the main tradeoffs?",
+                type="interpretive",
+                research_priority="medium",
+                search_guidance="tradeoffs",
+            ),
+        ],
+        optimization_axes=["employment", "cost"],
+        research_plan=ResearchPlan(
+            what_to_verify=["employment effects"],
+            critical_source_types=["official docs"],
+            falsification_targets=["evidence of harm"],
+        ),
+        stage_summary=StageSummary(
+            stage_name="Stage 1",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
 
     verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
         bundle=bundle,
+        stage_1_result=stage_1_result,
         stage_2_result=stage_2_result,
         trace_id="trace-1",
         max_disputes=1,
@@ -634,10 +748,44 @@ async def test_verify_disputes_tyler_v1_caps_rounds_at_two(
             reasoning="reasoning",
         ),
     )
+    stage_1_result = DecompositionResult(
+        core_question="Should cities adopt UBI pilots?",
+        sub_questions=[
+            SubQuestion(
+                id="Q-1",
+                question="What happened to employment?",
+                type="empirical",
+                research_priority="high",
+                search_guidance="pilot outcomes",
+            ),
+            SubQuestion(
+                id="Q-2",
+                question="What are the main tradeoffs?",
+                type="interpretive",
+                research_priority="medium",
+                search_guidance="tradeoffs",
+            ),
+        ],
+        optimization_axes=["employment", "cost"],
+        research_plan=ResearchPlan(
+            what_to_verify=["employment effects"],
+            critical_source_types=["official docs"],
+            falsification_targets=["evidence of harm"],
+        ),
+        stage_summary=StageSummary(
+            stage_name="Stage 1",
+            goal="goal",
+            key_findings=["k1", "k2", "k3"],
+            decisions_made=["d1"],
+            outcome="outcome",
+            reasoning="reasoning",
+        ),
+    )
 
     verification_result, warnings, llm_calls = await verify_disputes_tyler_v1(
         stage_4_result=stage_4_result,
         bundle=bundle,
+        stage_1_result=stage_1_result,
         stage_2_result=stage_2_result,
         trace_id="trace-1",
         max_disputes=1,

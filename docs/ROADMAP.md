@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-04-12
+**Last updated:** 2026-04-13
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
@@ -8,13 +8,13 @@
 **v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
 runtime path and the three-case frozen-eval gate is satisfied for the current
 lane. The exhaustive Tyler packet audit matrix now has full coverage of the
-four canonical Tyler files, and that audit has narrowed the remaining local
-work to five concrete rows: Tyler `PipelineState` trace parity, Stage 6
-prompt-variable parity, Stage 5/6 prompt data-structure parity, Stage 6
-grounding reject-and-retry, and Stage 6 final-report validation coverage.
-Earlier Stage 2 and Stage 3 reopenings were corrected as audit-process false
-positives rather than real runtime/spec mismatches. The frontier-model
-variability item remains a separate policy-governed operational watch.
+four canonical Tyler files, and the first post-audit remediation slice has
+already closed the Stage 5/6 prompt-contract rows. The remaining local work is
+now three concrete rows: Tyler `PipelineState` trace parity, Stage 6 grounding
+reject-and-retry, and Stage 6 final-report validation coverage. Earlier Stage
+2 and Stage 3 reopenings were corrected as audit-process false positives
+rather than real runtime/spec mismatches. The frontier-model variability item
+remains a separate policy-governed operational watch.
 
 Current operational reality:
 
@@ -27,6 +27,8 @@ Current operational reality:
   scoring, not a generic LLM judge
 - Stage 4 and Stage 5 randomization protections are live
 - Stage 5 uses Tyler query roles plus structured search controls
+- Stage 5 and Stage 6 now use Tyler-style prompt contracts for `claim_ledger`,
+  `decision_critical_claim_ids`, and `user_response_for_dispute`
 - Stage 6 steering, evidence propagation, compaction, and non-dominant
   synthesis-model policy are live
 - Gemini strict-schema parity is landed in shared infra on `llm_client/main`
@@ -79,20 +81,16 @@ Current implementation frontier:
 - the first two frozen `prompt_eval` Tyler-literal vs calibrated-legacy
   comparisons are now complete
 - the next concrete work is:
-  - run the exhaustive Tyler packet audit against all four canonical source
-    files, not just the previously identified stage lanes
-  - use `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` to prove every Tyler source
-    section has been inventoried and audited
-  - continue to drive all real findings into `docs/TYLER_SPEC_GAP_LEDGER.md`
+  - keep the exhaustive Tyler packet audit complete and drive any new findings
+    into `docs/TYLER_SPEC_GAP_LEDGER.md`
   - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
-  - treat the resulting remaining local divergences as the next
-    implementation frontier because the ledger has now narrowed them to:
-    Tyler `PipelineState` trace parity, Stage 6 prompt-variable parity,
-    Stage 5/6 prompt data-structure parity, Stage 6 grounding
-    reject-and-retry, and Stage 6 final-report validation coverage
-  - keep the next remediation order explicit in
-    `docs/plans/tyler_gap_remediation_wave1.md`
+  - treat the remaining local divergences as the current implementation
+    frontier because the ledger now narrows them to:
+    Tyler `PipelineState` trace parity, Stage 6 grounding reject-and-retry,
+    and Stage 6 final-report validation coverage
+  - keep the remediation order explicit in
+    `docs/plans/tyler_post_audit_remediation_wave2.md`
   - keep the frozen comparison gate satisfied without treating broader eval as
     the current blocker
   - land remaining shared provider/model parity work
@@ -245,7 +243,12 @@ Current evaluation policy:
 
 ### Priority 4: Choose The Next Benchmark Wave Explicitly
 
-There is currently **no active repo-local implementation wave**.
+There is currently an active repo-local implementation wave:
+
+- `docs/plans/tyler_post_audit_remediation_wave2.md`
+
+That wave is now down to three remaining rows after Phase 1 closed the Stage
+5/6 prompt-contract parity fixes.
 
 **Candidates for a future explicit wave:**
 - recent-first evidence ranking

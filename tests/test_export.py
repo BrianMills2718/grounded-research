@@ -441,6 +441,114 @@ async def test_generate_tyler_synthesis_report_includes_stage5_additional_source
 
 
 @pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_passes_tyler_stage6_prompt_variables(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 6 should render from Tyler's claim-ledger-plus-ID-set interface."""
+    captured: dict[str, object] = {}
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        response_model = kwargs["response_model"]
+        return response_model(
+            executive_recommendation="Recommendation.",
+            conditions_of_validity=["Condition."],
+            decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
+            disagreement_map=[],
+            preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
+            key_assumptions=[],
+            confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
+            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
+            evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
+            evidence_gaps=[],
+            reasoning="Reasoning",
+            stage_summary=_stage_summary("Stage 6").model_dump(mode="json"),
+        ), {}
+
+    def fake_render_prompt(*args, **kwargs):
+        captured["claim_ledger"] = kwargs["claim_ledger"]
+        captured["decision_critical_claim_ids"] = kwargs["decision_critical_claim_ids"]
+        captured["user_response_for_dispute"] = kwargs["user_response_for_dispute"]
+        return [{"role": "user", "content": "prompt"}]
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", fake_render_prompt)
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
+
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        user_guidance_notes=["Prefer lower downside risk."],
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[SourceRecord(id="S-1", url="https://example.com", title="Source", quality_tier="authoritative")],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=_stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=VerificationResult(
+            disputes_investigated=[],
+            additional_sources=[],
+            updated_claim_ledger=[
+                ClaimLedgerEntry(
+                    id="C-1",
+                    statement="Decision-critical claim",
+                    source_models=["A"],
+                    evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                    source_references=["S-1"],
+                    status=TylerClaimStatus.VERIFIED,
+                    supporting_models=["A"],
+                    contesting_models=[],
+                    related_assumptions=[],
+                ),
+                ClaimLedgerEntry(
+                    id="C-2",
+                    statement="Non-critical claim",
+                    source_models=["A"],
+                    evidence_label=EvidenceLabel.VENDOR_DOCUMENTED,
+                    source_references=["S-1"],
+                    status=TylerClaimStatus.SUPPORTED,
+                    supporting_models=["A"],
+                    contesting_models=[],
+                    related_assumptions=[],
+                ),
+            ],
+            updated_dispute_queue=[
+                DisputeQueueEntry(
+                    id="D-1",
+                    type=DisputeType.PREFERENCE_WEIGHTED,
+                    description="Preference conflict",
+                    claims_involved=["C-1"],
+                    model_positions=[],
+                    decision_critical=True,
+                    decision_critical_rationale="critical",
+                    status=DisputeStatus.DEFERRED_TO_USER,
+                    resolution_routing="stage_6a_user",
+                )
+            ],
+            search_budget={},
+            rounds_used=1,
+            stage_summary=_stage_summary("Stage 5"),
+        ),
+    )
+
+    await generate_tyler_synthesis_report(state, trace_id="trace-root")
+
+    claim_ledger = captured["claim_ledger"]
+    assert isinstance(claim_ledger, list)
+    assert {claim["id"] for claim in claim_ledger} == {"C-1", "C-2"}
+    assert captured["decision_critical_claim_ids"] == {"C-1"}
+    assert captured["user_response_for_dispute"] == {"D-1": "Prefer lower downside risk."}
+
+
+@pytest.mark.asyncio
 async def test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_over_limit(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -466,7 +574,8 @@ async def test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_
         ), {}
 
     def fake_render_prompt(*args, **kwargs):
-        captured["noncritical_claims"] = kwargs["noncritical_claims"]
+        captured["claim_ledger"] = kwargs["claim_ledger"]
+        captured["decision_critical_claim_ids"] = kwargs["decision_critical_claim_ids"]
         return [{"role": "user", "content": "prompt"}]
 
     monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
@@ -549,10 +658,12 @@ async def test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_
 
     await generate_tyler_synthesis_report(state, trace_id="trace-root")
 
-    noncritical_claims = captured["noncritical_claims"]
-    assert isinstance(noncritical_claims, list)
-    assert set(noncritical_claims[0].keys()) == {"id", "statement", "status"}
-    assert noncritical_claims[0]["statement"].endswith("...")
+    claim_ledger = captured["claim_ledger"]
+    assert isinstance(claim_ledger, list)
+    assert captured["decision_critical_claim_ids"] == {"C-1"}
+    compacted_noncritical = next(claim for claim in claim_ledger if claim["id"] == "C-2")
+    assert set(compacted_noncritical.keys()) == {"id", "statement", "status"}
+    assert compacted_noncritical["statement"].endswith("...")
 
 
 @pytest.mark.asyncio

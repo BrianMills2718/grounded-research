@@ -78,12 +78,12 @@ messages:
       Decision-critical rationale: {{ dispute.decision_critical_rationale }}
 
       CONFLICTING CLAIMS:
-      {% for claim in claim_ledger %}
-      [{{ claim.id }}] {{ claim.statement }}
-        Evidence label: {{ claim.evidence_label }}
-        Source references: {{ claim.source_references | join(", ") }}
-        Supporting analysts: {{ claim.supporting_models | join(", ") }}
-        Contesting analysts: {{ claim.contesting_models | join(", ") }}
+      {% for claim_id in dispute.claims_involved %}
+      [{{ claim_id }}] {{ claim_ledger[claim_id].statement }}
+        Evidence label: {{ claim_ledger[claim_id].evidence_label }}
+        Source references: {{ claim_ledger[claim_id].source_references | join(", ") }}
+        Supporting analysts: {{ claim_ledger[claim_id].supporting_models | join(", ") }}
+        Contesting analysts: {{ claim_ledger[claim_id].contesting_models | join(", ") }}
       {% endfor %}
 
       ANALYST POSITIONS:

@@ -215,11 +215,12 @@ def test_tyler_stage5_arbitration_prompt_renders_literal_contract() -> None:
             "id": "D-1",
             "type": "empirical",
             "description": "Whether pilots changed employment.",
+            "claims_involved": ["C-1"],
             "decision_critical_rationale": "Could change the recommendation.",
             "model_positions": [{"model_alias": "A", "position": "No labor harm."}],
         },
-        claim_ledger=[
-            {
+        claim_ledger={
+            "C-1": {
                 "id": "C-1",
                 "statement": "Employment stayed flat.",
                 "evidence_label": "empirically_observed",
@@ -227,7 +228,7 @@ def test_tyler_stage5_arbitration_prompt_renders_literal_contract() -> None:
                 "supporting_models": ["A"],
                 "contesting_models": ["B"],
             }
-        ],
+        },
         relevant_original_sources=[
             {
                 "id": "S-1",
@@ -251,6 +252,7 @@ def test_tyler_stage5_arbitration_prompt_renders_literal_contract() -> None:
     assert "ARBITRATION RULES" in messages[0]["content"]
     assert "ANTI-CONFORMITY RULE" in messages[0]["content"]
     assert "DISPUTE TO RESOLVE" in messages[1]["content"]
+    assert "[C-1] Employment stayed flat." in messages[1]["content"]
     assert "NEW EVIDENCE" in messages[1]["content"]
 
 
@@ -259,8 +261,7 @@ def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
     messages = render_prompt(
         str(PROMPTS_DIR / "tyler_v1_synthesis.yaml"),
         original_query="Should cities adopt UBI pilots?",
-        stage_6_user_input="Prefer lower downside risk.",
-        decision_critical_claims=[
+        claim_ledger=[
             {
                 "id": "C-1",
                 "statement": "Claim one.",
@@ -270,9 +271,15 @@ def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
                 "supporting_models": ["A"],
                 "contesting_models": ["B"],
                 "related_assumptions": ["A-1"],
+            },
+            {
+                "id": "C-2",
+                "statement": "Claim two.",
+                "status": "contested",
             }
         ],
-        noncritical_claims=[],
+        decision_critical_claim_ids={"C-1"},
+        user_response_for_dispute={"D-1": "Prefer lower downside risk."},
         assumption_set=[
             {
                 "id": "A-1",
@@ -287,8 +294,8 @@ def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
                 "id": "D-1",
                 "type": "interpretive",
                 "description": "Interpretation conflict.",
-                "status": "resolved",
-                "resolution_details": "Resolved in Stage 5.",
+                "status": "deferred_to_user",
+                "resolution_details": "",
                 "remaining_uncertainty": "",
                 "decision_critical": True,
                 "decision_critical_rationale": "Changes answer.",
@@ -324,6 +331,8 @@ def test_tyler_stage6_synthesis_prompt_renders_literal_contract() -> None:
     assert "FALSE CONSENSUS" in messages[0]["content"]
     assert "CONDITIONS OF VALIDITY" in messages[0]["content"]
     assert "CLAIM LEDGER (decision-critical claims)" in messages[1]["content"]
+    assert "NON-CRITICAL CLAIMS (for context, lower priority)" in messages[1]["content"]
+    assert "User response: Prefer lower downside risk." in messages[1]["content"]
     assert "KEY EVIDENCE SOURCES" in messages[1]["content"]
     assert "Original query repeated" in messages[1]["content"]
 
@@ -349,4 +358,3 @@ def test_query_generation_prompt_renders_sub_question_mode() -> None:
     assert "generate exactly 4 queries" in messages[0]["content"]
     assert "Required topic anchors" in messages[1]["content"]
     assert "Universal Basic Income" in messages[1]["content"]
-

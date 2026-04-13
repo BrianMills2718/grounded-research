@@ -218,5 +218,18 @@ This plan is complete when:
 - each wave has explicit acceptance criteria,
 - and the remaining shared-infra-blocked rows stay outside `grounded-research`.
 
-Completed on 2026-04-08. All five local child remediation waves landed. The
-remaining Tyler work is now either shared-infra-owned or evaluation-owned.
+Completed on 2026-04-08. All five original local child remediation waves
+landed.
+
+The later exhaustive packet audit on 2026-04-12 reopened additional local
+rows above that earlier remediation layer:
+
+- `SC-PIPELINESTATE-001`
+- `S6-PROMPT-VARS-001`
+- `S5-S6-DATASTRUCT-001`
+- `S6-GROUNDING-001`
+- `S6-VALIDATION-COVERAGE-001`
+
+Those rows now belong to:
+
+- `docs/plans/tyler_post_audit_remediation_wave2.md`

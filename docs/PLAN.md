@@ -24,9 +24,9 @@ The phases in this plan are artifact boundaries.
 They are not a requirement to build one monolithic phase-runner or bespoke
 workflow engine.
 
-## Current Status (2026-04-08)
+## Current Status (2026-04-13)
 
-**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational, but the April 2026 clause-by-clause Tyler audit found additional live code/spec gaps.**
+**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational, and the April 2026 clause-by-clause Tyler audit is now driving the remaining local remediation rows explicitly.**
 
 See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
@@ -94,8 +94,11 @@ Current operational notes:
   Perplexity deep research
 - repo-local Tyler runtime migration, prompt-quality recovery, canonical
   cutover, and the first five local remediation phases are landed
-- the remaining Tyler gaps are now explicit shared-infra or evaluation lanes,
-  not known unresolved local Stage 1-6 contract/orchestration debt
+- the exhaustive Tyler audit reopened a smaller local frontier, and Phase 1 of
+  the post-audit remediation wave has already closed the Stage 5/6 prompt
+  contract rows
+- the remaining known local Tyler gaps are now exactly Tyler `PipelineState`
+  trace parity plus the two Stage 6 validation-behavior rows
 - there is no active repo-local compatibility-deletion wave left in `main`;
   the current frontier is the evidence-backed gap ledger plus the remediation
   waves it implies
@@ -162,9 +165,10 @@ Current open work is intentionally narrow:
   `docs/plans/current_shape_model_surface_deletion.md`,
   `docs/plans/stage5_internal_protocol_literalization.md`,
   `docs/plans/stage34_compatibility_protocol_deletion.md`
-- there is currently no active repo-local implementation wave; the next
-  concrete work is the faithful-Tyler remainder plan plus shared-infra
-  follow-through in `llm_client` / `open_web_retrieval`
+- there is an active repo-local implementation wave:
+  `docs/plans/tyler_post_audit_remediation_wave2.md`
+- the current concrete work is closing the three remaining local audited rows,
+  then returning to shared-infra follow-through only if the ledger stays clean
 - the first frozen shared-eval comparison is complete:
   `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
   over the archived calibrated legacy anchor on the tracked UBI case
@@ -178,16 +182,19 @@ Current open work is intentionally narrow:
 - the current frozen-eval gate is satisfied for the active implementation lane;
   broader eval is now optional unless a later regression wave needs it
 - the exhaustive Tyler audit has reopened active implementation gaps in this
-  repo: Tyler `PipelineState` trace parity, Stage 5/6 prompt-interface
-  literalness, and the Stage 6 grounding / final-report validation rows
+  repo, and Phase 1 of the post-audit remediation wave has already closed the
+  prompt-interface rows; the remaining local frontier is Tyler `PipelineState`
+  trace parity plus the Stage 6 grounding / final-report validation rows
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
   `docs/plans/tyler_spec_gap_audit_wave1.md`
 - completed audit-governance wave:
   `docs/plans/tyler_audit_governance_wave1.md`
-- active remediation planner:
+- historical remediation planner:
   `docs/plans/tyler_gap_remediation_wave1.md`
+- active post-audit remediation planner:
+  `docs/plans/tyler_post_audit_remediation_wave2.md`
 - planned remediation-support maintainability wave:
   `docs/plans/post_audit_maintainability_wave1.md`
 - canonical gap ledger:
@@ -217,7 +224,6 @@ Current open work is intentionally narrow:
   before the ledger existed
 - completed provider-cutover wave:
   `docs/plans/tavily_integration_wave1.md`
-- there is currently no active repo-local implementation wave
 - completed eval-expansion wave:
   `docs/plans/tyler_literal_default_eval_wave2.md`
 - completed technical-breadth eval wave:

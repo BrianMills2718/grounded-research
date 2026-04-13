@@ -457,6 +457,16 @@ def _randomize_dispute_model_positions(
     return dispute_payload
 
 
+def _build_stage5_claim_ledger_prompt_payload(
+    claim_ledger_entries: list[ClaimLedgerEntry],
+) -> dict[str, dict[str, object]]:
+    """Convert the Stage 5 claim ledger into Tyler's dict-by-id prompt surface."""
+    return {
+        claim.id: claim.model_dump(mode="json")
+        for claim in claim_ledger_entries
+    }
+
+
 async def arbitrate_dispute_tyler_v1(
     *,
     original_query: str,
@@ -475,7 +485,9 @@ async def arbitrate_dispute_tyler_v1(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_arbitration.yaml"),
         original_query=original_query,
         dispute=randomized_dispute,
-        claim_ledger=[claim.model_dump(mode="json") for claim in claim_ledger_entries],
+        claim_ledger=_build_stage5_claim_ledger_prompt_payload(
+            list(claim_ledger_entries)
+        ),
         relevant_original_sources=[source.model_dump(mode="json") for source in relevant_original_sources],
         new_evidence=[source.model_dump(mode="json") for source in new_evidence],
         response_schema_json=ArbitrationAssessment.model_json_schema(),

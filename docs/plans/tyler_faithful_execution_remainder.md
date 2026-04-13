@@ -214,16 +214,14 @@ Repo-local:
    already identified real local divergences in Stage 1, Stage 2, Stage 3,
    Stage 4, Stage 5, and Stage 6
 2. the canonical gap list now lives in `docs/TYLER_SPEC_GAP_LEDGER.md`
-3. exhaustive packet audit has reopened a concrete Stage 2 local divergence:
-   query variant generation is currently an LLM call, while Tyler's Build Plan
-   and Prompt packet both specify orchestrator-expanded string templates
-4. exhaustive packet audit has reopened concrete Stage 6 local divergences:
-   Tyler's schema packet requires grounding failures to reject and retry once,
-   and it lists additional final-report validation rules that the live repair
-   loop currently enforces only partially
-5. exhaustive packet audit has narrowed a Stage 3 packet-level ambiguity:
-   Build Plan and Prompt packet disagree on the Claude/Gemini B/C frame
-   assignment, and the repo currently follows the Prompt packet
+3. the exhaustive packet audit matrix now has full source coverage across all
+   four Tyler files
+4. the current remaining local rows are exactly:
+   - `SC-PIPELINESTATE-001`
+   - `S6-GROUNDING-001`
+   - `S6-VALIDATION-COVERAGE-001`
+5. those rows are now sequenced under:
+   - `docs/plans/tyler_post_audit_remediation_wave2.md`
 
 Shared infra:
 
@@ -260,8 +258,9 @@ Faithful Tyler execution can be claimed only if:
 
 Current accurate claim:
 
-- the Tyler implementation lane is complete for the currently audited packet scope,
-- and one documented operational watch item remains on frontier-model variability.
+- the Tyler implementation lane is not yet complete for the fully audited packet scope,
+- three explicit local rows remain under the post-audit remediation wave,
+- and one separate documented operational watch item remains on frontier-model variability.
 
 ## Canonical Status Surface
 
