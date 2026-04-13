@@ -177,9 +177,9 @@ Current open work is intentionally narrow:
   `llm_swe` case
 - the current frozen-eval gate is satisfied for the active implementation lane;
   broader eval is now optional unless a later regression wave needs it
-- there are currently no active implementation gaps in this repo; the only
-  remaining uncertainty is a policy-governed operational watch on frontier
-  model variability
+- the exhaustive Tyler audit has reopened active implementation gaps in this
+  repo: Tyler `PipelineState` trace parity plus the Stage 6 grounding and
+  final-report validation rows
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
@@ -371,8 +371,10 @@ Build:
 - `prompts/`
 - `docs/DOMAIN_MODEL.md` (done)
 - Pydantic schemas (done)
-- `PipelineState` (done)
-- trace serialization (done — `PipelineState.model_dump_json()`)
+- `PipelineState` (repo-local trace model done; exact Tyler trace parity is
+  now tracked separately under `SC-PIPELINESTATE-001`)
+- trace serialization (repo-local trace path done; Tyler-literal trace
+  contract still under exhaustive audit)
 - dry-run CLI scaffold
 - canonical notebook alignment (done)
 

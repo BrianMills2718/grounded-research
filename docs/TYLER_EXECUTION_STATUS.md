@@ -58,14 +58,24 @@ Every item is classified as one of:
 
 ## Required: Active Implementation Gaps
 
-1. Stage 6 grounding reject-and-retry
+1. Tyler `PipelineState` / `trace.json` parity
+   - Tyler's Schema packet defines the trace artifact as a serialized
+     `PipelineState` with `stage_1_result` ... `stage_6_result`,
+     `stage_5_skipped`, `stage_6_user_input`, `errors`, and `total_cost_usd`.
+   - The live runtime still writes the repo-local `grounded_research.models`
+     trace object instead, with a different top-level shape
+     (`run_id` / `current_phase` / `user_guidance_notes` / `phase_traces`,
+     etc.).
+   - Canonical row: `SC-PIPELINESTATE-001`
+
+2. Stage 6 grounding reject-and-retry
    - Tyler's Schema packet says post-synthesis grounding failures should
      reject and retry once.
    - The live runtime validates grounding only after Stage 6 completes and
      currently records failures as warnings while still writing the report.
    - Canonical row: `S6-GROUNDING-001`
 
-2. Stage 6 final-report validation coverage
+3. Stage 6 final-report validation coverage
    - Tyler's Schema packet lists several explicit final-report validation
      rules beyond zombie checks and grounding.
    - The live repair loop currently enforces only a subset of them.
@@ -86,6 +96,17 @@ Every item is classified as one of:
    - Tyler's Stage 2 `Finding` schema does not include a reasoning field.
    - Current repo preserves Tyler's schema and documents the conflict explicitly.
    - Canonical row: `AMB-S2-REASONING-001`
+
+2. Stage 6a dispute status semantics
+   - Tyler's Schema packet says `DEFERRED_TO_USER` means the dispute was
+     surfaced through terminal user steering.
+   - But Tyler's Build Plan, Design packet, and Schema trigger pseudocode all
+     filter only `UNRESOLVED` disputes for the Stage 6a interrupt.
+   - The Stage 6b prompt packet then branches on both `deferred_to_user` and
+     `unresolved`.
+   - Current repo documents this as a Tyler-internal inconsistency and keeps
+     both statuses in the live Stage 6a selection helper.
+   - Canonical row: `AMB-S6A-STATUS-001`
 
 ## Extension: Present But Not Tyler-Required
 

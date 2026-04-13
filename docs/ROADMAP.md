@@ -84,15 +84,18 @@ Current implementation frontier:
   - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
   - treat the resulting remaining high-severity local divergences as the next
-    implementation frontier because the ledger has now narrowed them to
-    specific Stage 6 validation rows
+    implementation frontier because the ledger has now narrowed them to:
+    Tyler `PipelineState` trace parity, Stage 6 grounding reject-and-retry,
+    and Stage 6 final-report validation coverage
   - keep the next remediation order explicit in
     `docs/plans/tyler_gap_remediation_wave1.md`
   - keep the frozen comparison gate satisfied without treating broader eval as
     the current blocker
   - land remaining shared provider/model parity work
   - preserve the new shared Tavily-backed search path as the quality-first default
-  - keep the one Tyler-internal Stage 2 prompt/schema ambiguity documented rather than papered over
+  - keep the Tyler-internal ambiguities documented rather than papered over:
+    the Stage 2 reasoning-field conflict and the Stage 6a
+    `unresolved`/`deferred_to_user` status inconsistency
 
 See:
 
