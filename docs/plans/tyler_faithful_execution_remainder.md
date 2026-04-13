@@ -214,6 +214,12 @@ Repo-local:
    already identified real local divergences in Stage 1, Stage 2, Stage 3,
    Stage 4, Stage 5, and Stage 6
 2. the canonical gap list now lives in `docs/TYLER_SPEC_GAP_LEDGER.md`
+3. exhaustive packet audit has reopened a concrete Stage 2 local divergence:
+   query variant generation is currently an LLM call, while Tyler's Build Plan
+   and Prompt packet both specify orchestrator-expanded string templates
+4. exhaustive packet audit has narrowed a Stage 3 packet-level ambiguity:
+   Build Plan and Prompt packet disagree on the Claude/Gemini B/C frame
+   assignment, and the repo currently follows the Prompt packet
 
 Shared infra:
 

@@ -5,17 +5,19 @@
 
 ## Current State
 
-**v0.1.0 shipped.** The live repo is now Tyler-native on the local Stage 1-6
-runtime path, the three-case frozen-eval gate is satisfied for the current
-lane, and no active Tyler implementation gaps remain in `grounded-research`.
-The only remaining item is a policy-governed operational watch on frontier
-model variability.
+**v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
+runtime path and the three-case frozen-eval gate is satisfied for the current
+lane, but the exhaustive Tyler packet audit has now reopened a narrow local
+Stage 2 implementation gap and a Stage 3 packet ambiguity. The frontier-model
+variability item remains a separate policy-governed operational watch.
 
 Current operational reality:
 
 - Tyler-native Stage 1-6 runtime and export/handoff contracts are the live path
 - Stage 1 runs without a separate validation stage
-- Stage 2 uses model-driven query diversification and routed Tavily/Exa search
+- Stage 2 currently uses routed Tavily/Exa search, but the exhaustive audit
+  has reopened whether query diversification should be an orchestrator string
+  template rather than the current model call
 - Stage 2 quality scoring is deterministic authority/freshness/staleness
   scoring, not a generic LLM judge
 - Stage 4 and Stage 5 randomization protections are live

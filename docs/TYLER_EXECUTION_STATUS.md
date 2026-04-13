@@ -37,9 +37,9 @@ Every item is classified as one of:
 15. Stage 6 evidence-context completeness
 16. Stage 6 context-compaction parity
 17. Stage 6 non-dominant synthesis-model policy
-18. Default Stage 3 B/C frame-model mapping
+18. Default Stage 3 B/C frame-model mapping following the Prompt packet's
+    explicit assignment
 19. Stage 1 no-validation parity
-20. Stage 2 model-driven query diversification
 21. Stage 2 Tavily/Exa routing-by-query-type
 22. Stage 2 literal quality-score pipeline
 23. Stage 5 exact verification-query role parity
@@ -58,7 +58,13 @@ Every item is classified as one of:
 
 ## Required: Active Implementation Gaps
 
-None.
+1. Stage 2 query variant generation
+   - Exhaustive packet audit reopened this row.
+   - Tyler's Build Plan and Prompt packet both specify orchestrator-expanded
+     string templates, not an LLM call.
+   - The live runtime still uses `acall_llm_structured(...)` plus
+     `prompts/tyler_v1_query_diversification.yaml`.
+   - Canonical row: `S2-QUERY-MODEL-001`
 
 ## Operational Watch
 
@@ -74,6 +80,15 @@ None.
    - Tyler's shared output instructions imply a reasoning field everywhere.
    - Tyler's Stage 2 `Finding` schema does not include a reasoning field.
    - Current repo preserves Tyler's schema and documents the conflict explicitly.
+
+2. Stage 3 frame assignment packet conflict
+   - Tyler's Build Plan assigns Claude Opus to `structured_decomposition` and
+     Gemini to `verification_first`.
+   - Tyler's Prompt packet assigns Gemini to `structured_decomposition` and
+     Claude Opus to `verification_first`, and calls out the discrepancy
+     explicitly.
+   - Current repo follows the Prompt packet assignment.
+   - Canonical row: `AMB-S3-FRAME-001`
 
 ## Extension: Present But Not Tyler-Required
 
