@@ -194,6 +194,10 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_systematic_review_wave2.md`
 - compact review tracker:
   `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
+- active exhaustive Tyler packet audit wave:
+  `docs/plans/tyler_full_spec_exhaustive_audit_wave1.md`
+- exhaustive source coverage tracker:
+  `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
 - completed shared exact-model follow-through:
   `docs/plans/tyler_shared_model_version_parity_wave1.md`
 - completed app-local exact-model switch wave:

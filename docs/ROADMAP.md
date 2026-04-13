@@ -72,11 +72,12 @@ Current implementation frontier:
 - the first two frozen `prompt_eval` Tyler-literal vs calibrated-legacy
   comparisons are now complete
 - the next concrete work is:
-  - run a clause-by-clause code-vs-spec audit against Tyler's packet and
-    populate the canonical gap ledger
-  - use the new systematic review program and compact review matrix to
-    re-review each remaining lane with explicit evidence requirements
-  - keep the new Tyler audit-governance layer active so future status claims
+  - run the exhaustive Tyler packet audit against all four canonical source
+    files, not just the previously identified stage lanes
+  - use `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` to prove every Tyler source
+    section has been inventoried and audited
+  - continue to drive all real findings into `docs/TYLER_SPEC_GAP_LEDGER.md`
+  - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
   - treat the resulting high-severity local divergences as the next
     implementation frontier because the ledger has now confirmed them
