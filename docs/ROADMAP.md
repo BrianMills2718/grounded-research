@@ -7,18 +7,19 @@
 
 **v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
 runtime path and the three-case frozen-eval gate is satisfied for the current
-lane, but the exhaustive Tyler packet audit has now reopened several narrow
-local gaps in Stage 2 and Stage 6 plus a Stage 3 packet ambiguity. The
-frontier-model variability item remains a separate policy-governed
-operational watch.
+lane. The exhaustive Tyler packet audit has now narrowed the remaining local
+work to two Stage 6 validation gaps; earlier Stage 2 and Stage 3 reopenings
+were corrected as audit-process false positives rather than real runtime/spec
+mismatches. The frontier-model variability item remains a separate
+policy-governed operational watch.
 
 Current operational reality:
 
 - Tyler-native Stage 1-6 runtime and export/handoff contracts are the live path
 - Stage 1 runs without a separate validation stage
-- Stage 2 currently uses routed Tavily/Exa search, but the exhaustive audit
-  has reopened whether query diversification should be an orchestrator string
-  template rather than the current model call
+- Stage 2 currently uses routed Tavily/Exa search, and the full packet audit
+  confirmed the current lightweight-model query-diversification path is
+  Tyler-literal
 - Stage 2 quality scoring is deterministic authority/freshness/staleness
   scoring, not a generic LLM judge
 - Stage 4 and Stage 5 randomization protections are live
@@ -82,8 +83,9 @@ Current implementation frontier:
   - continue to drive all real findings into `docs/TYLER_SPEC_GAP_LEDGER.md`
   - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
-  - treat the resulting high-severity local divergences as the next
-    implementation frontier because the ledger has now confirmed them
+  - treat the resulting remaining high-severity local divergences as the next
+    implementation frontier because the ledger has now narrowed them to
+    specific Stage 6 validation rows
   - keep the next remediation order explicit in
     `docs/plans/tyler_gap_remediation_wave1.md`
   - keep the frozen comparison gate satisfied without treating broader eval as

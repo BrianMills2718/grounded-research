@@ -58,24 +58,14 @@ Every item is classified as one of:
 
 ## Required: Active Implementation Gaps
 
-1. Stage 2 query variant generation
-   - Exhaustive packet audit reopened this row.
-   - Tyler's Build Plan and Prompt packet both specify orchestrator-expanded
-     string templates, not an LLM call.
-   - The live runtime still uses `acall_llm_structured(...)` plus
-     `prompts/tyler_v1_query_diversification.yaml`.
-   - The live query-plan roles also differ from Tyler's formal /
-     practitioner / academic / colloquial / contrarian template family.
-   - Canonical rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`
-
-2. Stage 6 grounding reject-and-retry
+1. Stage 6 grounding reject-and-retry
    - Tyler's Schema packet says post-synthesis grounding failures should
      reject and retry once.
    - The live runtime validates grounding only after Stage 6 completes and
      currently records failures as warnings while still writing the report.
    - Canonical row: `S6-GROUNDING-001`
 
-3. Stage 6 final-report validation coverage
+2. Stage 6 final-report validation coverage
    - Tyler's Schema packet lists several explicit final-report validation
      rules beyond zombie checks and grounding.
    - The live repair loop currently enforces only a subset of them.
@@ -96,15 +86,6 @@ Every item is classified as one of:
    - Tyler's Stage 2 `Finding` schema does not include a reasoning field.
    - Current repo preserves Tyler's schema and documents the conflict explicitly.
    - Canonical row: `AMB-S2-REASONING-001`
-
-2. Stage 3 frame assignment packet conflict
-   - Tyler's Build Plan assigns Claude Opus to `structured_decomposition` and
-     Gemini to `verification_first`.
-   - Tyler's Prompt packet assigns Gemini to `structured_decomposition` and
-     Claude Opus to `verification_first`, and calls out the discrepancy
-     explicitly.
-   - Current repo follows the Prompt packet assignment.
-   - Canonical row: `AMB-S3-FRAME-001`
 
 ## Extension: Present But Not Tyler-Required
 

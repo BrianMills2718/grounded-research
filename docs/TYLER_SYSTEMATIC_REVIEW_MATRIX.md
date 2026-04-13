@@ -25,12 +25,12 @@ This matrix exists to make the review itself mechanical:
 | review_id | scope | review focus | evidence required | current source of truth | status | next artifact |
 |---|---|---|---|---|---|---|
 | R1 | Stage 1 | prompt, schema, no-validation runtime path | static review + stage runtime test | `S1-VALIDATION-001` | done | ledger only |
-| R2 | Stage 2 | query diversification mechanism and variant family | static review + stage runtime test | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001` | active | ledger only |
+| R2 | Stage 2 | query diversification mechanism and variant family | static review + stage runtime test | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`, `DOC-S2-QUERY-002` | done | ledger only |
 | R3 | Stage 2 | provider routing by query type | behavior check or runtime test | `S2-ROUTING-001` | done | ledger only |
 | R4 | Stage 2 | quality scoring pipeline | static review + deterministic test | `S2-QUALITY-001` | done | ledger only |
 | R5 | Stage 2 | Tavily depth behavior from consumer boundary | request-body or adapter verification | `S2-TAVILY-DEPTH-001` | done | ledger only |
 | R6 | Stage 2 | Exa retrieval instruction/control behavior | request-body or adapter verification | `S2-EXA-CONTROLS-001` | done | ledger only |
-| R7 | Stage 3 | frame/model assignment and packet-level assignment conflict | static review + config/runtime test | `S3-FRAME-MODEL-001`, `AMB-S3-FRAME-001` | active | ledger only |
+| R7 | Stage 3 | frame/model assignment and role-label interpretation | static review + config/runtime test | `S3-FRAME-MODEL-001`, `AMB-S3-FRAME-001` | done | ledger only |
 | R8 | Stage 3 | exact Tyler model-version parity | config review + shared ownership review | `S3-MODEL-VERSION-001` | done | ledger only |
 | R9 | Stage 4 | analyst-order randomization | behavior test | `S4-ORDER-RANDOMIZATION-001` | done | ledger only |
 | R10 | Stage 5 | query roles | runtime test | `S5-QUERY-ROLES-001` | done | ledger only |
@@ -46,23 +46,13 @@ This matrix exists to make the review itself mechanical:
 
 ## Immediate Open Lanes
 
-The exhaustive Tyler packet audit reopened two previously closed lanes:
+The exhaustive Tyler packet audit currently has one still-open local review lane:
 
-1. `R2` — Stage 2 query diversification mechanism
-   - Earlier review waves incorrectly treated Tyler query diversification as a
-     lightweight model call.
-   - Build Plan and Prompt packet both specify orchestrator-expanded string
-     templates.
-   - The live query-plan roles also differ from Tyler's formal / practitioner /
-     academic / colloquial / contrarian template family.
-2. `R7` — Stage 3 frame/model assignment packet conflict
-   - The Build Plan and Prompt packet disagree about whether Claude Opus or
-     Gemini owns `structured_decomposition` vs `verification_first`.
-3. `R19` — Stage 6 validation behavior
+1. `R19` — Stage 6 validation behavior
    - Tyler requires a post-synthesis reject-and-retry on grounding failure.
    - Tyler also lists additional final-report validation rules that the live
      repair loop does not currently enforce.
-4. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
+2. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
    documented policy threshold
 
 ## Review Rule
