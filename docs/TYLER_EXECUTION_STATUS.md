@@ -73,6 +73,12 @@ Every item is classified as one of:
      currently records failures as warnings while still writing the report.
    - Canonical row: `S6-GROUNDING-001`
 
+3. Stage 6 final-report validation coverage
+   - Tyler's Schema packet lists several explicit final-report validation
+     rules beyond zombie checks and grounding.
+   - The live repair loop currently enforces only a subset of them.
+   - Canonical row: `S6-VALIDATION-COVERAGE-001`
+
 ## Operational Watch
 
 1. Frontier-model runtime / model-policy watch item

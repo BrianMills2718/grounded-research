@@ -7,10 +7,10 @@
 
 **v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
 runtime path and the three-case frozen-eval gate is satisfied for the current
-lane, but the exhaustive Tyler packet audit has now reopened two local gaps
-(Stage 2 query generation and Stage 6 grounding retry) plus a Stage 3 packet
-ambiguity. The frontier-model variability item remains a separate
-policy-governed operational watch.
+lane, but the exhaustive Tyler packet audit has now reopened several narrow
+local gaps in Stage 2 and Stage 6 plus a Stage 3 packet ambiguity. The
+frontier-model variability item remains a separate policy-governed
+operational watch.
 
 Current operational reality:
 
