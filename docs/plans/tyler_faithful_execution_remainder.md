@@ -1,6 +1,6 @@
 # Tyler Faithful Execution Remainder
 
-**Status:** Active
+**Status:** Completed
 **Type:** remainder plan
 **Priority:** High
 
@@ -9,15 +9,16 @@
 Define the smallest remaining work required to say, precisely and defensibly,
 that `grounded-research` has faithfully executed Tyler's V1 plan.
 
-This plan exists because repo-local runtime cutover is already complete, but a
-clause-by-clause audit has now shown that several Tyler-required local and
-shared gaps still remain:
+This plan exists because repo-local runtime cutover was not enough by itself;
+the clause-by-clause audit had to close the remaining Tyler-required local and
+shared gaps explicitly before faithful Tyler execution could be claimed.
 
 - earlier prompt-literalness and parity waves landed, but the canonical gap
   ledger now overrules any stale "closure" claims
 - frozen eval evidence now covers three matched Tyler-vs-legacy cases, but it
   is still narrow directional evidence rather than broad proof
-- Tyler-specified provider/model parity still depends on shared infrastructure
+- Tyler-specified provider/model parity required shared infrastructure work and
+  explicit closure evidence rather than assumption
 
 ## Non-Goals
 
@@ -59,7 +60,7 @@ This remainder plan is complete only if:
 
 ### Phase 0: Install Audit Governance
 
-**Status:** Active
+**Status:** Completed
 
 Scope:
 
@@ -177,7 +178,7 @@ Failure modes:
 
 ### Phase 4: Clause-By-Clause Spec Gap Audit
 
-**Status:** Active
+**Status:** Completed
 
 Scope:
 
@@ -210,15 +211,14 @@ Failure modes:
 
 Repo-local:
 
-1. clause-by-clause Tyler gap audit ledger is now partially populated and has
-   already identified real local divergences in Stage 1, Stage 2, Stage 3,
-   Stage 4, Stage 5, and Stage 6
+1. clause-by-clause Tyler gap audit ledger is fully populated for the audited
+   Tyler packet scope and recorded real local divergences across Stages 1-6
 2. the canonical gap list now lives in `docs/TYLER_SPEC_GAP_LEDGER.md`
 3. the exhaustive packet audit matrix now has full source coverage across all
    four Tyler files
-4. the current remaining local rows are exactly:
-   - `SC-PIPELINESTATE-001`
-5. those rows are now sequenced under:
+4. the current remaining local rows are:
+   - none
+5. the final local remediation row was closed under:
    - `docs/plans/tyler_post_audit_remediation_wave2.md`
 
 Shared infra:
@@ -256,8 +256,8 @@ Faithful Tyler execution can be claimed only if:
 
 Current accurate claim:
 
-- the Tyler implementation lane is not yet complete for the fully audited packet scope,
-- one explicit local row remains under the post-audit remediation wave,
+- the Tyler implementation lane is complete for the fully audited packet scope,
+- there are no active local implementation rows remaining,
 - and one separate documented operational watch item remains on frontier-model variability.
 
 ## Canonical Status Surface

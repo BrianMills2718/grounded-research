@@ -6,13 +6,13 @@
 ## Current State
 
 **v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
-runtime path and the three-case frozen-eval gate is satisfied for the current
-lane. The exhaustive Tyler packet audit matrix now has full coverage of the
-four canonical Tyler files, and the first two post-audit remediation slices
-have already closed the Stage 5/6 prompt-contract rows plus the Stage 6
-validation-behavior rows. The remaining local work is now one concrete row:
-Tyler `PipelineState` trace parity. Earlier Stage 2 and Stage 3 reopenings
-were corrected as audit-process false positives rather than real runtime/spec
+runtime path, the three-case frozen-eval gate is satisfied for the current
+lane, the exhaustive Tyler packet audit matrix has full coverage of the four
+canonical Tyler files, and the post-audit remediation wave is complete. The
+previously reopened local rows are now closed, including the Stage 5/6 prompt
+contract rows, the Stage 6 validation-behavior rows, and Tyler
+`PipelineState` trace parity. Earlier Stage 2 and Stage 3 reopenings were
+corrected as audit-process false positives rather than real runtime/spec
 mismatches. The frontier-model variability item remains a separate
 policy-governed operational watch.
 
@@ -85,11 +85,10 @@ Current implementation frontier:
     into `docs/TYLER_SPEC_GAP_LEDGER.md`
   - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
-  - treat the remaining local divergences as the current implementation
-    frontier because the ledger now narrows them to Tyler `PipelineState`
-    trace parity
-  - keep the remediation order explicit in
-    `docs/plans/tyler_post_audit_remediation_wave2.md`
+  - keep the ledger and status docs truthful now that the recorded local
+    implementation rows are closed
+  - treat future repo-local work as reopen-only, triggered by new
+    evidence-backed ledger rows rather than speculative cleanup
   - keep the frozen comparison gate satisfied without treating broader eval as
     the current blocker
   - land remaining shared provider/model parity work

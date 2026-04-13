@@ -26,7 +26,7 @@ workflow engine.
 
 ## Current Status (2026-04-13)
 
-**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational, and the April 2026 clause-by-clause Tyler audit is now driving the remaining local remediation rows explicitly.**
+**v0.1.0 shipped. 47/52 scorecard features implemented. Full pipeline operational, and the April 2026 clause-by-clause Tyler audit plus the post-audit remediation wave are now closed.**
 
 See `docs/ROADMAP.md` for the forward-looking plan and priorities.
 See `docs/FEATURE_STATUS.md` for the complete scorecard mapping.
@@ -97,8 +97,8 @@ Current operational notes:
 - the exhaustive Tyler audit reopened a smaller local frontier, and Phase 1 of
   the post-audit remediation wave has already closed the Stage 5/6 prompt
   contract rows
-- the remaining known local Tyler gaps are now exactly Tyler `PipelineState`
-  trace parity plus the two Stage 6 validation-behavior rows
+- the previously reopened local Tyler gaps are now closed, including the Stage 6
+  validation rows and Tyler `PipelineState` trace parity
 - there is no active repo-local compatibility-deletion wave left in `main`;
   the current frontier is the evidence-backed gap ledger plus the remediation
   waves it implies
@@ -165,10 +165,10 @@ Current open work is intentionally narrow:
   `docs/plans/current_shape_model_surface_deletion.md`,
   `docs/plans/stage5_internal_protocol_literalization.md`,
   `docs/plans/stage34_compatibility_protocol_deletion.md`
-- there is an active repo-local implementation wave:
+- the post-audit repo-local implementation wave is completed:
   `docs/plans/tyler_post_audit_remediation_wave2.md`
-- the current concrete work is closing the single remaining local audited row,
-  then returning to shared-infra follow-through only if the ledger stays clean
+- there are no active local audited rows; future repo-local work should reopen
+  only if the ledger records a new concrete divergence
 - the first frozen shared-eval comparison is complete:
   `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
   over the archived calibrated legacy anchor on the tracked UBI case
@@ -181,19 +181,18 @@ Current open work is intentionally narrow:
   `llm_swe` case
 - the current frozen-eval gate is satisfied for the active implementation lane;
   broader eval is now optional unless a later regression wave needs it
-- the exhaustive Tyler audit reopened active implementation gaps in this repo,
-  and Phases 1-2 of the post-audit remediation wave have already closed the
-  prompt-contract and Stage 6 validation rows; the remaining local frontier is
-  Tyler `PipelineState` trace parity
-- active remainder plan:
+- the exhaustive Tyler audit reopened implementation gaps in this repo, and the
+  post-audit remediation wave has now closed the prompt-contract, Stage 6
+  validation, and Tyler `PipelineState` trace rows
+- completed remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
-- active audit wave:
+- completed audit wave:
   `docs/plans/tyler_spec_gap_audit_wave1.md`
 - completed audit-governance wave:
   `docs/plans/tyler_audit_governance_wave1.md`
 - historical remediation planner:
   `docs/plans/tyler_gap_remediation_wave1.md`
-- active post-audit remediation planner:
+- completed post-audit remediation planner:
   `docs/plans/tyler_post_audit_remediation_wave2.md`
 - planned remediation-support maintainability wave:
   `docs/plans/post_audit_maintainability_wave1.md`
@@ -203,13 +202,12 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_systematic_review_wave2.md`
 - compact review tracker:
   `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
-- active exhaustive Tyler packet audit wave:
+- completed exhaustive Tyler packet audit wave:
   `docs/plans/tyler_full_spec_exhaustive_audit_wave1.md`
 - exhaustive source coverage tracker:
   `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
-- the exhaustive Tyler packet matrix now has full source coverage; the
-  remaining work is resolving the recorded ledger rows, not filling inventory
-  holes
+- the exhaustive Tyler packet matrix has full source coverage and the recorded
+  local ledger rows are closed
 - completed shared exact-model follow-through:
   `docs/plans/tyler_shared_model_version_parity_wave1.md`
 - completed app-local exact-model switch wave:
@@ -380,10 +378,10 @@ Build:
 - `prompts/`
 - `docs/DOMAIN_MODEL.md` (done)
 - Pydantic schemas (done)
-- `PipelineState` (repo-local trace model done; exact Tyler trace parity is
-  now tracked separately under `SC-PIPELINESTATE-001`)
-- trace serialization (repo-local trace path done; Tyler-literal trace
-  contract still under exhaustive audit)
+- `PipelineState` (repo-local runtime state model done; Tyler-literal trace
+  projection is also landed)
+- trace serialization (Tyler-literal trace contract now landed on both success
+  and failure paths)
 - dry-run CLI scaffold
 - canonical notebook alignment (done)
 

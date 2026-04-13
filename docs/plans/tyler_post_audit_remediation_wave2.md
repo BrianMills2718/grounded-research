@@ -3,11 +3,11 @@
 `docs/PLAN.md` remains the canonical repo-level plan. This file turns the
 post-exhaustive-audit ledger rows into the new local remediation sequence.
 
-**Status:** Active
+**Status:** Completed
 **Type:** design
 **Priority:** High
 **Blocked By:** `docs/TYLER_SPEC_GAP_LEDGER.md`
-**Blocks:** Remaining local Tyler remediation implementation waves
+**Blocks:** None
 
 ---
 
@@ -27,9 +27,7 @@ Phase 2 of this wave landed on 2026-04-13 and closed:
 1. `S6-GROUNDING-001`
 2. `S6-VALIDATION-COVERAGE-001`
 
-The active local frontier is now exactly:
-
-1. `SC-PIPELINESTATE-001`
+All post-audit local remediation rows are now closed.
 
 ---
 
@@ -49,7 +47,8 @@ If this plan and the ledger disagree, trust the ledger.
 
 ### In Scope
 
-Verified **local** divergences still open after exhaustive packet coverage:
+This wave closed the final verified **local** divergence after exhaustive
+packet coverage:
 
 1. Tyler `PipelineState` trace parity
 
@@ -143,7 +142,7 @@ Failure modes:
 
 ### Phase 3: Tyler `PipelineState` Trace Parity
 
-**Status:** Active
+**Status:** Completed on 2026-04-13
 
 Rows:
 
@@ -191,6 +190,6 @@ This plan is complete when:
 
 - the remaining row above has either been fixed or explicitly reclassified by
   evidence,
-- `docs/TYLER_EXECUTION_STATUS.md` no longer lists them as active local gaps,
-- and the repo-local Tyler frontier returns to either zero active implementation
-  gaps or a strictly smaller, evidence-backed set.
+- `docs/TYLER_EXECUTION_STATUS.md` no longer lists active local gaps,
+- and the repo-local Tyler frontier returns to zero active implementation
+  gaps.

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import json
 from pathlib import Path
+import uuid
 
 import pytest
 
@@ -12,6 +15,7 @@ from grounded_research.export import (
     generate_tyler_synthesis_report,
     render_long_report,
     validate_tyler_grounding,
+    write_tyler_trace,
     write_outputs,
 )
 from grounded_research.models import (
@@ -44,6 +48,7 @@ from grounded_research.tyler_v1_models import (
     StageSummary,
     SubQuestion as TylerSubQuestion,
     SubQuestionEvidence,
+    PipelineState as TylerPipelineState,
     SynthesisReport,
     Tradeoff,
     VerificationResult,
@@ -1113,6 +1118,85 @@ def test_write_outputs_prefers_tyler_summary_when_present(tmp_path: Path) -> Non
     assert "## Executive Recommendation" in summary
     assert "Recommendation based on C-1." in summary
     assert "report" in paths
+
+
+def test_write_outputs_writes_tyler_pipeline_state_trace(tmp_path: Path) -> None:
+    """Trace output should serialize Tyler's canonical PipelineState contract."""
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[
+                SourceRecord(
+                    id="S-1",
+                    url="https://example.com/source",
+                    title="Source",
+                    quality_tier="authoritative",
+                )
+            ],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=_stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=_stage5_result_for_report(),
+        tyler_stage_6_result=_tyler_report(),
+        user_guidance_notes=["D-1: prioritize stable outcomes."],
+        current_phase="complete",
+        success=True,
+        completed_at=datetime.now(timezone.utc),
+    )
+
+    paths = write_outputs(state, tmp_path, long_report_md="# Long report")
+
+    raw_trace = json.loads(paths["trace"].read_text())
+    TylerPipelineState.model_validate(raw_trace)
+
+    assert raw_trace["original_query"] == "What is the evidence?"
+    assert raw_trace["current_stage"] == 6
+    assert raw_trace["stage_5_skipped"] is False
+    assert raw_trace["stage_6_user_input"] == "D-1: prioritize stable outcomes."
+    assert "run_id" not in raw_trace
+    assert "question" not in raw_trace
+    assert "evidence_bundle" not in raw_trace
+    assert "tyler_stage_1_result" not in raw_trace
+    assert "user_guidance_notes" not in raw_trace
+    assert "phase_traces" not in raw_trace
+    assert "warnings" not in raw_trace
+
+
+def test_write_tyler_trace_projects_partial_failure_state(tmp_path: Path) -> None:
+    """Partial failed runs should still emit Tyler's canonical trace shape."""
+    state = PipelineState(
+        run_id="partial-run",
+        question=ResearchQuestion(text="What is the evidence?"),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        current_phase="failed",
+        success=False,
+        completed_at=datetime.now(timezone.utc),
+    )
+    state.add_warning("failed", "pipeline_error", "Stage 2 exploded.")
+
+    trace_path = write_tyler_trace(state, tmp_path, trace_id_root="pipeline/partial-run")
+    trace = TylerPipelineState.model_validate_json(trace_path.read_text())
+
+    assert uuid.UUID(trace.query_id)
+    assert trace.original_query == "What is the evidence?"
+    assert trace.current_stage == 1
+    assert trace.stage_1_result is not None
+    assert trace.stage_2_result is None
+    assert trace.stage_5_skipped is True
+    assert trace.stage_6_user_input is None
+    assert trace.errors[0].stage == 1
+    assert trace.errors[0].action_taken == "aborted"
+    assert trace.errors[0].error_type == "validation_error"
 
 
 def test_build_tyler_downstream_handoff_prefers_canonical_stage_artifacts() -> None:

@@ -59,18 +59,19 @@ Every item is classified as one of:
 30. Stage 5/6 prompt data-structure convention parity
 31. Stage 6 grounding reject-and-retry
 32. Stage 6 final-report validation coverage
+33. Tyler `PipelineState` / `trace.json` parity
+   - `trace.json` now serializes Tyler's canonical `PipelineState` contract
+     rather than the repo-local runtime state object.
+   - Success and failure paths both project the live runtime state into the
+     Tyler trace shape with `query_id`, `original_query`, `current_stage`,
+     `stage_1_result` … `stage_6_result`, `stage_5_skipped`,
+     `stage_6_user_input`, `errors`, and `total_cost_usd`.
+   - Verified with `tests/test_export.py` and the live `write_outputs()` /
+     failure trace path.
 
 ## Required: Active Implementation Gaps
 
-1. Tyler `PipelineState` / `trace.json` parity
-   - Tyler's Schema packet defines the trace artifact as a serialized
-     `PipelineState` with `stage_1_result` ... `stage_6_result`,
-     `stage_5_skipped`, `stage_6_user_input`, `errors`, and `total_cost_usd`.
-   - The live runtime still writes the repo-local `grounded_research.models`
-     trace object instead, with a different top-level shape
-     (`run_id` / `current_phase` / `user_guidance_notes` / `phase_traces`,
-     etc.).
-   - Canonical row: `SC-PIPELINESTATE-001`
+None. The audited local Tyler implementation rows are closed.
 
 ## Operational Watch
 

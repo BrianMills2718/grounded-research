@@ -48,16 +48,14 @@ This matrix exists to make the review itself mechanical:
 
 ## Immediate Open Lanes
 
-The exhaustive Tyler packet audit currently has no active review lanes.
+The exhaustive Tyler packet audit currently has no active review lanes and no
+remaining active local implementation rows.
 
-The only remaining local implementation lane is:
+The only non-closure item left is:
 
-1. Tyler `PipelineState` trace parity
-   - Canonical row: `SC-PIPELINESTATE-001`
-     repair loop does not currently enforce.
-
-2. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
-   documented policy threshold
+1. `STATUS-FRONTIER-RUNTIME-001`
+   - operational watch item under the documented policy threshold
+   - not an active implementation blocker
 
 ## Review Rule
 

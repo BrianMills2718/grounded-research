@@ -1,11 +1,11 @@
 """Phase-boundary integration tests.
 
-Verifies inter-phase contracts using a real Tyler-native pipeline trace.
+Verifies inter-phase contracts using a saved historical pipeline trace fixture.
 These tests check that phase outputs satisfy the contracts defined in
-docs/CONTRACTS.md — they do NOT re-run LLM calls.
+docs/CONTRACTS.md; they do NOT assert the current live `trace.json` contract
+and they do NOT re-run LLM calls.
 
-The trace.json from a successful Tyler-native pipeline run is the fixture.
-If no trace exists, tests are skipped (not faked).
+If the fixture trace does not exist, tests are skipped (not faked).
 """
 
 from __future__ import annotations
@@ -54,12 +54,12 @@ class BoundaryAnalystRun:
 
 @pytest.fixture
 def state() -> PipelineState:
-    """Load the Tyler-native pipeline trace as a PipelineState.
+    """Load the historical boundary fixture as a repo-local PipelineState.
 
-    The canonical saved trace persists Tyler Stage 3 artifacts plus an execution
-    trace. Older historical traces may still carry projected `analyst_runs`, but
-    boundary checks rebuild their minimal analyst view from Tyler Stage 3 instead
-    of treating that projection as canonical truth.
+    This fixture preserves Tyler Stage 3 artifacts plus the older repo-local
+    execution-state shape used by these boundary tests. Boundary checks rebuild
+    their minimal analyst view from Tyler Stage 3 artifacts instead of treating
+    historical compatibility projections as canonical truth.
     """
     if not TYLER_TRACE.exists():
         pytest.skip("Tyler-native trace not found — run pipeline first")

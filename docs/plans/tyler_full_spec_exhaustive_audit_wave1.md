@@ -1,6 +1,6 @@
 # Tyler Full Spec Exhaustive Audit Wave 1
 
-**Status:** Active
+**Status:** Completed
 **Type:** audit plan
 **Priority:** High
 **Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`

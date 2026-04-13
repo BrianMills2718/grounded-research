@@ -110,6 +110,7 @@ async def run_pipeline(
         generate_tyler_synthesis_report,
         render_long_report,
         validate_tyler_grounding,
+        write_tyler_trace,
         write_outputs,
     )
     from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
@@ -395,7 +396,14 @@ async def run_pipeline(
         state.completed_at = datetime.now(timezone.utc)
 
         # Write outputs
-        paths = write_outputs(state, output_dir, long_report_md=long_report_md)
+        db_path = Path(runtime_policy["db_path"]) if runtime_policy["db_path"] else None
+        paths = write_outputs(
+            state,
+            output_dir,
+            long_report_md=long_report_md,
+            observability_db_path=db_path,
+            trace_id_root=trace_id,
+        )
         for name, path in paths.items():
             print(f"  Wrote: {path}")
 
@@ -413,9 +421,13 @@ async def run_pipeline(
         state.add_warning("failed", "pipeline_error", str(e))
 
         # Write partial trace even on failure
-        output_dir.mkdir(parents=True, exist_ok=True)
-        trace_path = output_dir / "trace.json"
-        trace_path.write_text(state.model_dump_json(indent=2))
+        db_path = Path(runtime_policy["db_path"]) if runtime_policy["db_path"] else None
+        trace_path = write_tyler_trace(
+            state,
+            output_dir,
+            observability_db_path=db_path,
+            trace_id_root=trace_id,
+        )
         print(f"\n=== Pipeline FAILED ===")
         print(f"Error: {e}")
         print(f"Partial trace: {trace_path}")

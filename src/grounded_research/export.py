@@ -18,6 +18,8 @@ import json
 import logging
 from pathlib import Path
 import re
+import sqlite3
+import uuid
 
 from grounded_research.config import (
     get_fallback_models,
@@ -31,7 +33,12 @@ from grounded_research.models import (
     TylerDownstreamHandoff,
 )
 from grounded_research.tyler_v1_adapters import render_tyler_synthesis_markdown
-from grounded_research.tyler_v1_models import SynthesisReport, VerificationResult
+from grounded_research.tyler_v1_models import (
+    PipelineError as TylerPipelineError,
+    PipelineState as TylerPipelineState,
+    SynthesisReport,
+    VerificationResult,
+)
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _LOG = logging.getLogger(__name__)
@@ -67,6 +74,155 @@ def _expected_process_summary_prefixes(
     if "Stage 6" not in expected:
         expected.append("Stage 6")
     return expected
+
+
+def _infer_tyler_current_stage(state: PipelineState) -> int:
+    """Infer Tyler's numeric current-stage field from the populated runtime state."""
+    if state.tyler_stage_6_result is not None:
+        return 6
+    if state.tyler_stage_5_result is not None:
+        return 5
+    if state.tyler_stage_4_result is not None:
+        return 4
+    if state.tyler_stage_3_results or state.tyler_stage_3_alias_mapping or state.stage3_attempts:
+        return 3
+    if state.tyler_stage_2_result is not None or state.evidence_bundle is not None:
+        return 2
+    return 1
+
+
+def _warning_to_tyler_pipeline_error(
+    warning_code: str,
+    *,
+    stage: int,
+    message: str,
+) -> TylerPipelineError:
+    """Convert a failed-run warning into Tyler's `PipelineError` surface."""
+    text = f"{warning_code} {message}".lower()
+    if "timeout" in text:
+        error_type = "timeout"
+    elif "budget" in text:
+        error_type = "budget_exceeded"
+    elif "json" in text:
+        error_type = "invalid_json"
+    elif any(token in text for token in ("auth", "quota", "rate", "api")):
+        error_type = "api_failure"
+    else:
+        error_type = "validation_error"
+    return TylerPipelineError(
+        stage=stage,
+        error_type=error_type,
+        message=message,
+        recoverable=False,
+        action_taken="aborted",
+    )
+
+
+def _load_total_cost_usd(
+    *,
+    observability_db_path: Path | None,
+    trace_id_root: str | None,
+    phase_traces: list,
+) -> float | None:
+    """Best-effort total-cost rollup for Tyler's trace contract."""
+    fallback_total = sum(float(getattr(trace, "llm_cost_usd", 0.0)) for trace in phase_traces)
+    if observability_db_path is None or trace_id_root is None or not observability_db_path.exists():
+        return fallback_total or None
+
+    try:
+        conn = sqlite3.connect(str(observability_db_path))
+        try:
+            total = 0.0
+            for table in ("llm_calls", "tool_calls"):
+                table_exists = conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                    (table,),
+                ).fetchone()
+                if not table_exists:
+                    continue
+                value = conn.execute(
+                    f"SELECT COALESCE(SUM(cost), 0.0) FROM {table} "
+                    "WHERE trace_id = ? OR trace_id LIKE ?",
+                    (trace_id_root, f"{trace_id_root}/%"),
+                ).fetchone()
+                total += float(value[0] or 0.0)
+            return total or fallback_total or None
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return fallback_total or None
+
+
+def build_tyler_pipeline_state(
+    state: PipelineState,
+    *,
+    observability_db_path: Path | None = None,
+    trace_id_root: str | None = None,
+) -> TylerPipelineState:
+    """Project the repo-local runtime state onto Tyler's canonical trace contract."""
+    query_id = state.run_id
+    if len(query_id) != 36:
+        query_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"grounded-research:{state.run_id}"))
+
+    current_stage = _infer_tyler_current_stage(state)
+    stage_6_user_input = "\n".join(state.user_guidance_notes).strip() or None
+    error_rows = [
+        _warning_to_tyler_pipeline_error(
+            warning.code,
+            stage=current_stage,
+            message=warning.message,
+        )
+        for warning in state.warnings
+        if warning.phase == "failed" or warning.code == "pipeline_error"
+    ]
+
+    return TylerPipelineState(
+        query_id=query_id,
+        original_query=(
+            state.question.text
+            if state.question is not None
+            else state.evidence_bundle.question.text
+            if state.evidence_bundle is not None
+            else ""
+        ),
+        started_at=state.started_at.isoformat(),
+        current_stage=current_stage,
+        stage_1_result=state.tyler_stage_1_result,
+        stage_2_result=state.tyler_stage_2_result,
+        stage_3_alias_mapping=state.tyler_stage_3_alias_mapping or None,
+        stage_3_results=state.tyler_stage_3_results or None,
+        stage_4_result=state.tyler_stage_4_result,
+        stage_5_result=state.tyler_stage_5_result,
+        stage_5_skipped=state.tyler_stage_5_result is None,
+        stage_6_user_input=stage_6_user_input,
+        stage_6_result=state.tyler_stage_6_result,
+        completed_at=state.completed_at.isoformat() if state.completed_at is not None else None,
+        errors=error_rows,
+        total_cost_usd=_load_total_cost_usd(
+            observability_db_path=observability_db_path,
+            trace_id_root=trace_id_root,
+            phase_traces=state.phase_traces,
+        ),
+    )
+
+
+def write_tyler_trace(
+    state: PipelineState,
+    output_dir: Path,
+    *,
+    observability_db_path: Path | None = None,
+    trace_id_root: str | None = None,
+) -> Path:
+    """Write Tyler's canonical `PipelineState` trace artifact to disk."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    trace_path = output_dir / "trace.json"
+    trace = build_tyler_pipeline_state(
+        state,
+        observability_db_path=observability_db_path,
+        trace_id_root=trace_id_root,
+    )
+    trace_path.write_text(trace.model_dump_json(indent=2))
+    return trace_path
 
 
 def _build_stage6_top_sources(
@@ -758,14 +914,20 @@ def write_outputs(
     state: PipelineState,
     output_dir: Path,
     long_report_md: str | None = None,
+    *,
+    observability_db_path: Path | None = None,
+    trace_id_root: str | None = None,
 ) -> dict[str, Path]:
     """Write canonical Tyler-native output artifacts to disk."""
     output_dir.mkdir(parents=True, exist_ok=True)
     paths: dict[str, Path] = {}
 
-    trace_path = output_dir / "trace.json"
-    trace_path.write_text(state.model_dump_json(indent=2))
-    paths["trace"] = trace_path
+    paths["trace"] = write_tyler_trace(
+        state,
+        output_dir,
+        observability_db_path=observability_db_path,
+        trace_id_root=trace_id_root,
+    )
 
     if long_report_md:
         report_path = output_dir / "report.md"
