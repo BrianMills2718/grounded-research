@@ -17,6 +17,7 @@ from collections import Counter
 import json
 import logging
 from pathlib import Path
+import re
 
 from grounded_research.config import (
     get_fallback_models,
@@ -34,6 +35,9 @@ from grounded_research.tyler_v1_models import SynthesisReport, VerificationResul
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _LOG = logging.getLogger(__name__)
+_CLAIM_ID_RE = re.compile(r"\bC-\d+\b")
+_STAGE_PREFIX_RE = re.compile(r"^(Stage \d+)\b")
+_CONDITIONAL_MARKER_RE = re.compile(r"\b(if|unless|when)\b", re.IGNORECASE)
 
 
 def _truncate_text(text: str, max_chars: int) -> str:
@@ -43,6 +47,26 @@ def _truncate_text(text: str, max_chars: int) -> str:
     if max_chars <= 3:
         return text[:max_chars]
     return text[: max_chars - 3].rstrip() + "..."
+
+
+def _extract_stage_prefix(stage_name: str) -> str | None:
+    """Normalize `Stage N ...` labels to the comparable `Stage N` prefix."""
+    match = _STAGE_PREFIX_RE.match(stage_name.strip())
+    return match.group(1) if match else None
+
+
+def _expected_process_summary_prefixes(
+    all_stage_summaries: list[dict[str, object]],
+) -> list[str]:
+    """Derive the executed stage-prefix set Tyler expects in `process_summary`."""
+    expected: list[str] = []
+    for summary in all_stage_summaries:
+        prefix = _extract_stage_prefix(str(summary.get("stage_name", "")))
+        if prefix and prefix not in expected:
+            expected.append(prefix)
+    if "Stage 6" not in expected:
+        expected.append("Stage 6")
+    return expected
 
 
 def _build_stage6_top_sources(
@@ -260,6 +284,19 @@ def validate_tyler_grounding(
     claim_map = {claim.id: claim for claim in verification_result.updated_claim_ledger}
     source_ids = {source.id for source in bundle.sources}
     source_ids.update(source.source_id for source in verification_result.additional_sources)
+    cited_claim_ids = set(_CLAIM_ID_RE.findall(report.executive_recommendation))
+
+    if not cited_claim_ids:
+        errors.append(
+            "Executive recommendation cites no claim IDs from the Tyler claim ledger."
+        )
+    else:
+        unknown_cited_claim_ids = sorted(cited_claim_ids - set(claim_map))
+        if unknown_cited_claim_ids:
+            errors.append(
+                "Executive recommendation cites unknown claim IDs: "
+                + ", ".join(unknown_cited_claim_ids)
+            )
 
     for excerpt in report.claim_ledger_excerpt:
         claim = claim_map.get(excerpt.claim_id)
@@ -299,16 +336,24 @@ def _validate_tyler_synthesis_report(
     report: SynthesisReport,
     *,
     unresolved_dispute_ids: set[str],
-    claim_ledger: list | None = None,
+    verification_result: VerificationResult,
+    bundle: EvidenceBundle,
+    expected_process_summary_prefixes: list[str],
     min_tradeoffs: int,
     min_preserved_alternatives: int,
+    min_conditions_of_validity: int,
+    max_conditional_markers: int,
 ) -> list[str]:
     """Return repair feedback for underfilled Tyler Stage 6 outputs.
 
     Includes zombie check per Tyler V1 spec: preserved alternatives must
     not reference refuted claims.
     """
-    errors: list[str] = []
+    errors = validate_tyler_grounding(
+        report,
+        verification_result=verification_result,
+        bundle=bundle,
+    )
     if len(report.decision_relevant_tradeoffs) < min_tradeoffs:
         errors.append(
             "decision_relevant_tradeoffs is underfilled. Add concrete decision tradeoffs tied to the recommendation and evidence."
@@ -317,6 +362,10 @@ def _validate_tyler_synthesis_report(
         errors.append(
             "preserved_alternatives is underfilled. Preserve at least one viable alternative when different conditions would rationally change the recommendation."
         )
+    if len(report.conditions_of_validity) < min_conditions_of_validity:
+        errors.append(
+            "conditions_of_validity is underfilled. Include at least one explicit condition that would flip the recommendation."
+        )
     disagreement_ids = {entry.dispute_id for entry in report.disagreement_map}
     missing_unresolved = sorted(unresolved_dispute_ids - disagreement_ids)
     if missing_unresolved:
@@ -324,19 +373,51 @@ def _validate_tyler_synthesis_report(
             "disagreement_map is missing unresolved disputes: " + ", ".join(missing_unresolved)
         )
 
-    # Tyler V1 zombie check: preserved alternatives must not cite refuted claims.
-    if claim_ledger is not None:
-        refuted_ids = {
-            c.id for c in claim_ledger
-            if hasattr(c, "status") and str(getattr(c.status, "value", c.status)) == "refuted"
-        }
-        for alt in report.preserved_alternatives:
-            zombie_refs = [cid for cid in alt.supporting_claims if cid in refuted_ids]
-            if zombie_refs:
-                errors.append(
-                    f"ZOMBIE: preserved alternative '{alt.alternative[:60]}...' cites refuted "
-                    f"claim(s): {', '.join(zombie_refs)}. Remove refuted alternatives or update claims."
-                )
+    claim_ledger = verification_result.updated_claim_ledger
+    claim_ids = {claim.id for claim in claim_ledger}
+    refuted_ids = {
+        claim.id
+        for claim in claim_ledger
+        if str(getattr(claim.status, "value", claim.status)) == "refuted"
+    }
+    for alt in report.preserved_alternatives:
+        invalid_refs = [cid for cid in alt.supporting_claims if cid not in claim_ids]
+        if invalid_refs:
+            errors.append(
+                f"preserved_alternatives contains unknown supporting_claims IDs: {', '.join(invalid_refs)}"
+            )
+        zombie_refs = [cid for cid in alt.supporting_claims if cid in refuted_ids]
+        if zombie_refs:
+            errors.append(
+                f"ZOMBIE: preserved alternative '{alt.alternative[:60]}...' cites refuted "
+                f"claim(s): {', '.join(zombie_refs)}. Remove refuted alternatives or update claims."
+            )
+
+    reported_prefixes = {
+        prefix
+        for prefix in (
+            _extract_stage_prefix(summary.stage_name)
+            for summary in report.process_summary
+        )
+        if prefix is not None
+    }
+    missing_process_summaries = [
+        prefix
+        for prefix in expected_process_summary_prefixes
+        if prefix not in reported_prefixes
+    ]
+    if missing_process_summaries:
+        errors.append(
+            "process_summary is missing executed stages: "
+            + ", ".join(missing_process_summaries)
+        )
+
+    conditional_markers = len(_CONDITIONAL_MARKER_RE.findall(report.executive_recommendation))
+    if conditional_markers > max_conditional_markers:
+        errors.append(
+            "executive_recommendation exceeds Tyler's conditional-nesting limit. "
+            f"Found {conditional_markers} conditional markers; max allowed is {max_conditional_markers}."
+        )
 
     return errors
 
@@ -477,6 +558,9 @@ async def generate_tyler_synthesis_report(
         stage_4_result.stage_summary.model_dump(mode="json"),
         stage_5_result.stage_summary.model_dump(mode="json"),
     ]
+    expected_process_summary_prefixes = _expected_process_summary_prefixes(
+        all_stage_summaries
+    )
 
     user_clarifications = "\n".join(state.user_guidance_notes)
     user_response_for_dispute = _build_stage6_user_response_map(
@@ -543,28 +627,58 @@ async def generate_tyler_synthesis_report(
         return report
 
     report = await _generate_once(feedback=[], suffix="")
+    repair_feedback = _validate_tyler_synthesis_report(
+        report,
+        unresolved_dispute_ids=unresolved_dispute_ids,
+        verification_result=stage_5_result,
+        bundle=state.evidence_bundle,
+        expected_process_summary_prefixes=expected_process_summary_prefixes,
+        min_tradeoffs=int(parity_policy.get("stage6_min_tradeoffs", 1)),
+        min_preserved_alternatives=int(
+            parity_policy.get("stage6_min_preserved_alternatives", 1)
+        ),
+        min_conditions_of_validity=int(
+            parity_policy.get("stage6_min_conditions_of_validity", 1)
+        ),
+        max_conditional_markers=int(
+            parity_policy.get("stage6_max_conditional_markers", 2)
+        ),
+    )
     if bool(parity_policy.get("stage6_repair_on_underfilled_fields", True)):
         max_repairs = int(parity_policy.get("stage6_repair_attempts", 1))
         for attempt in range(1, max_repairs + 1):
-            repair_feedback = _validate_tyler_synthesis_report(
-                report,
-                unresolved_dispute_ids=unresolved_dispute_ids,
-                claim_ledger=stage_5_result.updated_claim_ledger,
-                min_tradeoffs=int(parity_policy.get("stage6_min_tradeoffs", 1)),
-                min_preserved_alternatives=int(
-                    parity_policy.get("stage6_min_preserved_alternatives", 1)
-                ),
-            )
             if not repair_feedback:
                 break
             _LOG.warning(
-                "Tyler Stage 6 synthesis underfilled critical fields; retrying once. errors=%s",
+                "Tyler Stage 6 synthesis failed runtime validation; retrying. errors=%s",
                 repair_feedback,
             )
             report = await _generate_once(
                 feedback=repair_feedback,
                 suffix=f"/repair_{attempt}",
             )
+            repair_feedback = _validate_tyler_synthesis_report(
+                report,
+                unresolved_dispute_ids=unresolved_dispute_ids,
+                verification_result=stage_5_result,
+                bundle=state.evidence_bundle,
+                expected_process_summary_prefixes=expected_process_summary_prefixes,
+                min_tradeoffs=int(parity_policy.get("stage6_min_tradeoffs", 1)),
+                min_preserved_alternatives=int(
+                    parity_policy.get("stage6_min_preserved_alternatives", 1)
+                ),
+                min_conditions_of_validity=int(
+                    parity_policy.get("stage6_min_conditions_of_validity", 1)
+                ),
+                max_conditional_markers=int(
+                    parity_policy.get("stage6_max_conditional_markers", 2)
+                ),
+            )
+    if repair_feedback and bool(parity_policy.get("stage6_fail_on_validation_error", True)):
+        raise ValueError(
+            "Tyler Stage 6 validation failed after repair: "
+            + " | ".join(repair_feedback)
+        )
     return report
 
 

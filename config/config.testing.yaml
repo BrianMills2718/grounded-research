@@ -184,6 +184,9 @@ tyler_literal_parity:
   stage6_repair_attempts: 1
   stage6_min_tradeoffs: 1
   stage6_min_preserved_alternatives: 1
+  stage6_min_conditions_of_validity: 1
+  stage6_max_conditional_markers: 2
+  stage6_fail_on_validation_error: true
   stage6_compaction_char_limit: 80000
   stage6_noncritical_claim_chars: 180
   stage6_non_dispute_source_summary_chars: 140

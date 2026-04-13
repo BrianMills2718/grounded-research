@@ -57,6 +57,8 @@ Every item is classified as one of:
      - `query_diversification_tyler_v1` intentionally remained on `openrouter/google/gemini-2.5-pro`
 29. Stage 6 prompt-variable interface parity
 30. Stage 5/6 prompt data-structure convention parity
+31. Stage 6 grounding reject-and-retry
+32. Stage 6 final-report validation coverage
 
 ## Required: Active Implementation Gaps
 
@@ -69,19 +71,6 @@ Every item is classified as one of:
      (`run_id` / `current_phase` / `user_guidance_notes` / `phase_traces`,
      etc.).
    - Canonical row: `SC-PIPELINESTATE-001`
-
-2. Stage 6 grounding reject-and-retry
-   - Tyler's Schema packet says post-synthesis grounding failures should
-     reject and retry once.
-   - The live runtime validates grounding only after Stage 6 completes and
-     currently records failures as warnings while still writing the report.
-   - Canonical row: `S6-GROUNDING-001`
-
-3. Stage 6 final-report validation coverage
-   - Tyler's Schema packet lists several explicit final-report validation
-     rules beyond zombie checks and grounding.
-   - The live repair loop currently enforces only a subset of them.
-   - Canonical row: `S6-VALIDATION-COVERAGE-001`
 
 ## Operational Watch
 

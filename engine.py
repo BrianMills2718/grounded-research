@@ -357,16 +357,17 @@ async def run_pipeline(
         state.tyler_stage_6_result = tyler_stage_6_result
         state.tyler_handoff = build_tyler_downstream_handoff(state)
 
-        # Grounding validation now treats the Tyler Stage 6 artifact as primary.
+        # Defensive revalidation: Stage 6 should already have repaired-or-failed.
         grounding_errors = validate_tyler_grounding(
             tyler_stage_6_result,
             verification_result=tyler_stage_5_result,
             bundle=bundle,
         )
         if grounding_errors:
-            for err in grounding_errors:
-                state.add_warning("export", "grounding", err)
-                print(f"  GROUNDING WARNING: {err}")
+            raise RuntimeError(
+                "Tyler Stage 6 grounding validation still failed after the synthesis "
+                "repair loop: " + "; ".join(grounding_errors)
+            )
 
         # Render long-form report
         print("  Rendering final report from Tyler Stage 6 synthesis...")
@@ -383,7 +384,7 @@ async def run_pipeline(
             llm_calls=1,
             output_summary=(
                 f"Tyler Stage 6: {len(tyler_stage_6_result.claim_ledger_excerpt)} cited claims, "
-                f"{len(grounding_errors)} grounding warnings. "
+                f"{len(grounding_errors)} grounding errors. "
                 f"Long report: ~{len(long_report_md.split())} words."
             ),
         ))
@@ -402,7 +403,7 @@ async def run_pipeline(
         print(f"Report: {bundle.question.text}")
         print(f"Long report: ~{len(long_report_md.split())} words")
         print(f"Cited claims: {len(tyler_stage_6_result.claim_ledger_excerpt)}")
-        print(f"Grounding warnings: {len(grounding_errors)}")
+        print(f"Grounding errors: {len(grounding_errors)}")
         print(f"Pipeline warnings: {len(state.warnings)}")
 
     except Exception as e:

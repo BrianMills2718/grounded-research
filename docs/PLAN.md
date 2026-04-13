@@ -167,7 +167,7 @@ Current open work is intentionally narrow:
   `docs/plans/stage34_compatibility_protocol_deletion.md`
 - there is an active repo-local implementation wave:
   `docs/plans/tyler_post_audit_remediation_wave2.md`
-- the current concrete work is closing the three remaining local audited rows,
+- the current concrete work is closing the single remaining local audited row,
   then returning to shared-infra follow-through only if the ledger stays clean
 - the first frozen shared-eval comparison is complete:
   `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
@@ -181,10 +181,10 @@ Current open work is intentionally narrow:
   `llm_swe` case
 - the current frozen-eval gate is satisfied for the active implementation lane;
   broader eval is now optional unless a later regression wave needs it
-- the exhaustive Tyler audit has reopened active implementation gaps in this
-  repo, and Phase 1 of the post-audit remediation wave has already closed the
-  prompt-interface rows; the remaining local frontier is Tyler `PipelineState`
-  trace parity plus the Stage 6 grounding / final-report validation rows
+- the exhaustive Tyler audit reopened active implementation gaps in this repo,
+  and Phases 1-2 of the post-audit remediation wave have already closed the
+  prompt-contract and Stage 6 validation rows; the remaining local frontier is
+  Tyler `PipelineState` trace parity
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:

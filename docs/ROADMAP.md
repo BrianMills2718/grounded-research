@@ -8,13 +8,13 @@
 **v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
 runtime path and the three-case frozen-eval gate is satisfied for the current
 lane. The exhaustive Tyler packet audit matrix now has full coverage of the
-four canonical Tyler files, and the first post-audit remediation slice has
-already closed the Stage 5/6 prompt-contract rows. The remaining local work is
-now three concrete rows: Tyler `PipelineState` trace parity, Stage 6 grounding
-reject-and-retry, and Stage 6 final-report validation coverage. Earlier Stage
-2 and Stage 3 reopenings were corrected as audit-process false positives
-rather than real runtime/spec mismatches. The frontier-model variability item
-remains a separate policy-governed operational watch.
+four canonical Tyler files, and the first two post-audit remediation slices
+have already closed the Stage 5/6 prompt-contract rows plus the Stage 6
+validation-behavior rows. The remaining local work is now one concrete row:
+Tyler `PipelineState` trace parity. Earlier Stage 2 and Stage 3 reopenings
+were corrected as audit-process false positives rather than real runtime/spec
+mismatches. The frontier-model variability item remains a separate
+policy-governed operational watch.
 
 Current operational reality:
 
@@ -86,9 +86,8 @@ Current implementation frontier:
   - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
   - treat the remaining local divergences as the current implementation
-    frontier because the ledger now narrows them to:
-    Tyler `PipelineState` trace parity, Stage 6 grounding reject-and-retry,
-    and Stage 6 final-report validation coverage
+    frontier because the ledger now narrows them to Tyler `PipelineState`
+    trace parity
   - keep the remediation order explicit in
     `docs/plans/tyler_post_audit_remediation_wave2.md`
   - keep the frozen comparison gate satisfied without treating broader eval as
@@ -247,8 +246,8 @@ There is currently an active repo-local implementation wave:
 
 - `docs/plans/tyler_post_audit_remediation_wave2.md`
 
-That wave is now down to three remaining rows after Phase 1 closed the Stage
-5/6 prompt-contract parity fixes.
+That wave is now down to one remaining row after Phases 1-2 closed the Stage
+5/6 prompt-contract and Stage 6 validation fixes.
 
 **Candidates for a future explicit wave:**
 - recent-first evidence ranking

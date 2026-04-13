@@ -22,11 +22,14 @@ Phase 1 of this wave landed on 2026-04-13 and closed:
 1. `S6-PROMPT-VARS-001`
 2. `S5-S6-DATASTRUCT-001`
 
+Phase 2 of this wave landed on 2026-04-13 and closed:
+
+1. `S6-GROUNDING-001`
+2. `S6-VALIDATION-COVERAGE-001`
+
 The active local frontier is now exactly:
 
 1. `SC-PIPELINESTATE-001`
-2. `S6-GROUNDING-001`
-3. `S6-VALIDATION-COVERAGE-001`
 
 ---
 
@@ -49,14 +52,12 @@ If this plan and the ledger disagree, trust the ledger.
 Verified **local** divergences still open after exhaustive packet coverage:
 
 1. Tyler `PipelineState` trace parity
-2. Stage 6 grounding reject-and-retry
-3. Stage 6 final-report validation coverage
 
 ### Out of Scope
 
 - shared provider/runtime/model work
 - new benchmark expansion
-- broad cleanup unrelated to the three rows above
+- broad cleanup unrelated to the remaining row above
 - reopening already-fixed Stage 1-5 remediation rows
 
 ---
@@ -114,7 +115,7 @@ Failure modes:
 
 ### Phase 2: Stage 6 Validation Behavior Parity
 
-**Status:** Active
+**Status:** Completed on 2026-04-13
 
 Rows:
 
@@ -142,7 +143,7 @@ Failure modes:
 
 ### Phase 3: Tyler `PipelineState` Trace Parity
 
-**Status:** Planned
+**Status:** Active
 
 Rows:
 
@@ -188,7 +189,7 @@ change set.
 
 This plan is complete when:
 
-- the three rows above have either been fixed or explicitly reclassified by
+- the remaining row above has either been fixed or explicitly reclassified by
   evidence,
 - `docs/TYLER_EXECUTION_STATUS.md` no longer lists them as active local gaps,
 - and the repo-local Tyler frontier returns to either zero active implementation

@@ -218,8 +218,6 @@ Repo-local:
    four Tyler files
 4. the current remaining local rows are exactly:
    - `SC-PIPELINESTATE-001`
-   - `S6-GROUNDING-001`
-   - `S6-VALIDATION-COVERAGE-001`
 5. those rows are now sequenced under:
    - `docs/plans/tyler_post_audit_remediation_wave2.md`
 
@@ -259,7 +257,7 @@ Faithful Tyler execution can be claimed only if:
 Current accurate claim:
 
 - the Tyler implementation lane is not yet complete for the fully audited packet scope,
-- three explicit local rows remain under the post-audit remediation wave,
+- one explicit local row remains under the post-audit remediation wave,
 - and one separate documented operational watch item remains on frontier-model variability.
 
 ## Canonical Status Surface

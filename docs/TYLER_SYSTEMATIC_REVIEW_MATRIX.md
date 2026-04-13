@@ -42,17 +42,18 @@ This matrix exists to make the review itself mechanical:
 | R16 | Shared runtime | frontier literal runtime reliability | fixture evidence + policy review | `STATUS-FRONTIER-RUNTIME-001` | done | ledger only |
 | R17 | Docs | active status surfaces do not outrun ledger | doc review | `docs/TYLER_EXECUTION_STATUS.md`, `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`, `docs/plans/CLAUDE.md`, `README.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md` | done | ledger only |
 | R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | done | ledger only |
-| R19 | Stage 6 | grounding reject-and-retry plus remaining final-report validation rules | behavior check + runtime path review | `S6-GROUNDING-001`, `S6-VALIDATION-COVERAGE-001` | active | ledger only |
+| R19 | Stage 6 | grounding reject-and-retry plus remaining final-report validation rules | behavior check + runtime path review | `S6-GROUNDING-001`, `S6-VALIDATION-COVERAGE-001` | done | ledger only |
 | R20 | Schemas packet | pipeline-state trace parity plus remaining schema packet skip/trace semantics | static review + runtime trace + schema tests | `SC-PIPELINESTATE-001`, `AMB-S6A-STATUS-001`, `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | done | ledger + audit matrix |
 | R21 | Prompts packet | remaining prompt-template literalness and prompt-side design constraints | prompt render + static review | `S6-PROMPT-VARS-001`, `S5-S6-DATASTRUCT-001`, `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | done | ledger + audit matrix |
 
 ## Immediate Open Lanes
 
-The exhaustive Tyler packet audit currently has one active review lane:
+The exhaustive Tyler packet audit currently has no active review lanes.
 
-1. `R19` — Stage 6 validation behavior
-   - Tyler requires a post-synthesis reject-and-retry on grounding failure.
-   - Tyler also lists additional final-report validation rules that the live
+The only remaining local implementation lane is:
+
+1. Tyler `PipelineState` trace parity
+   - Canonical row: `SC-PIPELINESTATE-001`
      repair loop does not currently enforce.
 
 2. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the

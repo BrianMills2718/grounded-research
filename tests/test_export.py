@@ -61,6 +61,14 @@ def _stage_summary(stage_name: str) -> StageSummary:
     )
 
 
+def _full_process_summary_models() -> list[StageSummary]:
+    return [_stage_summary(f"Stage {index}") for index in range(1, 7)]
+
+
+def _full_process_summary_payload() -> list[dict[str, object]]:
+    return [summary.model_dump(mode="json") for summary in _full_process_summary_models()]
+
+
 def _tyler_report() -> SynthesisReport:
     return SynthesisReport(
         executive_recommendation="Recommendation based on C-1.",
@@ -102,7 +110,7 @@ def _tyler_report() -> SynthesisReport:
                 basis="Evidence is decent.",
             )
         ],
-        process_summary=[_stage_summary("Stage 6")],
+        process_summary=_full_process_summary_models(),
         claim_ledger_excerpt=[
             {
                 "claim_id": "C-1",
@@ -235,7 +243,7 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
-            executive_recommendation="Recommendation.",
+            executive_recommendation="Recommendation based on C-1.",
             conditions_of_validity=["Condition."],
             decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
             disagreement_map=[],
@@ -248,7 +256,7 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
             ],
             key_assumptions=[],
             confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            process_summary=_full_process_summary_payload(),
             claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             evidence_gaps=[],
@@ -347,7 +355,7 @@ async def test_generate_tyler_synthesis_report_prefers_persisted_tyler_stage_inp
 
     result = await generate_tyler_synthesis_report(state, trace_id="trace-root")
 
-    assert result.executive_recommendation == "Recommendation."
+    assert result.executive_recommendation == "Recommendation based on C-1."
 
 
 @pytest.mark.asyncio
@@ -360,14 +368,14 @@ async def test_generate_tyler_synthesis_report_includes_stage5_additional_source
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
-            executive_recommendation="Recommendation.",
+            executive_recommendation="Recommendation based on C-1.",
             conditions_of_validity=["Condition."],
             decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
             disagreement_map=[],
             preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
             key_assumptions=[],
             confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            process_summary=_full_process_summary_payload(),
             claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             evidence_gaps=[],
@@ -450,14 +458,14 @@ async def test_generate_tyler_synthesis_report_passes_tyler_stage6_prompt_variab
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
-            executive_recommendation="Recommendation.",
+            executive_recommendation="Recommendation based on C-1.",
             conditions_of_validity=["Condition."],
             decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
             disagreement_map=[],
             preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
             key_assumptions=[],
             confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            process_summary=_full_process_summary_payload(),
             claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             evidence_gaps=[],
@@ -558,14 +566,14 @@ async def test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
-            executive_recommendation="Recommendation.",
+            executive_recommendation="Recommendation based on C-1.",
             conditions_of_validity=["Condition."],
             decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
             disagreement_map=[],
             preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
             key_assumptions=[],
             confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            process_summary=_full_process_summary_payload(),
             claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             evidence_gaps=[],
@@ -677,14 +685,14 @@ async def test_generate_tyler_synthesis_report_uses_non_dominant_synthesis_model
         captured["model"] = model
         response_model = kwargs["response_model"]
         return response_model(
-            executive_recommendation="Recommendation.",
+            executive_recommendation="Recommendation based on C-1.",
             conditions_of_validity=["Condition."],
             decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
             disagreement_map=[],
             preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
             key_assumptions=[],
             confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            process_summary=_full_process_summary_payload(),
             claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             evidence_gaps=[],
@@ -759,14 +767,14 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
         calls["count"] += 1
         response_model = kwargs["response_model"]
         payload = {
-            "executive_recommendation": "Recommendation.",
+            "executive_recommendation": "Recommendation based on C-1.",
             "conditions_of_validity": ["Condition."],
             "decision_relevant_tradeoffs": [{"if_optimize_for": "Speed", "then_recommend": "A"}],
             "disagreement_map": [],
             "preserved_alternatives": [{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
             "key_assumptions": [],
             "confidence_assessment": [{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            "process_summary": [_stage_summary("Stage 6").model_dump(mode="json")],
+            "process_summary": _full_process_summary_payload(),
             "claim_ledger_excerpt": [{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             "evidence_trail": [{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             "evidence_gaps": [],
@@ -774,6 +782,7 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
             "stage_summary": _stage_summary("Stage 6").model_dump(mode="json"),
         }
         if calls["count"] == 1:
+            payload["conditions_of_validity"] = []
             payload["decision_relevant_tradeoffs"] = []
             payload["preserved_alternatives"] = []
         return response_model(**payload), {}
@@ -813,29 +822,8 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
             queries_per_sub_question={},
             stage_summary=_stage_summary("Stage 2"),
         ),
-        tyler_stage_4_result=TylerClaimExtractionResult(
-            claim_ledger=[],
-            assumption_set=[],
-            dispute_queue=[],
-            statistics={
-                "total_claims": 0,
-                "total_assumptions": 0,
-                "total_disputes": 0,
-                "disputes_by_type": {},
-                "decision_critical_disputes": 0,
-                "claims_per_model": {},
-            },
-            stage_summary=_stage_summary("Stage 4"),
-        ),
-        tyler_stage_5_result=VerificationResult(
-            disputes_investigated=[],
-            additional_sources=[],
-            updated_claim_ledger=[],
-            updated_dispute_queue=[],
-            search_budget={},
-            rounds_used=1,
-            stage_summary=_stage_summary("Stage 5"),
-        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=_stage5_result_for_report(),
     )
 
     result = await generate_tyler_synthesis_report(state, trace_id="trace-root")
@@ -845,6 +833,68 @@ async def test_generate_tyler_synthesis_report_repairs_underfilled_decision_fiel
     assert len(result.preserved_alternatives) >= int(
         get_tyler_literal_parity_config()["stage6_min_preserved_alternatives"]
     )
+    assert len(result.conditions_of_validity) >= int(
+        get_tyler_literal_parity_config()["stage6_min_conditions_of_validity"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_generate_tyler_synthesis_report_repairs_grounding_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Grounding failures should feed back into the Stage 6 repair loop once."""
+    calls = {"count": 0}
+
+    async def fake_acall_llm_structured(*args, **kwargs):
+        calls["count"] += 1
+        response_model = kwargs["response_model"]
+        payload = {
+            "executive_recommendation": "Recommendation without grounded claim reference.",
+            "conditions_of_validity": ["Condition."],
+            "decision_relevant_tradeoffs": [{"if_optimize_for": "Speed", "then_recommend": "A"}],
+            "disagreement_map": [],
+            "preserved_alternatives": [{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
+            "key_assumptions": [],
+            "confidence_assessment": [{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
+            "process_summary": _full_process_summary_payload(),
+            "claim_ledger_excerpt": [{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
+            "evidence_trail": [{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
+            "evidence_gaps": ["Need more regional evidence."],
+            "reasoning": "Reasoning",
+            "stage_summary": _stage_summary("Stage 6").model_dump(mode="json"),
+        }
+        if calls["count"] == 2:
+            payload["executive_recommendation"] = "Recommendation based on C-1."
+        return response_model(**payload), {}
+
+    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
+    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+    monkeypatch.setattr("grounded_research.export._select_stage6_synthesis_model", lambda state: ("test-model", None))
+
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        evidence_bundle=EvidenceBundle(
+            question=ResearchQuestion(text="What is the evidence?"),
+            sources=[SourceRecord(id="S-1", url="https://example.com", title="Source", quality_tier="authoritative")],
+            evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+            gaps=[],
+        ),
+        tyler_stage_1_result=_stage1_result_for_export(),
+        tyler_stage_2_result=EvidencePackage(
+            sub_question_evidence=[],
+            total_queries_used=0,
+            queries_per_sub_question={},
+            stage_summary=_stage_summary("Stage 2"),
+        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=_stage5_result_for_report(),
+    )
+
+    result = await generate_tyler_synthesis_report(state, trace_id="trace-root")
+
+    assert calls["count"] == 2
+    assert "C-1" in result.executive_recommendation
 
 
 @pytest.mark.asyncio
@@ -875,14 +925,14 @@ async def test_generate_tyler_synthesis_report_redecomposes_from_question_when_m
     async def fake_acall_llm_structured(*args, **kwargs):
         response_model = kwargs["response_model"]
         return response_model(
-            executive_recommendation="Recommendation.",
+            executive_recommendation="Recommendation based on C-1.",
             conditions_of_validity=["Condition."],
             decision_relevant_tradeoffs=[{"if_optimize_for": "Speed", "then_recommend": "A"}],
             disagreement_map=[],
             preserved_alternatives=[{"alternative": "Alternative", "conditions_for_preference": "If cost dominates.", "supporting_claims": ["C-1"]}],
             key_assumptions=[],
             confidence_assessment=[{"claim_summary": "Summary", "confidence": "medium", "basis": "Basis"}],
-            process_summary=[_stage_summary("Stage 6").model_dump(mode="json")],
+            process_summary=_full_process_summary_payload(),
             claim_ledger_excerpt=[{"claim_id": "C-1", "statement": "Claim", "final_status": "verified", "resolution_path": "Stage 5"}],
             evidence_trail=[{"source_id": "S-1", "url": "https://example.com", "quality_score": 0.9, "key_contribution": "Contribution"}],
             evidence_gaps=[],
@@ -912,29 +962,8 @@ async def test_generate_tyler_synthesis_report_redecomposes_from_question_when_m
             queries_per_sub_question={},
             stage_summary=_stage_summary("Stage 2"),
         ),
-        tyler_stage_4_result=TylerClaimExtractionResult(
-            claim_ledger=[],
-            assumption_set=[],
-            dispute_queue=[],
-            statistics={
-                "total_claims": 0,
-                "total_assumptions": 0,
-                "total_disputes": 0,
-                "disputes_by_type": {},
-                "decision_critical_disputes": 0,
-                "claims_per_model": {},
-            },
-            stage_summary=_stage_summary("Stage 4"),
-        ),
-        tyler_stage_5_result=VerificationResult(
-            disputes_investigated=[],
-            additional_sources=[],
-            updated_claim_ledger=[],
-            updated_dispute_queue=[],
-            search_budget={},
-            rounds_used=1,
-            stage_summary=_stage_summary("Stage 5"),
-        ),
+        tyler_stage_4_result=_stage4_result_for_export(),
+        tyler_stage_5_result=_stage5_result_for_report(),
     )
 
     result = await generate_tyler_synthesis_report(
@@ -943,7 +972,7 @@ async def test_generate_tyler_synthesis_report_redecomposes_from_question_when_m
     )
 
     assert calls["decompose"] == 1
-    assert result.executive_recommendation == "Recommendation."
+    assert result.executive_recommendation == "Recommendation based on C-1."
 
 
 @pytest.mark.asyncio
@@ -1026,6 +1055,35 @@ def test_validate_tyler_grounding_checks_stage5_claims_and_sources() -> None:
         verification_result=verification_result,
         bundle=bundle,
     ) == []
+
+
+def test_validate_tyler_grounding_requires_claim_reference_in_recommendation() -> None:
+    """Grounding should fail if the recommendation cites no Tyler claim IDs."""
+    report = _tyler_report().model_copy(
+        update={"executive_recommendation": "Recommendation without claim reference."}
+    )
+    verification_result = _stage5_result_for_report()
+    bundle = EvidenceBundle(
+        question=ResearchQuestion(text="What is the evidence?"),
+        sources=[
+            SourceRecord(
+                id="S-1",
+                url="https://example.com/source",
+                title="Source",
+                quality_tier="authoritative",
+            )
+        ],
+        evidence=[EvidenceItem(id="E-1", source_id="S-1", content="Evidence", content_type="text")],
+        gaps=[],
+    )
+
+    errors = validate_tyler_grounding(
+        report,
+        verification_result=verification_result,
+        bundle=bundle,
+    )
+
+    assert any("cites no claim IDs" in error for error in errors)
 
 
 def test_write_outputs_prefers_tyler_summary_when_present(tmp_path: Path) -> None:

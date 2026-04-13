@@ -162,6 +162,9 @@ tyler_literal_parity:
   stage6_repair_attempts: 1
   stage6_min_tradeoffs: 1
   stage6_min_preserved_alternatives: 1
+  stage6_min_conditions_of_validity: 1
+  stage6_max_conditional_markers: 2
+  stage6_fail_on_validation_error: true
 
 runtime_reliability:
   use_run_local_observability_db: true
