@@ -1,17 +1,20 @@
 # Roadmap
 
-**Last updated:** 2026-04-09
+**Last updated:** 2026-04-12
 **Replaces:** ROADMAP_V2.md (stale)
 
 ## Current State
 
 **v0.1.0 shipped.** The live repo is Tyler-native on the local Stage 1-6
 runtime path and the three-case frozen-eval gate is satisfied for the current
-lane. The exhaustive Tyler packet audit has now narrowed the remaining local
-work to two Stage 6 validation gaps; earlier Stage 2 and Stage 3 reopenings
-were corrected as audit-process false positives rather than real runtime/spec
-mismatches. The frontier-model variability item remains a separate
-policy-governed operational watch.
+lane. The exhaustive Tyler packet audit matrix now has full coverage of the
+four canonical Tyler files, and that audit has narrowed the remaining local
+work to five concrete rows: Tyler `PipelineState` trace parity, Stage 6
+prompt-variable parity, Stage 5/6 prompt data-structure parity, Stage 6
+grounding reject-and-retry, and Stage 6 final-report validation coverage.
+Earlier Stage 2 and Stage 3 reopenings were corrected as audit-process false
+positives rather than real runtime/spec mismatches. The frontier-model
+variability item remains a separate policy-governed operational watch.
 
 Current operational reality:
 
@@ -83,10 +86,11 @@ Current implementation frontier:
   - continue to drive all real findings into `docs/TYLER_SPEC_GAP_LEDGER.md`
   - keep the Tyler audit-governance layer active so future status claims
     cannot outrun the evidence in the ledger
-  - treat the resulting remaining high-severity local divergences as the next
+  - treat the resulting remaining local divergences as the next
     implementation frontier because the ledger has now narrowed them to:
-    Tyler `PipelineState` trace parity, Stage 6 grounding reject-and-retry,
-    and Stage 6 final-report validation coverage
+    Tyler `PipelineState` trace parity, Stage 6 prompt-variable parity,
+    Stage 5/6 prompt data-structure parity, Stage 6 grounding
+    reject-and-retry, and Stage 6 final-report validation coverage
   - keep the next remediation order explicit in
     `docs/plans/tyler_gap_remediation_wave1.md`
   - keep the frozen comparison gate satisfied without treating broader eval as

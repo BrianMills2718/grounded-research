@@ -178,8 +178,8 @@ Current open work is intentionally narrow:
 - the current frozen-eval gate is satisfied for the active implementation lane;
   broader eval is now optional unless a later regression wave needs it
 - the exhaustive Tyler audit has reopened active implementation gaps in this
-  repo: Tyler `PipelineState` trace parity plus the Stage 6 grounding and
-  final-report validation rows
+  repo: Tyler `PipelineState` trace parity, Stage 5/6 prompt-interface
+  literalness, and the Stage 6 grounding / final-report validation rows
 - active remainder plan:
   `docs/plans/tyler_faithful_execution_remainder.md`
 - active audit wave:
@@ -200,6 +200,9 @@ Current open work is intentionally narrow:
   `docs/plans/tyler_full_spec_exhaustive_audit_wave1.md`
 - exhaustive source coverage tracker:
   `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
+- the exhaustive Tyler packet matrix now has full source coverage; the
+  remaining work is resolving the recorded ledger rows, not filling inventory
+  holes
 - completed shared exact-model follow-through:
   `docs/plans/tyler_shared_model_version_parity_wave1.md`
 - completed app-local exact-model switch wave:

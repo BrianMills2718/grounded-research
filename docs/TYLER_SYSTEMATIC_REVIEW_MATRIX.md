@@ -44,23 +44,18 @@ This matrix exists to make the review itself mechanical:
 | R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | done | ledger only |
 | R19 | Stage 6 | grounding reject-and-retry plus remaining final-report validation rules | behavior check + runtime path review | `S6-GROUNDING-001`, `S6-VALIDATION-COVERAGE-001` | active | ledger only |
 | R20 | Schemas packet | pipeline-state trace parity plus remaining schema packet skip/trace semantics | static review + runtime trace + schema tests | `SC-PIPELINESTATE-001`, `AMB-S6A-STATUS-001`, `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | done | ledger + audit matrix |
-| R21 | Prompts packet | remaining prompt-template literalness and prompt-side design constraints | prompt render + static review | `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` prompt rows | active | ledger + audit matrix |
+| R21 | Prompts packet | remaining prompt-template literalness and prompt-side design constraints | prompt render + static review | `S6-PROMPT-VARS-001`, `S5-S6-DATASTRUCT-001`, `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | done | ledger + audit matrix |
 
 ## Immediate Open Lanes
 
-The exhaustive Tyler packet audit currently has two active review lanes:
+The exhaustive Tyler packet audit currently has one active review lane:
 
 1. `R19` — Stage 6 validation behavior
    - Tyler requires a post-synthesis reject-and-retry on grounding failure.
    - Tyler also lists additional final-report validation rules that the live
      repair loop does not currently enforce.
 
-2. `R21` — Prompt packet exhaustive coverage
-   - the core prompt templates are now audited
-   - the remaining prompt work is narrowed to the developer-note appendix,
-     especially the orchestrator-variable and data-structure convention rows
-
-3. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
+2. `STATUS-FRONTIER-RUNTIME-001` remains an operational watch item under the
    documented policy threshold
 
 ## Review Rule

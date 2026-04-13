@@ -68,14 +68,31 @@ Every item is classified as one of:
      etc.).
    - Canonical row: `SC-PIPELINESTATE-001`
 
-2. Stage 6 grounding reject-and-retry
+2. Stage 6 prompt-variable interface parity
+   - Tyler's prompt packet says Stage 6b should receive a full `claim_ledger`
+     list plus orchestrator-built variables such as
+     `decision_critical_claim_ids` and `user_response_for_dispute`.
+   - The live Stage 6 prompt instead takes normalized local convenience inputs
+     (`decision_critical_claims`, `noncritical_claims`,
+     `stage_6_user_input`).
+   - Canonical row: `S6-PROMPT-VARS-001`
+
+3. Stage 5/6 prompt data-structure convention parity
+   - Tyler's prompt packet says Stage 5 should use `claim_ledger[claim_id]`
+     dict access and Stage 6b should keep the full claim ledger plus
+     `decision_critical_claim_ids` set membership.
+   - The live prompt/orchestrator path uses list iteration for Stage 5 and
+     pre-materialized claim subsets for Stage 6.
+   - Canonical row: `S5-S6-DATASTRUCT-001`
+
+4. Stage 6 grounding reject-and-retry
    - Tyler's Schema packet says post-synthesis grounding failures should
      reject and retry once.
    - The live runtime validates grounding only after Stage 6 completes and
      currently records failures as warnings while still writing the report.
    - Canonical row: `S6-GROUNDING-001`
 
-3. Stage 6 final-report validation coverage
+5. Stage 6 final-report validation coverage
    - Tyler's Schema packet lists several explicit final-report validation
      rules beyond zombie checks and grounding.
    - The live repair loop currently enforces only a subset of them.
@@ -107,6 +124,18 @@ Every item is classified as one of:
    - Current repo documents this as a Tyler-internal inconsistency and keeps
      both statuses in the live Stage 6a selection helper.
    - Canonical row: `AMB-S6A-STATUS-001`
+
+3. Unit-of-analysis scenario surface
+   - Tyler's Design packet says the unit of analysis is
+     claim-assumption-scenario tuples and that alternatives are bundles of
+     claims, assumptions, and scenarios.
+   - Tyler's later Schema and Prompt packets never materialize a first-class
+     scenario object or field.
+   - Current repo documents this as a Tyler design-to-schema simplification and
+     carries scenario-like information indirectly through
+     `conditions_of_validity`, `decision_relevant_tradeoffs`, and preserved
+     alternative conditions.
+   - Canonical row: `AMB-UNIT-SCENARIO-001`
 
 ## Extension: Present But Not Tyler-Required
 
