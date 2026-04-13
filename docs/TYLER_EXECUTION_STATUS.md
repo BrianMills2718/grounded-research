@@ -64,7 +64,9 @@ Every item is classified as one of:
      string templates, not an LLM call.
    - The live runtime still uses `acall_llm_structured(...)` plus
      `prompts/tyler_v1_query_diversification.yaml`.
-   - Canonical row: `S2-QUERY-MODEL-001`
+   - The live query-plan roles also differ from Tyler's formal /
+     practitioner / academic / colloquial / contrarian template family.
+   - Canonical rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`
 
 2. Stage 6 grounding reject-and-retry
    - Tyler's Schema packet says post-synthesis grounding failures should

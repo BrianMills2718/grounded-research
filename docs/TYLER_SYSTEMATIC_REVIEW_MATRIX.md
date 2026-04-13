@@ -25,7 +25,7 @@ This matrix exists to make the review itself mechanical:
 | review_id | scope | review focus | evidence required | current source of truth | status | next artifact |
 |---|---|---|---|---|---|---|
 | R1 | Stage 1 | prompt, schema, no-validation runtime path | static review + stage runtime test | `S1-VALIDATION-001` | done | ledger only |
-| R2 | Stage 2 | query diversification implementation mechanism | static review + stage runtime test | `S2-QUERY-MODEL-001` | active | ledger only |
+| R2 | Stage 2 | query diversification mechanism and variant family | static review + stage runtime test | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001` | active | ledger only |
 | R3 | Stage 2 | provider routing by query type | behavior check or runtime test | `S2-ROUTING-001` | done | ledger only |
 | R4 | Stage 2 | quality scoring pipeline | static review + deterministic test | `S2-QUALITY-001` | done | ledger only |
 | R5 | Stage 2 | Tavily depth behavior from consumer boundary | request-body or adapter verification | `S2-TAVILY-DEPTH-001` | done | ledger only |
@@ -53,6 +53,8 @@ The exhaustive Tyler packet audit reopened two previously closed lanes:
      lightweight model call.
    - Build Plan and Prompt packet both specify orchestrator-expanded string
      templates.
+   - The live query-plan roles also differ from Tyler's formal / practitioner /
+     academic / colloquial / contrarian template family.
 2. `R7` — Stage 3 frame/model assignment packet conflict
    - The Build Plan and Prompt packet disagree about whether Claude Opus or
      Gemini owns `structured_decomposition` vs `verification_first`.
