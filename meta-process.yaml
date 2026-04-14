@@ -50,11 +50,14 @@ meta_process:
       config_file: "scripts/relationships.yaml"
 
     dead_code:
-      enabled: false          # opt-in per repo
-      strict: false           # false = warn only, true = block commit
-      min_confidence: 80      # vulture confidence threshold (60-100)
-      paths: []               # specific paths to check (empty = project root)
+      enabled: true
+      strict: true
+      min_confidence: 80
+      paths:
+        - "src"
+        - "scripts"
       whitelist: ".vulture_whitelist.py"
+      audit_file: "dead_code_audit.json"
 
   # =============================================================================
   # CI CONFIGURATION

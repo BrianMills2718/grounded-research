@@ -12,15 +12,18 @@ fail-loud invariants for evidence-backed arbitration.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import json
 import random
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Literal, TypeVar, cast
 from urllib.parse import urlparse
 
 from grounded_research.config import get_budget, get_depth_config, get_fallback_models, get_model, load_config
+from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
@@ -42,21 +45,27 @@ from grounded_research.tyler_v1_models import (
     EvidencePackage,
     ResolutionOutcome,
     Source as TylerSource,
+    StageSummary,
     VerificationResult,
 )
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-
-from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
+_DecoratorTarget = TypeVar("_DecoratorTarget", bound=Callable[..., Any])
+FreshnessWindow = Literal["pd", "pw", "pm", "py", "none"]
 
 try:
-    from data_contracts import boundary, BoundaryModel  # type: ignore[import-untyped]
+    from data_contracts import boundary as _boundary
 except ImportError:
-    def boundary(*args, **kwargs):  # type: ignore[misc]
-        def decorator(fn):  # type: ignore[misc]
+    def boundary(*args: Any, **kwargs: Any) -> Callable[[_DecoratorTarget], _DecoratorTarget]:
+        def decorator(fn: _DecoratorTarget) -> _DecoratorTarget:
             return fn
+
         return decorator
-    from pydantic import BaseModel as BoundaryModel  # type: ignore[assignment]
+else:
+    boundary = cast(
+        Callable[..., Callable[[_DecoratorTarget], _DecoratorTarget]],
+        _boundary,
+    )
 
 
 @dataclass(frozen=True)
@@ -68,7 +77,7 @@ class VerificationWarning:
     context: dict[str, object]
 
 
-def _load_verification_config() -> dict[str, object]:
+def _load_verification_config() -> dict[str, Any]:
     """Read the verification section from config."""
     config = load_config()
     raw = config.get("verification", {})
@@ -77,9 +86,9 @@ def _load_verification_config() -> dict[str, object]:
     return {}
 
 
-def _freshness_for_time_sensitivity(time_sensitivity: str) -> str:
+def _freshness_for_time_sensitivity(time_sensitivity: str) -> FreshnessWindow:
     """Map project time-sensitivity into shared-provider freshness windows."""
-    return _FRESHNESS_MAP.get(time_sensitivity, "pm")
+    return cast(FreshnessWindow, _FRESHNESS_MAP.get(time_sensitivity, "pm"))
 
 async def _collect_fresh_evidence_for_dispute(
     dispute_id: str,
@@ -471,8 +480,8 @@ async def arbitrate_dispute_tyler_v1(
     *,
     original_query: str,
     dispute: DisputeQueueEntry,
-    claim_ledger_entries: list[object],
-    relevant_original_sources: list[object],
+    claim_ledger_entries: list[ClaimLedgerEntry],
+    relevant_original_sources: list[TylerSource],
     new_evidence: list[AdditionalSource],
     trace_id: str,
     max_budget: float,
@@ -485,9 +494,7 @@ async def arbitrate_dispute_tyler_v1(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_arbitration.yaml"),
         original_query=original_query,
         dispute=randomized_dispute,
-        claim_ledger=_build_stage5_claim_ledger_prompt_payload(
-            list(claim_ledger_entries)
-        ),
+        claim_ledger=_build_stage5_claim_ledger_prompt_payload(claim_ledger_entries),
         relevant_original_sources=[source.model_dump(mode="json") for source in relevant_original_sources],
         new_evidence=[source.model_dump(mode="json") for source in new_evidence],
         response_schema_json=ArbitrationAssessment.model_json_schema(),
@@ -502,7 +509,7 @@ async def arbitrate_dispute_tyler_v1(
         max_budget=max_budget,
         fallback_models=get_fallback_models("arbitration"),
     )
-    return result
+    return cast(ArbitrationAssessment, result)
 
 
 def _normalize_tyler_claim_status_updates(
@@ -587,12 +594,10 @@ async def verify_disputes_tyler_v1(
             "Pass `stage_2_result` from the live pipeline or fixture artifacts "
             "instead of rebuilding it from the legacy EvidenceBundle."
         )
-    if stage_1_result is not None:
-        tyler_stage1 = stage_1_result
-    else:
+    if stage_1_result is None:
         from grounded_research.decompose import decompose_question_tyler_v1
 
-        tyler_stage1 = await decompose_question_tyler_v1(
+        await decompose_question_tyler_v1(
             question=original_query,
             trace_id=f"{trace_id}/stage1_for_verify",
             max_budget=max_budget * 0.1,
@@ -615,14 +620,14 @@ async def verify_disputes_tyler_v1(
             updated_dispute_queue=stage_4_result.dispute_queue,
             search_budget={},
             rounds_used=0,
-            stage_summary={
-                "stage_name": "Stage 5: Targeted Verification & Arbitration",
-                "goal": "Resolve decision-critical empirical and interpretive disputes.",
-                "key_findings": ["No decision-critical Stage 5 disputes required investigation."],
-                "decisions_made": ["Skipped Stage 5 because no actionable disputes remained."],
-                "outcome": "No verification work performed.",
-                "reasoning": "The Stage 4 dispute queue had no unresolved empirical or interpretive decision-critical disputes.",
-            },
+            stage_summary=StageSummary(
+                stage_name="Stage 5: Targeted Verification & Arbitration",
+                goal="Resolve decision-critical empirical and interpretive disputes.",
+                key_findings=["No decision-critical Stage 5 disputes required investigation."],
+                decisions_made=["Skipped Stage 5 because no actionable disputes remained."],
+                outcome="No verification work performed.",
+                reasoning="The Stage 4 dispute queue had no unresolved empirical or interpretive decision-critical disputes.",
+            ),
         )
         return empty, [], 0
 
@@ -757,20 +762,20 @@ async def verify_disputes_tyler_v1(
         updated_dispute_queue=list(dispute_lookup.values()),
         search_budget=search_budget,
         rounds_used=rounds_used,
-        stage_summary={
-            "stage_name": "Stage 5: Targeted Verification & Arbitration",
-            "goal": "Resolve decision-critical empirical and interpretive disputes with targeted fresh evidence.",
-            "key_findings": [
+        stage_summary=StageSummary(
+            stage_name="Stage 5: Targeted Verification & Arbitration",
+            goal="Resolve decision-critical empirical and interpretive disputes with targeted fresh evidence.",
+            key_findings=[
                 f"{len(investigated)} disputes investigated",
                 f"{len(all_additional_sources)} additional sources gathered",
                 f"{sum(1 for item in investigated if item.resolution is not ResolutionOutcome.EVIDENCE_INSUFFICIENT)} disputes resolved",
             ],
-            "decisions_made": [
+            decisions_made=[
                 "Used deterministic neutral verification queries per dispute",
                 "Updated only claims directly involved in investigated disputes",
             ],
-            "outcome": f"Stage 5 completed with {rounds_used} round(s) used.",
-            "reasoning": "Literal Tyler Stage 5 arbitration ran against targeted fresh evidence, then the result was normalized into strict post-verification claim statuses.",
-        },
+            outcome=f"Stage 5 completed with {rounds_used} round(s) used.",
+            reasoning="Literal Tyler Stage 5 arbitration ran against targeted fresh evidence, then the result was normalized into strict post-verification claim statuses.",
+        ),
     )
     return verification_result, warnings, llm_calls

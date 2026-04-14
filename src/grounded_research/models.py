@@ -236,7 +236,7 @@ class EvidenceItem(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _upgrade_legacy_sub_question_field(cls, data: Any) -> Any:
+    def _upgrade_legacy_sub_question_field(_cls, data: Any) -> Any:
         """Accept older traces that stored only one sub-question tag."""
         if not isinstance(data, dict):
             return data

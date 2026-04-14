@@ -87,6 +87,18 @@ evaluate: ## Show latest adjudication outputs and dispute stats
 	@echo "---"
 	@echo "Run-specific evaluation: python -m grounded_research.cli evaluate <output_dir>"
 
+# --- Quality ---
+.PHONY: dead-code dead-code-audit dead-code-validate
+
+dead-code:  ## Run dead code detection
+	@python scripts/meta/check_dead_code.py
+
+dead-code-audit:  ## Refresh reviewed dead-code audit file
+	@python scripts/meta/audit_dead_code.py --write
+
+dead-code-validate:  ## Validate reviewed dead-code dispositions
+	@python scripts/meta/validate_dead_code_audit.py
+
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py
 WORKTREE_REMOVE_SCRIPT := scripts/meta/worktree-coordination/safe_worktree_remove.py
@@ -96,6 +108,8 @@ WORKTREE_SESSION_HEARTBEAT_SCRIPT := scripts/meta/worktree-coordination/../sessi
 WORKTREE_SESSION_STATUS_SCRIPT := scripts/meta/worktree-coordination/../session_status.py
 WORKTREE_SESSION_FINISH_SCRIPT := scripts/meta/worktree-coordination/../session_finish.py
 WORKTREE_SESSION_CLOSE_SCRIPT := scripts/meta/worktree-coordination/../session_close.py
+WORKTREE_REVIEW_CLAIM_SCRIPT := scripts/meta/worktree-coordination/create_review_claim.py
+WORKTREE_RAISE_CONCERN_SCRIPT := scripts/meta/worktree-coordination/raise_concern.py
 WORKTREE_DIR ?= $(shell python "$(WORKTREE_CREATE_SCRIPT)" --repo-root . --print-default-worktree-dir)
 WORKTREE_START_POINT ?= HEAD
 WORKTREE_PROJECT ?= $(notdir $(CURDIR))
@@ -106,8 +120,11 @@ SESSION_NEXT ?=
 SESSION_DEPENDS ?=
 SESSION_STOP_CONDITIONS ?=
 SESSION_NOTE ?=
+REVIEW_SCOPE ?=
+REVIEW_NOTES ?=
+RECIPIENT ?=
 
-.PHONY: worktree worktree-list worktree-remove session-start session-heartbeat session-status session-finish session-close
+.PHONY: worktree worktree-list worktree-remove session-start session-heartbeat session-status session-finish session-close review-claim raise-concern
 
 worktree:  ## Create claimed worktree (BRANCH=name TASK="..." [PLAN=N] [AGENT=name])
 ifndef BRANCH
@@ -275,4 +292,84 @@ endif
 		exit 1; \
 	fi
 	@$(MAKE) session-close BRANCH="$(BRANCH)" $(if $(SESSION_NOTE),SESSION_NOTE="$(SESSION_NOTE)",)
+
+review-claim:  ## Create a review claim for TARGET_BRANCH=name WRITE_PATHS="a|b" TASK="..."
+ifndef TARGET_BRANCH
+	$(error TARGET_BRANCH is required. Usage: make review-claim TARGET_BRANCH=plan-42-feature WRITE_PATHS="src/foo.py|tests/test_foo.py" TASK="Review concern")
+endif
+ifndef WRITE_PATHS
+	$(error WRITE_PATHS is required. Provide one or more repo-relative paths separated by '|')
+endif
+ifndef TASK
+	$(error TASK is required. Describe the review intent)
+endif
+ifndef WORKTREE_AGENT
+	$(error Unable to infer agent runtime. Set AGENT via WORKTREE_AGENT=codex|claude-code|openclaw)
+endif
+	@python "$(WORKTREE_REVIEW_CLAIM_SCRIPT)" \
+		--repo-root "$(CURDIR)" \
+		--agent "$(WORKTREE_AGENT)" \
+		--project "$(WORKTREE_PROJECT)" \
+		--target-branch "$(TARGET_BRANCH)" \
+		--intent "$(TASK)" \
+		--write-path "$(WRITE_PATHS)" \
+		$(if $(PLAN),--plan "Plan #$(PLAN)",) \
+		$(if $(REVIEW_SCOPE),--scope "$(REVIEW_SCOPE)",) \
+		$(if $(REVIEW_NOTES),--notes "$(REVIEW_NOTES)",)
+
+raise-concern:  ## Route concern to TARGET_BRANCH via PR comment or local inbox
+ifndef TARGET_BRANCH
+	$(error TARGET_BRANCH is required. Usage: make raise-concern TARGET_BRANCH=plan-42-feature SUBJECT="..." MESSAGE="...")
+endif
+ifndef SUBJECT
+	$(error SUBJECT is required. Usage: make raise-concern TARGET_BRANCH=plan-42-feature SUBJECT="..." MESSAGE="...")
+endif
+ifndef WORKTREE_AGENT
+	$(error Unable to infer agent runtime. Set AGENT via WORKTREE_AGENT=codex|claude-code|openclaw)
+endif
+ifndef MESSAGE
+ifndef MESSAGE_FILE
+	$(error MESSAGE or MESSAGE_FILE is required. Provide inline content or a path to a concern file)
+endif
+endif
+	@python "$(WORKTREE_RAISE_CONCERN_SCRIPT)" \
+		--repo-root "$(CURDIR)" \
+		--agent "$(WORKTREE_AGENT)" \
+		--project "$(WORKTREE_PROJECT)" \
+		--target-branch "$(TARGET_BRANCH)" \
+		--subject "$(SUBJECT)" \
+		$(if $(MESSAGE),--content "$(MESSAGE)",) \
+		$(if $(MESSAGE_FILE),--content-file "$(MESSAGE_FILE)",) \
+		$(if $(RECIPIENT),--recipient "$(RECIPIENT)",)
 # <<< META-PROCESS WORKTREE TARGETS <<<
+
+# >>> META-PROCESS PUBLISH TARGETS >>>
+PUBLISH_PUSH_CHECK_SCRIPT := scripts/meta/check_push_safety.py
+PUBLISH_DEAD_CODE_SCRIPT := scripts/meta/check_dead_code.py
+PUBLISH_DEAD_CODE_VALIDATE_SCRIPT := scripts/meta/validate_dead_code_audit.py
+
+.PHONY: publish-check
+
+publish-check:  ## Run the governed publish gate (coordination, repo checks, reviewed dead-code)
+	@if [ ! -f "$(PUBLISH_PUSH_CHECK_SCRIPT)" ]; then \
+		echo "Missing push-safety validator: $(PUBLISH_PUSH_CHECK_SCRIPT)"; \
+		echo "Install or sync the sanctioned governed-repo support before publishing."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(PUBLISH_DEAD_CODE_SCRIPT)" ]; then \
+		echo "Missing dead-code detector: $(PUBLISH_DEAD_CODE_SCRIPT)"; \
+		echo "Install or sync the sanctioned governed-repo support before publishing."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(PUBLISH_DEAD_CODE_VALIDATE_SCRIPT)" ]; then \
+		echo "Missing dead-code audit validator: $(PUBLISH_DEAD_CODE_VALIDATE_SCRIPT)"; \
+		echo "Install or sync the sanctioned governed-repo support before publishing."; \
+		exit 1; \
+	fi
+	@python "$(PUBLISH_PUSH_CHECK_SCRIPT)"
+	@python "$(PUBLISH_DEAD_CODE_SCRIPT)"
+	@python "$(PUBLISH_DEAD_CODE_VALIDATE_SCRIPT)"
+	@if $(MAKE) -n publish-check-extra >/dev/null 2>&1; then \
+		$(MAKE) publish-check-extra; \
+	fi
+# <<< META-PROCESS PUBLISH TARGETS <<<
