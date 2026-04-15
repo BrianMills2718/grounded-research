@@ -2,6 +2,10 @@
 
 This is the strict status surface for Tyler's requested implementation.
 
+For the cross-repo unfinished-work handoff, use:
+
+- `docs/TYLER_CROSS_REPO_HANDOFF_2026_04_14.md`
+
 During the clause-by-clause audit wave, the canonical detailed source of truth
 for open gaps is:
 
