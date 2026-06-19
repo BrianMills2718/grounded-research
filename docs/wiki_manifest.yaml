@@ -1,0 +1,25 @@
+version: 1
+project: grounded-research
+publish:
+  - path: README.md
+    type: ProjectOverview
+    title: Grounded Research Overview
+    tags: [portfolio, research-system, retrieval]
+  - path: docs/ARCHITECTURE_ONE_PAGE.md
+    type: ArchitectureDoc
+    tags: [research-system, architecture]
+  - path: docs/CONTRACTS.md
+    type: ContractDoc
+    tags: [research-system, contracts]
+  - path: docs/DOMAIN_MODEL.md
+    type: DomainModel
+    tags: [research-system, domain-model]
+  - path: docs/FEATURE_STATUS.md
+    type: StatusReport
+    tags: [research-system, status]
+  - path: output/fair_tyler_literal_parity_ubi_reanchor_v8_vs_ubi_dense_dedup_eval.md
+    type: EvaluationReport
+    tags: [evaluation, research-system, portfolio]
+exclude:
+  - .pytest_cache/**
+  - docs/wiki_manifest.yaml
