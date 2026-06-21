@@ -5,6 +5,10 @@ publish:
     type: ProjectOverview
     title: Grounded Research Overview
     tags: [portfolio, research-system, retrieval]
+  - path: docs/ADJUDICATION_WALKTHROUGH.md
+    type: PortfolioGuide
+    title: Grounded Research Adjudication Walkthrough
+    tags: [portfolio, adjudication, research-system]
   - path: docs/ARCHITECTURE_ONE_PAGE.md
     type: ArchitectureDoc
     tags: [research-system, architecture]
