@@ -1,10 +1,30 @@
 version: 1
 project: grounded-research
 publish:
+  - path: PROJECT.md
+    type: ProjectDossier
+    title: Grounded Research Project Dossier
+    tags: [portfolio, research-system, adjudication, dossier]
   - path: README.md
     type: ProjectOverview
     title: Grounded Research Overview
     tags: [portfolio, research-system, retrieval]
+  - path: docs/METHODOLOGY.md
+    type: Methodology
+    title: Grounded Research Methodology
+    tags: [portfolio, research-system, adjudication, methodology]
+  - path: docs/ARTIFACTS.md
+    type: ArtifactRegister
+    title: Grounded Research Artifact Register
+    tags: [portfolio, research-system, artifacts]
+  - path: docs/VALIDATION.md
+    type: Validation
+    title: Grounded Research Validation Register
+    tags: [portfolio, research-system, validation, evaluation]
+  - path: docs/CONCERNS.md
+    type: ConcernRegister
+    title: Grounded Research Concern Register
+    tags: [portfolio, research-system, concerns]
   - path: docs/ADJUDICATION_WALKTHROUGH.md
     type: PortfolioGuide
     title: Grounded Research Adjudication Walkthrough
