@@ -114,11 +114,11 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 26 | 7,471 |
-| `scripts/**/*.py` | 9 | 1,927 |
+| `tests/**/*.py` | 26 | 7,489 |
+| `scripts/**/*.py` | 9 | 1,928 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 111 | 16,365 |
-| all tracked Markdown | 124 | 20,847 |
+| `docs/**/*.md` | 111 | 16,362 |
+| all tracked Markdown | 124 | 20,844 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -182,14 +182,15 @@ Quality standard:
 Current first-pass coverage-quality readout:
 
 - 36 requirements
-- 33 rows still need line-level Tyler source anchors
-- 3 rows now have line-level Tyler source anchors
+- 31 rows still need line-level Tyler source anchors
+- 5 rows now have line-level Tyler source anchors
 - 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`
-- 10 grade `D`
-- 2 grade `F`
+- 12 grade `D`
+- 0 grade `F`
 - negative controls implemented for all seven audit-quality failure families
 
-The grade-F rows are `EXT-SCHEMA-001` and `DOC-README-001`. These remain
-audit-evidence or documentation-quality gaps.
+There are currently no grade-F rows under the non-strict coverage-quality
+policy. `EXT-SCHEMA-001` and `DOC-README-001` now grade `D`, which means
+documented rather than strongly closed by runtime proof.

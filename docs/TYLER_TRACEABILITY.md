@@ -45,7 +45,7 @@ The current generated summary is:
 | audit units pointing at missing ledger rows | 0 |
 | review lanes pointing at missing ledger rows | 0 |
 | verified rows without explicit test references | 1 |
-| rows without source references | 2 |
+| rows without source references | 1 |
 
 Current non-closure rows:
 
@@ -58,7 +58,6 @@ Current evidence-quality flags:
   evidence, but does not cite a local pytest test directly.
 - `S2-TAVILY-DEPTH-001` is shared-infra-backed, so its strongest source/test
   evidence lives in `open_web_retrieval`.
-- `DOC-README-001` is a doc-status row and does not need source-code evidence.
 
 These are not current broken links. They are prompts for future evidence-quality
 improvement if the maintainer wants stricter closure criteria.
@@ -74,9 +73,9 @@ Current first-pass readout:
 | Metric | Count |
 |---|---:|
 | requirements | 36 |
-| review needed | 33 |
-| line-anchor pending | 33 |
-| grade F | 2 |
+| review needed | 31 |
+| line-anchor pending | 31 |
+| grade F | 0 |
 
 Evidence grades:
 
@@ -85,8 +84,7 @@ Evidence grades:
 | A | 21 |
 | B | 2 |
 | C | 1 |
-| D | 10 |
-| F | 2 |
+| D | 12 |
 
 Requirement classes:
 
@@ -102,15 +100,13 @@ Requirement classes:
 | runtime_behavior | 3 |
 | schema_contract | 3 |
 
-Current grade-F rows under the conservative first policy:
-
-- `EXT-SCHEMA-001`
-- `DOC-README-001`
+Current grade-F rows under the conservative first policy: none.
 
 `S2-QUERY-MODEL-001` and `S2-QUERY-VARIANTS-001` were reopened by the
 coverage-quality pass and then fixed by restoring deterministic
 string/orchestrator query templates in the live runtime. `EXT-SCHEMA-001` and
-`DOC-README-001` remain audit-evidence/documentation-quality gaps.
+`DOC-README-001` now grade `D`, which means documented rather than strongly
+closed by runtime proof.
 
 Negative controls are now covered in `tests/test_tyler_coverage.py` for the
 seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.

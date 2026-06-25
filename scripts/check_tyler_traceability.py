@@ -22,6 +22,7 @@ AUDIT_MATRIX_PATH = Path("docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md")
 REVIEW_MATRIX_PATH = Path("docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md")
 
 PATH_PREFIXES = (
+    "README.md",
     "config/",
     "docs/",
     "engine.py",

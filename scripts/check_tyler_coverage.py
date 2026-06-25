@@ -133,7 +133,7 @@ def _evidence_from_refs(row: TableRow) -> list[CoverageEvidence]:
             kind = "local_test"
         elif ref.path.startswith("prompts/"):
             kind = "prompt_template"
-        elif ref.path.startswith("docs/"):
+        elif ref.path == "README.md" or ref.path.startswith("docs/"):
             kind = "doc"
         elif ref.path.startswith("config/"):
             kind = "config"

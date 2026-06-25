@@ -221,3 +221,21 @@ def test_negative_control_stale_doc_without_doc_ref_fails() -> None:
     assert result.evidence_grade == "F"
     assert result.requirement_class == "doc_status"
     assert "doc_status_row_without_doc_ref" in result.findings
+
+
+def test_root_readme_counts_as_doc_evidence() -> None:
+    """Root README references should count as documentation evidence."""
+    row = _negative_row(
+        "DOC-README-LOCAL-001",
+        tyler_source="README status row",
+        requirement="README must not overclaim status.",
+        local_surface="`README.md`",
+        evidence="Verified by reviewing `README.md`.",
+        classification="stale_doc",
+    )
+
+    result = evaluate_coverage_row(row)
+
+    assert result.requirement_class == "doc_status"
+    assert result.evidence_grade == "D"
+    assert "doc_status_row_without_doc_ref" not in result.findings
