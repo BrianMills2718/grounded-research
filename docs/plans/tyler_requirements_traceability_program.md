@@ -11,7 +11,8 @@
 > `docs/TYLER_V1_CURRENT_REPO_MAP.md`;
 > `docs/plans/CLAUDE.md`;
 > `docs/plans/maintainer_onboarding_cleanup_wave1.md`;
-> raw Tyler packet in ignored local directory `2026_0325_tyler_feedback/`.
+> `docs/TYLER_SOURCE_MANIFEST.md`; tracked raw Tyler packet in
+> `2026_0325_tyler_feedback/`.
 >
 > Status: active planning document. This supersedes PR-readiness framing for
 > the current branch.
@@ -212,7 +213,7 @@ close runtime behavior.
 | Broad source section hides requirement ambiguity | Row cites a file or stage but no line span | Require line-level Tyler anchors or explicit exception |
 | Shared-infra proof treated as local pytest proof | Requirement row cites external repo without owner/command | Require `owner_repo` and `verification_command` on shared evidence |
 | Checker is untested against bad data | Only happy-path current docs are parsed | Add negative-control fixtures that must fail |
-| Raw Tyler packet missing from clone | `2026_0325_tyler_feedback/` remains ignored with no tracked copy | Track a sanitized source copy or document the exception and derived artifact hash |
+| Raw Tyler packet changes silently | Manifest hash check fails or line anchors drift | Keep the four raw files force-tracked and update `docs/TYLER_SOURCE_MANIFEST.md` only after intentional source review |
 | Active docs conflict silently | Status/map docs make different closure claims | Add doc-drift audit and reconcile canonical docs |
 | MCP discovery bypasses Tyler evidence contracts | Social/search sources feed synthesis directly | Keep MCP behind typed provider adapter and existing evidence gates |
 
@@ -237,14 +238,16 @@ Audit:
 
 - Check that the new docs do not claim every Tyler requirement has local pytest
   coverage.
-- Check that the docs name the raw Tyler packet reproducibility gap.
+- Check that the docs name the raw Tyler packet reproducibility status.
 
 Cleanup:
 
 - Ensure the plan index names this plan as active and does not frame the next
   step as PR readiness.
 
-Status: complete.
+Status: complete. The raw source packet is now tracked at its original
+`2026_0325_tyler_feedback/` paths, and `docs/TYLER_SOURCE_MANIFEST.md` plus
+`make tyler-source-check` verify the expected line counts and SHA-256 hashes.
 
 ### Slice 2: Structured Registry Skeleton
 
@@ -472,13 +475,15 @@ Status: complete for the first adversarial checkpoint. The review is recorded
 in `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md`. It sampled grade `A`, `B`, `C`,
 and `D` rows across Stage 2, Stage 3, Stage 5, Stage 6, schema, doc-governance,
 ambiguity, and shared-infra surfaces; found no new blocking findings; and
-dispositioned residual risks around raw Tyler packet reproducibility, grade-B
-runtime-artifact closure, grade-C shared-infra closure, and targeted doc-drift
-coverage.
+dispositioned residual risks around grade-B runtime-artifact closure, grade-C
+shared-infra closure, and targeted doc-drift coverage. The previous raw Tyler
+packet clone-dependency risk was closed afterward by tracking the source packet
+and adding the source manifest gate.
 
 ## Current Concern Register Additions
 
-- Raw Tyler packet is ignored, making full audit reproduction clone-dependent.
+- Raw Tyler source hashes must remain stable; intentional source changes require
+  manifest review.
 - Current checker validates references, not evidence sufficiency.
 - Binary `verified_fixed` status can overstate closure strength unless paired
   with evidence grade and class policy.

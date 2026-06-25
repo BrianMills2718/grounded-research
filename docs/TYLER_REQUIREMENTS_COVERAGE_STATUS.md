@@ -11,7 +11,8 @@
 > `docs/TYLER_V1_CURRENT_REPO_MAP.md`;
 > `docs/plans/CLAUDE.md`;
 > `docs/plans/maintainer_onboarding_cleanup_wave1.md`;
-> raw Tyler packet in ignored local directory `2026_0325_tyler_feedback/`.
+> `docs/TYLER_SOURCE_MANIFEST.md`; tracked raw Tyler packet in
+> `2026_0325_tyler_feedback/`.
 >
 > Status: current-state checkpoint. This is not a PR-readiness claim.
 
@@ -37,9 +38,9 @@ Yes, locally. The raw Tyler packet is in `2026_0325_tyler_feedback/`:
 | `4. V1_PROMPTS.md` | 1,163 |
 | Total | 2,377 |
 
-Important caveat: that directory is currently ignored by `.gitignore`, so a
-fresh clone cannot independently regenerate the audit from the raw Tyler packet.
-That is a reproducibility gap.
+The directory remains listed in `.gitignore` to avoid accidental addition of
+extra local feedback artifacts, but these four files are force-tracked and
+verified by `docs/TYLER_SOURCE_MANIFEST.md` plus `make tyler-source-check`.
 
 ### Is there a test for every Tyler requirement?
 
@@ -116,10 +117,10 @@ Tracked repository counts from `git ls-files`:
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
 | `tests/**/*.py` | 28 | 7,609 |
-| `scripts/**/*.py` | 11 | 2,282 |
+| `scripts/**/*.py` | 12 | 2,445 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 112 | 16,486 |
-| all tracked Markdown | 125 | 20,969 |
+| `docs/**/*.md` | 113 | 16,526 |
+| all tracked Markdown | 130 | 23,386 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -171,6 +172,8 @@ make tyler-doc-audit
 make tyler-doc-audit-json
 make tyler-code-audit
 make tyler-code-audit-json
+make tyler-source-check
+make tyler-source-check-json
 make check
 ```
 
@@ -178,7 +181,8 @@ make check
 drift findings. It also fails when non-doc Tyler rows lack current
 implementation or verification evidence. The anchor policy is closed for the
 current ledger: rows have either line-level Tyler anchors or explicit
-doc-governance exceptions.
+doc-governance exceptions. The tracked raw Tyler source packet must also match
+its manifest hashes and line counts.
 
 Quality standard:
 
@@ -190,9 +194,10 @@ Current first-pass coverage-quality readout:
 - 0 rows still need line-level Tyler source anchors or explicit exceptions
 - 31 rows now have line-level Tyler source anchors
 - 5 rows have explicit doc-governance anchor exceptions
-- 0 active-doc drift findings across 40 active docs under the targeted current-state checker
+- 0 active-doc drift findings across 41 active docs under the targeted current-state checker
 - 24 non-doc/non-exception rows audited for current code evidence
 - 0 current-code evidence gaps
+- 4 raw Tyler source files tracked and hash-verified
 - first independent closure-review checkpoint recorded in
   `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md`
 - 21 grade `A`

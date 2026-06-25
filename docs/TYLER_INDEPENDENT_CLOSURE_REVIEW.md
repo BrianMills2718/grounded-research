@@ -54,7 +54,7 @@ Dispositioned residual risks:
 
 | Risk | Disposition |
 |---|---|
-| Raw Tyler packet remains ignored by git. | Still open as `GR-TYLER-TRACE-001`; derived ledger/matrices are tracked, but full reproduction from raw source remains clone-dependent. |
+| Raw Tyler packet reproducibility. | Closed after this review by force-tracking the four raw Tyler files and adding `docs/TYLER_SOURCE_MANIFEST.md` plus `make tyler-source-check`; future risk is silent source drift, now covered by the hash gate. |
 | `S3-MODEL-VERSION-001` has runtime-artifact/shared-infra evidence rather than local pytest proof. | Accepted at grade B; do not upgrade to A without a local deterministic assertion or a governed runtime-artifact checker. |
 | `S2-TAVILY-DEPTH-001` relies on `open_web_retrieval` adapter behavior. | Accepted at grade C; shared-infra source and test references are explicit. |
 | Active-doc drift detection is targeted, not semantic. | Accepted for this slice; it catches known high-risk stale claims and is backed by tests, but it is not a substitute for future semantic doc cleanup. |

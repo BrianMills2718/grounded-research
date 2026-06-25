@@ -38,6 +38,7 @@ check: ## Run tests + type check + lint
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
@@ -46,6 +47,7 @@ check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
@@ -72,7 +74,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json
+.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -128,6 +130,12 @@ tyler-code-audit: ## Audit current-code evidence for Tyler requirement rows
 
 tyler-code-audit-json: ## Emit current-code Tyler evidence audit as JSON
 	@$(PYTHON) scripts/check_tyler_code_audit.py --format json
+
+tyler-source-check: ## Verify tracked raw Tyler source packet hashes
+	@$(PYTHON) scripts/check_tyler_source_manifest.py --format markdown
+
+tyler-source-check-json: ## Emit raw Tyler source manifest check as JSON
+	@$(PYTHON) scripts/check_tyler_source_manifest.py --format json
 
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py

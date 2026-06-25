@@ -121,10 +121,12 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | Coverage matrix over Tyler's source packet. |
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md` | Adversarial closure-review checkpoint and residual-risk disposition. |
+| `docs/TYLER_SOURCE_MANIFEST.md` | Raw Tyler packet line-count and hash manifest. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
 | `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades; grade-F rows can fail the gate. |
 | `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
 | `scripts/check_tyler_code_audit.py` | Current-code evidence audit for non-doc Tyler rows. |
+| `scripts/check_tyler_source_manifest.py` | Raw Tyler source packet reproducibility check. |
 | `make tyler-traceability` | Human-readable report. |
 | `make tyler-traceability-json` | Agent/tool-readable report. |
 | `make tyler-coverage` | Human-readable audit-quality dashboard. |
@@ -133,6 +135,8 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `make tyler-doc-audit-json` | Agent/tool-readable active-doc drift report. |
 | `make tyler-code-audit` | Human-readable current-code evidence audit. |
 | `make tyler-code-audit-json` | Agent/tool-readable current-code evidence audit. |
+| `make tyler-source-check` | Human-readable raw Tyler source manifest check. |
+| `make tyler-source-check-json` | Agent/tool-readable raw Tyler source manifest check. |
 
 ## Design Boundary
 
