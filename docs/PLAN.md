@@ -76,11 +76,9 @@ Current operational notes:
   with Tavily as the quality-first default, not a bespoke workflow engine
 - Stage 1 no longer runs a separate validation/retry layer in the live path;
   Tyler's prompt-level self-check is the local mitigation
-- Stage 2 query diversification currently uses a lightweight model call that
-  emits typed query plans and routes by query role instead of dual-provider
-  fan-out; the 2026-06-25 coverage-quality anchor pass reopened this as a
-  Tyler-literal mismatch because the raw packet describes string/orchestrator
-  templates for query generation
+- Stage 2 query generation uses deterministic Tyler string/orchestrator
+  templates that emit typed query plans and route by query role instead of
+  dual-provider fan-out
 - Stage 2 final source scoring is now deterministic authority/freshness/
   staleness blending, not tier-only scoring
 - `deep` and `thorough` now add goal-driven evidence extraction on persisted

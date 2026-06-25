@@ -25,7 +25,7 @@ This matrix exists to make the review itself mechanical:
 | review_id | scope | review focus | evidence required | current source of truth | status | next artifact |
 |---|---|---|---|---|---|---|
 | R1 | Stage 1 | prompt, schema, no-validation runtime path | static review + stage runtime test | `S1-VALIDATION-001` | done | ledger only |
-| R2 | Stage 2 | query diversification mechanism and variant family | static review + runtime decision | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`, `DOC-S2-QUERY-002` | active | ledger + runtime decision plan |
+| R2 | Stage 2 | query diversification mechanism and variant family | static review + runtime test | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`, `DOC-S2-QUERY-002` | done | ledger only |
 | R3 | Stage 2 | provider routing by query type | behavior check or runtime test | `S2-ROUTING-001` | done | ledger only |
 | R4 | Stage 2 | quality scoring pipeline | static review + deterministic test | `S2-QUALITY-001` | done | ledger only |
 | R5 | Stage 2 | Tavily depth behavior from consumer boundary | request-body or adapter verification | `S2-TAVILY-DEPTH-001` | done | ledger only |
@@ -48,14 +48,13 @@ This matrix exists to make the review itself mechanical:
 
 ## Immediate Open Lanes
 
-The coverage-quality anchor pass reopened one active Stage 2 review lane.
+The coverage-quality anchor pass reopened one active Stage 2 review lane. It
+was resolved by restoring Tyler-literal string/orchestrator templates and
+adding runtime coverage that fails if query generation calls an LLM.
 
 Active implementation lane:
 
-1. `R2` / `S2-QUERY-MODEL-001` / `S2-QUERY-VARIANTS-001`
-   - runtime decision required
-   - decide whether to restore Tyler-literal string/orchestrator templates or
-     document model-driven query generation as an extension/deviation
+None currently recorded in this matrix.
 
 Operational watch item:
 

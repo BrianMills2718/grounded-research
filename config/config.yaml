@@ -8,7 +8,6 @@ depth: "standard"
 models:
   decomposition: "openrouter/google/gemini-3.1-pro-preview"        # Tyler: Gemini 3.1 Pro
   analyst: "openrouter/openai/gpt-5.4"                     # Tyler: per-analyst override below
-  query_diversification: "openrouter/google/gemini-2.5-pro"  # Tyler: lightweight model call
   evidence_extraction: "openrouter/google/gemini-3.1-pro-preview"  # Tyler: same as decomposition
   claim_extraction: "openrouter/openai/gpt-5.4"            # Tyler: GPT-5.4 (best structured output)
   deduplication: "openrouter/openai/gpt-5.4"               # Tyler: part of Stage 4
@@ -24,7 +23,6 @@ model_fallbacks:
     - "openrouter/openai/gpt-5.4-mini"
     - "openrouter/anthropic/claude-sonnet-4.6"
     - "openrouter/google/gemini-2.5-flash"
-  query_diversification: ["openrouter/google/gemini-2.5-flash"]
   evidence_extraction: ["openrouter/google/gemini-2.5-flash"]
   claim_extraction: ["openrouter/anthropic/claude-opus-4.6"]   # Tyler: fallback Claude Opus
   deduplication: ["openrouter/google/gemini-2.5-flash"]

@@ -112,13 +112,13 @@ Tracked repository counts from `git ls-files`:
 
 | Area | Files | Lines |
 |---|---:|---:|
-| `src/**/*.py` | 23 | 7,696 |
+| `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 25 | 7,252 |
-| `scripts/**/*.py` | 8 | 1,522 |
-| `prompts/` | 9 | 898 |
-| `docs/**/*.md` | 108 | 15,480 |
-| all tracked Markdown | 121 | 19,963 |
+| `tests/**/*.py` | 26 | 7,471 |
+| `scripts/**/*.py` | 9 | 1,927 |
+| `prompts/` | 8 | 846 |
+| `docs/**/*.md` | 111 | 16,365 |
+| all tracked Markdown | 124 | 20,847 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -184,14 +184,12 @@ Current first-pass coverage-quality readout:
 - 36 requirements
 - 33 rows still need line-level Tyler source anchors
 - 3 rows now have line-level Tyler source anchors
-- 19 grade `A`
+- 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`
 - 10 grade `D`
-- 4 grade `F`
+- 2 grade `F`
 - negative controls implemented for all seven audit-quality failure families
 
-The grade-F rows are `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
-`EXT-SCHEMA-001`, and `DOC-README-001`. The two `S2-QUERY-*` rows are reopened
-runtime-decision gaps; the extension/README rows are audit-evidence or
-documentation-quality gaps.
+The grade-F rows are `EXT-SCHEMA-001` and `DOC-README-001`. These remain
+audit-evidence or documentation-quality gaps.

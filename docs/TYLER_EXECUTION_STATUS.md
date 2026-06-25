@@ -58,7 +58,6 @@ Every item is classified as one of:
      - `question_decomposition_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
      - `finding_extraction_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
      - Analyst B `analyst_reasoning_tyler_v1` used `openrouter/google/gemini-3.1-pro-preview`
-     - `query_diversification_tyler_v1` intentionally remained on `openrouter/google/gemini-2.5-pro`
 29. Stage 6 prompt-variable interface parity
 30. Stage 5/6 prompt data-structure convention parity
 31. Stage 6 grounding reject-and-retry
@@ -73,18 +72,20 @@ Every item is classified as one of:
    - Verified with `tests/test_export.py` and the live `write_outputs()` /
      failure trace path.
 
+34. Stage 2 query generation mechanism and variant-family parity
+   - Canonical rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`.
+   - Reopened on 2026-06-25 by the coverage-quality anchor pass after finding
+     that the live path used a query-generation model call where Tyler required
+     string/orchestrator templates.
+   - Fixed on 2026-06-25 by restoring deterministic query-template expansion in
+     `generate_search_queries_tyler_v1()`, deleting the dormant query
+     diversification prompt/config surface, and covering the runtime with a
+     test that fails if Stage 2 query generation calls an LLM.
+
 ## Required: Active Implementation Gaps
 
-1. Stage 2 query generation mechanism and variant-family parity
-   - Canonical rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`.
-   - Reopened on 2026-06-25 by the coverage-quality anchor pass.
-   - Tyler's raw Build Plan and Prompt packet describe Stage 2 query generation
-     as string/orchestrator templates, not a model call.
-   - The live runtime currently uses `prompts/tyler_v1_query_diversification.yaml`
-     and `acall_llm_structured(...)` in `generate_search_queries_tyler_v1()`.
-   - This needs a runtime decision: either restore literal string-template
-     query generation or explicitly document the model-driven path as an
-     extension/deviation with acceptance evidence.
+None currently recorded in this status surface. New gaps must be backed by
+`docs/TYLER_SPEC_GAP_LEDGER.md`.
 
 ## Operational Watch
 

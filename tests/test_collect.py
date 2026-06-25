@@ -132,7 +132,7 @@ async def test_collect_evidence_routes_tyler_query_plans_by_provider_role(
         return [
             Stage2QueryPlan(
                 provider="tavily",
-                query_role="keyword_rewrite",
+                query_role="formal_technical",
                 query_text="pilot A employment effect",
                 sub_question_id="Q-1",
                 search_depth="basic",

@@ -289,15 +289,42 @@ First readout:
 - 36 requirements
 - 33 rows pending line-level Tyler anchors
 - 3 rows with line-level Tyler anchors
-- evidence grades: 19 `A`, 2 `B`, 1 `C`, 10 `D`, 4 `F`
-- grade-F rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
-  `EXT-SCHEMA-001`, `DOC-README-001`
+- evidence grades: 21 `A`, 2 `B`, 1 `C`, 10 `D`, 2 `F`
+- grade-F rows: `EXT-SCHEMA-001`, `DOC-README-001`
 
 Update from the anchor pass: `S2-QUERY-MODEL-001` and
 `S2-QUERY-VARIANTS-001` are no longer treated as audit-evidence-only gaps. The
 raw Tyler packet describes Stage 2 query generation as string/orchestrator
-templates, while the live runtime uses a model-driven query-diversification
-prompt. These rows need a runtime decision before closure.
+templates; the live runtime previously used a model-driven
+query-diversification prompt. These rows required a runtime decision before
+closure and are now fixed by the deterministic template path below.
+
+Runtime decision on 2026-06-25: restore the Tyler-literal orchestrator
+template path. Rationale: `CLAUDE.md` defines Tyler literal compliance as the
+priority, the raw Build Plan and Prompt packet both explicitly say Stage 2
+query generation is string/template orchestration rather than a model call, and
+no local evidence currently licenses a model-driven query-generation extension.
+The implementation slice removed the live `query_diversification` model call,
+generates at most four query plans per sub-question from deterministic
+templates, keeps high-priority Exa routing as the already-audited provider
+extension/control path, and updates tests so the runtime cannot silently
+reintroduce an LLM call.
+
+Acceptance for this runtime slice:
+
+- `generate_search_queries_tyler_v1()` imports neither `render_prompt` nor
+  `acall_llm_structured`.
+- Query plans use Tyler's template families with hard cap
+  `MAX_QUERIES_PER_SUB_QUESTION = 4`.
+- High-priority sub-questions still exercise both Tavily and Exa, but query
+  text is produced by deterministic templates.
+- Runtime tests fail if an LLM-backed query-diversification call is made.
+- Active docs and config no longer describe `query_diversification` as a
+  Tyler-literal model assignment.
+
+Status: complete. Verified with targeted Stage 2 tests, `make
+tyler-coverage-json`, `scripts/check_tyler_traceability.py --format json
+--fail-on-issues`, and `make check`.
 
 ### Slice 3: Evidence Policy Gate
 

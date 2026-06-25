@@ -12,18 +12,18 @@ canonical Tyler files, and the post-audit remediation wave is complete. The
 previously reopened local rows are now closed, including the Stage 5/6 prompt
 contract rows, the Stage 6 validation-behavior rows, and Tyler
 `PipelineState` trace parity. The 2026-06-25 coverage-quality anchor pass
-reopened the Stage 2 query-generation mechanism and variant-family rows because
-the raw Tyler packet describes string/orchestrator templates while the live
-runtime uses a lightweight model call. The frontier-model variability item
-remains a separate policy-governed operational watch.
+reopened the Stage 2 query-generation mechanism and variant-family rows, then
+the runtime was restored to deterministic Tyler orchestrator templates instead
+of a query-generation model call. The frontier-model variability item remains a
+separate policy-governed operational watch.
 
 Current operational reality:
 
 - Tyler-native Stage 1-6 runtime and export/handoff contracts are the live path
 - Stage 1 runs without a separate validation stage
 - Stage 2 currently uses routed Tavily/Exa search; query generation is
-  model-driven in the live runtime and is reopened as a Tyler-literal mismatch
-  pending a runtime decision
+  deterministic Tyler string-template orchestration with a hard cap of four
+  queries per sub-question
 - Stage 2 quality scoring is deterministic authority/freshness/staleness
   scoring, not a generic LLM judge
 - Stage 4 and Stage 5 randomization protections are live
