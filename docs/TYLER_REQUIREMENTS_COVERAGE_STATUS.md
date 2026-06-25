@@ -185,8 +185,8 @@ Quality standard:
 Current first-pass coverage-quality readout:
 
 - 36 requirements
-- 31 rows still need line-level Tyler source anchors
-- 5 rows now have line-level Tyler source anchors
+- 24 rows still need line-level Tyler source anchors
+- 12 rows now have line-level Tyler source anchors
 - 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`

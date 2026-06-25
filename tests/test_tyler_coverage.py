@@ -57,7 +57,7 @@ def test_tyler_coverage_report_surfaces_anchor_backlog() -> None:
 
     assert report["summary"]["line_anchor_pending"] > 0
     assert "section_only" in report["by_anchor_status"]
-    assert "S1-VALIDATION-001" in report["review_needed"]
+    assert "AMB-S3-FRAME-001" in report["review_needed"]
 
 
 def test_tyler_coverage_report_keeps_known_shared_infra_rows_visible() -> None:

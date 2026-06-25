@@ -287,8 +287,8 @@ place.
 First readout:
 
 - 36 requirements
-- 31 rows pending line-level Tyler anchors
-- 5 rows with line-level Tyler anchors
+- 24 rows pending line-level Tyler anchors
+- 12 rows with line-level Tyler anchors
 - evidence grades: 21 `A`, 2 `B`, 1 `C`, 12 `D`, 0 `F`
 - grade-F rows: none
 

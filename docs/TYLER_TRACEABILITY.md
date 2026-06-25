@@ -73,8 +73,8 @@ Current first-pass readout:
 | Metric | Count |
 |---|---:|
 | requirements | 36 |
-| review needed | 31 |
-| line-anchor pending | 31 |
+| review needed | 24 |
+| line-anchor pending | 24 |
 | grade F | 0 |
 
 Evidence grades:
