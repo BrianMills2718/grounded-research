@@ -77,6 +77,8 @@ def _anchor_status(row: TableRow) -> str:
     source_text = row.fields.get("tyler_source", "")
     if not source_text.strip():
         return "missing"
+    if re.search(r"\banchor exception\b", source_text, flags=re.IGNORECASE):
+        return "explicit_exception"
     if re.search(r"(:L?\d+|#L\d+|\blines?\s+\d+)", source_text, flags=re.IGNORECASE):
         return "line_level"
     if _source_aliases(source_text):
@@ -213,7 +215,7 @@ def _findings_for(
 
     findings: list[str] = []
     kinds = _evidence_kinds(evidence)
-    if anchor_status != "line_level":
+    if anchor_status not in {"line_level", "explicit_exception"}:
         findings.append(f"source_anchor_{anchor_status}")
     if grade == "F":
         findings.append("insufficient_evidence_for_closure")
@@ -250,6 +252,8 @@ def _adversarial_notes(requirement_class: str, grade: str, findings: list[str]) 
         notes.append("Confirm shared-infra owner, command, and artifact before strict closure.")
     if "source_anchor_section_only" in findings:
         notes.append("Backfill exact Tyler line span before strong closure.")
+    if "source_anchor_missing" in findings:
+        notes.append("Add a Tyler line span or explicit anchor exception before strong closure.")
     return notes
 
 
@@ -306,7 +310,8 @@ def build_coverage_report() -> dict[str, Any]:
     review_needed = [
         item.requirement_id
         for item in requirements
-        if item.evidence_grade == "F" or item.anchor_status != "line_level"
+        if item.evidence_grade == "F"
+        or item.anchor_status not in {"line_level", "explicit_exception"}
     ]
     return {
         "sources": [str(LEDGER_PATH), "docs/TYLER_AUDIT_QUALITY_STANDARD.md"],
@@ -314,7 +319,9 @@ def build_coverage_report() -> dict[str, Any]:
             "requirements": len(requirements),
             "review_needed": len(review_needed),
             "line_anchor_pending": sum(
-                1 for item in requirements if item.anchor_status != "line_level"
+                1
+                for item in requirements
+                if item.anchor_status not in {"line_level", "explicit_exception"}
             ),
             "grade_f": by_grade.get("F", 0),
         },
@@ -334,6 +341,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "> Generated from the current ledger and audit quality standard.",
         "> Grade-F rows fail `make check`; source-anchor gaps remain non-strict review items.",
+        "> Rows may satisfy the anchor policy with either line-level Tyler anchors or explicit exceptions.",
         "",
         "## Summary",
         "",
@@ -357,7 +365,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         for requirement_id in report["review_needed"]:
             lines.append(f"- `{requirement_id}`")
     else:
-        lines.append("None.")
+        lines.append("No rows currently require review.")
 
     lines.extend(["", "## Requirement Detail", ""])
     lines.append("| requirement | class | grade | anchor | findings |")

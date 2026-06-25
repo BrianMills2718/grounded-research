@@ -287,8 +287,9 @@ place.
 First readout:
 
 - 36 requirements
-- 8 rows pending line-level Tyler anchors
-- 28 rows with line-level Tyler anchors
+- 0 rows pending line-level Tyler anchors or explicit exceptions
+- 31 rows with line-level Tyler anchors
+- 5 rows with explicit doc-governance anchor exceptions
 - evidence grades: 21 `A`, 2 `B`, 1 `C`, 12 `D`, 0 `F`
 - grade-F rows: none
 
@@ -300,12 +301,11 @@ query-diversification prompt. These rows required a runtime decision before
 closure and are now fixed by the deterministic template path below.
 
 Second anchor-pass update: high-priority Stage 1, Stage 2, Stage 3, Stage 4,
-Stage 5, Stage 6, ambiguity, schema, extension, and frontier-watch rows now
-cite line-level Tyler packet anchors where the packet provides concrete text.
-The remaining eight pending rows are the three provider-control rows whose
-current anchors are still broad sections and five documentation-status rows
-that need a policy decision on whether to anchor to Tyler lines, active docs, or
-explicit doc-governance exceptions.
+Stage 5, Stage 6, ambiguity, schema, extension, frontier-watch, and
+provider-control rows now cite line-level Tyler packet anchors where the packet
+provides concrete text. Five local documentation-status rows are marked with
+explicit doc-governance anchor exceptions because they govern active repo-doc
+truthfulness against the ledger rather than standalone Tyler requirements.
 
 Runtime decision on 2026-06-25: restore the Tyler-literal orchestrator
 template path. Rationale: `CLAUDE.md` defines Tyler literal compliance as the

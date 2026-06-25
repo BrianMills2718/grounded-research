@@ -51,13 +51,14 @@ def test_tyler_coverage_report_builds_from_current_ledger() -> None:
     assert len(report["requirements"]) == 36
 
 
-def test_tyler_coverage_report_surfaces_anchor_backlog() -> None:
-    """Current rows should be honest about missing line-level Tyler anchors."""
+def test_tyler_coverage_report_tracks_resolved_anchor_status() -> None:
+    """Current rows should have line-level Tyler anchors or explicit exceptions."""
     report = build_coverage_report()
 
-    assert report["summary"]["line_anchor_pending"] > 0
-    assert "section_only" in report["by_anchor_status"]
-    assert "S5-SEARCH-PARAMS-001" in report["review_needed"]
+    assert report["summary"]["line_anchor_pending"] == 0
+    assert report["by_anchor_status"]["line_level"] == 31
+    assert report["by_anchor_status"]["explicit_exception"] == 5
+    assert report["review_needed"] == []
 
 
 def test_tyler_coverage_report_keeps_known_shared_infra_rows_visible() -> None:
@@ -77,7 +78,7 @@ def test_tyler_coverage_markdown_renders_review_sections() -> None:
     assert "# Tyler Coverage Report" in markdown
     assert "## Evidence Grades" in markdown
     assert "## Rows Needing Review" in markdown
-    assert "`S5-SEARCH-PARAMS-001`" in markdown
+    assert "No rows currently require review." in markdown
 
 
 def test_grade_requirement_rejects_runtime_doc_only_closure() -> None:
