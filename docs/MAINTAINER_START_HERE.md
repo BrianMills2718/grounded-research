@@ -7,10 +7,12 @@ of inferring requirements from historical plans or old delivery summaries.
 ## Authority Chain
 
 1. `docs/TYLER_SPEC_GAP_LEDGER.md` - canonical code-vs-spec evidence ledger.
-2. `docs/TYLER_EXECUTION_STATUS.md` - current implementation status.
-3. `docs/ROADMAP.md` - forward-looking gates and stop lines.
-4. `docs/CONCERNS.md` - open risk register.
-5. `docs/PLAN.md` and `docs/plans/CLAUDE.md` - current execution framing.
+2. `docs/TYLER_REQUIREMENTS_COVERAGE_STATUS.md` - current requirements coverage
+   status and stop lines.
+3. `docs/TYLER_EXECUTION_STATUS.md` - current implementation status.
+4. `docs/ROADMAP.md` - forward-looking gates and stop lines.
+5. `docs/CONCERNS.md` - open risk register.
+6. `docs/PLAN.md` and `docs/plans/CLAUDE.md` - current execution framing.
 
 Archived plans in `docs/plans/archive/` are provenance. They explain how the
 repo got here; they do not create active requirements by themselves.
@@ -53,6 +55,8 @@ when it becomes the active plan.
 
 ## Runtime Stop Lines
 
+- Do not describe this branch as PR-ready for Tyler requirements work until the
+  structured coverage plan has closed its stop lines.
 - Do not change Tyler Stage 1-6 behavior as part of documentation cleanup.
 - Do not reopen a closed Tyler gap without updating the evidence ledger.
 - Do not route new sources directly into synthesis; normalize them through the

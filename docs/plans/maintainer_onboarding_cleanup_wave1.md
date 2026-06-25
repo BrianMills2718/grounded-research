@@ -6,9 +6,10 @@ In progress.
 
 ## Mission
 
-Prepare a reviewable maintainer-facing PR that organizes the repository without
-changing Tyler V1 runtime behavior. The end state should let the current
-implementer quickly answer:
+Prepare a reviewable maintainer-facing requirements-coverage surface without
+changing Tyler V1 runtime behavior. This is a prerequisite to any later PR
+readiness claim, not a claim that the branch is ready. The end state should let
+the current implementer quickly answer:
 
 - What is the current Tyler source of truth?
 - Which Tyler requirement rows link to code, prompt, test, doc, and runtime
@@ -16,6 +17,9 @@ implementer quickly answer:
 - Which docs are active versus historical?
 - Which local gates are expected to pass?
 - Where should future evidence-source and MCP work plug in?
+
+The active follow-on plan is
+`docs/plans/tyler_requirements_traceability_program.md`.
 
 ## Modality Diagnosis
 
@@ -85,4 +89,8 @@ Out of scope:
    and expose Markdown/JSON reports.
 5. Local infrastructure alignment: document where shared libraries, future
    `trace_eval`, and MCP discovery can help.
-6. Verification and PR: run gates, commit, push, and summarize residual risks.
+6. Verification checkpoint: run gates, commit, push, and summarize residual
+   risks without claiming PR readiness.
+
+Current correction: do not frame this branch as PR-ready until the structured
+Tyler requirements coverage program closes its stop lines.

@@ -23,8 +23,9 @@ status are the source of truth.
 | Plan | Status | Purpose |
 |------|--------|---------|
 | [v1_spec_alignment.md](v1_spec_alignment.md) | Reference analysis | Reconciliation memo for Tyler V1 versus the repository. Use only with the current gap ledger. |
+| [tyler_requirements_traceability_program.md](tyler_requirements_traceability_program.md) | Active | Program to make Tyler requirements structured, evidence-kind checked, code/test/doc linked, and gap-visible before any PR-readiness claim. |
 | [post_audit_maintainability_wave1.md](post_audit_maintainability_wave1.md) | Planned | Strictly limited maintainability work that supports Tyler remediation without changing the runtime contract. |
-| [maintainer_onboarding_cleanup_wave1.md](maintainer_onboarding_cleanup_wave1.md) | In progress | Organization and onboarding PR for plan hygiene, local gates, maintainer docs, and MCP extension guidance. |
+| [maintainer_onboarding_cleanup_wave1.md](maintainer_onboarding_cleanup_wave1.md) | In progress | Organization and onboarding work for plan hygiene, local gates, maintainer docs, and MCP extension guidance. |
 | [llm_call_observability.md](llm_call_observability.md) | Partial/reference | Observability plan for LLM/tool calls and shared infrastructure alignment. |
 | [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new implementation plans. |
 
