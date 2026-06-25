@@ -7,7 +7,6 @@ are intentionally excluded from `main`.
 
 from __future__ import annotations
 
-from collections import Counter
 from pathlib import Path
 import random
 

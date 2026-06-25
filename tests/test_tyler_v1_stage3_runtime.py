@@ -9,12 +9,8 @@ import pytest
 import yaml
 
 from grounded_research.analysts import run_analysts_tyler_v1
-from grounded_research.config import load_config
 from grounded_research.models import EvidenceBundle, EvidenceItem, ResearchQuestion, SourceRecord
 from grounded_research.tyler_v1_models import (
-    AnalysisObject,
-    ConfidenceLevel,
-    CounterArgument,
     DecompositionResult,
     EvidenceLabel,
     EvidencePackage,

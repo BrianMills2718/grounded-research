@@ -7,7 +7,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 PROJECT := $(notdir $(CURDIR))
-PYTHON := python3
+PYTHON ?= python
 DAYS ?= 7
 LIMIT ?= 20
 QUERY ?=
@@ -15,7 +15,7 @@ INPUT ?=
 
 # ─── Shared Targets ─────────────────────────────────────────────────────────
 
-.PHONY: help test test-quick check status cost errors summary
+.PHONY: help test test-quick lint typecheck check check-strict status cost errors summary
 
 help: ## Show this help
 	@echo "grounded-research — adjudication-centered research system"
@@ -33,8 +33,18 @@ test-quick: ## Run tests, minimal output
 
 check: ## Run tests + type check + lint
 	$(PYTHON) -m pytest tests/ -x -q
-	$(PYTHON) -m ruff check src/ tests/ || true
-	$(PYTHON) -m mypy src/ --ignore-missing-imports || true
+	$(PYTHON) -m ruff check src/ tests/
+
+check-strict: ## Run tests + lint + current strict typecheck gate
+	$(PYTHON) -m pytest tests/ -x -q
+	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m mypy src/ --ignore-missing-imports
+
+lint: ## Run Ruff lint checks
+	$(PYTHON) -m ruff check src/ tests/
+
+typecheck: ## Run mypy strict typecheck (currently tracks known debt)
+	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 status: ## Git status
 	@git status --short --branch
@@ -79,7 +89,7 @@ adjudicate-test: ## Run adjudication with cheap testing models (QUERY= or INPUT=
 	fi
 
 bench: ## Run evaluation benchmarks
-	$(PYTHON) -m pytest tests/ -v -k "bench or eval" 2>/dev/null || echo "No benchmark tests found"
+	$(PYTHON) -m pytest tests/ -v -k "bench or eval"
 
 evaluate: ## Show latest adjudication outputs and dispute stats
 	@echo "Latest adjudication runs:"

@@ -13,39 +13,22 @@ is narrower:
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 import logging
-import re
 
 from grounded_research.tyler_v1_models import (
-    AdditionalSource,
     AnalysisObject,
-    ArbitrationAssessment,
     AssumptionSetEntry,
     ClaimExtractionResult,
     ClaimLedgerEntry,
     ClaimStatus,
-    ClaimStatusUpdate,
-    ConfidenceAssessment,
     DecompositionResult,
-    DisagreementMapEntry,
     DisputeQueueEntry,
     DisputeStatus,
     DisputeType,
-    EvidenceTrailEntry,
-    EvidencePackage,
     ExtractionStatistics,
-    Finding,
-    KeyAssumption,
     ModelPosition,
-    PreservedAlternative,
-    ResolutionOutcome,
     SynthesisReport,
-    Source,
-    StageSummary,
-    SubQuestion as TylerSubQuestion,
-    SubQuestionEvidence,
-    Tradeoff,
 )
 
 _LOG = logging.getLogger(__name__)

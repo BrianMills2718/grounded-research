@@ -18,7 +18,6 @@ from grounded_research.models import (
 )
 from grounded_research.tyler_v1_models import (
     AnalysisObject,
-    ClaimExtractionResult,
     Claim as TylerClaim,
     ConfidenceLevel,
     CounterArgument,

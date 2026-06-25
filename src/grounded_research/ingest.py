@@ -15,14 +15,14 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-logger = logging.getLogger(__name__)
-
 from grounded_research.models import (
     EvidenceBundle,
     EvidenceItem,
     ResearchQuestion,
     SourceRecord,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def load_bundle(path: Path) -> EvidenceBundle:

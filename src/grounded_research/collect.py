@@ -41,6 +41,7 @@ from grounded_research.models import (
     SourceRecord,
     Stage2QueryPlan,
 )
+from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 from grounded_research.tyler_v1_models import (
     DecompositionResult as TylerDecompositionResult,
     EvidenceLabel,
@@ -52,8 +53,6 @@ from grounded_research.tyler_v1_models import (
 )
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-
-from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 
 
 def _tool_call_started(
@@ -1108,7 +1107,7 @@ async def collect_evidence(
                     task="collection.fetch",
                 )
                 from grounded_research.tools.jina_reader import fetch_page_jina
-                print(f"    → 403 blocked, retrying via Jina Reader...")
+                print("    → 403 blocked, retrying via Jina Reader...")
                 raw_page = await fetch_page_jina(url, question=question)
                 page_data = json.loads(raw_page)
                 if page_data.get("error"):
