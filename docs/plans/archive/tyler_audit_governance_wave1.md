@@ -25,8 +25,8 @@ Create one explicit operating model for Tyler findings so the repo can:
 ## Canonical Inputs
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
-- `docs/plans/tyler_spec_gap_audit_wave1.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
 - `docs/PLAN.md`
 - `docs/ROADMAP.md`
@@ -66,13 +66,13 @@ If this plan and the ledger disagree, trust the ledger.
 ## Deliverables
 
 1. `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
-2. `docs/plans/tyler_audit_governance_wave1.md`
+2. `docs/plans/archive/tyler_audit_governance_wave1.md`
 3. `docs/notebooks/35_tyler_audit_governance_wave1.ipynb`
 4. updated authority surfaces pointing at the governance layer:
    - `docs/PLAN.md`
    - `docs/ROADMAP.md`
    - `docs/plans/CLAUDE.md`
-   - `docs/plans/tyler_faithful_execution_remainder.md`
+   - `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ---
 

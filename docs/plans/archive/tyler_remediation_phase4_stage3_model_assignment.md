@@ -6,7 +6,7 @@ child implementation wave under `tyler_gap_remediation_wave1.md`.
 **Status:** Completed
 **Type:** implementation
 **Priority:** Medium
-**Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
+**Blocked By:** `docs/plans/archive/tyler_gap_remediation_wave1.md`
 **Blocks:** truthful default Stage 3 frame-model mapping
 
 ---

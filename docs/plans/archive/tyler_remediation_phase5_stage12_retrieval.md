@@ -159,7 +159,7 @@ verified:
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/plans/CLAUDE.md`
 - `docs/PLAN.md`
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md`

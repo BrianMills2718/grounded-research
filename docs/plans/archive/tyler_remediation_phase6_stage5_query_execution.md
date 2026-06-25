@@ -107,7 +107,7 @@ local consumption plus a stale overclaim in the ledger/status layer.
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
 - `docs/plans/CLAUDE.md`
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ---
 

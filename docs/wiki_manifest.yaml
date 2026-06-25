@@ -17,6 +17,18 @@ publish:
     type: ArtifactRegister
     title: Grounded Research Artifact Register
     tags: [portfolio, research-system, artifacts]
+  - path: docs/MAINTAINER_START_HERE.md
+    type: MaintainerGuide
+    title: Grounded Research Maintainer Start Here
+    tags: [maintainer, tyler-v1, process]
+  - path: docs/wiki/index.md
+    type: ProjectWikiIndex
+    title: Grounded Research Wiki
+    tags: [wiki, tyler-v1, maintainer]
+  - path: docs/wiki/concepts/mcp-evidence-discovery.md
+    type: Concept
+    title: MCP Evidence Discovery
+    tags: [mcp, evidence, retrieval, extension]
   - path: docs/VALIDATION.md
     type: Validation
     title: Grounded Research Validation Register

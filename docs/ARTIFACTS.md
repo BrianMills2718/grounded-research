@@ -8,6 +8,7 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 |---|---|---|
 | [PROJECT.md](../PROJECT.md) | Dossier entrypoint | Frames the repo as adjudication-centered research architecture. |
 | [README.md](../README.md) | System overview and benchmark summary | Gives the top-level capability and comparison claims. |
+| [docs/MAINTAINER_START_HERE.md](MAINTAINER_START_HERE.md) | Maintainer entrypoint | Defines the Tyler authority chain, local gates, stop lines, and MCP extension boundary. |
 | [docs/ADJUDICATION_WALKTHROUGH.md](ADJUDICATION_WALKTHROUGH.md) | Portfolio walkthrough | Explains the question -> analysts -> claim ledger -> disputes -> report path. |
 | [docs/METHODOLOGY.md](METHODOLOGY.md) | Methodology spine | Summarizes the adjudication method and failure modes. |
 | [docs/VALIDATION.md](VALIDATION.md) | Validation register | Separates tracked evidence from broader claims. |
@@ -22,6 +23,7 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 | [docs/DOMAIN_MODEL.md](DOMAIN_MODEL.md) | Domain model | Defines research questions, evidence, claims, analysts, disputes, and reports. |
 | [docs/FEATURE_STATUS.md](FEATURE_STATUS.md) | Feature scorecard | Maps original scorecard features to implementation status. |
 | [docs/ROADMAP.md](ROADMAP.md) | Roadmap | Current state and next expansion gates. |
+| [docs/wiki/](wiki/) | Concept wiki | Durable Tyler compliance and extension-boundary notes for maintainers. |
 
 ## Audit And Evaluation Artifacts
 
@@ -51,4 +53,3 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
   `trace.json`, and handoff artifact.
 - A short benchmark note that scopes the Perplexity/Tyler comparison claims.
 - A wiki-rendered trace excerpt showing how a final claim resolves to evidence.
-

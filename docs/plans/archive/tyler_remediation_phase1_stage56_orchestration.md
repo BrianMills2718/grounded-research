@@ -6,7 +6,7 @@ child implementation wave under `tyler_gap_remediation_wave1.md`.
 **Status:** Completed
 **Type:** implementation
 **Priority:** High
-**Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
+**Blocked By:** `docs/plans/archive/tyler_gap_remediation_wave1.md`
 **Blocks:** truthful Tyler Stage 4→5→6 behavior
 
 ---
@@ -28,7 +28,7 @@ while skipping it in live execution.
 ## Canonical Inputs
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
 - `engine.py`
 - `src/grounded_research/verify.py`

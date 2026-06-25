@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** shared-parity plan
 **Priority:** Medium
-**Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
+**Parent plan:** `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ## Goal
 
@@ -104,7 +104,7 @@ This lane is now closed:
 - the Tyler-like structured-output study recorded `5/5` `native_schema`
   successes in `docs/reviews/2026-04-09-openrouter-gemini31-pro-validation.json`
 - `grounded-research` consumed the shared model surface in
-  `docs/plans/tyler_exact_model_version_switch_wave1.md`
+  `docs/plans/archive/tyler_exact_model_version_switch_wave1.md`
 - raw-question validation run
   `output/tyler_exact_model_version_switch_wave1_palantir` completed and proved
   the switched Stage 1, Stage 2 extraction/scoring, and Stage 3 Analyst B roles

@@ -43,7 +43,7 @@ interpretation. The audit needs to separate:
 - `docs/PLAN.md` - current canonical plan and active surfaces.
 - `docs/ROADMAP.md` - current frontier and shared-infra boundary.
 - `docs/plans/CLAUDE.md` - plan index and current active plan surface.
-- `docs/plans/tyler_faithful_execution_remainder.md` - what the project currently claims is still open.
+- `docs/plans/archive/tyler_faithful_execution_remainder.md` - what the project currently claims is still open.
 - `docs/TYLER_EXECUTION_STATUS.md` - strict required/extension/blocked checklist.
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md` - current repo-local parity claim.
 - `docs/TYLER_PROMPT_LITERALNESS_MATRIX.md` - line-by-line prompt audit precedent.
@@ -56,10 +56,10 @@ interpretation. The audit needs to separate:
 
 ## Files Affected
 
-- `docs/plans/tyler_spec_gap_audit_wave1.md` (create)
+- `docs/plans/archive/tyler_spec_gap_audit_wave1.md` (create)
 - `docs/notebooks/33_tyler_spec_gap_audit_wave1.ipynb` (create)
 - `docs/TYLER_SPEC_GAP_LEDGER.md` (create)
-- `docs/plans/tyler_faithful_execution_remainder.md` (modify)
+- `docs/plans/archive/tyler_faithful_execution_remainder.md` (modify)
 - `docs/plans/CLAUDE.md` (modify)
 - `docs/PLAN.md` (modify)
 - `docs/ROADMAP.md` (modify)

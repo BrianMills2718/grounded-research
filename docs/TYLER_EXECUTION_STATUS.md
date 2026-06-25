@@ -82,7 +82,7 @@ None. The audited local Tyler implementation rows are closed.
 1. Frontier-model runtime / model-policy watch item
    - Three literal production-config fixture runs are recorded. The first failed the Claude Opus Stage 3 citation quality floor; the next two passed cleanly on the same primary-model stack.
    - Frontier Reliability Wave 3 showed the miss was a clean model output with one uncited claim (`C-16`), not a transport, schema, or local orchestration defect.
-   - This is no longer treated as an active implementation blocker. It is a documented watch item governed by the explicit threshold in `docs/plans/tyler_frontier_model_policy_wave1.md`.
+   - This is no longer treated as an active implementation blocker. It is a documented watch item governed by the explicit threshold in `docs/plans/archive/tyler_frontier_model_policy_wave1.md`.
    - Reopen only if the same model-role pair fails the same quality floor in `2/3` identical reruns, the same failure mode appears on `2` distinct fixtures, or a shared runtime defect is proven.
    - Evidence: `output/tyler_frontier_runtime_validation_wave1`, `output/tyler_frontier_runtime_validation_wave2_repeat`, and `output/tyler_frontier_runtime_validation_wave2_palantir`
 ## Required: Explicit Tyler Ambiguity

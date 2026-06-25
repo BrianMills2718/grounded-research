@@ -205,4 +205,4 @@ Do not reopen this refactor unless:
 
 The remaining faithful-Tyler execution work is tracked separately in:
 
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`

@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** audit plan
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
+**Parent plan:** `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ## Goal
 
@@ -38,7 +38,7 @@ The repo already has:
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
 - `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
-- `docs/plans/tyler_spec_gap_audit_wave1.md`
+- `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
 
 Those were enough to drive the initial clause-by-clause correction wave.
 They are not yet the same thing as an exhaustive packet audit.
@@ -115,7 +115,7 @@ independent requirements.
 
 This wave creates or updates:
 
-1. `docs/plans/tyler_full_spec_exhaustive_audit_wave1.md`
+1. `docs/plans/archive/tyler_full_spec_exhaustive_audit_wave1.md`
 2. `docs/notebooks/48_tyler_full_spec_exhaustive_audit_wave1.ipynb`
 3. `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
 4. `docs/TYLER_SPEC_GAP_LEDGER.md`

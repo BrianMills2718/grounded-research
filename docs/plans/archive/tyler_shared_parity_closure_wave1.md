@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** shared-infra closure
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
+**Parent plan:** `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ## Goal
 
@@ -83,7 +83,7 @@ Deliverables:
 
 - updated `docs/TYLER_EXECUTION_STATUS.md`
 - updated `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`
-- updated `docs/plans/tyler_faithful_execution_remainder.md`
+- updated `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ### Phase 4: Name The Next Remaining Shared Tyler Item
 
@@ -124,4 +124,4 @@ variability / policy row.
 
 Named next shared Tyler item:
 
-- `docs/plans/tyler_frontier_runtime_reliability_wave3.md`
+- `docs/plans/archive/tyler_frontier_runtime_reliability_wave3.md`

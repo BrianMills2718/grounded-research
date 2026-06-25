@@ -71,7 +71,7 @@ Scope:
 Deliverables:
 
 - `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
-- `docs/plans/tyler_audit_governance_wave1.md`
+- `docs/plans/archive/tyler_audit_governance_wave1.md`
 - `docs/notebooks/35_tyler_audit_governance_wave1.ipynb`
 
 Pass if:
@@ -188,10 +188,10 @@ Scope:
 
 Deliverables:
 
-- `docs/plans/tyler_spec_gap_audit_wave1.md`
+- `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
 - `docs/notebooks/33_tyler_spec_gap_audit_wave1.ipynb`
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/notebooks/34_tyler_gap_remediation_wave1.ipynb`
 
 Pass if:
@@ -219,14 +219,14 @@ Repo-local:
 4. the current remaining local rows are:
    - none
 5. the final local remediation row was closed under:
-   - `docs/plans/tyler_post_audit_remediation_wave2.md`
+   - `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
 
 Shared infra:
 
 1. Gemini schema-mode quality study in `llm_client` / `prompt_eval`
    - closed on 2026-04-09 when `llm_client` PR #27 merged to `main` at `e9a0cbf`: the proven issue was a direct-Gemini transport/config problem, and the shared direct-Gemini thinking-budget policy fix is now landed
 2. exact Tyler Gemini model-version parity in shared registry/config surfaces
-   - closed on 2026-04-09 when `llm_client` PR #28 merged to `main` at `37623ec` and `grounded-research` completed `docs/plans/tyler_exact_model_version_switch_wave1.md`
+   - closed on 2026-04-09 when `llm_client` PR #28 merged to `main` at `37623ec` and `grounded-research` completed `docs/plans/archive/tyler_exact_model_version_switch_wave1.md`
    - the live config now uses `openrouter/google/gemini-3.1-pro-preview` on Tyler's named Gemini roles and the raw-question validation run proved those stages used it on the live path
 3. frontier model-output variability / policy handling
    - narrowed on 2026-04-08 by three literal runs: the configured primary models are callable on a literal run, and the remaining issue is now a stochastic Claude Opus Stage 3 citation-floor miss governed by the explicit frontier model-policy threshold

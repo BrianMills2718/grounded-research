@@ -36,7 +36,7 @@ All post-audit local remediation rows are now closed.
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
 - `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
-- `docs/plans/tyler_full_spec_exhaustive_audit_wave1.md`
+- `docs/plans/archive/tyler_full_spec_exhaustive_audit_wave1.md`
 - Tyler packet under `2026_0325_tyler_feedback/`
 
 If this plan and the ledger disagree, trust the ledger.

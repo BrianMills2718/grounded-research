@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** implementation
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_shared_model_version_parity_wave1.md`
+**Parent plan:** `docs/plans/archive/tyler_shared_model_version_parity_wave1.md`
 
 ## Goal
 

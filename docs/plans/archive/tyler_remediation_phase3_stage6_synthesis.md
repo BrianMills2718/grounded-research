@@ -6,7 +6,7 @@ child implementation wave under `tyler_gap_remediation_wave1.md`.
 **Status:** Completed
 **Type:** implementation
 **Priority:** High
-**Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
+**Blocked By:** `docs/plans/archive/tyler_gap_remediation_wave1.md`
 **Blocks:** truthful Tyler Stage 6 synthesis behavior
 
 ---
@@ -27,7 +27,7 @@ and call policy used by `generate_tyler_synthesis_report()`.
 ## Canonical Inputs
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/plans/post_audit_maintainability_wave1.md`
 - `src/grounded_research/export.py`
 - `tests/test_export.py`

@@ -36,7 +36,7 @@ priorities and makes review harder than the code itself.
 - `docs/PLAN.md`
 - `docs/ROADMAP.md`
 - `docs/plans/CLAUDE.md`
-- `docs/plans/depth_modes.md`
+- `docs/plans/archive/depth_modes.md`
 - `docs/plans/v1_reasoning_quality_execution.md`
 - `docs/plans/wave2_enumeration_grounding.md`
 - `docs/TECH_DEBT.md`
@@ -50,7 +50,7 @@ priorities and makes review harder than the code itself.
 - `docs/PLAN.md` (modify)
 - `docs/ROADMAP.md` (modify)
 - `docs/plans/CLAUDE.md` (modify)
-- `docs/plans/depth_modes.md` (modify)
+- `docs/plans/archive/depth_modes.md` (modify)
 - `docs/TECH_DEBT.md` (modify)
 
 ---

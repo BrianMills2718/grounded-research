@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** shared-runtime investigation
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_shared_parity_closure_wave1.md`
+**Parent plan:** `docs/plans/archive/tyler_shared_parity_closure_wave1.md`
 
 ## Goal
 
@@ -127,4 +127,4 @@ not:
 Next owner:
 
 - shared model availability + config policy
-- execution surface: `docs/plans/tyler_frontier_model_policy_wave1.md`
+- execution surface: `docs/plans/archive/tyler_frontier_model_policy_wave1.md`

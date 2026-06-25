@@ -85,4 +85,4 @@ Prompt-focused status can be classified honestly as:
 
 The remaining faithful-Tyler execution work is tracked in:
 
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`

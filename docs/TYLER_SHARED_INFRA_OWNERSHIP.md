@@ -49,7 +49,7 @@ Exact Tyler Gemini model-version parity is no longer open:
 - `llm_client/main` now exposes `openrouter/google/gemini-3.1-pro-preview` via
   PR #28 / `37623ec`
 - `grounded-research` consumed that shared surface in
-  `docs/plans/tyler_exact_model_version_switch_wave1.md`
+  `docs/plans/archive/tyler_exact_model_version_switch_wave1.md`
 - raw-question validation run
   `output/tyler_exact_model_version_switch_wave1_palantir` completed
   successfully and proved the switched Gemini roles used the exact model

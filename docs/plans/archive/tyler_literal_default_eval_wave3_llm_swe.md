@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** cross-repo evaluation
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
+**Parent plan:** `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ## Goal
 

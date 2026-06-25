@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** repo-local implementation
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
+**Parent plan:** `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ## Goal
 

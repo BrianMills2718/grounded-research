@@ -102,7 +102,7 @@ See:
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
 - `docs/plans/tyler_literal_prompt_quality_recovery.md`
 - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`
 - `docs/plans/tyler_prompt_literalness_wave1.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
 
@@ -243,7 +243,7 @@ Current evaluation policy:
 
 There is currently an active repo-local implementation wave:
 
-- `docs/plans/tyler_post_audit_remediation_wave2.md`
+- `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
 
 That wave is now down to one remaining row after Phases 1-2 closed the Stage
 5/6 prompt-contract and Stage 6 validation fixes.

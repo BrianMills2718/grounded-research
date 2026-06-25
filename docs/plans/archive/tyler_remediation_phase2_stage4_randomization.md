@@ -6,7 +6,7 @@ child implementation wave under `tyler_gap_remediation_wave1.md`.
 **Status:** Completed
 **Type:** implementation
 **Priority:** High
-**Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
+**Blocked By:** `docs/plans/archive/tyler_gap_remediation_wave1.md`
 **Blocks:** truthful Tyler Stage 4 primacy-bias mitigation
 
 ---
@@ -24,7 +24,7 @@ prompt order.
 ## Canonical Inputs
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `src/grounded_research/canonicalize.py`
 - `tests/test_canonicalize.py`
 - Tyler packet under `tyler_response_20260326/`

@@ -163,4 +163,4 @@ Relevant references:
 - `docs/plans/tyler_literal_parity_refactor.md`
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
 - `docs/plans/tyler_literal_prompt_quality_recovery.md`
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`

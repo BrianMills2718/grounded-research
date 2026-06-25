@@ -103,7 +103,7 @@ operational monitoring:
 3. **Operational watch**
    - Monitor `STATUS-FRONTIER-RUNTIME-001`
    - Reopen only if the threshold in
-     `docs/plans/tyler_frontier_model_policy_wave1.md` is crossed.
+     `docs/plans/archive/tyler_frontier_model_policy_wave1.md` is crossed.
 
 #### Do not do
 

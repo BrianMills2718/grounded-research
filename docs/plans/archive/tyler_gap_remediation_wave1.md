@@ -25,7 +25,7 @@ there really gaps?" and start asking "what is the cleanest verified fix order?"
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
-- `docs/plans/tyler_spec_gap_audit_wave1.md`
+- `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
 - Tyler packet under `tyler_response_20260326/`
 
 If this plan and the ledger disagree, trust the ledger.
@@ -90,7 +90,7 @@ Rows:
 
 Execution surface:
 
-- `docs/plans/tyler_remediation_phase1_stage56_orchestration.md`
+- `docs/plans/archive/tyler_remediation_phase1_stage56_orchestration.md`
 - `docs/notebooks/37_tyler_remediation_phase1_stage56_orchestration.ipynb`
 
 Pass if:
@@ -109,7 +109,7 @@ Rows:
 
 Execution surface:
 
-- `docs/plans/tyler_remediation_phase2_stage4_randomization.md`
+- `docs/plans/archive/tyler_remediation_phase2_stage4_randomization.md`
 - `docs/notebooks/38_tyler_remediation_phase2_stage4_randomization.ipynb`
 
 Pass if:
@@ -128,7 +128,7 @@ Rows:
 
 Execution surface:
 
-- `docs/plans/tyler_remediation_phase3_stage6_synthesis.md`
+- `docs/plans/archive/tyler_remediation_phase3_stage6_synthesis.md`
 - `docs/notebooks/39_tyler_remediation_phase3_stage6_synthesis.ipynb`
 
 Pass if:
@@ -146,7 +146,7 @@ Rows:
 
 Execution surface:
 
-- `docs/plans/tyler_remediation_phase4_stage3_model_assignment.md`
+- `docs/plans/archive/tyler_remediation_phase4_stage3_model_assignment.md`
 - `docs/notebooks/40_tyler_remediation_phase4_stage3_model_assignment.ipynb`
 
 Pass if:
@@ -166,7 +166,7 @@ Rows:
 
 Execution surface:
 
-- `docs/plans/tyler_remediation_phase5_stage12_retrieval.md`
+- `docs/plans/archive/tyler_remediation_phase5_stage12_retrieval.md`
 - `docs/notebooks/41_tyler_remediation_phase5_stage12_retrieval.ipynb`
 
 Pass if:
@@ -232,4 +232,4 @@ rows above that earlier remediation layer:
 
 Those rows now belong to:
 
-- `docs/plans/tyler_post_audit_remediation_wave2.md`
+- `docs/plans/archive/tyler_post_audit_remediation_wave2.md`

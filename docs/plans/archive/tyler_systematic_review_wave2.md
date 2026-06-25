@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** audit plan
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_faithful_execution_remainder.md`
+**Parent plan:** `docs/plans/archive/tyler_faithful_execution_remainder.md`
 
 ## Goal
 
@@ -190,19 +190,19 @@ Completed in this wave so far:
   - `docs/ROADMAP.md`
   - `docs/TYLER_EXECUTION_STATUS.md`
   - `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`
-  - `docs/plans/tyler_faithful_execution_remainder.md`
+  - `docs/plans/archive/tyler_faithful_execution_remainder.md`
 - exact Tyler model-version row is now closed:
   - `llm_client` PR #28 merged the shared registry surface
-  - `docs/plans/tyler_exact_model_version_switch_wave1.md` completed the
+  - `docs/plans/archive/tyler_exact_model_version_switch_wave1.md` completed the
     application config switch and raw-question validation run
 - frontier runtime/model-policy lane is now review-complete:
   - the remaining ledger row is explicitly governed by
-    `docs/plans/tyler_frontier_model_policy_wave1.md`
+    `docs/plans/archive/tyler_frontier_model_policy_wave1.md`
   - no additional local or shared runtime defect was proven in this wave
 - governance lane is now review-complete:
   - no new process gap surfaced after the exact-model closure
   - the ledger-first controls in `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md` and
-    `docs/plans/tyler_audit_governance_wave1.md` held
+    `docs/plans/archive/tyler_audit_governance_wave1.md` held
 
 ## Completion Note
 

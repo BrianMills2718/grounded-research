@@ -3,7 +3,7 @@
 **Status:** Completed
 **Type:** shared-policy plan
 **Priority:** High
-**Parent plan:** `docs/plans/tyler_frontier_runtime_reliability_wave3.md`
+**Parent plan:** `docs/plans/archive/tyler_frontier_runtime_reliability_wave3.md`
 
 ## Goal
 

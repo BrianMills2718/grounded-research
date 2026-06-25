@@ -138,11 +138,11 @@ prompt render, CLI path, or live smoke.
 
 The repo now uses a layered process:
 
-1. `docs/plans/tyler_spec_gap_audit_wave1.md`
+1. `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
    - defines how findings must be audited
 2. `docs/TYLER_SPEC_GAP_LEDGER.md`
    - canonical clause-level truth
-3. `docs/plans/tyler_gap_remediation_wave1.md`
+3. `docs/plans/archive/tyler_gap_remediation_wave1.md`
    - converts verified local rows into implementation order
 4. `docs/TYLER_EXECUTION_STATUS.md`
    - high-level required/extension/blocked status surface
