@@ -5,8 +5,8 @@
 
 > Historical delivery summary. It overstates parity relative to the current
 > clause-by-clause audit. For current code-vs-spec truth, use
-> [TYLER_SPEC_GAP_LEDGER.md](TYLER_SPEC_GAP_LEDGER.md)
-> and [TYLER_EXECUTION_STATUS.md](TYLER_EXECUTION_STATUS.md).
+> [TYLER_SPEC_GAP_LEDGER.md](../TYLER_SPEC_GAP_LEDGER.md)
+> and [TYLER_EXECUTION_STATUS.md](../TYLER_EXECUTION_STATUS.md).
 
 ## What Was Built
 

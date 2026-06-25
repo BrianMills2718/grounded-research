@@ -45,8 +45,8 @@ interpretation. The audit needs to separate:
 - `docs/plans/CLAUDE.md` - plan index and current active plan surface.
 - `docs/plans/archive/tyler_faithful_execution_remainder.md` - what the project currently claims is still open.
 - `docs/TYLER_EXECUTION_STATUS.md` - strict required/extension/blocked checklist.
-- `docs/TYLER_LITERAL_PARITY_AUDIT.md` - current repo-local parity claim.
-- `docs/TYLER_PROMPT_LITERALNESS_MATRIX.md` - line-by-line prompt audit precedent.
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md` - current repo-local parity claim.
+- `docs/archive/TYLER_PROMPT_LITERALNESS_MATRIX.md` - line-by-line prompt audit precedent.
 - `tyler_response_20260326/1. V1_Build_Plan_Step_By_Step (1).md` - Tyler implementation contract.
 - `tyler_response_20260326/2. V1_DESIGN (1).md` - Tyler architecture and policy contract.
 - `tyler_response_20260326/3. V1_SCHEMAS (1).md` - Tyler typed schema contract.

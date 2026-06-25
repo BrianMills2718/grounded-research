@@ -95,7 +95,7 @@ Verification:
   - `docs/PLAN.md`
   - `docs/ROADMAP.md`
   - `docs/ARCHITECTURE_ONE_PAGE.md`
-  - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+  - `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
   - `docs/TYLER_VARIANT_COMMIT_MAP.md`
   - `docs/plans/CLAUDE.md`
 - record this wave’s commits and the new remaining stop line

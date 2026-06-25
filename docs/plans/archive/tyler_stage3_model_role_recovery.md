@@ -136,8 +136,8 @@ ambiguous.
 
 - update:
   - `docs/plans/tyler_literal_prompt_quality_recovery.md`
-  - `docs/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
-  - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+  - `docs/archive/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
+  - `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
   - `docs/PLAN.md`
   - `docs/plans/CLAUDE.md`
 

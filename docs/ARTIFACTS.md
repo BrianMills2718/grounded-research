@@ -31,7 +31,6 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 |---|---|---|
 | [docs/TYLER_SPEC_GAP_LEDGER.md](TYLER_SPEC_GAP_LEDGER.md) | Code-vs-spec ledger | Canonical truth surface for Tyler packet compliance. |
 | [docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md](TYLER_FULL_SPEC_AUDIT_MATRIX.md) | Audit coverage | Exhaustive Tyler packet review matrix. |
-| [docs/TYLER_FINAL_COMPLIANCE_AUDIT.md](TYLER_FINAL_COMPLIANCE_AUDIT.md) | Compliance audit | Final compliance review surface. |
 | [docs/TYLER_FROZEN_EVAL_STATUS.md](TYLER_FROZEN_EVAL_STATUS.md) | Frozen eval status | Tracks frozen evaluation gates. |
 | [docs/COMPETITIVE_ANALYSIS.md](COMPETITIVE_ANALYSIS.md) | Baseline comparison | Comparison framing against other research systems. |
 | [docs/JUDGE_CRITIQUES.md](JUDGE_CRITIQUES.md) | Judge feedback | Where the pipeline loses points and why. |
@@ -53,3 +52,15 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
   `trace.json`, and handoff artifact.
 - A short benchmark note that scopes the Perplexity/Tyler comparison claims.
 - A wiki-rendered trace excerpt showing how a final claim resolves to evidence.
+
+## Historical Tyler Artifacts
+
+These files are preserved in `docs/archive/` because later ledger/status
+documents supersede their current-state claims:
+
+- `docs/archive/TYLER_FINAL_COMPLIANCE_AUDIT.md`
+- `docs/archive/TYLER_V1_DELIVERY_SUMMARY.md`
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/archive/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
+- `docs/archive/TYLER_PROMPT_LITERALNESS_MATRIX.md`
+- `docs/archive/TYLER_FEEDBACK_RESPONSE.md`

@@ -81,7 +81,7 @@ Files:
 ### Phase 4: Rewrite authority docs and commit map
 
 - update `docs/CONTRACTS.md`, `docs/PLAN.md`, `docs/ARCHITECTURE_ONE_PAGE.md`,
-  `docs/ROADMAP.md`, `docs/TYLER_LITERAL_PARITY_AUDIT.md`,
+  `docs/ROADMAP.md`, `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`,
   `docs/TYLER_VARIANT_COMMIT_MAP.md`, and the plan index
 - record the last commit that still contained the removed compatibility path
 

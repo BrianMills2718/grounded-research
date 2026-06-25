@@ -140,7 +140,7 @@ Current benchmark target:
 
 ### Slice 3: Record Outcome
 
-- update `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+- update `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
 - update `docs/plans/tyler_literal_parity_refactor.md`
 - update `docs/PLAN.md` and `docs/plans/CLAUDE.md`
 

@@ -87,10 +87,10 @@ operational monitoring:
      - `docs/ROADMAP.md`
      - `docs/TYLER_V1_CURRENT_REPO_MAP.md`
    - Demote or archive materially stale historical Tyler summaries:
-     - `docs/TYLER_FINAL_COMPLIANCE_AUDIT.md`
-     - `docs/TYLER_V1_DELIVERY_SUMMARY.md`
-     - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
-     - `docs/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
+     - `docs/archive/TYLER_FINAL_COMPLIANCE_AUDIT.md`
+     - `docs/archive/TYLER_V1_DELIVERY_SUMMARY.md`
+     - `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
+     - `docs/archive/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
 
 2. **Doc consolidation**
    - Keep the canonical Tyler current-state surface small:

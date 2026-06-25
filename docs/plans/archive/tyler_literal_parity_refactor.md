@@ -24,7 +24,7 @@ The original repo-local gap was real in:
 
 Reference audit:
 
-- `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
 
 ## Scope
 

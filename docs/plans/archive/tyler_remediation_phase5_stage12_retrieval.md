@@ -162,9 +162,9 @@ verified:
 - `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/plans/CLAUDE.md`
 - `docs/PLAN.md`
-- `docs/TYLER_LITERAL_PARITY_AUDIT.md`
-- `docs/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
-- `docs/TYLER_PROMPT_LITERALNESS_MATRIX.md`
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/archive/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
+- `docs/archive/TYLER_PROMPT_LITERALNESS_MATRIX.md`
 - `docs/FEATURE_STATUS.md`
 
 ---
