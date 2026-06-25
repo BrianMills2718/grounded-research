@@ -114,9 +114,15 @@ Python 3.11+.
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
-pip install -e path/to/llm_client
-pip install -e path/to/open_web_retrieval
+pip install -e ../llm_client
+pip install -e ../open_web_retrieval
+pip install -e ../data_contracts
 ```
+
+`llm_client` and `open_web_retrieval` are required shared local infrastructure.
+`data_contracts` is used when available for boundary registration; the runtime
+keeps a no-op decorator fallback for environments that only need the local test
+suite.
 
 Requires API keys for: Gemini, OpenRouter (routes to current configured OpenAI/Gemini models), Tavily for the default quality-first search path. Brave remains optional if you reconfigure `collection.search_provider`. Optionally: Perplexity (for comparison scripts).
 

@@ -23,11 +23,17 @@ source .venv/bin/activate
 pip install -e .
 pip install -e ../llm_client
 pip install -e ../open_web_retrieval
+pip install -e ../data_contracts
 ```
 
 The default search path currently uses Tavily through shared retrieval. Configure
 provider keys in your normal secret environment before running raw-question
 research flows.
+
+`llm_client` and `open_web_retrieval` are required shared local infrastructure.
+`data_contracts` is recommended for boundary registration; local tests can still
+run without it because the live verification boundary has a fail-loud import
+fallback for the decorator only.
 
 ## Verification Gates
 
