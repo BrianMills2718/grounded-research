@@ -244,6 +244,8 @@ Cleanup:
 - Ensure the plan index names this plan as active and does not frame the next
   step as PR readiness.
 
+Status: complete.
+
 ### Slice 2: Structured Registry Skeleton
 
 Advances: convert the current read model into governed data with audit-quality
@@ -275,6 +277,20 @@ Cleanup:
 
 - Decide whether Markdown is generated from registry or registry is checked
   against Markdown. Record the decision in the plan.
+
+Status: partial. `scripts/check_tyler_coverage.py` now builds a non-strict
+structured read model from the current ledger and exposes `make
+tyler-coverage` / `make tyler-coverage-json`. It deliberately remains a read
+model over Markdown until source-anchor backfill and negative controls are in
+place.
+
+First readout:
+
+- 36 requirements
+- 36 rows pending line-level Tyler anchors
+- evidence grades: 19 `A`, 2 `B`, 1 `C`, 10 `D`, 4 `F`
+- grade-F rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
+  `EXT-SCHEMA-001`, `DOC-README-001`
 
 ### Slice 3: Evidence Policy Gate
 

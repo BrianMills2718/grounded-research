@@ -164,17 +164,31 @@ Current commands:
 ```bash
 make tyler-traceability
 make tyler-traceability-json
+make tyler-coverage
+make tyler-coverage-json
 make check
 ```
 
-Missing commands to add in the next plan:
+Still missing:
 
 ```bash
-make tyler-coverage
-make tyler-coverage-json
 make tyler-doc-audit
 ```
 
 Quality standard:
 
 - `docs/TYLER_AUDIT_QUALITY_STANDARD.md`
+
+Current first-pass coverage-quality readout:
+
+- 36 requirements
+- 36 rows still need line-level Tyler source anchors
+- 19 grade `A`
+- 2 grade `B`
+- 1 grade `C`
+- 10 grade `D`
+- 4 grade `F`
+
+The grade-F rows are audit-evidence gaps, not newly discovered runtime
+regressions: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
+`EXT-SCHEMA-001`, and `DOC-README-001`.

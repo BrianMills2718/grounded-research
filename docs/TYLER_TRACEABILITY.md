@@ -26,6 +26,8 @@ repo now has a checker that parses them and answers:
 ```bash
 make tyler-traceability
 make tyler-traceability-json
+make tyler-coverage
+make tyler-coverage-json
 ```
 
 `make check` also runs the machine check in fail-on-broken-link mode.
@@ -61,6 +63,42 @@ Current evidence-quality flags:
 These are not current broken links. They are prompts for future evidence-quality
 improvement if the maintainer wants stricter closure criteria.
 
+## Coverage Quality Readout
+
+`make tyler-coverage` adds a non-strict coverage-quality view over the same
+ledger. It applies the audit quality standard but does not yet fail `make check`
+on grades or source-anchor gaps.
+
+Current first-pass readout:
+
+| Metric | Count |
+|---|---:|
+| requirements | 36 |
+| review needed | 36 |
+| line-anchor pending | 36 |
+| grade F | 4 |
+
+Evidence grades:
+
+| Grade | Rows |
+|---|---:|
+| A | 19 |
+| B | 2 |
+| C | 1 |
+| D | 10 |
+| F | 4 |
+
+Current grade-F rows under the conservative first policy:
+
+- `S2-QUERY-MODEL-001`
+- `S2-QUERY-VARIANTS-001`
+- `EXT-SCHEMA-001`
+- `DOC-README-001`
+
+These are not new runtime regressions. They are rows where the current Markdown
+ledger does not yet carry enough structured evidence for the audit quality
+standard.
+
 ## Artifact Roles
 
 | Artifact | Role |
@@ -69,8 +107,11 @@ improvement if the maintainer wants stricter closure criteria.
 | `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | Coverage matrix over Tyler's source packet. |
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
+| `scripts/check_tyler_coverage.py` | Non-strict coverage-quality report with evidence grades. |
 | `make tyler-traceability` | Human-readable report. |
 | `make tyler-traceability-json` | Agent/tool-readable report. |
+| `make tyler-coverage` | Human-readable audit-quality dashboard. |
+| `make tyler-coverage-json` | Agent/tool-readable coverage-quality report. |
 
 ## Design Boundary
 

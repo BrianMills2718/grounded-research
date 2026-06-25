@@ -66,7 +66,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json
+.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -104,6 +104,12 @@ tyler-traceability: ## Summarize Tyler requirements linked to code, tests, and d
 
 tyler-traceability-json: ## Emit Tyler requirements traceability as JSON
 	@$(PYTHON) scripts/check_tyler_traceability.py --format json
+
+tyler-coverage: ## Summarize Tyler requirement coverage quality and evidence grades
+	@$(PYTHON) scripts/check_tyler_coverage.py --format markdown
+
+tyler-coverage-json: ## Emit Tyler requirement coverage quality as JSON
+	@$(PYTHON) scripts/check_tyler_coverage.py --format json
 
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py
