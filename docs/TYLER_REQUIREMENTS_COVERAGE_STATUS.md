@@ -114,8 +114,8 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 27 | 7,549 |
-| `scripts/**/*.py` | 10 | 2,135 |
+| `tests/**/*.py` | 28 | 7,609 |
+| `scripts/**/*.py` | 11 | 2,282 |
 | `prompts/` | 8 | 846 |
 | `docs/**/*.md` | 111 | 16,386 |
 | all tracked Markdown | 124 | 20,869 |
@@ -168,12 +168,16 @@ make tyler-coverage
 make tyler-coverage-json
 make tyler-doc-audit
 make tyler-doc-audit-json
+make tyler-code-audit
+make tyler-code-audit-json
 make check
 ```
 
 `make check` now fails on grade-F Tyler coverage rows and on known active-doc
-drift findings. The anchor policy is closed for the current ledger: rows have
-either line-level Tyler anchors or explicit doc-governance exceptions.
+drift findings. It also fails when non-doc Tyler rows lack current
+implementation or verification evidence. The anchor policy is closed for the
+current ledger: rows have either line-level Tyler anchors or explicit
+doc-governance exceptions.
 
 Quality standard:
 
@@ -186,6 +190,8 @@ Current first-pass coverage-quality readout:
 - 31 rows now have line-level Tyler source anchors
 - 5 rows have explicit doc-governance anchor exceptions
 - 0 active-doc drift findings under the targeted current-state checker
+- 24 non-doc/non-exception rows audited for current code evidence
+- 0 current-code evidence gaps
 - 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`

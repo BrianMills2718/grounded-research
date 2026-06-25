@@ -430,6 +430,17 @@ Cleanup:
 
 - Remove dead references discovered by the scan.
 
+Status: complete for the current evidence gate. The repo was fast-indexed with
+codebase-memory on 2026-06-25 as `home-brian-projects-grounded-research`
+(`1,165` graph nodes, `2,118` edges) and sampled around the core Tyler runtime
+symbols (`generate_search_queries_tyler_v1`, `canonicalize_tyler_v1`,
+`generate_tyler_synthesis_report`, `validate_tyler_grounding`, and Tyler
+schema classes). The durable repo-local gate is
+`scripts/check_tyler_code_audit.py`: it audits 24 non-doc/non-exception Tyler
+rows and fails when any lacks current implementation evidence or verification
+evidence. `make tyler-code-audit` / `make tyler-code-audit-json` expose the
+report, and `make check` fails on findings.
+
 ### Slice 6: Independent Closure Review
 
 Advances: calibrate the programmatic checker against adversarial human/agent

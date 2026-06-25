@@ -37,6 +37,7 @@ check: ## Run tests + type check + lint
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
@@ -44,6 +45,7 @@ check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
@@ -70,7 +72,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json
+.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -120,6 +122,12 @@ tyler-doc-audit: ## Detect stale Tyler status claims in active docs
 
 tyler-doc-audit-json: ## Emit active Tyler doc-drift audit as JSON
 	@$(PYTHON) scripts/check_tyler_doc_drift.py --format json
+
+tyler-code-audit: ## Audit current-code evidence for Tyler requirement rows
+	@$(PYTHON) scripts/check_tyler_code_audit.py --format markdown
+
+tyler-code-audit-json: ## Emit current-code Tyler evidence audit as JSON
+	@$(PYTHON) scripts/check_tyler_code_audit.py --format json
 
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py
