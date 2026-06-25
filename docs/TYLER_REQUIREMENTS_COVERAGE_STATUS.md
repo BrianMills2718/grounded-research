@@ -4,6 +4,7 @@
 > `docs/MAINTAINER_START_HERE.md`; `docs/PLAN.md`;
 > `docs/CONCERNS.md`; `docs/TYLER_TRACEABILITY.md`;
 > `docs/TYLER_AUDIT_QUALITY_STANDARD.md`;
+> `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md`;
 > `docs/TYLER_SPEC_GAP_LEDGER.md`; `docs/TYLER_EXECUTION_STATUS.md`;
 > `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`;
 > `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`;
@@ -117,8 +118,8 @@ Tracked repository counts from `git ls-files`:
 | `tests/**/*.py` | 28 | 7,609 |
 | `scripts/**/*.py` | 11 | 2,282 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 111 | 16,386 |
-| all tracked Markdown | 124 | 20,869 |
+| `docs/**/*.md` | 112 | 16,486 |
+| all tracked Markdown | 125 | 20,969 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -189,9 +190,11 @@ Current first-pass coverage-quality readout:
 - 0 rows still need line-level Tyler source anchors or explicit exceptions
 - 31 rows now have line-level Tyler source anchors
 - 5 rows have explicit doc-governance anchor exceptions
-- 0 active-doc drift findings under the targeted current-state checker
+- 0 active-doc drift findings across 40 active docs under the targeted current-state checker
 - 24 non-doc/non-exception rows audited for current code evidence
 - 0 current-code evidence gaps
+- first independent closure-review checkpoint recorded in
+  `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md`
 - 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`

@@ -120,6 +120,7 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `docs/TYLER_SPEC_GAP_LEDGER.md` | Requirement/gap ledger and current status by row. |
 | `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | Coverage matrix over Tyler's source packet. |
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
+| `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md` | Adversarial closure-review checkpoint and residual-risk disposition. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
 | `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades; grade-F rows can fail the gate. |
 | `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
