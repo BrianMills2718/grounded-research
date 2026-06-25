@@ -75,8 +75,9 @@ written as separate `tyler_stage_*.json` sidecars by the live export path.
   (the live Tyler path now uses prompt-level self-check only; the separate
   validation/retry layer was removed after the audit)
 - **Distinct analyst roles**: the live default Stage 3 family/role mapping now
-  matches Tyler's requested A/B/C assignment; the remaining exact gap is the
-  Gemini 3.1 Pro model-version substitution, which is tracked as shared parity
+  matches Tyler's requested A/B/C assignment; exact Gemini 3.1 Pro preview
+  model-version parity is closed, and the remaining model concern is the
+  separate frontier runtime watch
 - **3 reasoning frames**: verification-first, structured decomposition, step-back abstraction
 - **Source quality scoring**: deterministic Tyler-style authority/freshness/
   staleness blending on the live Stage 2 path
@@ -100,7 +101,7 @@ All operational policy in `config/config.yaml`:
 
 ## Architecture
 
-- 9 YAML prompt templates in `prompts/` (Tyler-literal)
+- 8 YAML prompt templates in `prompts/` (Tyler-literal plus legacy comparison helpers)
 - All LLM calls via [llm_client](https://github.com/BrianMills2718/llm_client)
 - Web search via [open_web_retrieval](https://github.com/BrianMills2718/open_web_retrieval)
 - 21 top-level test modules covering phase-boundary contracts and Tyler-native runtime slices

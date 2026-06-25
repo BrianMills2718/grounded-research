@@ -43,7 +43,7 @@ Tyler clause-by-clause truth surface, defer to `docs/TYLER_SPEC_GAP_LEDGER.md`.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | The live Tyler path now uses `generate_search_queries_tyler_v1()` as a lightweight structured model call that emits typed query plans per sub-question and query role. |
+| 13 | Generate 3-5 query variants per sub-question | KEEP | **DONE** | The live Tyler path now uses `generate_search_queries_tyler_v1()` to expand deterministic Tyler string/orchestrator templates into typed query plans per sub-question and query role. |
 | 14 | Optional Grok/Reddit real-time scan | DEFER | SKIP | Separate search-provider integration, not treated as a core pipeline feature. |
 | 15 | Apply source quality scoring | KEEP | **DONE** | `source_quality.py` now computes deterministic Tyler-style `quality_score` from authority lookup, freshness blending, authority-floor logic, and staleness penalties. |
 | 16 | Extract atomic findings with evidence tier labels | KEEP | **DONE** | Tyler Stage 2 finding extraction is prompt-driven and the live Stage 2 surfaces carry explicit `quality_tier` / numeric quality scoring through source and evidence normalization. |
@@ -56,7 +56,7 @@ Tyler clause-by-clause truth surface, defer to `docs/TYLER_SPEC_GAP_LEDGER.md`.
 
 | # | Feature | Verdict | Status | Notes |
 |---|---------|---------|--------|-------|
-| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts_tyler_v1()` emits three Tyler `AnalysisObject`s with distinct frames. The live primary defaults now use Tyler's intended family/role mapping: GPT-5.4, Gemini 2.5 Pro as a temporary substitute for Tyler's named Gemini 3.1 Pro, and Claude Opus 4.6. The remaining exact-model gap is tracked in `S3-MODEL-VERSION-001`. |
+| 21 | Run 3 models in parallel with reasoning frames | KEEP | **DONE** | `run_analysts_tyler_v1()` emits three Tyler `AnalysisObject`s with distinct frames. The live primary defaults now use Tyler's intended family/role mapping: GPT-5.4, Gemini 3.1 Pro preview via OpenRouter, and Claude Opus 4.6. Exact Gemini model-version parity is closed in `S3-MODEL-VERSION-001`; the remaining model concern is the separate frontier runtime watch. |
 | 22 | Require bottom-line recommendation | KEEP | **DONE** | Tyler Stage 3 `AnalysisObject.recommendation` is required. |
 | 23 | Require falsifiable claims with evidence references | KEEP | **DONE** | Tyler Stage 3 `claims[].source_references` and Stage 4 normalization keep source linkage explicit. |
 | 24 | Require explicit assumptions | KEEP | **DONE** | Tyler Stage 3 `assumptions` is required structured state. |

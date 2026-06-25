@@ -297,7 +297,7 @@ grounded-research's role is producing the claim ledger that feeds the chain.
 
 | Phase | What | Status |
 |-------|------|--------|
-| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; the live Stage 3 family/role mapping now matches Tyler's intended A/B/C assignment, with only the exact Gemini 3.1 Pro model-version row still open |
+| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; the live Stage 3 family/role mapping now matches Tyler's intended A/B/C assignment, exact Gemini model-version parity is closed, and only the separate frontier runtime watch remains |
 | 0 | Domain model, contracts, trace | Done |
 | 1 | Evidence ingest | Done — Brave + Jina fallback, parallel fetch |
 | 2 | Independent analysts | Done — 3 models × 3 frames |

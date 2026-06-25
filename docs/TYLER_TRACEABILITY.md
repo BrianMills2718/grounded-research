@@ -122,10 +122,13 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
 | `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades; grade-F rows can fail the gate. |
+| `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
 | `make tyler-traceability` | Human-readable report. |
 | `make tyler-traceability-json` | Agent/tool-readable report. |
 | `make tyler-coverage` | Human-readable audit-quality dashboard. |
 | `make tyler-coverage-json` | Agent/tool-readable coverage-quality report. |
+| `make tyler-doc-audit` | Human-readable active-doc drift report. |
+| `make tyler-doc-audit-json` | Agent/tool-readable active-doc drift report. |
 
 ## Design Boundary
 

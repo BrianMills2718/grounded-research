@@ -114,11 +114,11 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 26 | 7,489 |
-| `scripts/**/*.py` | 9 | 1,928 |
+| `tests/**/*.py` | 27 | 7,549 |
+| `scripts/**/*.py` | 10 | 2,135 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 111 | 16,366 |
-| all tracked Markdown | 124 | 20,848 |
+| `docs/**/*.md` | 111 | 16,386 |
+| all tracked Markdown | 124 | 20,869 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -166,17 +166,14 @@ make tyler-traceability
 make tyler-traceability-json
 make tyler-coverage
 make tyler-coverage-json
+make tyler-doc-audit
+make tyler-doc-audit-json
 make check
 ```
 
-`make check` now fails on grade-F Tyler coverage rows. Line-anchor gaps remain
-non-strict review items until the anchor backfill is complete.
-
-Still missing:
-
-```bash
-make tyler-doc-audit
-```
+`make check` now fails on grade-F Tyler coverage rows and on known active-doc
+drift findings. The anchor policy is closed for the current ledger: rows have
+either line-level Tyler anchors or explicit doc-governance exceptions.
 
 Quality standard:
 
@@ -188,6 +185,7 @@ Current first-pass coverage-quality readout:
 - 0 rows still need line-level Tyler source anchors or explicit exceptions
 - 31 rows now have line-level Tyler source anchors
 - 5 rows have explicit doc-governance anchor exceptions
+- 0 active-doc drift findings under the targeted current-state checker
 - 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`

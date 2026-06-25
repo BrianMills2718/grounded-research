@@ -368,8 +368,9 @@ now exist for the seven failure families in
 without model test, prompt row with broken render ref, shared-infra row without
 explicit owner, runtime-artifact row without artifact path, Tyler source row
 without line anchor, and stale-doc row without doc ref. `make check` now runs
-`scripts/check_tyler_coverage.py --fail-on-grade-f`, while line-anchor gaps
-remain intentionally non-strict until the source-anchor backfill is complete.
+`scripts/check_tyler_coverage.py --fail-on-grade-f`. Source-anchor debt is now
+closed for the current ledger: 31 rows have line-level Tyler anchors and five
+doc-governance rows have explicit exceptions.
 
 ### Slice 4: Active Doc Drift Audit
 
@@ -395,6 +396,13 @@ Audit:
 Cleanup:
 
 - Move or mark stale docs instead of leaving contradictory prose in place.
+
+Status: complete for the targeted current-state gate. `scripts/check_tyler_doc_drift.py`
+now scans active maintainer-facing docs, excluding archive plans, for known stale
+Tyler status claims. It caught and fixed active prose that still described
+Stage 2 query generation with the obsolete LLM-call description and exact
+Gemini parity as open. `make tyler-doc-audit` / `make tyler-doc-audit-json`
+expose the report, and `make check` fails on findings.
 
 ### Slice 5: Fresh Codebase Audit
 
