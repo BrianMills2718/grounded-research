@@ -281,11 +281,12 @@ Cleanup:
 - Decide whether Markdown is generated from registry or registry is checked
   against Markdown. Record the decision in the plan.
 
-Status: partial. `scripts/check_tyler_coverage.py` now builds a non-strict
-structured read model from the current ledger and exposes `make
-tyler-coverage` / `make tyler-coverage-json`. It deliberately remains a read
-model over Markdown until source-anchor backfill and negative controls are in
-place.
+Status: complete for a one-way registry snapshot. `scripts/check_tyler_coverage.py`
+now builds a non-strict structured read model from the current ledger, and
+`scripts/sync_tyler_registry.py` writes/checks
+`docs/tyler_requirements_registry.json`. Markdown remains the authoring surface
+by explicit policy; `make check` fails if the tracked registry snapshot drifts
+from the current ledger-derived model.
 
 First readout:
 
@@ -293,6 +294,7 @@ First readout:
 - 0 rows pending line-level Tyler anchors or explicit exceptions
 - 31 rows with line-level Tyler anchors
 - 5 rows with explicit doc-governance anchor exceptions
+- 36 rows exported in `docs/tyler_requirements_registry.json`
 - evidence grades: 21 `A`, 2 `B`, 1 `C`, 12 `D`, 0 `F`
 - grade-F rows: none
 

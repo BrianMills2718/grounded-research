@@ -122,11 +122,13 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md` | Adversarial closure-review checkpoint and residual-risk disposition. |
 | `docs/TYLER_SOURCE_MANIFEST.md` | Raw Tyler packet line-count and hash manifest. |
+| `docs/tyler_requirements_registry.json` | Generated structured registry snapshot from the Markdown ledger. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
 | `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades; grade-F rows can fail the gate. |
 | `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
 | `scripts/check_tyler_code_audit.py` | Current-code evidence audit for non-doc Tyler rows. |
 | `scripts/check_tyler_source_manifest.py` | Raw Tyler source packet reproducibility check. |
+| `scripts/sync_tyler_registry.py` | Generate or check the structured registry snapshot. |
 | `make tyler-traceability` | Human-readable report. |
 | `make tyler-traceability-json` | Agent/tool-readable report. |
 | `make tyler-coverage` | Human-readable audit-quality dashboard. |
@@ -137,13 +139,16 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `make tyler-code-audit-json` | Agent/tool-readable current-code evidence audit. |
 | `make tyler-source-check` | Human-readable raw Tyler source manifest check. |
 | `make tyler-source-check-json` | Agent/tool-readable raw Tyler source manifest check. |
+| `make tyler-registry-check` | Verify the tracked structured registry snapshot is current. |
+| `make tyler-registry-json` | Emit the structured registry JSON to stdout. |
+| `make tyler-registry-sync` | Regenerate the tracked structured registry snapshot. |
 
 ## Design Boundary
 
-This is intentionally a read model over existing authority docs, not a new
-second ledger. The next improvement should be schema-backed editing of the
-ledger, but only after the current parser/report proves which fields are worth
-governing.
+This is intentionally a one-way generated registry from existing authority
+docs, not a second manually edited ledger. The next improvement should invert
+ownership so Markdown is generated from a schema-backed source, but only after
+the current parser/report proves which fields are worth governing.
 
 ## Next Improvements
 

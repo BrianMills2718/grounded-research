@@ -96,8 +96,9 @@ What exists:
 
 What is still missing:
 
-- A structured source-of-truth for Tyler requirements. The source of truth is
-  still Markdown tables, parsed by convention.
+- A structured authoring source-of-truth for Tyler requirements. The current
+  structured registry is a generated JSON snapshot checked against the
+  Markdown ledger.
 - A policy that says which requirement classes require which evidence kinds.
 - A quality standard that is enforced by code, not only described in docs.
 - A generated coverage dashboard that shows pass/fail by evidence class.
@@ -116,10 +117,11 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 28 | 7,609 |
-| `scripts/**/*.py` | 12 | 2,445 |
+| `tests/**/*.py` | 30 | 7,671 |
+| `scripts/**/*.py` | 13 | 2,548 |
 | `prompts/` | 8 | 846 |
 | `docs/**/*.md` | 113 | 16,526 |
+| `docs/tyler_requirements_registry.json` | 1 | 1,494 |
 | all tracked Markdown | 130 | 23,386 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
@@ -174,6 +176,9 @@ make tyler-code-audit
 make tyler-code-audit-json
 make tyler-source-check
 make tyler-source-check-json
+make tyler-registry-check
+make tyler-registry-json
+make tyler-registry-sync
 make check
 ```
 
@@ -182,7 +187,8 @@ drift findings. It also fails when non-doc Tyler rows lack current
 implementation or verification evidence. The anchor policy is closed for the
 current ledger: rows have either line-level Tyler anchors or explicit
 doc-governance exceptions. The tracked raw Tyler source packet must also match
-its manifest hashes and line counts.
+its manifest hashes and line counts. The generated structured registry must
+also match the current ledger-derived read model.
 
 Quality standard:
 
@@ -198,6 +204,7 @@ Current first-pass coverage-quality readout:
 - 24 non-doc/non-exception rows audited for current code evidence
 - 0 current-code evidence gaps
 - 4 raw Tyler source files tracked and hash-verified
+- 36 rows exported in `docs/tyler_requirements_registry.json`
 - first independent closure-review checkpoint recorded in
   `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md`
 - 21 grade `A`

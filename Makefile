@@ -39,6 +39,7 @@ check: ## Run tests + type check + lint
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
@@ -48,6 +49,7 @@ check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
@@ -74,7 +76,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json
+.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -136,6 +138,15 @@ tyler-source-check: ## Verify tracked raw Tyler source packet hashes
 
 tyler-source-check-json: ## Emit raw Tyler source manifest check as JSON
 	@$(PYTHON) scripts/check_tyler_source_manifest.py --format json
+
+tyler-registry-check: ## Verify structured Tyler registry snapshot is current
+	@$(PYTHON) scripts/sync_tyler_registry.py --check
+
+tyler-registry-json: ## Emit structured Tyler registry JSON
+	@$(PYTHON) scripts/sync_tyler_registry.py --format json
+
+tyler-registry-sync: ## Regenerate structured Tyler registry snapshot
+	@$(PYTHON) scripts/sync_tyler_registry.py --write
 
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py
