@@ -108,6 +108,11 @@ must prove they fail. Required negative controls:
 6. Tyler requirement row without a line-level source anchor;
 7. stale-doc row claiming closure status that conflicts with the registry.
 
+Current implementation: `tests/test_tyler_coverage.py` includes fixture-row
+negative controls for all seven cases. These controls prove the non-strict
+coverage checker can identify the failure families before those findings are
+promoted into `make check` failures.
+
 ## Fresh-Code Audit Standard
 
 Historical fix notes are provenance, not proof by themselves. A fresh-code audit

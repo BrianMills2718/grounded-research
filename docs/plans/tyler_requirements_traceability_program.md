@@ -320,6 +320,14 @@ Cleanup:
 
 - Remove any ad hoc parsing rules made obsolete by the structured schema.
 
+Status: partial. Negative-control fixture tests now exist for the seven failure
+families in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`: runtime doc-only closure,
+schema row without model test, prompt row with broken render ref, shared-infra
+row without explicit owner, runtime-artifact row without artifact path, Tyler
+source row without line anchor, and stale-doc row without doc ref. Strict
+`make check` enforcement remains intentionally deferred until the class policy
+is calibrated against the real 36 rows.
+
 ### Slice 4: Active Doc Drift Audit
 
 Advances: remove contradictory guidance from the maintainer surface.

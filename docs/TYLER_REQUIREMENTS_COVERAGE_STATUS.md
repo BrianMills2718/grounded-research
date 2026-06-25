@@ -188,6 +188,7 @@ Current first-pass coverage-quality readout:
 - 1 grade `C`
 - 10 grade `D`
 - 4 grade `F`
+- negative controls implemented for all seven audit-quality failure families
 
 The grade-F rows are audit-evidence gaps, not newly discovered runtime
 regressions: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,

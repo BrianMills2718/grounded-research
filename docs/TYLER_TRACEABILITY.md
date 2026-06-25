@@ -88,6 +88,20 @@ Evidence grades:
 | D | 10 |
 | F | 4 |
 
+Requirement classes:
+
+| Class | Rows |
+|---|---:|
+| ambiguity | 3 |
+| doc_status | 10 |
+| extension | 1 |
+| model_config | 4 |
+| operational_watch | 1 |
+| prompt_template | 9 |
+| provider_behavior | 2 |
+| runtime_behavior | 3 |
+| schema_contract | 3 |
+
 Current grade-F rows under the conservative first policy:
 
 - `S2-QUERY-MODEL-001`
@@ -98,6 +112,9 @@ Current grade-F rows under the conservative first policy:
 These are not new runtime regressions. They are rows where the current Markdown
 ledger does not yet carry enough structured evidence for the audit quality
 standard.
+
+Negative controls are now covered in `tests/test_tyler_coverage.py` for the
+seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 
 ## Artifact Roles
 

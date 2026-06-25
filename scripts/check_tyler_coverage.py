@@ -100,11 +100,13 @@ def _classify_requirement(row: TableRow, evidence: list[CoverageEvidence]) -> st
         return "doc_status"
     if row.fields.get("next_action") == "operational_watch_reopen_on_threshold":
         return "operational_watch"
+    if spec_id.startswith("SC-") or "tyler_v1_models.py" in text:
+        return "schema_contract"
     if "model" in text or "frontier" in text or "config" in evidence_kinds:
         return "model_config"
     if "prompt" in text or "prompt_template" in evidence_kinds:
         return "prompt_template"
-    if spec_id.startswith("SC-") or "schema" in text or "tyler_v1_models.py" in text:
+    if "schema" in text:
         return "schema_contract"
     if (
         classification == "shared_infra_blocked"
@@ -215,12 +217,18 @@ def _findings_for(
         findings.append("insufficient_evidence_for_closure")
     if requirement_class == "runtime_behavior" and "local_test" not in kinds:
         findings.append("runtime_row_without_local_test")
+    if requirement_class == "schema_contract" and "local_test" not in kinds:
+        findings.append("schema_row_without_model_test")
     if requirement_class == "prompt_template" and "prompt_template" not in kinds:
         findings.append("prompt_row_without_prompt_template_ref")
     if requirement_class == "provider_behavior" and not (
         {"shared_infra_source", "shared_infra_test"} & kinds
     ):
         findings.append("provider_row_without_shared_infra_ref")
+    if requirement_class in {"output_artifact", "operational_watch"} and "runtime_artifact" not in kinds:
+        findings.append("runtime_artifact_row_without_artifact")
+    if requirement_class == "doc_status" and "doc" not in kinds:
+        findings.append("doc_status_row_without_doc_ref")
     if any(not item.exists for item in evidence):
         findings.append("evidence_ref_missing_locally")
     if row.fields.get("classification") == "shared_infra_blocked":
@@ -243,43 +251,45 @@ def _adversarial_notes(requirement_class: str, grade: str, findings: list[str]) 
     return notes
 
 
+def evaluate_coverage_row(row: TableRow) -> CoverageRequirement:
+    """Evaluate one Tyler ledger row against the audit quality standard."""
+
+    evidence = _evidence_from_refs(row)
+    requirement_class = _classify_requirement(row, evidence)
+    closure_status = row.fields.get("next_action", "")
+    anchor_status = _anchor_status(row)
+    grade = _grade_requirement(
+        requirement_class=requirement_class,
+        closure_status=closure_status,
+        evidence=evidence,
+    )
+    findings = _findings_for(
+        row=row,
+        requirement_class=requirement_class,
+        grade=grade,
+        anchor_status=anchor_status,
+        evidence=evidence,
+    )
+    return CoverageRequirement(
+        requirement_id=row.key,
+        requirement_class=requirement_class,
+        closure_status=closure_status,
+        evidence_grade=grade,
+        anchor_status=anchor_status,
+        tyler_sources=_source_aliases(row.fields.get("tyler_source", "")),
+        owner=row.fields.get("owner", ""),
+        severity=row.fields.get("severity", ""),
+        evidence=evidence,
+        findings=findings,
+        adversarial_notes=_adversarial_notes(requirement_class, grade, findings),
+    )
+
+
 def build_coverage_report() -> dict[str, Any]:
     """Build a Tyler requirement coverage report."""
 
     ledger_rows = _parse_table(LEDGER_PATH, "spec_id")
-    requirements: list[CoverageRequirement] = []
-    for row in ledger_rows:
-        evidence = _evidence_from_refs(row)
-        requirement_class = _classify_requirement(row, evidence)
-        closure_status = row.fields.get("next_action", "")
-        anchor_status = _anchor_status(row)
-        grade = _grade_requirement(
-            requirement_class=requirement_class,
-            closure_status=closure_status,
-            evidence=evidence,
-        )
-        findings = _findings_for(
-            row=row,
-            requirement_class=requirement_class,
-            grade=grade,
-            anchor_status=anchor_status,
-            evidence=evidence,
-        )
-        requirements.append(
-            CoverageRequirement(
-                requirement_id=row.key,
-                requirement_class=requirement_class,
-                closure_status=closure_status,
-                evidence_grade=grade,
-                anchor_status=anchor_status,
-                tyler_sources=_source_aliases(row.fields.get("tyler_source", "")),
-                owner=row.fields.get("owner", ""),
-                severity=row.fields.get("severity", ""),
-                evidence=evidence,
-                findings=findings,
-                adversarial_notes=_adversarial_notes(requirement_class, grade, findings),
-            )
-        )
+    requirements = [evaluate_coverage_row(row) for row in ledger_rows]
 
     by_grade: dict[str, int] = {}
     by_class: dict[str, int] = {}
