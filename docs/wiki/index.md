@@ -11,6 +11,8 @@ discovery extensions without rereading every historical plan.
 - [Repo Authority Chain](concepts/repo-authority-chain.md)
 - [MCP Evidence Discovery](concepts/mcp-evidence-discovery.md)
 - [Tyler V1 Packet Source Summary](sources/tyler-v1-packet.md)
+- [Traceability System](../TYLER_TRACEABILITY.md)
+- [Local Infrastructure Alignment](../LOCAL_INFRA_ALIGNMENT.md)
 - [Wiki Log](log.md)
 
 ## Source Of Truth

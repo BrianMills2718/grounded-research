@@ -129,6 +129,8 @@ Requires API keys for: Gemini, OpenRouter (routes to current configured OpenAI/G
 ## Documentation
 
 - `docs/MAINTAINER_START_HERE.md` — maintainer entrypoint and authority chain
+- `docs/TYLER_TRACEABILITY.md` — Tyler requirement-to-code/test traceability system
+- `docs/LOCAL_INFRA_ALIGNMENT.md` — local infrastructure that can help the project
 - `docs/ROADMAP.md` — priorities and next steps
 - `docs/COMPETITIVE_ANALYSIS.md` — full SOTA comparison with Perplexity, GPT-Researcher
 - `docs/JUDGE_CRITIQUES.md` — where the pipeline loses points and why

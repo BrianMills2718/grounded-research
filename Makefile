@@ -34,10 +34,12 @@ test-quick: ## Run tests, minimal output
 check: ## Run tests + type check + lint
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
+	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
+	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
@@ -64,7 +66,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate
+.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -96,6 +98,12 @@ evaluate: ## Show latest adjudication outputs and dispute stats
 	@ls -dt output/*/ 2>/dev/null | head -5
 	@echo "---"
 	@echo "Run-specific evaluation: python -m grounded_research.cli evaluate <output_dir>"
+
+tyler-traceability: ## Summarize Tyler requirements linked to code, tests, and docs
+	@$(PYTHON) scripts/check_tyler_traceability.py --format markdown
+
+tyler-traceability-json: ## Emit Tyler requirements traceability as JSON
+	@$(PYTHON) scripts/check_tyler_traceability.py --format json
 
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py

@@ -26,3 +26,6 @@ jobs:
 
       - name: Run lint
         run: python -m ruff check engine.py src/ tests/
+
+      - name: Check Tyler traceability links
+        run: python scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null

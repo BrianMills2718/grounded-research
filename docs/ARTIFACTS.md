@@ -31,6 +31,7 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 |---|---|---|
 | [docs/TYLER_SPEC_GAP_LEDGER.md](TYLER_SPEC_GAP_LEDGER.md) | Code-vs-spec ledger | Canonical truth surface for Tyler packet compliance. |
 | [docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md](TYLER_FULL_SPEC_AUDIT_MATRIX.md) | Audit coverage | Exhaustive Tyler packet review matrix. |
+| [docs/TYLER_TRACEABILITY.md](TYLER_TRACEABILITY.md) | Traceability system | Explains the machine-checkable Tyler requirement-to-code/test report. |
 | [docs/TYLER_FROZEN_EVAL_STATUS.md](TYLER_FROZEN_EVAL_STATUS.md) | Frozen eval status | Tracks frozen evaluation gates. |
 | [docs/COMPETITIVE_ANALYSIS.md](COMPETITIVE_ANALYSIS.md) | Baseline comparison | Comparison framing against other research systems. |
 | [docs/JUDGE_CRITIQUES.md](JUDGE_CRITIQUES.md) | Judge feedback | Where the pipeline loses points and why. |
