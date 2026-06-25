@@ -287,8 +287,8 @@ place.
 First readout:
 
 - 36 requirements
-- 24 rows pending line-level Tyler anchors
-- 12 rows with line-level Tyler anchors
+- 8 rows pending line-level Tyler anchors
+- 28 rows with line-level Tyler anchors
 - evidence grades: 21 `A`, 2 `B`, 1 `C`, 12 `D`, 0 `F`
 - grade-F rows: none
 
@@ -298,6 +298,14 @@ raw Tyler packet describes Stage 2 query generation as string/orchestrator
 templates; the live runtime previously used a model-driven
 query-diversification prompt. These rows required a runtime decision before
 closure and are now fixed by the deterministic template path below.
+
+Second anchor-pass update: high-priority Stage 1, Stage 2, Stage 3, Stage 4,
+Stage 5, Stage 6, ambiguity, schema, extension, and frontier-watch rows now
+cite line-level Tyler packet anchors where the packet provides concrete text.
+The remaining eight pending rows are the three provider-control rows whose
+current anchors are still broad sections and five documentation-status rows
+that need a policy decision on whether to anchor to Tyler lines, active docs, or
+explicit doc-governance exceptions.
 
 Runtime decision on 2026-06-25: restore the Tyler-literal orchestrator
 template path. Rationale: `CLAUDE.md` defines Tyler literal compliance as the

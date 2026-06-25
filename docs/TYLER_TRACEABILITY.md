@@ -73,8 +73,8 @@ Current first-pass readout:
 | Metric | Count |
 |---|---:|
 | requirements | 36 |
-| review needed | 24 |
-| line-anchor pending | 24 |
+| review needed | 8 |
+| line-anchor pending | 8 |
 | grade F | 0 |
 
 Evidence grades:
@@ -106,7 +106,9 @@ Current grade-F rows under the conservative first policy: none.
 coverage-quality pass and then fixed by restoring deterministic
 string/orchestrator query templates in the live runtime. `EXT-SCHEMA-001` and
 `DOC-README-001` now grade `D`, which means documented rather than strongly
-closed by runtime proof.
+closed by runtime proof. The current source-anchor backlog is down to the three
+provider-control rows that still cite broad Tyler sections and five doc-status
+rows that need explicit source-anchor policy.
 
 Negative controls are now covered in `tests/test_tyler_coverage.py` for the
 seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.

@@ -57,7 +57,7 @@ def test_tyler_coverage_report_surfaces_anchor_backlog() -> None:
 
     assert report["summary"]["line_anchor_pending"] > 0
     assert "section_only" in report["by_anchor_status"]
-    assert "AMB-S3-FRAME-001" in report["review_needed"]
+    assert "S5-SEARCH-PARAMS-001" in report["review_needed"]
 
 
 def test_tyler_coverage_report_keeps_known_shared_infra_rows_visible() -> None:
@@ -77,7 +77,7 @@ def test_tyler_coverage_markdown_renders_review_sections() -> None:
     assert "# Tyler Coverage Report" in markdown
     assert "## Evidence Grades" in markdown
     assert "## Rows Needing Review" in markdown
-    assert "`S1-VALIDATION-001`" in markdown
+    assert "`S5-SEARCH-PARAMS-001`" in markdown
 
 
 def test_grade_requirement_rejects_runtime_doc_only_closure() -> None:

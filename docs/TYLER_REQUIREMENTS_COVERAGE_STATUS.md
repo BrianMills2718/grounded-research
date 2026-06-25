@@ -56,7 +56,7 @@ Current generated traceability readout:
 | Audit units pointing at missing ledger IDs | 0 |
 | Review lanes pointing at missing ledger IDs | 0 |
 | Verified rows without explicit local test references | 1 |
-| Rows without source-code references | 2 |
+| Rows without source-code references | 1 |
 
 Known evidence-quality flags:
 
@@ -185,8 +185,8 @@ Quality standard:
 Current first-pass coverage-quality readout:
 
 - 36 requirements
-- 24 rows still need line-level Tyler source anchors
-- 12 rows now have line-level Tyler source anchors
+- 8 rows still need line-level Tyler source anchors
+- 28 rows now have line-level Tyler source anchors
 - 21 grade `A`
 - 2 grade `B`
 - 1 grade `C`
