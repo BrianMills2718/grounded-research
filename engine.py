@@ -10,18 +10,53 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import re
 import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from grounded_research.config import get_budget, get_depth_config, load_config
-from grounded_research.models import PipelineState, PhaseTrace
-from grounded_research.runtime_policy import configure_run_runtime
+from grounded_research.config import get_budget, get_depth_config, load_config  # noqa: E402
+from grounded_research.models import PipelineState, PhaseTrace  # noqa: E402
+from grounded_research.runtime_policy import configure_run_runtime  # noqa: E402
+
+if TYPE_CHECKING:
+    from grounded_research.tyler_v1_models import (
+        DecompositionResult,
+        DisputeQueueEntry,
+        EvidencePackage,
+    )
+
+
+def _slugify_question(question: str) -> str:
+    """Build a filesystem-safe default run directory name from a user question."""
+
+    slug = re.sub(r"[^a-z0-9]+", "_", question[:80].lower()).strip("_")
+    return slug[:40] or "question"
+
+
+def _prepare_fresh_output_dir(output_dir: Path) -> None:
+    """Create or validate a run output directory without overwriting artifacts."""
+
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise FileExistsError(
+            f"Output directory already contains files: {output_dir}. "
+            "Choose a new --output-dir before running to avoid overwriting artifacts."
+        )
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+
+def _write_new_text(path: Path, text: str) -> None:
+    """Write an artifact only when it does not already exist."""
+
+    if path.exists():
+        raise FileExistsError(f"Refusing to overwrite existing artifact: {path}")
+    path.write_text(text)
 
 
 def _load_fixture_sidecars(
@@ -95,6 +130,7 @@ async def run_pipeline(
     output_dir: Path,
     tyler_stage_1_result: "DecompositionResult | None" = None,
     tyler_stage_2_result: "EvidencePackage | None" = None,
+    output_dir_prepared: bool = False,
 ) -> PipelineState:
     """Run the full adjudication pipeline."""
     from grounded_research.collect import build_tyler_evidence_package
@@ -113,18 +149,19 @@ async def run_pipeline(
         write_tyler_trace,
         write_outputs,
     )
-    from grounded_research.tyler_v1_models import DecompositionResult, EvidencePackage
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
     state = PipelineState(run_id=run_id)
+    if not output_dir_prepared:
+        _prepare_fresh_output_dir(output_dir)
     runtime_policy = configure_run_runtime(run_id, output_dir)
 
     config = load_config()
     depth = get_depth_config()
     total_budget = depth["pipeline_max_budget_usd"]
 
-    print(f"=== Grounded Research Adjudication Engine ===")
+    print("=== Grounded Research Adjudication Engine ===")
     print(f"Run ID: {run_id}")
     print(f"Depth: {config.get('depth', 'standard')}, Budget: ${total_budget:.2f}")
     if runtime_policy["db_path"]:
@@ -341,9 +378,9 @@ async def run_pipeline(
                     answer = input("  Your guidance (or Enter to skip): ").strip()
                     if answer:
                         state.user_guidance_notes.append(f"{d.id}: {answer}")
-                        print(f"  → Recorded.")
+                        print("  → Recorded.")
                 except (EOFError, KeyboardInterrupt):
-                    print(f"  → Skipped.")
+                    print("  → Skipped.")
 
         # --- Phase 5: Export ---
         phase_start = datetime.now(timezone.utc)
@@ -407,7 +444,7 @@ async def run_pipeline(
         for name, path in paths.items():
             print(f"  Wrote: {path}")
 
-        print(f"\n=== Pipeline complete ===")
+        print("\n=== Pipeline complete ===")
         print(f"Report: {bundle.question.text}")
         print(f"Long report: ~{len(long_report_md.split())} words")
         print(f"Cited claims: {len(tyler_stage_6_result.claim_ledger_excerpt)}")
@@ -428,7 +465,7 @@ async def run_pipeline(
             observability_db_path=db_path,
             trace_id_root=trace_id,
         )
-        print(f"\n=== Pipeline FAILED ===")
+        print("\n=== Pipeline FAILED ===")
         print(f"Error: {e}")
         print(f"Partial trace: {trace_path}")
         raise
@@ -446,10 +483,11 @@ async def run_pipeline_from_question(
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"pipeline/{run_id}"
+    _prepare_fresh_output_dir(output_dir)
     runtime_policy = configure_run_runtime(run_id, output_dir)
 
     # --- Decompose question into Tyler Stage 1 sub-questions ---
-    print(f"=== Question Decomposition ===")
+    print("=== Question Decomposition ===")
     print(f"Raw question: {question}")
     if runtime_policy["db_path"]:
         print(f"Observability DB: {runtime_policy['db_path']}")
@@ -464,7 +502,7 @@ async def run_pipeline_from_question(
     print()
 
     # --- Collect evidence with sub-question-driven search ---
-    print(f"=== Evidence Collection ===")
+    print("=== Evidence Collection ===")
     print(f"Question: {tyler_stage_1_result.core_question}")
     print()
 
@@ -478,15 +516,14 @@ async def run_pipeline_from_question(
 
     # Save the collected bundle for reuse
     bundle_path = output_dir / "collected_bundle.json"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    bundle_path.write_text(bundle.model_dump_json(indent=2))
+    _write_new_text(bundle_path, bundle.model_dump_json(indent=2))
     print(f"  Saved bundle: {bundle_path}")
 
     tyler_decomp_path = output_dir / "tyler_stage_1.json"
-    tyler_decomp_path.write_text(tyler_stage_1_result.model_dump_json(indent=2))
+    _write_new_text(tyler_decomp_path, tyler_stage_1_result.model_dump_json(indent=2))
     print(f"  Saved Tyler Stage 1: {tyler_decomp_path}")
     tyler_stage2_path = output_dir / "tyler_stage_2.json"
-    tyler_stage2_path.write_text(tyler_stage_2_result.model_dump_json(indent=2))
+    _write_new_text(tyler_stage2_path, tyler_stage_2_result.model_dump_json(indent=2))
     print(f"  Saved Tyler Stage 2: {tyler_stage2_path}")
     print()
 
@@ -495,6 +532,7 @@ async def run_pipeline_from_question(
         output_dir,
         tyler_stage_1_result=tyler_stage_1_result,
         tyler_stage_2_result=tyler_stage_2_result,
+        output_dir_prepared=True,
     )
 
 
@@ -547,12 +585,11 @@ def main() -> None:
 
     # Override depth in config if CLI flag provided
     if args.depth:
-        from grounded_research.config import _cached_config, load_config
         cfg = load_config()
         cfg["depth"] = args.depth
 
     if args.question:
-        slug = args.question[:40].lower().replace(" ", "_").replace("?", "")
+        slug = _slugify_question(args.question)
         out_dir = args.output_dir or (PROJECT_ROOT / "output" / slug)
         asyncio.run(run_pipeline_from_question(args.question, out_dir))
     elif args.fixture:

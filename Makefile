@@ -33,15 +33,15 @@ test-quick: ## Run tests, minimal output
 
 check: ## Run tests + type check + lint
 	$(PYTHON) -m pytest tests/ -x -q
-	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m ruff check engine.py src/ tests/
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
-	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
-	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m ruff check engine.py src/ tests/
 
 typecheck: ## Run mypy strict typecheck (currently tracks known debt)
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
