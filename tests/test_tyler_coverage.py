@@ -105,6 +105,20 @@ def test_grade_requirement_accepts_local_tested_runtime_closure() -> None:
     assert grade == "A"
 
 
+def test_grade_requirement_reopened_row_cannot_grade_as_closed() -> None:
+    """Reopened rows should not look strongly closed just because evidence exists."""
+    grade = _grade_requirement(
+        requirement_class="runtime_behavior",
+        closure_status="reopened_needs_runtime_decision",
+        evidence=[
+            CoverageEvidence(kind="local_source", target="src/example.py", exists=True),
+            CoverageEvidence(kind="local_test", target="tests/test_example.py", exists=True),
+        ],
+    )
+
+    assert grade == "F"
+
+
 def test_negative_control_closed_runtime_row_with_doc_only_evidence_fails() -> None:
     """A runtime row cannot close with documentation evidence only."""
     row = _negative_row(

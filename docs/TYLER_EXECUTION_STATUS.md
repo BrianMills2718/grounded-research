@@ -75,7 +75,16 @@ Every item is classified as one of:
 
 ## Required: Active Implementation Gaps
 
-None. The audited local Tyler implementation rows are closed.
+1. Stage 2 query generation mechanism and variant-family parity
+   - Canonical rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`.
+   - Reopened on 2026-06-25 by the coverage-quality anchor pass.
+   - Tyler's raw Build Plan and Prompt packet describe Stage 2 query generation
+     as string/orchestrator templates, not a model call.
+   - The live runtime currently uses `prompts/tyler_v1_query_diversification.yaml`
+     and `acall_llm_structured(...)` in `generate_search_queries_tyler_v1()`.
+   - This needs a runtime decision: either restore literal string-template
+     query generation or explicitly document the model-driven path as an
+     extension/deviation with acceptance evidence.
 
 ## Operational Watch
 

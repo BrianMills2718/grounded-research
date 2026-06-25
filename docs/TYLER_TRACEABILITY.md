@@ -49,6 +49,8 @@ The current generated summary is:
 
 Current non-closure rows:
 
+- `S2-QUERY-MODEL-001` - reopened Stage 2 runtime decision item.
+- `S2-QUERY-VARIANTS-001` - reopened Stage 2 runtime decision item.
 - `STATUS-FRONTIER-RUNTIME-001` - operational watch item.
 - `EXT-SCHEMA-001` - documented extension row.
 
@@ -74,8 +76,8 @@ Current first-pass readout:
 | Metric | Count |
 |---|---:|
 | requirements | 36 |
-| review needed | 36 |
-| line-anchor pending | 36 |
+| review needed | 35 |
+| line-anchor pending | 33 |
 | grade F | 4 |
 
 Evidence grades:
@@ -109,9 +111,10 @@ Current grade-F rows under the conservative first policy:
 - `EXT-SCHEMA-001`
 - `DOC-README-001`
 
-These are not new runtime regressions. They are rows where the current Markdown
-ledger does not yet carry enough structured evidence for the audit quality
-standard.
+`S2-QUERY-MODEL-001` and `S2-QUERY-VARIANTS-001` are reopened runtime-decision
+rows: Tyler's raw packet describes string/orchestrator query templates, while
+the live runtime uses a model-driven query-diversification prompt. `EXT-SCHEMA-001`
+and `DOC-README-001` remain audit-evidence/documentation-quality gaps.
 
 Negative controls are now covered in `tests/test_tyler_coverage.py` for the
 seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.

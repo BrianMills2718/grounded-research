@@ -184,6 +184,8 @@ def _grade_requirement(
     has_shared = bool({"shared_infra_source", "shared_infra_test"} & kinds)
     has_doc = "doc" in kinds or "tyler_source" in kinds
 
+    if closure_status.startswith("reopened"):
+        return "F"
     if requirement_class in {"ambiguity", "extension", "doc_status"}:
         return "D" if has_doc else "F"
     if requirement_class == "operational_watch":

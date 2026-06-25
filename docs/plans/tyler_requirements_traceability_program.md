@@ -287,10 +287,17 @@ place.
 First readout:
 
 - 36 requirements
-- 36 rows pending line-level Tyler anchors
+- 33 rows pending line-level Tyler anchors
+- 3 rows with line-level Tyler anchors
 - evidence grades: 19 `A`, 2 `B`, 1 `C`, 10 `D`, 4 `F`
 - grade-F rows: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
   `EXT-SCHEMA-001`, `DOC-README-001`
+
+Update from the anchor pass: `S2-QUERY-MODEL-001` and
+`S2-QUERY-VARIANTS-001` are no longer treated as audit-evidence-only gaps. The
+raw Tyler packet describes Stage 2 query generation as string/orchestrator
+templates, while the live runtime uses a model-driven query-diversification
+prompt. These rows need a runtime decision before closure.
 
 ### Slice 3: Evidence Policy Gate
 

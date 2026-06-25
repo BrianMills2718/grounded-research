@@ -11,18 +11,19 @@ lane, the exhaustive Tyler packet audit matrix has full coverage of the four
 canonical Tyler files, and the post-audit remediation wave is complete. The
 previously reopened local rows are now closed, including the Stage 5/6 prompt
 contract rows, the Stage 6 validation-behavior rows, and Tyler
-`PipelineState` trace parity. Earlier Stage 2 and Stage 3 reopenings were
-corrected as audit-process false positives rather than real runtime/spec
-mismatches. The frontier-model variability item remains a separate
-policy-governed operational watch.
+`PipelineState` trace parity. The 2026-06-25 coverage-quality anchor pass
+reopened the Stage 2 query-generation mechanism and variant-family rows because
+the raw Tyler packet describes string/orchestrator templates while the live
+runtime uses a lightweight model call. The frontier-model variability item
+remains a separate policy-governed operational watch.
 
 Current operational reality:
 
 - Tyler-native Stage 1-6 runtime and export/handoff contracts are the live path
 - Stage 1 runs without a separate validation stage
-- Stage 2 currently uses routed Tavily/Exa search, and the full packet audit
-  confirmed the current lightweight-model query-diversification path is
-  Tyler-literal
+- Stage 2 currently uses routed Tavily/Exa search; query generation is
+  model-driven in the live runtime and is reopened as a Tyler-literal mismatch
+  pending a runtime decision
 - Stage 2 quality scoring is deterministic authority/freshness/staleness
   scoring, not a generic LLM judge
 - Stage 4 and Stage 5 randomization protections are live

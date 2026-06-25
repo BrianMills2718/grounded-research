@@ -17,6 +17,7 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 | GR-TYLER-TRACE-002 | Current Tyler traceability validates references and matrix links, not that every closed requirement has the right evidence kind. | High | `scripts/check_tyler_traceability.py` exposes current weak spots. | Implement the structured coverage plan in `docs/plans/tyler_requirements_traceability_program.md`. |
 | GR-TYLER-TRACE-003 | Active docs may still disagree about remaining Tyler-required items. | Medium | Ledger and execution status are newer than older repo-map docs. | Run the planned doc-drift audit and reconcile or mark stale docs. |
 | GR-TYLER-TRACE-004 | Binary closure labels can overstate confidence unless paired with source anchors, evidence grades, negative controls, and adversarial review. | High | `docs/TYLER_AUDIT_QUALITY_STANDARD.md` defines the standard. | Build the structured checker against that standard before claiming strong closure. |
+| GR-TYLER-S2-001 | Stage 2 query generation was previously overclosed as Tyler-literal; raw Tyler lines describe string/orchestrator templates while live runtime uses a model call. | High | `S2-QUERY-MODEL-001` and `S2-QUERY-VARIANTS-001` are reopened in the ledger. | Make a runtime decision: restore literal templates or document model-driven generation as an explicit extension/deviation with evidence. |
 
 ## Portfolio Judgment
 

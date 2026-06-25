@@ -182,7 +182,8 @@ Quality standard:
 Current first-pass coverage-quality readout:
 
 - 36 requirements
-- 36 rows still need line-level Tyler source anchors
+- 33 rows still need line-level Tyler source anchors
+- 3 rows now have line-level Tyler source anchors
 - 19 grade `A`
 - 2 grade `B`
 - 1 grade `C`
@@ -190,6 +191,7 @@ Current first-pass coverage-quality readout:
 - 4 grade `F`
 - negative controls implemented for all seven audit-quality failure families
 
-The grade-F rows are audit-evidence gaps, not newly discovered runtime
-regressions: `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
-`EXT-SCHEMA-001`, and `DOC-README-001`.
+The grade-F rows are `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`,
+`EXT-SCHEMA-001`, and `DOC-README-001`. The two `S2-QUERY-*` rows are reopened
+runtime-decision gaps; the extension/README rows are audit-evidence or
+documentation-quality gaps.
