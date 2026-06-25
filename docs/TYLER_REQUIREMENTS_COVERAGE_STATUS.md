@@ -117,8 +117,8 @@ Tracked repository counts from `git ls-files`:
 | `tests/**/*.py` | 26 | 7,489 |
 | `scripts/**/*.py` | 9 | 1,928 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 111 | 16,362 |
-| all tracked Markdown | 124 | 20,844 |
+| `docs/**/*.md` | 111 | 16,366 |
+| all tracked Markdown | 124 | 20,848 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -168,6 +168,9 @@ make tyler-coverage
 make tyler-coverage-json
 make check
 ```
+
+`make check` now fails on grade-F Tyler coverage rows. Line-anchor gaps remain
+non-strict review items until the anchor backfill is complete.
 
 Still missing:
 

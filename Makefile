@@ -35,11 +35,13 @@ check: ## Run tests + type check + lint
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
+	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
+	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks

@@ -64,9 +64,9 @@ improvement if the maintainer wants stricter closure criteria.
 
 ## Coverage Quality Readout
 
-`make tyler-coverage` adds a non-strict coverage-quality view over the same
-ledger. It applies the audit quality standard but does not yet fail `make check`
-on grades or source-anchor gaps.
+`make tyler-coverage` adds a coverage-quality view over the same ledger.
+Grade-F rows now fail `make check`; source-anchor gaps remain non-strict review
+items.
 
 Current first-pass readout:
 
@@ -119,7 +119,7 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | Coverage matrix over Tyler's source packet. |
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
-| `scripts/check_tyler_coverage.py` | Non-strict coverage-quality report with evidence grades. |
+| `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades; grade-F rows can fail the gate. |
 | `make tyler-traceability` | Human-readable report. |
 | `make tyler-traceability-json` | Agent/tool-readable report. |
 | `make tyler-coverage` | Human-readable audit-quality dashboard. |

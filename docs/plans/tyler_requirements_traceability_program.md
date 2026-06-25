@@ -354,13 +354,14 @@ Cleanup:
 
 - Remove any ad hoc parsing rules made obsolete by the structured schema.
 
-Status: partial. Negative-control fixture tests now exist for the seven failure
-families in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`: runtime doc-only closure,
-schema row without model test, prompt row with broken render ref, shared-infra
-row without explicit owner, runtime-artifact row without artifact path, Tyler
-source row without line anchor, and stale-doc row without doc ref. Strict
-`make check` enforcement remains intentionally deferred until the class policy
-is calibrated against the real 36 rows.
+Status: complete for the grade-F evidence gate. Negative-control fixture tests
+now exist for the seven failure families in
+`docs/TYLER_AUDIT_QUALITY_STANDARD.md`: runtime doc-only closure, schema row
+without model test, prompt row with broken render ref, shared-infra row without
+explicit owner, runtime-artifact row without artifact path, Tyler source row
+without line anchor, and stale-doc row without doc ref. `make check` now runs
+`scripts/check_tyler_coverage.py --fail-on-grade-f`, while line-anchor gaps
+remain intentionally non-strict until the source-anchor backfill is complete.
 
 ### Slice 4: Active Doc Drift Audit
 

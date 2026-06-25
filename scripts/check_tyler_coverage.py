@@ -333,7 +333,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "# Tyler Coverage Report",
         "",
         "> Generated from the current ledger and audit quality standard.",
-        "> This is a non-strict read model; grade and anchor gaps are not yet `make check` failures.",
+        "> Grade-F rows fail `make check`; source-anchor gaps remain non-strict review items.",
         "",
         "## Summary",
         "",
@@ -386,7 +386,7 @@ def main() -> int:
     parser.add_argument(
         "--fail-on-grade-f",
         action="store_true",
-        help="Exit non-zero if any row has grade F. Not used by make check yet.",
+        help="Exit non-zero if any row has grade F.",
     )
     args = parser.parse_args()
 
