@@ -3,6 +3,7 @@
 > Sources consulted: `CLAUDE.md`; `README.md`;
 > `docs/MAINTAINER_START_HERE.md`; `docs/PLAN.md`;
 > `docs/CONCERNS.md`; `docs/TYLER_TRACEABILITY.md`;
+> `docs/TYLER_AUDIT_QUALITY_STANDARD.md`;
 > `docs/TYLER_SPEC_GAP_LEDGER.md`; `docs/TYLER_EXECUTION_STATUS.md`;
 > `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`;
 > `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`;
@@ -96,6 +97,7 @@ What is still missing:
 - A structured source-of-truth for Tyler requirements. The source of truth is
   still Markdown tables, parsed by convention.
 - A policy that says which requirement classes require which evidence kinds.
+- A quality standard that is enforced by code, not only described in docs.
 - A generated coverage dashboard that shows pass/fail by evidence class.
 - A fresh live-code audit that traces each requirement to concrete functions,
   tests, and runtime artifacts using a repeatable process.
@@ -145,10 +147,15 @@ all of these are true:
 2. Tyler requirement rows have a structured source-of-truth, not only Markdown
    tables.
 3. Every requirement row declares the evidence kind required for closure.
-4. The checker fails when a row marked closed lacks its required evidence kind.
-5. Active docs that contradict the ledger are reconciled or marked superseded.
-6. A fresh codebase audit has been run and recorded against the structured rows.
-7. Shared-infra rows name the owning repo, artifact, and verification command.
+4. Every requirement row has a line-level Tyler source anchor or explicit
+   exception.
+5. Every closed row has an evidence grade that matches the audit quality
+   standard.
+6. The checker fails when a row marked closed lacks its required evidence kind.
+7. Negative-control fixtures prove the checker catches false closure cases.
+8. Active docs that contradict the ledger are reconciled or marked superseded.
+9. A fresh codebase audit has been run and recorded against the structured rows.
+10. Shared-infra rows name the owning repo, artifact, and verification command.
 
 ## Commands
 
@@ -167,3 +174,7 @@ make tyler-coverage
 make tyler-coverage-json
 make tyler-doc-audit
 ```
+
+Quality standard:
+
+- `docs/TYLER_AUDIT_QUALITY_STANDARD.md`

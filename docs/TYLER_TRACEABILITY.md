@@ -83,9 +83,12 @@ governing.
 
 1. Promote the ledger rows into a YAML or JSON source file and generate the
    Markdown ledger from it.
-2. Add per-row evidence kinds: static code, unit test, integration test, runtime
+2. Apply the quality bar in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`: line-level
+   Tyler anchors, evidence grades, requirement-class evidence policy,
+   adversarial audit lane, and negative controls.
+3. Add per-row evidence kinds: static code, unit test, integration test, runtime
    artifact, shared-infra evidence, doc-only.
-3. Add owners for shared-infra evidence rows so `open_web_retrieval`,
+4. Add owners for shared-infra evidence rows so `open_web_retrieval`,
    `llm_client`, and `prompt_eval` references are explicit rather than prose.
-4. Add a `trace_eval`-style runtime evidence checker once that shared library
+5. Add a `trace_eval`-style runtime evidence checker once that shared library
    exists.

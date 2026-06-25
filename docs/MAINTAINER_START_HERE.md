@@ -9,10 +9,11 @@ of inferring requirements from historical plans or old delivery summaries.
 1. `docs/TYLER_SPEC_GAP_LEDGER.md` - canonical code-vs-spec evidence ledger.
 2. `docs/TYLER_REQUIREMENTS_COVERAGE_STATUS.md` - current requirements coverage
    status and stop lines.
-3. `docs/TYLER_EXECUTION_STATUS.md` - current implementation status.
-4. `docs/ROADMAP.md` - forward-looking gates and stop lines.
-5. `docs/CONCERNS.md` - open risk register.
-6. `docs/PLAN.md` and `docs/plans/CLAUDE.md` - current execution framing.
+3. `docs/TYLER_AUDIT_QUALITY_STANDARD.md` - evidence grades and closure bar.
+4. `docs/TYLER_EXECUTION_STATUS.md` - current implementation status.
+5. `docs/ROADMAP.md` - forward-looking gates and stop lines.
+6. `docs/CONCERNS.md` - open risk register.
+7. `docs/PLAN.md` and `docs/plans/CLAUDE.md` - current execution framing.
 
 Archived plans in `docs/plans/archive/` are provenance. They explain how the
 repo got here; they do not create active requirements by themselves.
