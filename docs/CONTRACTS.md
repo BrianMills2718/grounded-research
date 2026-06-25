@@ -111,6 +111,8 @@ Budget exhaustion semantics:
 Examples:
 
 - fewer than 2 successful analysts: abort
+- zero successful search results for a required Stage 2 query family: open design
+  concern, tracked as `GR-RUNTIME-001`
 - verification query cap reached: stop generating more queries, warn, continue
 - export grounding failure: fail the export stage loudly
 

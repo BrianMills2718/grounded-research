@@ -39,6 +39,8 @@ Before a result can influence a Tyler run, it needs:
 
 - A frozen prompt set where MCP discovery improves source coverage without
   lowering source quality.
+- A minimum evidence threshold for when discovery/search failure should fail
+  loudly rather than produce a partial run.
 - Trace records showing which MCP candidates were accepted or rejected.
 - No direct MCP object leakage into report synthesis.
 - No new source family bypassing Stage 2 or Stage 5 evidence gates.

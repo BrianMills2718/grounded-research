@@ -12,6 +12,7 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 | GR-PORT-004 | Retrieval quality may be mistaken for the project thesis. | Medium | Architecture docs state adjudication is the product. | Keep portfolio walkthrough centered on disagreement and verification. |
 | GR-PORT-005 | Saved output artifacts are not yet packaged as a compact public reviewer bundle. | High | Existing docs identify output files and walkthrough expectations. | Produce one non-sensitive run bundle and source-to-claim walkthrough. |
 | GR-PORT-006 | Cost and latency claims can drift if estimated from old runs. | Medium | Shared observability exists. | Query real `llm_client` observability rows before public cost claims. |
+| GR-RUNTIME-001 | Stage 2 collection can continue after individual search/fetch failures, so a run may succeed with partial source coverage. | High | Tool failures are logged and failed fetches are excluded from evidence. | Define a Tyler-compatible minimum evidence/readout threshold before changing this from warning-and-continue to fail-loud. |
 
 ## Portfolio Judgment
 
@@ -19,4 +20,3 @@ This is valuable portfolio work because it shows a real analyst-system design:
 independent views, disagreement localization, fresh verification, and traceable
 claims. The portfolio should emphasize adjudication and provenance, not a broad
 "research agent" claim.
-
