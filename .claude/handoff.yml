@@ -1,0 +1,53 @@
+updated: "2026-06-26T10:05:58"
+project: grounded-research
+scope: repo
+status: active
+git_commit: "8453b92"
+git_branch: organize-tyler-maintainer-pr
+summary: "Built and verified an identify-only Tyler requirement status harness for the Inside-Success grounded-research PR branch."
+next_action: "Decide whether to add the optional LLM/human judgment result collector for the 15 B/C/D rows, or open the PR from BrianMills2718:organize-tyler-maintainer-pr into Inside-Success:main as-is."
+completed:
+  - "Cloned accessible Inside-Success repos under ~/projects/inside-success/repos and corrected grounded-research upstream context to Inside-Success."
+  - "Merged inside-success/main into organize-tyler-maintainer-pr; branch is 0 behind and 40 commits ahead of Inside-Success main at 8453b92."
+  - "Added Tyler requirements YAML snapshot, evidence policy, and sync/check gate in docs/tyler_requirements.yaml and scripts/sync_tyler_requirements_yaml.py."
+  - "Added identify-only Tyler requirement review rubric, deterministic review report, and per-requirement packet generator in docs/TYLER_REQUIREMENT_REVIEW_RUBRIC.md and scripts/generate_tyler_review_packets.py."
+  - "Added focused tests for YAML sync and review packet status accounting."
+  - "Verified make check PYTHON=/home/brian/projects/.venv/bin/python: 230 passed, 6 skipped, Ruff clean, Tyler gates clean."
+uncertainties:
+  - id: U1
+    priority: medium
+    summary: "Whether Tyler/Brian wants an LLM/human judgment result collector before opening the PR."
+    context: "The deterministic harness identifies all 36 rows and routes 15 B/C/D rows to llm_or_human_judgment, but it does not yet collect reviewer verdict JSON or compute scored judgment outcomes. Add this only if the desired bar is review-result capture rather than status identification."
+    blocking: "Optional improvement before PR; not blocking deterministic status identification."
+  - id: U2
+    priority: low
+    summary: "Whether broad historical docs in the PR should be squashed, split, or trimmed before review."
+    context: "The PR diff is large: 138 files changed, about 10.9k insertions. Much of it is documentation, archive moves, and traceability scaffolding. Maintainer review may be easier if the PR body explains the commit sequence and generated/archived surfaces."
+    blocking: "Reviewer ergonomics, not test correctness."
+pending:
+  - id: P1
+    priority: high
+    effort: small
+    summary: "Prepare or open the Inside-Success PR."
+    details: "Target repo is git@github-insidesuccess:Inside-Success/grounded-research.git. Current branch tracks Brian's fork origin/organize-tyler-maintainer-pr. If opening via gh, use repo Inside-Success/grounded-research, base main, head BrianMills2718:organize-tyler-maintainer-pr, and include the Tyler review counts plus make check result."
+  - id: P2
+    priority: medium
+    effort: medium
+    summary: "Optional: add judgment-result collector for Tyler review packets."
+    details: "Implement a non-default advisory script that reads output/tyler_requirement_reviews/packets, accepts structured LLM/human verdict JSON matching docs/TYLER_REQUIREMENT_REVIEW_RUBRIC.md, writes ignored output/tyler_requirement_reviews/llm_results, and has fixture-only tests. Use llm_client if live LLM calls are added; default checks must not require live LLM access."
+  - id: P3
+    priority: medium
+    effort: small
+    summary: "Write a PR description that avoids overstating test coverage."
+    details: "Say every Tyler row has structured YAML, deterministic policy checks, and a review mode. Do not claim every Tyler requirement has a robust local unit test: 15 B/C/D rows are intentionally routed to LLM/human judgment, accepted doc/ambiguity/extension review, artifact review, or shared-infra review."
+warnings:
+  - "Do not edit ignored output/tyler_requirement_reviews artifacts directly; regenerate with make tyler-review-packets."
+  - "Do not treat make check-strict as the landing gate unless asked; strict mypy has known broader repo debt outside this slice."
+  - "The parent ~/projects/inside-success directory is itself a git repo with pre-existing local dirt in plan/dloa/actuals.js; ignore it for this grounded-research PR."
+sanity_checks:
+  - cmd: "git status --short --branch"
+    expect: "clean worktree on organize-tyler-maintainer-pr after handoff commit"
+  - cmd: "make check PYTHON=/home/brian/projects/.venv/bin/python"
+    expect: "exits 0 with 230 passed, 6 skipped"
+  - cmd: "make tyler-review-json PYTHON=/home/brian/projects/.venv/bin/python"
+    expect: "36 requirements, deterministic_needs_review 0, policy_findings 0, 15 llm_or_human_judgment rows"
