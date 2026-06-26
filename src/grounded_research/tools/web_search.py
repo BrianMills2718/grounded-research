@@ -45,7 +45,8 @@ def _provider_source_label(provider: str) -> str:
 
 def _build_client(provider: str) -> OpenWebRetrievalClient:
     """Build the shared retrieval client for the configured provider."""
-    kwargs: dict[str, object] = {"tool_call_logger": log_tool_call}
+    search_log_path = os.environ.get("OWR_SEARCH_LOG_DB", os.path.expanduser("~/projects/data/owr_search_log.db"))
+    kwargs: dict[str, object] = {"tool_call_logger": log_tool_call, "search_log_path": search_log_path}
     if provider == "tavily":
         api_key = os.environ.get("TAVILY_API_KEY")
         if not api_key:
