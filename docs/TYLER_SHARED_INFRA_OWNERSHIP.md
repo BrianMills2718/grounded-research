@@ -1,5 +1,11 @@
 # Tyler Shared Infra Ownership
 
+> Provenance/status: Tyler review/provenance artifact. Preserve for audit.
+> Some status claims may be superseded by the current machine-readable
+> registry. For current status, cross-check `docs/MAINTAINER_START_HERE.md`,
+> `docs/tyler_requirements.yaml`, and
+> `docs/tyler_requirements_registry.json`.
+
 This note names the remaining non-local Tyler gaps and any shared operational
 watch items.
 

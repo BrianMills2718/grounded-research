@@ -1,5 +1,11 @@
 # Tyler Traceability System
 
+> Provenance/status: Tyler review/provenance artifact. Preserve for audit.
+> Some status claims may be superseded by the current machine-readable
+> registry. For current status, cross-check `docs/MAINTAINER_START_HERE.md`,
+> `docs/tyler_requirements.yaml`, and
+> `docs/tyler_requirements_registry.json`.
+
 > Sources: `docs/TYLER_SPEC_GAP_LEDGER.md` ·
 > `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` ·
 > `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` ·

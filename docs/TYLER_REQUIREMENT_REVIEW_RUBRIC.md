@@ -1,5 +1,11 @@
 # Tyler Requirement Review Rubric
 
+> Provenance/status: Tyler review/provenance artifact. Preserve for audit.
+> Some status claims may be superseded by the current machine-readable
+> registry. For current status, cross-check `docs/MAINTAINER_START_HERE.md`,
+> `docs/tyler_requirements.yaml`, and
+> `docs/tyler_requirements_registry.json`.
+
 This rubric defines success criteria for identifying the status of every Tyler
 requirement. This is an identify-only review layer: it classifies closure
 strength and suspected gaps, but it does not fix findings.

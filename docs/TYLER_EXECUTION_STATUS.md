@@ -1,5 +1,11 @@
 # Tyler Execution Status
 
+> Provenance/status: Tyler review/provenance artifact. Preserve for audit.
+> Some status claims may be superseded by the current machine-readable
+> registry. For current status, cross-check `docs/MAINTAINER_START_HERE.md`,
+> `docs/tyler_requirements.yaml`, and
+> `docs/tyler_requirements_registry.json`.
+
 This is the strict status surface for Tyler's requested implementation.
 
 For the cross-repo unfinished-work handoff, use:

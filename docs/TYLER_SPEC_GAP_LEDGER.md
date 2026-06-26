@@ -1,5 +1,11 @@
 # Tyler Spec Gap Ledger
 
+> Provenance/status: Tyler review/provenance artifact. Preserve for audit.
+> Some status claims may be superseded by the current machine-readable
+> registry. For current status, cross-check `docs/MAINTAINER_START_HERE.md`,
+> `docs/tyler_requirements.yaml`, and
+> `docs/tyler_requirements_registry.json`.
+
 This file is the canonical evidence ledger for code-vs-spec review against
 Tyler's V1 packet.
 

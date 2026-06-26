@@ -18,6 +18,26 @@ of inferring requirements from historical plans or old delivery summaries.
 Archived plans in `docs/plans/archive/` are provenance. They explain how the
 repo got here; they do not create active requirements by themselves.
 
+## Tyler Document Map
+
+Tyler-related documents are preserved in place for review. Do not archive,
+rename, or rewrite Tyler provenance artifacts just to make the tree look
+smaller. When a Tyler document appears inconsistent with another surface,
+cross-check the machine-readable registry before treating the prose as current
+status.
+
+- Current status surfaces: `docs/TYLER_SPEC_GAP_LEDGER.md`,
+  `docs/TYLER_REQUIREMENTS_COVERAGE_STATUS.md`,
+  `docs/TYLER_TRACEABILITY.md`, `docs/tyler_requirements.yaml`, and
+  `docs/tyler_requirements_registry.json`.
+- Raw-source reproducibility: `docs/TYLER_SOURCE_MANIFEST.md` plus the tracked
+  source packet under `2026_0325_tyler_feedback/`.
+- Review/audit provenance: the remaining top-level `docs/TYLER*.md` files.
+  They are intentionally retained with provenance warnings because they explain
+  how the current registry was derived.
+- Historical execution plans: `docs/plans/archive/`. These are provenance, not
+  active requirements.
+
 ## Local Setup
 
 ```bash
@@ -68,8 +88,8 @@ make typecheck
 ```
 
 `make typecheck` is intentionally still exposed and currently tracks strict mypy
-debt. Do not hide this with `|| true`; fix it in a dedicated type-hardening wave
-when it becomes the active plan.
+coverage. Do not hide this with `|| true`; strict typing is part of the cleanup
+gate.
 
 ## Runtime Stop Lines
 

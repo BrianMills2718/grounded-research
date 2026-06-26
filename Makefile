@@ -42,6 +42,7 @@ check: ## Run tests + lint + Tyler status gates
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/check_tyler_doc_provenance.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
@@ -57,6 +58,7 @@ check-strict: ## Run tests + lint + docstring gate + strict mypy
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
+	$(PYTHON) scripts/check_tyler_doc_provenance.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
@@ -88,7 +90,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate check-env restore-frozen-outputs tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync tyler-requirements-yaml-check tyler-requirements-yaml tyler-requirements-yaml-sync tyler-review tyler-review-json tyler-review-packets
+.PHONY: adjudicate adjudicate-test bench evaluate check-env restore-frozen-outputs tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-doc-provenance tyler-doc-provenance-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync tyler-requirements-yaml-check tyler-requirements-yaml tyler-requirements-yaml-sync tyler-review tyler-review-json tyler-review-packets
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -144,6 +146,12 @@ tyler-doc-audit: ## Detect stale Tyler status claims in active docs
 
 tyler-doc-audit-json: ## Emit active Tyler doc-drift audit as JSON
 	@$(PYTHON) scripts/check_tyler_doc_drift.py --format json
+
+tyler-doc-provenance: ## Verify Tyler docs carry provenance warnings
+	@$(PYTHON) scripts/check_tyler_doc_provenance.py --format markdown
+
+tyler-doc-provenance-json: ## Emit Tyler doc provenance report as JSON
+	@$(PYTHON) scripts/check_tyler_doc_provenance.py --format json
 
 tyler-code-audit: ## Audit current-code evidence for Tyler requirement rows
 	@$(PYTHON) scripts/check_tyler_code_audit.py --format markdown
