@@ -43,7 +43,11 @@ decorator only.
 The full gate also verifies checked-in frozen-eval manifests against ignored
 runtime artifacts under `output/`. In a clean worktree, restore the manifest
 referenced output directories from a populated checkout before running the full
-gate.
+gate:
+
+```bash
+make restore-frozen-outputs
+```
 
 ## Verification Gates
 
@@ -53,7 +57,9 @@ make check
 ```
 
 `make check-env` explains local-only prerequisites such as shared editable
-packages and frozen output artifacts. `make check` is the maintainer gate for
+packages and frozen output artifacts. `make restore-frozen-outputs` copies the
+manifest-referenced ignored artifacts from the populated checkout when using the
+standard `worktrees/<branch>` layout. `make check` is the maintainer gate for
 this branch: environment preflight, tests, Ruff lint, and the Tyler traceability
 gates.
 

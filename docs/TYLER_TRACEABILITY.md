@@ -157,6 +157,6 @@ the current parser/report proves which fields are worth governing.
    Markdown ledger from it.
 2. Add a `trace_eval`-style runtime evidence checker once that shared library
    exists.
-3. Package or restore frozen output artifacts in an agent-drivable way so clean
-   worktrees can run `make check` without copying ignored `output/` directories
-   from another checkout.
+3. Package frozen output artifacts for machines that do not have a populated
+   local checkout. Local worktrees can now restore them with
+   `make restore-frozen-outputs`.

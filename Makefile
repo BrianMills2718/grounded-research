@@ -78,7 +78,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate check-env tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync
+.PHONY: adjudicate adjudicate-test bench evaluate check-env restore-frozen-outputs tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -113,6 +113,9 @@ evaluate: ## Show latest adjudication outputs and dispute stats
 
 check-env: ## Explain local prerequisites required by make check
 	@$(PYTHON) scripts/check_local_test_env.py --format markdown
+
+restore-frozen-outputs: ## Restore ignored frozen eval outputs from populated checkout
+	@$(PYTHON) scripts/restore_frozen_outputs.py --format markdown
 
 tyler-traceability: ## Summarize Tyler requirements linked to code, tests, and docs
 	@$(PYTHON) scripts/check_tyler_traceability.py --format markdown
