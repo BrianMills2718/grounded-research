@@ -182,13 +182,13 @@ make tyler-registry-sync
 make check
 ```
 
-`make check` now fails on grade-F Tyler coverage rows and on known active-doc
-drift findings. It also fails when non-doc Tyler rows lack current
-implementation or verification evidence. The anchor policy is closed for the
-current ledger: rows have either line-level Tyler anchors or explicit
-doc-governance exceptions. The tracked raw Tyler source packet must also match
-its manifest hashes and line counts. The generated structured registry must
-also match the current ledger-derived read model.
+`make check` now fails on grade-F Tyler coverage rows, any coverage-quality
+findings, and known active-doc drift findings. It also fails when non-doc Tyler
+rows lack current implementation or verification evidence. The anchor policy is
+closed for the current ledger: rows have either line-level Tyler anchors or
+explicit doc-governance exceptions. The tracked raw Tyler source packet must
+also match its manifest hashes and line counts. The generated structured
+registry must also match the current ledger-derived read model.
 
 Quality standard:
 
@@ -214,6 +214,6 @@ Current first-pass coverage-quality readout:
 - 0 grade `F`
 - negative controls implemented for all seven audit-quality failure families
 
-There are currently no grade-F rows under the non-strict coverage-quality
-policy. `EXT-SCHEMA-001` and `DOC-README-001` now grade `D`, which means
+There are currently no grade-F rows or coverage-quality findings under the
+strict coverage-quality policy. `EXT-SCHEMA-001` and `DOC-README-001` now grade `D`, which means
 documented rather than strongly closed by runtime proof.

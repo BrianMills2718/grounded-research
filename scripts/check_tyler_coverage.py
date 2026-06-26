@@ -341,7 +341,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "# Tyler Coverage Report",
         "",
         "> Generated from the current ledger and audit quality standard.",
-        "> Grade-F rows fail `make check`; source-anchor gaps remain non-strict review items.",
+        "> Grade-F rows and coverage-quality findings fail `make check`.",
         "> Rows may satisfy the anchor policy with either line-level Tyler anchors or explicit exceptions.",
         "",
         "## Summary",

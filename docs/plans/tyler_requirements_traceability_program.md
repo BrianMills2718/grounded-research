@@ -367,15 +367,16 @@ Cleanup:
 
 - Remove any ad hoc parsing rules made obsolete by the structured schema.
 
-Status: complete for the grade-F evidence gate. Negative-control fixture tests
-now exist for the seven failure families in
+Status: complete for the strict evidence-policy gate. Negative-control fixture
+tests now exist for the seven failure families in
 `docs/TYLER_AUDIT_QUALITY_STANDARD.md`: runtime doc-only closure, schema row
 without model test, prompt row with broken render ref, shared-infra row without
 explicit owner, runtime-artifact row without artifact path, Tyler source row
 without line anchor, and stale-doc row without doc ref. `make check` now runs
-`scripts/check_tyler_coverage.py --fail-on-grade-f`. Source-anchor debt is now
-closed for the current ledger: 31 rows have line-level Tyler anchors and five
-doc-governance rows have explicit exceptions.
+`scripts/check_tyler_coverage.py --fail-on-grade-f --fail-on-findings`.
+Source-anchor debt is now closed for the current ledger: 31 rows have
+line-level Tyler anchors and five doc-governance rows have explicit exceptions.
+The current ledger has zero coverage-quality findings.
 
 ### Slice 4: Active Doc Drift Audit
 

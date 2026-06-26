@@ -65,8 +65,7 @@ improvement if the maintainer wants stricter closure criteria.
 ## Coverage Quality Readout
 
 `make tyler-coverage` adds a coverage-quality view over the same ledger.
-Grade-F rows now fail `make check`; source-anchor gaps remain non-strict review
-items.
+Grade-F rows and coverage-quality findings now fail `make check`.
 
 Current first-pass readout:
 
@@ -95,12 +94,13 @@ Requirement classes:
 | extension | 1 |
 | model_config | 6 |
 | operational_watch | 1 |
-| prompt_template | 9 |
+| prompt_template | 2 |
 | provider_behavior | 2 |
-| runtime_behavior | 3 |
-| schema_contract | 3 |
+| runtime_behavior | 6 |
+| schema_contract | 7 |
 
-Current grade-F rows under the conservative first policy: none.
+Current grade-F rows under the calibrated policy: none. Current
+coverage-quality findings: none.
 
 `S2-QUERY-MODEL-001` and `S2-QUERY-VARIANTS-001` were reopened by the
 coverage-quality pass and then fixed by restoring deterministic
@@ -111,7 +111,8 @@ closed by runtime proof. The source-anchor pass now leaves no pending rows:
 carry explicit anchor exceptions rather than fake Tyler citations.
 
 Negative controls are now covered in `tests/test_tyler_coverage.py` for the
-seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
+seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
+`make check` runs the calibrated `--fail-on-findings` gate.
 
 ## Artifact Roles
 
@@ -124,7 +125,7 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`.
 | `docs/TYLER_SOURCE_MANIFEST.md` | Raw Tyler packet line-count and hash manifest. |
 | `docs/tyler_requirements_registry.json` | Generated structured registry snapshot from the Markdown ledger. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
-| `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades; grade-F rows can fail the gate. |
+| `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades and strict finding failures. |
 | `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
 | `scripts/check_tyler_code_audit.py` | Current-code evidence audit for non-doc Tyler rows. |
 | `scripts/check_tyler_source_manifest.py` | Raw Tyler source packet reproducibility check. |
