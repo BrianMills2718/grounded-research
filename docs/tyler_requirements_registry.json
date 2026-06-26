@@ -13,10 +13,10 @@
     "ambiguity": 3,
     "doc_status": 8,
     "extension": 1,
-    "model_config": 5,
+    "model_config": 6,
     "operational_watch": 1,
     "prompt_template": 2,
-    "provider_behavior": 3,
+    "provider_behavior": 2,
     "runtime_behavior": 6,
     "schema_contract": 7
   },
@@ -781,7 +781,7 @@
       "evidence_grade": "B",
       "findings": [],
       "owner": "llm_client + grounded-research",
-      "requirement_class": "provider_behavior",
+      "requirement_class": "model_config",
       "requirement_id": "S3-MODEL-VERSION-001",
       "severity": "medium",
       "tyler_sources": [
