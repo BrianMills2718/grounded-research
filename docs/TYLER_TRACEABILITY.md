@@ -155,12 +155,8 @@ the current parser/report proves which fields are worth governing.
 
 1. Promote the ledger rows into a YAML or JSON source file and generate the
    Markdown ledger from it.
-2. Apply the quality bar in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`: line-level
-   Tyler anchors, evidence grades, requirement-class evidence policy,
-   adversarial audit lane, and negative controls.
-3. Add per-row evidence kinds: static code, unit test, integration test, runtime
-   artifact, shared-infra evidence, doc-only.
-4. Add owners for shared-infra evidence rows so `open_web_retrieval`,
-   `llm_client`, and `prompt_eval` references are explicit rather than prose.
-5. Add a `trace_eval`-style runtime evidence checker once that shared library
+2. Add a `trace_eval`-style runtime evidence checker once that shared library
    exists.
+3. Package or restore frozen output artifacts in an agent-drivable way so clean
+   worktrees can run `make check` without copying ignored `output/` directories
+   from another checkout.

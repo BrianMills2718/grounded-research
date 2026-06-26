@@ -94,20 +94,31 @@ What exists:
 - `scripts/check_tyler_traceability.py` can validate references and emit JSON or
   Markdown.
 
+What is now enforced:
+
+- The structured registry is generated from the Markdown ledger and checked by
+  `make check`.
+- Requirement-class evidence policy is implemented in
+  `scripts/check_tyler_coverage.py` and enforced with
+  `--fail-on-grade-f --fail-on-findings`.
+- The coverage dashboard reports evidence grades, requirement classes, anchor
+  status, and per-row findings.
+- The fresh live-code audit checks non-doc Tyler rows for current
+  implementation and verification evidence.
+- Active-doc drift is scanned by `scripts/check_tyler_doc_drift.py`.
+- Raw Tyler source files are tracked and hash-verified against
+  `docs/TYLER_SOURCE_MANIFEST.md`.
+
 What is still missing:
 
 - A structured authoring source-of-truth for Tyler requirements. The current
   structured registry is a generated JSON snapshot checked against the
   Markdown ledger.
-- A policy that says which requirement classes require which evidence kinds.
-- A quality standard that is enforced by code, not only described in docs.
-- A generated coverage dashboard that shows pass/fail by evidence class.
-- A fresh live-code audit that traces each requirement to concrete functions,
-  tests, and runtime artifacts using a repeatable process.
-- Reconciliation of stale or conflicting active docs. For example,
-  `docs/TYLER_V1_CURRENT_REPO_MAP.md` still says several Tyler-required items
-  remain, while the newer ledger/status docs say audited local implementation
-  rows are closed except watch, extension, and Tyler-ambiguity rows.
+- A `trace_eval`-style runtime evidence checker once that shared library
+  exists.
+- A packaged frozen-output artifact story for clean worktrees. `make
+  check-env` now explains missing local artifacts, but the artifacts themselves
+  still live outside git.
 
 ### How much code and documentation is there?
 
@@ -117,12 +128,12 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 30 | 7,671 |
-| `scripts/**/*.py` | 13 | 2,548 |
+| `tests/**/*.py` | 30 | 7,690 |
+| `scripts/**/*.py` | 14 | 2,682 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 113 | 16,526 |
-| `docs/tyler_requirements_registry.json` | 1 | 1,494 |
-| all tracked Markdown | 130 | 23,386 |
+| `docs/**/*.md` | 113 | 16,553 |
+| `docs/tyler_requirements_registry.json` | 1 | 1,475 |
+| all tracked Markdown | 130 | 23,414 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
