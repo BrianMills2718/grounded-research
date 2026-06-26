@@ -8,8 +8,7 @@ direct YAML parsing in pipeline code.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
-from typing import Literal
+from typing import Any, Literal, cast
 
 import yaml
 
@@ -53,7 +52,10 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
         return _cached_config
     p = path or _resolve_config_path()
     with open(p) as f:
-        cfg = yaml.safe_load(f)
+        loaded = yaml.safe_load(f)
+    if not isinstance(loaded, dict):
+        raise TypeError(f"Config file {p} must contain a mapping.")
+    cfg = cast(dict[str, Any], loaded)
     if path is None:
         _cached_config = cfg
     return cfg
@@ -66,7 +68,7 @@ def get_model(task: str) -> str:
     model = models.get(task)
     if not model:
         raise KeyError(f"No model configured for task '{task}' in config/config.yaml")
-    return model
+    return str(model)
 
 
 def get_fallback_models(task: str) -> list[str] | None:
@@ -158,6 +160,8 @@ def get_budget(key: str) -> int | float:
     val = budgets.get(key)
     if val is None:
         raise KeyError(f"No budget configured for '{key}' in config/config.yaml")
+    if not isinstance(val, int | float):
+        raise TypeError(f"Budget '{key}' must be numeric, got {type(val).__name__}.")
     return val
 
 

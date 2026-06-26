@@ -98,9 +98,11 @@ def normalize_tyler_analysis_object(
     )
     if not evidence_used:
         evidence_used = _ordered_unique(
-            source_id
-            for claim in normalized_claims
-            for source_id in claim.source_references
+            [
+                source_id
+                for claim in normalized_claims
+                for source_id in claim.source_references
+            ]
         )
 
     return result.model_copy(
@@ -260,12 +262,13 @@ def normalize_tyler_claim_extraction_result(
         }:
             dispute_type = DisputeType.OTHER
         routing = _compute_resolution_routing(dispute_type, old_dispute.decision_critical)
+        dispute_status: DisputeStatus
         if routing == "logged_only":
-            status = DisputeStatus.LOGGED_ONLY
+            dispute_status = DisputeStatus.LOGGED_ONLY
         elif routing == "stage_6_user_input":
-            status = DisputeStatus.DEFERRED_TO_USER
+            dispute_status = DisputeStatus.DEFERRED_TO_USER
         else:
-            status = DisputeStatus.UNRESOLVED
+            dispute_status = DisputeStatus.UNRESOLVED
 
         model_positions: list[ModelPosition] = []
         for position in old_dispute.model_positions:
@@ -294,7 +297,7 @@ def normalize_tyler_claim_extraction_result(
                     "type": dispute_type,
                     "claims_involved": claims_involved,
                     "model_positions": model_positions,
-                    "status": status,
+                    "status": dispute_status,
                     "resolution_routing": routing,
                     "decision_critical_rationale": old_dispute.decision_critical_rationale
                     or "Normalized by orchestrator during Tyler Stage 4 migration.",
@@ -311,10 +314,10 @@ def normalize_tyler_claim_extraction_result(
             if position.model_alias in allowed_model_aliases
         }
         for claim_id in dispute.claims_involved:
-            claim = claim_lookup.get(claim_id)
-            if claim is None:
+            claim_for_dispute = claim_lookup.get(claim_id)
+            if claim_for_dispute is None:
                 continue
-            supporting_aliases = set(claim.source_models) or aliases_in_dispute
+            supporting_aliases = set(claim_for_dispute.source_models) or aliases_in_dispute
             claim_supporting_map[claim_id].update(supporting_aliases)
             claim_contesting_map[claim_id].update(aliases_in_dispute - supporting_aliases)
 
@@ -388,9 +391,11 @@ def render_tyler_synthesis_markdown(report: SynthesisReport, original_query: str
         lines.append(f"- **{assumption.assumption_id}** {assumption.statement}")
         lines.append(f"  If wrong: {assumption.if_wrong}")
     lines.extend(["", "## Confidence Assessment", ""])
-    for item in report.confidence_assessment:
-        lines.append(f"- **{item.confidence.value.upper()}**: {item.claim_summary}")
-        lines.append(f"  Basis: {item.basis}")
+    for confidence_item in report.confidence_assessment:
+        lines.append(
+            f"- **{confidence_item.confidence.value.upper()}**: {confidence_item.claim_summary}"
+        )
+        lines.append(f"  Basis: {confidence_item.basis}")
     lines.extend(["", "## Process Summary", ""])
     for summary in report.process_summary:
         lines.append(f"### {summary.stage_name}")

@@ -10,6 +10,7 @@ that Tyler specified as a lookup table for determinism and speed.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from collections.abc import Mapping
 import logging
 import re
 from typing import Literal
@@ -187,18 +188,37 @@ def _authority_score_for_source_url(*, url: str, source_type: str) -> float:
     return 0.5
 
 
+def _as_mapping(value: object) -> Mapping[str, object]:
+    """Return config sub-mappings in a type-safe form."""
+    return value if isinstance(value, Mapping) else {}
+
+
+def _as_float(value: object, default: float) -> float:
+    """Return numeric config values while rejecting non-numeric settings."""
+    if isinstance(value, int | float):
+        return float(value)
+    return default
+
+
 def _resolve_topic_policy(cfg: dict[str, object]) -> tuple[int, float]:
     """Resolve the current Stage 2 topic half-life and temporal weight."""
     topic = str(cfg.get("default_topic", "default"))
-    half_life_days = int(dict(cfg.get("half_life_days", {})).get(topic, dict(cfg.get("half_life_days", {})).get("default", 1095)))
-    temporal_weight = float(dict(cfg.get("temporal_weight", {})).get(topic, dict(cfg.get("temporal_weight", {})).get("default", 0.2)))
+    half_life_by_topic = _as_mapping(cfg.get("half_life_days", {}))
+    temporal_weight_by_topic = _as_mapping(cfg.get("temporal_weight", {}))
+    half_life_days = int(
+        _as_float(half_life_by_topic.get(topic, half_life_by_topic.get("default", 1095)), 1095)
+    )
+    temporal_weight = _as_float(
+        temporal_weight_by_topic.get(topic, temporal_weight_by_topic.get("default", 0.2)),
+        0.2,
+    )
     return half_life_days, temporal_weight
 
 
 def _blend_authority_and_freshness(
     *,
     authority_score: float,
-    published_at,
+    published_at: datetime | None,
     cfg: dict[str, object],
 ) -> float:
     """Blend authority with freshness using Tyler's Stage 2 scoring rule."""
@@ -209,12 +229,12 @@ def _blend_authority_and_freshness(
     now = datetime.now(tz=published_at.tzinfo or timezone.utc)
     age_days = max(0.0, (now - published_at).total_seconds() / 86400.0)
     freshness = 0.5 ** (age_days / max(1.0, float(half_life_days)))
-    return (temporal_weight * freshness) + ((1.0 - temporal_weight) * authority_score)
+    return float((temporal_weight * freshness) + ((1.0 - temporal_weight) * authority_score))
 
 
 def _apply_authority_floor(score: float, *, url: str, title: str, cfg: dict[str, object]) -> float:
     """Apply Tyler's authority floor for seminal or official specifications."""
-    authority_floor = float(cfg.get("authority_floor", 0.4))
+    authority_floor = _as_float(cfg.get("authority_floor", 0.4), 0.4)
     haystack = f"{url.lower()} {title.lower()}"
     if any(pattern in haystack for pattern in _AUTHORITY_FLOOR_PATTERNS):
         return max(score, authority_floor)
@@ -233,22 +253,26 @@ def _apply_staleness_modifiers(
     excerpt = (content_excerpt or "")[:2000]
 
     if _DEPRECATION_PATTERN.search(excerpt):
-        adjusted = max(0.1, adjusted - float(cfg.get("deprecation_penalty", 0.3)))
+        adjusted = max(0.1, adjusted - _as_float(cfg.get("deprecation_penalty", 0.3), 0.3))
 
-    current_versions = dict(cfg.get("current_versions", {}))
+    current_versions = _as_mapping(cfg.get("current_versions", {}))
     version_match = _VERSION_IN_URL_PATTERN.search(url)
     if version_match:
         version_num = int(version_match.group(1))
         url_lower = url.lower()
         for api_name, current_version in current_versions.items():
-            if str(api_name).lower() in url_lower and version_num < int(current_version):
-                adjusted = max(0.1, adjusted - float(cfg.get("stale_year_penalty", 0.15)))
+            try:
+                current_version_number = int(str(current_version))
+            except ValueError:
+                continue
+            if str(api_name).lower() in url_lower and version_num < current_version_number:
+                adjusted = max(0.1, adjusted - _as_float(cfg.get("stale_year_penalty", 0.15), 0.15))
                 break
 
     years = [int(year) for year in _YEAR_PATTERN.findall(excerpt)]
     half_life_days, _ = _resolve_topic_policy(cfg)
     if years and half_life_days <= 1095 and max(years) < (datetime.now().year - 2):
-        adjusted = max(0.1, adjusted - float(cfg.get("stale_year_penalty", 0.15)))
+        adjusted = max(0.1, adjusted - _as_float(cfg.get("stale_year_penalty", 0.15), 0.15))
 
     return adjusted
 

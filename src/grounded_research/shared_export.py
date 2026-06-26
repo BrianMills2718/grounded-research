@@ -8,6 +8,7 @@ other downstream projects.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from epistemic_contracts import (
     ClaimRecord,
@@ -33,7 +34,7 @@ def claim_ledger_to_shared(
     confidence = ConfidenceScore(
         score=weight,
         source="adjudication",
-        evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,  # type: ignore[arg-type]
+        evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,
     )
 
     # Map status
@@ -43,10 +44,10 @@ def claim_ledger_to_shared(
         id=entry.id,
         statement=entry.statement,
         claim_type="fact_claim",
-        status=status_str,  # type: ignore[arg-type]
+        status=status_str,
         confidence=confidence,
         source_ids=list(entry.source_references),
-        evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,  # type: ignore[arg-type]
+        evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,
         supporting_models=list(entry.supporting_models),
         contesting_models=list(entry.contesting_models),
         is_provisional=entry.is_provisional,
@@ -60,8 +61,8 @@ def source_to_shared(record: SourceRecord) -> SharedSourceRecord:
         id=record.id,
         url=record.url,
         title=record.title,
-        source_type=record.source_type,  # type: ignore[arg-type]
-        quality_tier=record.quality_tier,  # type: ignore[arg-type]
+        source_type=record.source_type,
+        quality_tier=record.quality_tier,
         recency_score=record.recency_score,
         published_at=record.published_at,
         retrieved_at=record.retrieved_at,
@@ -76,13 +77,13 @@ def evidence_to_shared(item: EvidenceItem, source_id: str) -> SharedEvidenceItem
         id=item.id,
         source_id=source_id,
         content=item.content,
-        content_type=item.content_type,  # type: ignore[arg-type]
+        content_type=item.content_type,
         relevance_note=item.relevance_note,
-        extraction_method=item.extraction_method,  # type: ignore[arg-type]
+        extraction_method=item.extraction_method,
     )
 
 
-def _load_handoff_v1(data: dict) -> list[ClaimRecord]:
+def _load_handoff_v1(data: dict[str, Any]) -> list[ClaimRecord]:
     """Load Tyler V1 format: claim_ledger.claims[] with confidence string."""
     claim_ledger = data.get("claim_ledger", {})
     raw_claims = claim_ledger.get("claims", [])
@@ -97,19 +98,23 @@ def _load_handoff_v1(data: dict) -> list[ClaimRecord]:
         confidence = ConfidenceScore(score=score, source="adjudication")
         status_str = str(raw.get("status", "initial")).lower()
 
-        source_ids = []
+        source_ids: list[str] = []
         for eid in raw.get("evidence_ids", []):
             ev = evidence_by_id.get(eid)
             if ev and ev.get("source_id"):
                 source_ids.append(ev["source_id"])
         seen: set[str] = set()
-        unique_source_ids = [s for s in source_ids if not (s in seen or seen.add(s))]  # type: ignore[func-returns-value]
+        unique_source_ids: list[str] = []
+        for source_id in source_ids:
+            if source_id not in seen:
+                unique_source_ids.append(source_id)
+                seen.add(source_id)
 
         records.append(ClaimRecord(
             id=raw["id"],
             statement=raw["statement"],
             claim_type="fact_claim",
-            status=status_str,  # type: ignore[arg-type]
+            status=status_str,
             confidence=confidence,
             source_ids=unique_source_ids,
             supporting_models=raw.get("analyst_sources", []),
@@ -120,7 +125,7 @@ def _load_handoff_v1(data: dict) -> list[ClaimRecord]:
     return records
 
 
-def _load_handoff_stage_based(data: dict) -> list[ClaimRecord]:
+def _load_handoff_stage_based(data: dict[str, Any]) -> list[ClaimRecord]:
     """Load stage-based format: stage_5_verification_result.updated_claim_ledger[].
 
     Produced by the testing config and newer pipeline variants. Claim status
@@ -154,14 +159,14 @@ def _load_handoff_stage_based(data: dict) -> list[ClaimRecord]:
         confidence = ConfidenceScore(
             score=score,
             source="adjudication",
-            evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,  # type: ignore[arg-type]
+            evidence_label=label if label in EVIDENCE_LABEL_WEIGHTS else None,
         )
 
         records.append(ClaimRecord(
             id=raw["id"],
             statement=raw["statement"],
             claim_type="fact_claim",
-            status=status_str,  # type: ignore[arg-type]
+            status=status_str,
             confidence=confidence,
             source_ids=list(raw.get("source_references", [])),
             supporting_models=list(raw.get("supporting_models", [])),

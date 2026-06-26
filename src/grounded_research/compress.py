@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 
-from grounded_research.models import EvidenceBundle
+from grounded_research.models import EvidenceBundle, EvidenceItem
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def compress_evidence(
     source_quality = {s.id: s.quality_tier for s in bundle.sources}
 
     # Score each evidence item for priority
-    def _priority(e) -> tuple[int, bool, str]:
+    def _priority(e: EvidenceItem) -> tuple[int, bool, str]:
         quality = source_quality.get(e.source_id, "unknown")
         tier = {"authoritative": 0, "reliable": 1, "unknown": 2, "unreliable": 3}.get(quality, 2)
         has_sq = bool(e.sub_question_ids)
@@ -49,7 +49,7 @@ def compress_evidence(
     sorted_evidence = sorted(bundle.evidence, key=_priority)
 
     # Keep up to threshold, ensuring at least one item per sub-question tag.
-    kept: list = []
+    kept: list[EvidenceItem] = []
     seen_sq: set[str] = set()
 
     # First pass: ensure sub-question coverage
