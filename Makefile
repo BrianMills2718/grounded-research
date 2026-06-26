@@ -34,7 +34,7 @@ test-quick: ## Run tests, minimal output
 check: ## Run tests + type check + lint
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
 	$(PYTHON) -m pytest tests/ -x -q
-	$(PYTHON) -m ruff check engine.py src/ tests/
+	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
@@ -45,7 +45,7 @@ check: ## Run tests + type check + lint
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
 	$(PYTHON) -m pytest tests/ -x -q
-	$(PYTHON) -m ruff check engine.py src/ tests/
+	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
@@ -55,7 +55,7 @@ check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
-	$(PYTHON) -m ruff check engine.py src/ tests/
+	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
 
 typecheck: ## Run mypy strict typecheck (currently tracks known debt)
 	$(PYTHON) -m mypy src/ --ignore-missing-imports

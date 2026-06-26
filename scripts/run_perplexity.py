@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -34,7 +33,7 @@ async def run_perplexity(question: str, output_dir: Path) -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"=== Perplexity ===")
+    print("=== Perplexity ===")
     print(f"Question: {question}")
     print(f"Output: {output_dir}")
     print()

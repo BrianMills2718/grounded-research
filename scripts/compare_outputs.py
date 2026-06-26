@@ -79,7 +79,7 @@ async def compare(
     a_citations = set(re.findall(r'[ECR]-[a-f0-9]{6,}', report_a))
     b_citations = set(re.findall(r'[ECR]-[a-f0-9]{6,}', report_b))
 
-    print(f"=== Structural Metrics ===")
+    print("=== Structural Metrics ===")
     print(f"Report A: {len(report_a.split())} words, {len(a_citations)} unique citations")
     print(f"Report B: {len(report_b.split())} words, {len(b_citations)} unique citations")
     print(f"Shared citations: {len(a_citations & b_citations)}")
@@ -111,7 +111,7 @@ Score both reports on all 6 dimensions (1-5 each). Then give your overall verdic
         {"role": "user", "content": user_msg},
     ]
 
-    print(f"=== LLM Judge Evaluation ===")
+    print("=== LLM Judge Evaluation ===")
     print(f"(Using {judge_model} as judge)")
     print()
 

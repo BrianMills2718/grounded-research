@@ -86,7 +86,7 @@ Explicitly flag any conflicts between sources.
     # Use the strongest available model for a fair comparison
     model = "gemini/gemini-2.5-flash"
 
-    print(f"=== Single-Shot Baseline ===")
+    print("=== Single-Shot Baseline ===")
     print(f"Model: {model}")
     print(f"Evidence items: {len(bundle['evidence'])}")
     print(f"Sources: {len(bundle['sources'])}")

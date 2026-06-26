@@ -129,7 +129,7 @@ Tracked repository counts from `git ls-files`:
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
 | `tests/**/*.py` | 31 | 7,747 |
-| `scripts/**/*.py` | 15 | 2,815 |
+| `scripts/**/*.py` | 15 | 2,811 |
 | `prompts/` | 8 | 846 |
 | `docs/**/*.md` | 113 | 16,566 |
 | `docs/tyler_requirements_registry.json` | 1 | 1,475 |
