@@ -8,7 +8,11 @@ version = "0.1.0"
 description = "Adjudication-first layer for grounded research claims"
 requires-python = ">=3.11"
 dependencies = [
+    "beautifulsoup4>=4.12",
+    "httpx>=0.25",
     "pydantic>=2.0",
+    "pymupdf>=1.24",
+    "pypdf>=5.0",
     "pyyaml>=6.0",
     "jinja2>=3.0",
 ]
@@ -16,8 +20,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-asyncio>=0.23",
     "mypy>=1.0",
     "ruff>=0.1",
+]
+compare = [
+    "openai>=1.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -34,3 +42,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]

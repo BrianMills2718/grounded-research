@@ -5,7 +5,6 @@ Uses a temporary SQLite DB per test (no shared state, no mocks needed).
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest

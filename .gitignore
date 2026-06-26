@@ -1,4 +1,7 @@
 .venv/
+.env
+.env.*
+!.env.example
 __pycache__/
 .mypy_cache/
 .pytest_cache/
@@ -33,8 +36,8 @@ scripts/check_adr_invariants.py
 scripts/check_markdown_links.py
 scripts/ci_checks.py
 scripts/relationships.yaml
-.github/
 docs/plans/v1_gap_closure.md
 docs/QUESTIONS_FOR_TYLER.md
 docs/HANDOFF_2026_03_24.md
 2026_0325_tyler_feedback/
+worktrees/

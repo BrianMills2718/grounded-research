@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,7 +20,7 @@ async def run_gpt_researcher(question: str, output_dir: Path) -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"=== GPT-Researcher ===")
+    print("=== GPT-Researcher ===")
     print(f"Question: {question}")
     print(f"Output: {output_dir}")
     print()
@@ -30,7 +28,7 @@ async def run_gpt_researcher(question: str, output_dir: Path) -> None:
     start = datetime.now(timezone.utc)
 
     researcher = GPTResearcher(query=question, report_type="research_report")
-    research_result = await researcher.conduct_research()
+    await researcher.conduct_research()
     report = await researcher.write_report()
 
     elapsed = (datetime.now(timezone.utc) - start).total_seconds()

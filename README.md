@@ -3,7 +3,7 @@
 Multi-analyst research platform that beats cached Perplexity Deep Research on the tracked 6-question benchmark set in the shipped calibrated path, and whose Tyler-native path now also beats cached Perplexity on the tracked UBI case. It supports both raw-question runs and pre-built evidence bundles, then decomposes questions, runs 3 independent LLM analysts with different reasoning lenses, detects disagreements, resolves factual conflicts with fresh evidence, and produces grounded reports with full provenance.
 
 > Current Tyler code-vs-spec status is tracked in
-> [docs/TYLER_SPEC_GAP_LEDGER.md](/home/brian/projects/grounded-research/docs/TYLER_SPEC_GAP_LEDGER.md),
+> [docs/TYLER_SPEC_GAP_LEDGER.md](docs/TYLER_SPEC_GAP_LEDGER.md),
 > not in this summary README.
 
 ## Results
@@ -75,8 +75,9 @@ written as separate `tyler_stage_*.json` sidecars by the live export path.
   (the live Tyler path now uses prompt-level self-check only; the separate
   validation/retry layer was removed after the audit)
 - **Distinct analyst roles**: the live default Stage 3 family/role mapping now
-  matches Tyler's requested A/B/C assignment; the remaining exact gap is the
-  Gemini 3.1 Pro model-version substitution, which is tracked as shared parity
+  matches Tyler's requested A/B/C assignment; exact Gemini 3.1 Pro preview
+  model-version parity is closed, and the remaining model concern is the
+  separate frontier runtime watch
 - **3 reasoning frames**: verification-first, structured decomposition, step-back abstraction
 - **Source quality scoring**: deterministic Tyler-style authority/freshness/
   staleness blending on the live Stage 2 path
@@ -100,7 +101,7 @@ All operational policy in `config/config.yaml`:
 
 ## Architecture
 
-- 9 YAML prompt templates in `prompts/` (Tyler-literal)
+- 8 YAML prompt templates in `prompts/` (Tyler-literal plus legacy comparison helpers)
 - All LLM calls via [llm_client](https://github.com/BrianMills2718/llm_client)
 - Web search via [open_web_retrieval](https://github.com/BrianMills2718/open_web_retrieval)
 - 21 top-level test modules covering phase-boundary contracts and Tyler-native runtime slices
@@ -114,18 +115,28 @@ Python 3.11+.
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
-pip install -e path/to/llm_client
-pip install -e path/to/open_web_retrieval
+pip install -e ../llm_client
+pip install -e ../open_web_retrieval
+pip install -e ../data_contracts
 ```
+
+`llm_client` and `open_web_retrieval` are required shared local infrastructure.
+`data_contracts` is used when available for boundary registration; the runtime
+keeps a no-op decorator fallback for environments that only need the local test
+suite.
 
 Requires API keys for: Gemini, OpenRouter (routes to current configured OpenAI/Gemini models), Tavily for the default quality-first search path. Brave remains optional if you reconfigure `collection.search_provider`. Optionally: Perplexity (for comparison scripts).
 
 ## Documentation
 
+- `docs/MAINTAINER_START_HERE.md` — maintainer entrypoint and authority chain
+- `docs/TYLER_TRACEABILITY.md` — Tyler requirement-to-code/test traceability system
+- `docs/LOCAL_INFRA_ALIGNMENT.md` — local infrastructure that can help the project
 - `docs/ROADMAP.md` — priorities and next steps
 - `docs/COMPETITIVE_ANALYSIS.md` — full SOTA comparison with Perplexity, GPT-Researcher
 - `docs/JUDGE_CRITIQUES.md` — where the pipeline loses points and why
 - `docs/FEATURE_STATUS.md` — 47/52 scorecard features implemented
 - `docs/TECH_DEBT.md` — known issues for future work
+- `docs/wiki/` — compact concept wiki for Tyler compliance and extension boundaries
 - `docs/adr/` — architectural decision records
 - `v1_Pruning_Scorecard.xlsx` — original feature scorecard with implementation status

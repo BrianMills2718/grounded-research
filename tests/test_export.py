@@ -1172,6 +1172,20 @@ def test_write_outputs_writes_tyler_pipeline_state_trace(tmp_path: Path) -> None
     assert "warnings" not in raw_trace
 
 
+def test_write_outputs_refuses_to_overwrite_existing_artifacts(tmp_path: Path) -> None:
+    """Export should not silently replace an existing run artifact."""
+
+    (tmp_path / "trace.json").write_text("{}")
+    state = PipelineState(
+        run_id="run-1",
+        question=ResearchQuestion(text="What is the evidence?"),
+        tyler_stage_6_result=_tyler_report(),
+    )
+
+    with pytest.raises(FileExistsError, match="trace.json"):
+        write_outputs(state, tmp_path, long_report_md="# Long report")
+
+
 def test_write_tyler_trace_projects_partial_failure_state(tmp_path: Path) -> None:
     """Partial failed runs should still emit Tyler's canonical trace shape."""
     state = PipelineState(

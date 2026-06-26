@@ -159,13 +159,13 @@ Files:
 - `docs/PLAN.md`
 - `docs/ROADMAP.md`
 - `docs/ARCHITECTURE_ONE_PAGE.md`
-- `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
 - `docs/TYLER_VARIANT_COMMIT_MAP.md`
 - `docs/plans/CLAUDE.md`
 
 Verification:
 
-- `rg -n "QuestionDecomposition|AnalystRun" docs/CONTRACTS.md docs/PLAN.md docs/ROADMAP.md docs/ARCHITECTURE_ONE_PAGE.md docs/TYLER_LITERAL_PARITY_AUDIT.md docs/plans/CLAUDE.md`
+- `rg -n "QuestionDecomposition|AnalystRun" docs/CONTRACTS.md docs/PLAN.md docs/ROADMAP.md docs/ARCHITECTURE_ONE_PAGE.md docs/archive/TYLER_LITERAL_PARITY_AUDIT.md docs/plans/CLAUDE.md`
 - any remaining hits in active docs must describe explicit historical or compatibility context only
 
 ## Failure Modes

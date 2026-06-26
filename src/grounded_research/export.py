@@ -216,6 +216,8 @@ def write_tyler_trace(
     """Write Tyler's canonical `PipelineState` trace artifact to disk."""
     output_dir.mkdir(parents=True, exist_ok=True)
     trace_path = output_dir / "trace.json"
+    if trace_path.exists():
+        raise FileExistsError(f"Refusing to overwrite existing artifact: {trace_path}")
     trace = build_tyler_pipeline_state(
         state,
         observability_db_path=observability_db_path,
@@ -931,11 +933,15 @@ def write_outputs(
 
     if long_report_md:
         report_path = output_dir / "report.md"
+        if report_path.exists():
+            raise FileExistsError(f"Refusing to overwrite existing artifact: {report_path}")
         report_path.write_text(long_report_md)
         paths["report"] = report_path
 
     if state.tyler_stage_6_result is not None and state.question is not None:
         summary_path = output_dir / "summary.md"
+        if summary_path.exists():
+            raise FileExistsError(f"Refusing to overwrite existing artifact: {summary_path}")
         summary_path.write_text(
             _render_tyler_structured_summary(
                 state.tyler_stage_6_result,
@@ -958,6 +964,8 @@ def write_outputs(
 
     if handoff is not None:
         handoff_path = output_dir / "handoff.json"
+        if handoff_path.exists():
+            raise FileExistsError(f"Refusing to overwrite existing artifact: {handoff_path}")
         handoff_path.write_text(handoff.model_dump_json(indent=2))
         paths["handoff"] = handoff_path
 

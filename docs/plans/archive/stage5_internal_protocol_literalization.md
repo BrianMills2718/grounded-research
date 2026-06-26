@@ -90,7 +90,7 @@ Files:
 
 - update `docs/CONTRACTS.md`, `docs/PLAN.md`, `docs/ROADMAP.md`,
   `docs/ARCHITECTURE_ONE_PAGE.md`, `docs/DOMAIN_MODEL.md`,
-  `docs/TYLER_LITERAL_PARITY_AUDIT.md`, and `docs/TYLER_VARIANT_COMMIT_MAP.md`
+  `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`, and `docs/TYLER_VARIANT_COMMIT_MAP.md`
 - record the last commit that still contained the deleted Stage 5
   current-shape protocol
 

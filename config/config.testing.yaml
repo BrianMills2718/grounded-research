@@ -8,7 +8,6 @@ depth: "standard"
 models:
   decomposition: "gemini/gemini-2.5-flash"
   analyst: "gemini/gemini-2.5-flash"
-  query_diversification: "gemini/gemini-2.5-flash"
   evidence_extraction: "gemini/gemini-2.5-flash"
   claim_extraction: "gemini/gemini-2.5-flash"
   deduplication: "gemini/gemini-2.5-flash"
@@ -22,7 +21,6 @@ model_fallbacks:
   analyst:
     - "gemini/gemini-2.5-flash"
     - "gemini/gemini-2.5-flash-lite"
-  query_diversification: ["gemini/gemini-2.5-flash-lite"]
   evidence_extraction: ["gemini/gemini-2.5-flash-lite"]
   claim_extraction: ["gemini/gemini-2.5-flash-lite"]
   deduplication: ["gemini/gemini-2.5-flash-lite"]

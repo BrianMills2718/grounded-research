@@ -41,6 +41,7 @@ from grounded_research.models import (
     SourceRecord,
     Stage2QueryPlan,
 )
+from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 from grounded_research.tyler_v1_models import (
     DecompositionResult as TylerDecompositionResult,
     EvidenceLabel,
@@ -52,8 +53,7 @@ from grounded_research.tyler_v1_models import (
 )
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-
-from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
+MAX_QUERIES_PER_SUB_QUESTION = 4
 
 
 def _tool_call_started(
@@ -485,51 +485,23 @@ async def generate_search_queries_tyler_v1(
 ) -> tuple[list[Stage2QueryPlan], dict[str, int]]:
     """Generate Tyler-native Stage 2 query variants per sub-question.
 
-    Tyler V1 Stage 2 uses a lightweight model call to generate 3 Tavily query
-    variants plus 1 optional Exa semantic variant per sub-question.
+    Tyler V1 Stage 2 defines this as orchestrator-owned string/template
+    expansion, not a model call. The unused budget arguments remain in the
+    signature for call-site compatibility with the generic collection path.
     """
-    from llm_client import acall_llm_structured, render_prompt
-    from pydantic import BaseModel, Field
-
-    class QueryDiversificationResult(BaseModel):
-        """LLM-facing Tyler Stage 2 query diversification output."""
-
-        keyword_rewrite: str = Field(description="Concise keyword-oriented Tavily query.")
-        practitioner_rewrite: str = Field(description="Practitioner-signal Tavily query.")
-        contrarian_falsification: str = Field(description="Disconfirming Tavily query.")
-        semantic_description: str = Field(
-            default="",
-            description="Optional Exa semantic-description query for high-priority or concept-heavy retrieval.",
-        )
-        reasoning: str = Field(
-            description="Brief explanation of how the variants differ in retrieval strategy.",
-        )
-
+    del trace_id, max_budget
     queries_per_sq: dict[str, int] = {}
     query_plans: list[Stage2QueryPlan] = []
     tavily_corpus = "news" if time_sensitivity == "time_sensitive" else "general"
 
     for sub_question in stage_1_result.sub_questions:
-        messages = render_prompt(
-            str(_PROJECT_ROOT / "prompts" / "tyler_v1_query_diversification.yaml"),
-            sub_question=sub_question.model_dump(mode="json"),
-            response_schema_json=QueryDiversificationResult.model_json_schema(),
-        )
-        result, _meta = await acall_llm_structured(
-            get_model("query_diversification"),
-            messages,
-            response_model=QueryDiversificationResult,
-            task="query_diversification_tyler_v1",
-            trace_id=f"{trace_id}/stage2_queries/{sub_question.id}",
-            max_budget=max_budget / max(1, len(stage_1_result.sub_questions)),
-            fallback_models=get_fallback_models("query_diversification"),
-        )
-
+        topic = _stage2_query_topic(sub_question.question)
+        academic_provider = "exa" if sub_question.research_priority == "high" else "tavily"
         per_sub_question_plans = [
             Stage2QueryPlan(
                 provider="tavily",
-                query_role="keyword_rewrite",
-                query_text=result.keyword_rewrite.strip(),
+                query_role="formal_technical",
+                query_text=_normalize_query_text(sub_question.question),
                 sub_question_id=sub_question.id,
                 search_depth="basic",
                 result_detail="summary",
@@ -538,42 +510,55 @@ async def generate_search_queries_tyler_v1(
             Stage2QueryPlan(
                 provider="tavily",
                 query_role="practitioner_rewrite",
-                query_text=result.practitioner_rewrite.strip(),
+                query_text=_normalize_query_text(f"{topic} lessons learned"),
                 sub_question_id=sub_question.id,
                 search_depth="basic",
                 result_detail="summary",
                 corpus=tavily_corpus,  # type: ignore[arg-type]
             ),
             Stage2QueryPlan(
+                provider=academic_provider,
+                query_role="academic_research",
+                query_text=_normalize_query_text(f"{topic} empirical study benchmark comparison"),
+                sub_question_id=sub_question.id,
+                search_depth="advanced" if academic_provider == "exa" else "basic",
+                result_detail="chunks" if academic_provider == "exa" else "summary",
+                detail_budget=3 if academic_provider == "exa" else None,
+                corpus="academic" if academic_provider == "exa" else tavily_corpus,  # type: ignore[arg-type]
+                retrieval_instruction=(
+                    _build_exa_retrieval_instruction(sub_question.search_guidance)
+                    if academic_provider == "exa"
+                    else None
+                ),
+            ),
+            Stage2QueryPlan(
                 provider="tavily",
                 query_role="contrarian_falsification",
-                query_text=result.contrarian_falsification.strip(),
+                query_text=_normalize_query_text(f"{topic} limitations problems with alternatives to"),
                 sub_question_id=sub_question.id,
                 search_depth="basic",
                 result_detail="summary",
                 corpus=tavily_corpus,  # type: ignore[arg-type]
             ),
         ]
-        semantic_query = result.semantic_description.strip()
-        if sub_question.research_priority == "high" and semantic_query:
-            per_sub_question_plans.append(
-                Stage2QueryPlan(
-                    provider="exa",
-                    query_role="semantic_description",
-                    query_text=semantic_query,
-                    sub_question_id=sub_question.id,
-                    search_depth="advanced",
-                    result_detail="chunks",
-                    detail_budget=3,
-                    corpus="academic" if "review" in sub_question.search_guidance.lower() or "academic" in sub_question.search_guidance.lower() else "general",
-                    retrieval_instruction=_build_exa_retrieval_instruction(sub_question.search_guidance),
-                )
-            )
-
-        query_plans.extend([plan for plan in per_sub_question_plans if plan.query_text])
-        queries_per_sq[sub_question.id] = len([plan for plan in per_sub_question_plans if plan.query_text])
+        capped_plans = [plan for plan in per_sub_question_plans if plan.query_text][:MAX_QUERIES_PER_SUB_QUESTION]
+        query_plans.extend(capped_plans)
+        queries_per_sq[sub_question.id] = len(capped_plans)
 
     return query_plans, queries_per_sq
+
+
+def _stage2_query_topic(question: str) -> str:
+    """Derive Tyler's `topic` placeholder from a Stage 1 sub-question."""
+    topic = _normalize_query_text(question)
+    topic = re.sub(r"^(what|how|why|when|where|which|who)\s+", "", topic, flags=re.IGNORECASE)
+    topic = re.sub(r"^(did|do|does|should|could|would|can)\s+", "", topic, flags=re.IGNORECASE)
+    return topic or _normalize_query_text(question)
+
+
+def _normalize_query_text(value: str) -> str:
+    """Normalize deterministic Stage 2 query strings without changing meaning."""
+    return re.sub(r"\s+", " ", value.replace('"', "").strip().rstrip("?.!")).strip()
 
 
 def _current_source_type_to_tyler_source_type(source_type: str) -> str:
@@ -754,7 +739,7 @@ async def build_tyler_evidence_package(
                 f"{sum(len(sqe.sources) for sqe in sub_question_evidence)} source-group assignments landed in Stage 2",
             ],
             decisions_made=[
-                "Used Tyler query diversification output for sub-question search coverage when Stage 1 was Tyler-native",
+                "Used Tyler orchestrator query templates for sub-question search coverage when Stage 1 was Tyler-native",
                 "Built Tyler findings from the collected source evidence while keeping the flat bundle as compatibility substrate",
             ],
             outcome=f"{len(sub_question_evidence)} Tyler sub-question evidence groups",
@@ -1108,7 +1093,7 @@ async def collect_evidence(
                     task="collection.fetch",
                 )
                 from grounded_research.tools.jina_reader import fetch_page_jina
-                print(f"    → 403 blocked, retrying via Jina Reader...")
+                print("    → 403 blocked, retrying via Jina Reader...")
                 raw_page = await fetch_page_jina(url, question=question)
                 page_data = json.loads(raw_page)
                 if page_data.get("error"):

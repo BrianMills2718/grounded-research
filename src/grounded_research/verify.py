@@ -27,6 +27,7 @@ from grounded_research.models import (
     SourceRecord,
     Stage5QueryPlan,
 )
+from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 from grounded_research.tyler_v1_models import (
     AdditionalSource,
     ArbitrationAssessment,
@@ -47,16 +48,13 @@ from grounded_research.tyler_v1_models import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-from grounded_research.evidence_utils import FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
-
 try:
-    from data_contracts import boundary, BoundaryModel  # type: ignore[import-untyped]
+    from data_contracts import boundary  # type: ignore[import-untyped]
 except ImportError:
     def boundary(*args, **kwargs):  # type: ignore[misc]
         def decorator(fn):  # type: ignore[misc]
             return fn
         return decorator
-    from pydantic import BaseModel as BoundaryModel  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -587,12 +585,10 @@ async def verify_disputes_tyler_v1(
             "Pass `stage_2_result` from the live pipeline or fixture artifacts "
             "instead of rebuilding it from the legacy EvidenceBundle."
         )
-    if stage_1_result is not None:
-        tyler_stage1 = stage_1_result
-    else:
+    if stage_1_result is None:
         from grounded_research.decompose import decompose_question_tyler_v1
 
-        tyler_stage1 = await decompose_question_tyler_v1(
+        await decompose_question_tyler_v1(
             question=original_query,
             trace_id=f"{trace_id}/stage1_for_verify",
             max_budget=max_budget * 0.1,

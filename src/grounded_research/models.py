@@ -62,8 +62,10 @@ SourceType = Literal[
 QualityTier = Literal["authoritative", "reliable", "unknown", "unreliable"]
 Stage2QueryProvider = Literal["tavily", "exa"]
 Stage2QueryRole = Literal[
-    "keyword_rewrite",
+    "formal_technical",
     "practitioner_rewrite",
+    "academic_research",
+    "colloquial_forum",
     "contrarian_falsification",
     "semantic_description",
 ]

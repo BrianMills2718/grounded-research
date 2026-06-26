@@ -11,18 +11,19 @@ lane, the exhaustive Tyler packet audit matrix has full coverage of the four
 canonical Tyler files, and the post-audit remediation wave is complete. The
 previously reopened local rows are now closed, including the Stage 5/6 prompt
 contract rows, the Stage 6 validation-behavior rows, and Tyler
-`PipelineState` trace parity. Earlier Stage 2 and Stage 3 reopenings were
-corrected as audit-process false positives rather than real runtime/spec
-mismatches. The frontier-model variability item remains a separate
-policy-governed operational watch.
+`PipelineState` trace parity. The 2026-06-25 coverage-quality anchor pass
+reopened the Stage 2 query-generation mechanism and variant-family rows, then
+the runtime was restored to deterministic Tyler orchestrator templates instead
+of a query-generation model call. The frontier-model variability item remains a
+separate policy-governed operational watch.
 
 Current operational reality:
 
 - Tyler-native Stage 1-6 runtime and export/handoff contracts are the live path
 - Stage 1 runs without a separate validation stage
-- Stage 2 currently uses routed Tavily/Exa search, and the full packet audit
-  confirmed the current lightweight-model query-diversification path is
-  Tyler-literal
+- Stage 2 currently uses routed Tavily/Exa search; query generation is
+  deterministic Tyler string-template orchestration with a hard cap of four
+  queries per sub-question
 - Stage 2 quality scoring is deterministic authority/freshness/staleness
   scoring, not a generic LLM judge
 - Stage 4 and Stage 5 randomization protections are live
@@ -101,8 +102,8 @@ See:
 
 - `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
 - `docs/plans/tyler_literal_prompt_quality_recovery.md`
-- `docs/TYLER_LITERAL_PARITY_AUDIT.md`
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`
 - `docs/plans/tyler_prompt_literalness_wave1.md`
 - `docs/TYLER_EXECUTION_STATUS.md`
 
@@ -243,7 +244,7 @@ Current evaluation policy:
 
 There is currently an active repo-local implementation wave:
 
-- `docs/plans/tyler_post_audit_remediation_wave2.md`
+- `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
 
 That wave is now down to one remaining row after Phases 1-2 closed the Stage
 5/6 prompt-contract and Stage 6 validation fixes.
@@ -296,7 +297,7 @@ grounded-research's role is producing the claim ledger that feeds the chain.
 
 | Phase | What | Status |
 |-------|------|--------|
-| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; the live Stage 3 family/role mapping now matches Tyler's intended A/B/C assignment, with only the exact Gemini 3.1 Pro model-version row still open |
+| -1 | Thesis validation | Done — distinct frames and multi-family thesis validation; the live Stage 3 family/role mapping now matches Tyler's intended A/B/C assignment, exact Gemini model-version parity is closed, and only the separate frontier runtime watch remains |
 | 0 | Domain model, contracts, trace | Done |
 | 1 | Evidence ingest | Done — Brave + Jina fallback, parallel fetch |
 | 2 | Independent analysts | Done — 3 models × 3 frames |

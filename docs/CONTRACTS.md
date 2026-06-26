@@ -23,9 +23,9 @@ Current runtime note:
 
 It is the bridge between:
 
-- [PLAN.md](/home/brian/projects/grounded-research/docs/PLAN.md)
-- [DOMAIN_MODEL.md](/home/brian/projects/grounded-research/docs/DOMAIN_MODEL.md)
-- [ARCHITECTURE_ONE_PAGE.md](/home/brian/projects/grounded-research/docs/ARCHITECTURE_ONE_PAGE.md)
+- [PLAN.md](PLAN.md)
+- [DOMAIN_MODEL.md](DOMAIN_MODEL.md)
+- [ARCHITECTURE_ONE_PAGE.md](ARCHITECTURE_ONE_PAGE.md)
 - `src/grounded_research/models.py`
 
 ## Purpose
@@ -111,6 +111,8 @@ Budget exhaustion semantics:
 Examples:
 
 - fewer than 2 successful analysts: abort
+- zero successful search results for a required Stage 2 query family: open design
+  concern, tracked as `GR-RUNTIME-001`
 - verification query cap reached: stop generating more queries, warn, continue
 - export grounding failure: fail the export stage loudly
 

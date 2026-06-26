@@ -1,0 +1,1490 @@
+schema_version: 1
+source_policy: synchronized_from_markdown_ledger_until_yaml_cutover
+source_files:
+- docs/TYLER_SPEC_GAP_LEDGER.md
+- docs/TYLER_AUDIT_QUALITY_STANDARD.md
+summary:
+  requirements: 36
+  review_needed: 0
+  line_anchor_pending: 0
+  grade_f: 0
+evidence_policy:
+  ambiguity:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_any_evidence_kinds:
+    - - doc
+      - local_source
+      - prompt_template
+      - tyler_source
+  doc_status:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - doc
+  extension:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_any_evidence_kinds:
+    - - doc
+      - local_source
+  model_config:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_any_evidence_kinds:
+    - - config
+      - local_source
+    - - local_test
+      - runtime_artifact
+      - shared_infra_source
+  operational_watch:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - runtime_artifact
+    required_any_evidence_kinds:
+    - - config
+      - local_source
+  output_artifact:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - runtime_artifact
+    required_any_evidence_kinds:
+    - - local_source
+      - local_test
+  prompt_template:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - prompt_template
+    - local_test
+  provider_behavior:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - local_test
+    required_any_evidence_kinds:
+    - - shared_infra_source
+      - shared_infra_test
+  runtime_behavior:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - local_source
+    - local_test
+  schema_contract:
+    required_anchor_statuses:
+    - line_level
+    - explicit_exception
+    required_evidence_kinds:
+    - local_source
+    - local_test
+requirements:
+- id: AMB-S2-REASONING-001
+  requirement_class: ambiguity
+  closure_status: document_local_interpretation
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  - local_source
+  - prompt_template
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - doc
+    - local_source
+    - prompt_template
+    - tyler_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_models.py
+    exists: true
+    symbol: null
+  - kind: prompt_template
+    target: prompts/tyler_v1_extract_findings.yaml
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: AMB-S3-FRAME-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: AMB-S6A-STATUS-001
+  requirement_class: ambiguity
+  closure_status: document_local_interpretation
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  - local_source
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - doc
+    - local_source
+    - prompt_template
+    - tyler_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_models.py
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: AMB-UNIT-SCENARIO-001
+  requirement_class: ambiguity
+  closure_status: document_local_interpretation
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: docs-only
+  severity: low
+  evidence_kinds:
+  - local_source
+  - prompt_template
+  - tyler_source
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - doc
+    - local_source
+    - prompt_template
+    - tyler_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_models.py
+    exists: true
+    symbol: null
+  - kind: prompt_template
+    target: prompts/tyler_v1_synthesis.yaml
+    exists: true
+    symbol: null
+  - kind: tyler_source
+    target: 2026_0325_tyler_feedback/2. V1_DESIGN.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-FEATURE-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: explicit_exception
+  tyler_sources: []
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/FEATURE_STATUS.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-README-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources: []
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: README.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_SPEC_GAP_LEDGER.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-ROADMAP-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: explicit_exception
+  tyler_sources: []
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/ROADMAP.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-S2-QUERY-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: explicit_exception
+  tyler_sources: []
+  owner: docs-only
+  severity: high
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/archive/TYLER_LITERAL_PARITY_AUDIT.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/archive/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-S2-QUERY-002
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources: []
+  owner: docs-only
+  severity: high
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/PLAN.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/ROADMAP.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-S3-MODEL-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: explicit_exception
+  tyler_sources: []
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: DOC-STATUS-001
+  requirement_class: doc_status
+  closure_status: verified_fixed
+  evidence_grade: D
+  anchor_status: explicit_exception
+  tyler_sources: []
+  owner: docs-only
+  severity: medium
+  evidence_kinds:
+  - doc
+  required_evidence_kinds:
+  - doc
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_EXECUTION_STATUS.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/TYLER_SHARED_INFRA_OWNERSHIP.md
+    exists: true
+    symbol: null
+  - kind: doc
+    target: docs/plans/archive/tyler_faithful_execution_remainder.md
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: EXT-SCHEMA-001
+  requirement_class: extension
+  closure_status: document_extension
+  evidence_grade: D
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  owner: docs-only
+  severity: low
+  evidence_kinds:
+  - doc
+  - local_source
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - doc
+    - local_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: doc
+    target: docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_models.py
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes: []
+- id: S1-VALIDATION-001
+  requirement_class: runtime_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/decompose.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_engine_fixture_loading.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_tyler_v1_stage1_runtime.py
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S2-EXA-CONTROLS-001
+  requirement_class: provider_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: open_web_retrieval + grounded-research
+  severity: medium
+  evidence_kinds:
+  - local_source
+  - local_test
+  - shared_infra_test
+  required_evidence_kinds:
+  - local_test
+  required_any_evidence_kinds:
+  - - shared_infra_source
+    - shared_infra_test
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/collect.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tools/web_search.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_collect.py
+    exists: true
+    symbol: test_collect_evidence_routes_tyler_query_plans_by_provider_role
+  - kind: local_test
+    target: tests/test_tyler_v1_stage2_runtime.py
+    exists: true
+    symbol: test_generate_search_queries_tyler_v1_returns_routed_query_plans
+  - kind: local_test
+    target: tests/test_web_search.py
+    exists: true
+    symbol: test_search_web_exa_forwards_retrieval_instruction
+  - kind: shared_infra_test
+    target: open_web_retrieval/tests/test_adapters.py
+    exists: true
+    symbol: TestExaAdapter
+  - kind: shared_infra_test
+    target: open_web_retrieval/tests/test_adapters.py
+    exists: true
+    symbol: TestExaAdapter::test_search_honors_retrieval_instruction
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S2-QUALITY-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/collect.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/source_quality.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_source_quality.py
+    exists: true
+    symbol: test_quality_score_applies_freshness_and_staleness_modifiers
+  - kind: local_test
+    target: tests/test_tyler_v1_stage2_runtime.py
+    exists: true
+    symbol: test_build_tyler_evidence_package_uses_tyler_findings
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S2-QUERY-MODEL-001
+  requirement_class: model_config
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - config
+  - local_source
+  - local_test
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  - - local_test
+    - runtime_artifact
+    - shared_infra_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: config
+    target: config/config.yaml
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/collect.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_tyler_v1_stage2_runtime.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_tyler_v1_stage2_runtime.py
+    exists: true
+    symbol: test_generate_search_queries_tyler_v1_returns_routed_query_plans
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S2-QUERY-VARIANTS-001
+  requirement_class: model_config
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  - - local_test
+    - runtime_artifact
+    - shared_infra_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/collect.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/models.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_tyler_v1_stage2_runtime.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_tyler_v1_stage2_runtime.py
+    exists: true
+    symbol: test_generate_search_queries_tyler_v1_returns_routed_query_plans
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S2-ROUTING-001
+  requirement_class: runtime_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/collect.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tools/web_search.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_collect.py
+    exists: true
+    symbol: test_collect_evidence_routes_tyler_query_plans_by_provider_role
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S2-TAVILY-DEPTH-001
+  requirement_class: provider_behavior
+  closure_status: verified_fixed
+  evidence_grade: C
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  owner: open_web_retrieval
+  severity: high
+  evidence_kinds:
+  - local_test
+  - shared_infra_source
+  - shared_infra_test
+  required_evidence_kinds:
+  - local_test
+  required_any_evidence_kinds:
+  - - shared_infra_source
+    - shared_infra_test
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_test
+    target: tests/test_collect.py
+    exists: true
+    symbol: test_collect_evidence_routes_tyler_query_plans_by_provider_role
+  - kind: local_test
+    target: tests/test_web_search.py
+    exists: true
+    symbol: test_search_web_forwards_shared_retrieval_controls
+  - kind: shared_infra_source
+    target: open_web_retrieval/src/open_web_retrieval/adapters/tavily.py
+    exists: true
+    symbol: null
+  - kind: shared_infra_test
+    target: open_web_retrieval/tests/test_adapters.py
+    exists: true
+    symbol: test_summary_detail_without_explicit_depth_uses_basic
+  findings: []
+  adversarial_notes:
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S3-FRAME-MODEL-001
+  requirement_class: model_config
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: critical
+  evidence_kinds:
+  - config
+  - local_source
+  - local_test
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  - - local_test
+    - runtime_artifact
+    - shared_infra_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: config
+    target: config/config.yaml
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/analysts.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_tyler_v1_stage3_runtime.py
+    exists: true
+    symbol: test_tyler_stage3_primary_config_matches_recovery_contract
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S3-MODEL-VERSION-001
+  requirement_class: model_config
+  closure_status: verified_fixed
+  evidence_grade: B
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: llm_client + grounded-research
+  severity: medium
+  evidence_kinds:
+  - config
+  - runtime_artifact
+  - shared_infra_source
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  - - local_test
+    - runtime_artifact
+    - shared_infra_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: config
+    target: config/config.yaml
+    exists: true
+    symbol: null
+  - kind: runtime_artifact
+    target: output/tyler_exact_model_version_switch_wave1_palantir
+    exists: true
+    symbol: null
+  - kind: runtime_artifact
+    target: output/tyler_exact_model_version_switch_wave1_palantir/llm_observability.db
+    exists: true
+    symbol: null
+  - kind: shared_infra_source
+    target: llm_client/data/default_model_registry.json
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S4-ORDER-RANDOMIZATION-001
+  requirement_class: runtime_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/canonicalize.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_canonicalize.py
+    exists: true
+    symbol: test_canonicalize_tyler_v1_randomizes_stage4_prompt_input
+  - kind: local_test
+    target: tests/test_canonicalize.py
+    exists: true
+    symbol: test_canonicalize_tyler_v1_rerenders_retry_from_fresh_randomized_order
+  - kind: local_test
+    target: tests/test_canonicalize.py
+    exists: true
+    symbol: test_randomize_stage4_analysis_order_preserves_aliases_without_mutating_input
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S5-ORDER-RANDOMIZATION-001
+  requirement_class: model_config
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  - - local_test
+    - runtime_artifact
+    - shared_infra_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/verify.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_arbitrate_dispute_tyler_v1_passes_randomized_positions_to_prompt
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_randomize_dispute_model_positions_preserves_content_and_changes_order
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S5-QUERY-ROLES-001
+  requirement_class: runtime_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/verify.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_build_tyler_verification_queries_adds_dated_search_only_when_time_sensitive
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_build_tyler_verification_queries_matches_literal_query_roles
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S5-ROUND-CAP-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  owner: grounded-research
+  severity: medium
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/config.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/verify.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_verify_disputes_tyler_v1_caps_rounds_at_two
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S5-S6-DATASTRUCT-001
+  requirement_class: prompt_template
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: medium
+  evidence_kinds:
+  - local_source
+  - local_test
+  - prompt_template
+  required_evidence_kinds:
+  - prompt_template
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/verify.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_over_limit
+  - kind: local_test
+    target: tests/test_prompt_templates.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_arbitrate_dispute_tyler_v1_passes_claim_ledger_as_dict
+  - kind: prompt_template
+    target: prompts/tyler_v1_arbitration.yaml
+    exists: true
+    symbol: null
+  - kind: prompt_template
+    target: prompts/tyler_v1_synthesis.yaml
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S5-SEARCH-PARAMS-001
+  requirement_class: runtime_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/tools/web_search.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/verify.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_verify.py
+    exists: true
+    symbol: test_collect_fresh_evidence_uses_verification_search_trace_metadata
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S6-COMPACTION-001
+  requirement_class: runtime_behavior
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: medium
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_compacts_noncritical_claims_when_over_limit
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S6-EVIDENCE-CONTEXT-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_includes_stage5_additional_sources_in_top_sources
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S6-GROUNDING-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_engine.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_repairs_grounding_failure
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_validate_tyler_grounding_requires_claim_reference_in_recommendation
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S6-MODEL-POLICY-001
+  requirement_class: model_config
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/2. V1_DESIGN.md
+  owner: grounded-research
+  severity: medium
+  evidence_kinds:
+  - config
+  - local_source
+  - local_test
+  required_evidence_kinds: []
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  - - local_test
+    - runtime_artifact
+    - shared_infra_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: config
+    target: config/config.yaml
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_uses_non_dominant_synthesis_model
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+  - Confirm shared-infra owner, command, and artifact before strict closure.
+- id: S6-PROMPT-VARS-001
+  requirement_class: prompt_template
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: medium
+  evidence_kinds:
+  - local_source
+  - local_test
+  - prompt_template
+  required_evidence_kinds:
+  - prompt_template
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_passes_tyler_stage6_prompt_variables
+  - kind: local_test
+    target: tests/test_prompt_templates.py
+    exists: true
+    symbol: test_tyler_stage6_synthesis_prompt_renders_literal_contract
+  - kind: prompt_template
+    target: prompts/tyler_v1_synthesis.yaml
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S6-VALIDATION-COVERAGE-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  - 2026_0325_tyler_feedback/4. V1_PROMPTS.md
+  owner: grounded-research
+  severity: medium
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_models.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_engine.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_generate_tyler_synthesis_report_repairs_underfilled_decision_fields
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: S6A-STEERING-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  owner: grounded-research
+  severity: critical
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_adapters.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_engine.py
+    exists: true
+    symbol: test_run_pipeline_collects_guidance_from_stage5_deferred_queue
+  - kind: local_test
+    target: tests/test_engine.py
+    exists: true
+    symbol: test_select_stage6a_steering_disputes_uses_latest_tyler_statuses
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: SC-PIPELINESTATE-001
+  requirement_class: schema_contract
+  closure_status: verified_fixed
+  evidence_grade: A
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/3. V1_SCHEMAS.md
+  owner: grounded-research
+  severity: high
+  evidence_kinds:
+  - local_source
+  - local_test
+  required_evidence_kinds:
+  - local_source
+  - local_test
+  required_any_evidence_kinds: []
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/export.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/models.py
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: src/grounded_research/tyler_v1_models.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_engine.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: null
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_write_outputs_writes_tyler_pipeline_state_trace
+  - kind: local_test
+    target: tests/test_export.py
+    exists: true
+    symbol: test_write_tyler_trace_projects_partial_failure_state
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+- id: STATUS-FRONTIER-RUNTIME-001
+  requirement_class: operational_watch
+  closure_status: operational_watch_reopen_on_threshold
+  evidence_grade: B
+  anchor_status: line_level
+  tyler_sources:
+  - 2026_0325_tyler_feedback/1. V1_Build_Plan_Step_By_Step.md
+  owner: grounded-research config policy + llm_client model transport/observability
+  severity: medium
+  evidence_kinds:
+  - config
+  - local_source
+  - runtime_artifact
+  required_evidence_kinds:
+  - runtime_artifact
+  required_any_evidence_kinds:
+  - - config
+    - local_source
+  required_anchor_statuses:
+  - line_level
+  - explicit_exception
+  evidence:
+  - kind: config
+    target: config/config.yaml
+    exists: true
+    symbol: null
+  - kind: local_source
+    target: engine.py
+    exists: true
+    symbol: null
+  - kind: runtime_artifact
+    target: output/tyler_frontier_runtime_validation_wave1
+    exists: true
+    symbol: null
+  - kind: runtime_artifact
+    target: output/tyler_frontier_runtime_validation_wave1/*
+    exists: true
+    symbol: null
+  - kind: runtime_artifact
+    target: output/tyler_frontier_runtime_validation_wave2_palantir/*
+    exists: true
+    symbol: null
+  - kind: runtime_artifact
+    target: output/tyler_frontier_runtime_validation_wave2_repeat/*
+    exists: true
+    symbol: null
+  findings: []
+  adversarial_notes:
+  - Verify the cited test or artifact asserts Tyler behavior, not only local shape.
+

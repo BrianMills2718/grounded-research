@@ -76,10 +76,9 @@ Current operational notes:
   with Tavily as the quality-first default, not a bespoke workflow engine
 - Stage 1 no longer runs a separate validation/retry layer in the live path;
   Tyler's prompt-level self-check is the local mitigation
-- Stage 2 query diversification uses a lightweight model call that emits typed
-  query plans and routes by query role instead of dual-provider fan-out; the
-  full Tyler packet audit confirmed this is Tyler-literal and that the earlier
-  reopen was an audit-inventory error
+- Stage 2 query generation uses deterministic Tyler string/orchestrator
+  templates that emit typed query plans and route by query role instead of
+  dual-provider fan-out
 - Stage 2 final source scoring is now deterministic authority/freshness/
   staleness blending, not tier-only scoring
 - `deep` and `thorough` now add goal-driven evidence extraction on persisted
@@ -166,7 +165,7 @@ Current open work is intentionally narrow:
   `docs/plans/stage5_internal_protocol_literalization.md`,
   `docs/plans/stage34_compatibility_protocol_deletion.md`
 - the post-audit repo-local implementation wave is completed:
-  `docs/plans/tyler_post_audit_remediation_wave2.md`
+  `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
 - there are no active local audited rows; future repo-local work should reopen
   only if the ledger records a new concrete divergence
 - the first frozen shared-eval comparison is complete:
@@ -185,33 +184,33 @@ Current open work is intentionally narrow:
   post-audit remediation wave has now closed the prompt-contract, Stage 6
   validation, and Tyler `PipelineState` trace rows
 - completed remainder plan:
-  `docs/plans/tyler_faithful_execution_remainder.md`
+  `docs/plans/archive/tyler_faithful_execution_remainder.md`
 - completed audit wave:
-  `docs/plans/tyler_spec_gap_audit_wave1.md`
+  `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
 - completed audit-governance wave:
-  `docs/plans/tyler_audit_governance_wave1.md`
+  `docs/plans/archive/tyler_audit_governance_wave1.md`
 - historical remediation planner:
-  `docs/plans/tyler_gap_remediation_wave1.md`
+  `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - completed post-audit remediation planner:
-  `docs/plans/tyler_post_audit_remediation_wave2.md`
+  `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
 - planned remediation-support maintainability wave:
   `docs/plans/post_audit_maintainability_wave1.md`
 - canonical gap ledger:
   `docs/TYLER_SPEC_GAP_LEDGER.md`
 - completed systematic review program:
-  `docs/plans/tyler_systematic_review_wave2.md`
+  `docs/plans/archive/tyler_systematic_review_wave2.md`
 - compact review tracker:
   `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
 - completed exhaustive Tyler packet audit wave:
-  `docs/plans/tyler_full_spec_exhaustive_audit_wave1.md`
+  `docs/plans/archive/tyler_full_spec_exhaustive_audit_wave1.md`
 - exhaustive source coverage tracker:
   `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
 - the exhaustive Tyler packet matrix has full source coverage and the recorded
   local ledger rows are closed
 - completed shared exact-model follow-through:
-  `docs/plans/tyler_shared_model_version_parity_wave1.md`
+  `docs/plans/archive/tyler_shared_model_version_parity_wave1.md`
 - completed app-local exact-model switch wave:
-  `docs/plans/tyler_exact_model_version_switch_wave1.md`
+  `docs/plans/archive/tyler_exact_model_version_switch_wave1.md`
 - canonical failure-analysis / prevention surface:
   `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
 - the active audit has already identified real local divergences in Stage 1,
@@ -225,14 +224,14 @@ Current open work is intentionally narrow:
 - completed eval-expansion wave:
   `docs/plans/tyler_literal_default_eval_wave2.md`
 - completed technical-breadth eval wave:
-  `docs/plans/tyler_literal_default_eval_wave3_llm_swe.md`
+  `docs/plans/archive/tyler_literal_default_eval_wave3_llm_swe.md`
 - completed shared-parity closure wave:
-  `docs/plans/tyler_shared_parity_closure_wave1.md`
+  `docs/plans/archive/tyler_shared_parity_closure_wave1.md`
 - supporting status notes:
   `docs/TYLER_FROZEN_EVAL_STATUS.md`,
   `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`,
   `docs/TYLER_EXECUTION_STATUS.md`
-- deferred depth continuation beyond Wave 1: `docs/plans/depth_modes.md`
+- deferred depth continuation beyond Wave 1: `docs/plans/archive/depth_modes.md`
 - completed Wave 1 depth continuation reference:
   `docs/plans/depth_modes_wave1_execution.md`
 - Tyler literal-parity completed repo-local recovery references:

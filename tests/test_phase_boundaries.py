@@ -18,7 +18,6 @@ import pytest
 
 from grounded_research.models import (
     EvidenceBundle,
-    EvidenceItem,
     PipelineState,
 )
 from grounded_research.tyler_v1_models import AnalysisObject

@@ -12,6 +12,12 @@ Wiki home: http://localhost:8088/index.php/Project_Wiki
 | GR-PORT-004 | Retrieval quality may be mistaken for the project thesis. | Medium | Architecture docs state adjudication is the product. | Keep portfolio walkthrough centered on disagreement and verification. |
 | GR-PORT-005 | Saved output artifacts are not yet packaged as a compact public reviewer bundle. | High | Existing docs identify output files and walkthrough expectations. | Produce one non-sensitive run bundle and source-to-claim walkthrough. |
 | GR-PORT-006 | Cost and latency claims can drift if estimated from old runs. | Medium | Shared observability exists. | Query real `llm_client` observability rows before public cost claims. |
+| GR-RUNTIME-001 | Stage 2 collection can continue after individual search/fetch failures, so a run may succeed with partial source coverage. | High | Tool failures are logged and failed fetches are excluded from evidence. | Define a Tyler-compatible minimum evidence/readout threshold before changing this from warning-and-continue to fail-loud. |
+| GR-TYLER-TRACE-001 | Raw Tyler source reproducibility can regress if the source packet is edited without updating hashes. | High | The four raw Tyler files are force-tracked under `2026_0325_tyler_feedback/`; `docs/TYLER_SOURCE_MANIFEST.md` records line counts and SHA-256 hashes; `make check` runs the manifest gate. | Keep `make tyler-source-check` in the gate and update the manifest only with an intentional source-change review. |
+| GR-TYLER-TRACE-002 | Tyler traceability can regress if evidence kind checks are not kept in the gate. | High | `scripts/check_tyler_coverage.py` grades evidence, includes negative controls, and fails `make check` on grade-F rows or coverage-quality findings. | Keep the strict coverage gate in `make check`; keep the generated registry current until the Markdown ledger is replaced by a structured source. |
+| GR-TYLER-TRACE-003 | Active docs may still drift after future Tyler remediation. | Medium | `scripts/check_tyler_doc_drift.py` scans active docs for known stale Tyler status claims and fails `make check` on findings. | Expand the doc-drift rule set when new stale-claim families are discovered. |
+| GR-TYLER-TRACE-004 | Binary closure labels can overstate confidence unless paired with source anchors, evidence grades, negative controls, and adversarial review. | High | Source-anchor debt is closed for the current ledger; `scripts/check_tyler_code_audit.py` audits current implementation/verification evidence; `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md` records the adversarial pass. | Do not upgrade grade-B/C/D rows without evidence that satisfies their class policy. |
+| GR-TYLER-S2-001 | Stage 2 query generation was previously overclosed as Tyler-literal. | High | Fixed on 2026-06-25 by restoring deterministic string/orchestrator templates and deleting the obsolete query-diversification model path. | Keep `tests/test_tyler_v1_stage2_runtime.py::test_generate_search_queries_tyler_v1_returns_routed_query_plans` and the coverage/doc-drift gates active. |
 
 ## Portfolio Judgment
 
@@ -19,4 +25,3 @@ This is valuable portfolio work because it shows a real analyst-system design:
 independent views, disagreement localization, fresh verification, and traceable
 claims. The portfolio should emphasize adjudication and provenance, not a broad
 "research agent" claim.
-

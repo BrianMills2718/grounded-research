@@ -84,7 +84,7 @@ async def compare_fair(
     report_a = report_a_path.read_text()
     report_b = report_b_path.read_text()
 
-    print(f"=== Fair Comparison (no provenance bias) ===")
+    print("=== Fair Comparison (no provenance bias) ===")
     print(f"Report A: {len(report_a.split())} words")
     print(f"Report B: {len(report_b.split())} words")
     print(f"Judge: {judge_model}")

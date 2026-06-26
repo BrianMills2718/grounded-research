@@ -24,7 +24,7 @@ The original repo-local gap was real in:
 
 Reference audit:
 
-- `docs/TYLER_LITERAL_PARITY_AUDIT.md`
+- `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
 
 ## Scope
 
@@ -205,4 +205,4 @@ Do not reopen this refactor unless:
 
 The remaining faithful-Tyler execution work is tracked separately in:
 
-- `docs/plans/tyler_faithful_execution_remainder.md`
+- `docs/plans/archive/tyler_faithful_execution_remainder.md`

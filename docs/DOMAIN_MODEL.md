@@ -13,7 +13,7 @@ Current runtime note:
 - `models.py` now mostly holds support entities: evidence records, validation,
   phase traces, Stage 3 attempt traces, and top-level pipeline state
 - if you need literal Tyler artifact shapes, consult
-  `docs/TYLER_LITERAL_PARITY_AUDIT.md` and `tyler_v1_models.py`
+  `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md` and `tyler_v1_models.py`
 
 ## ID Conventions
 

@@ -87,10 +87,10 @@ operational monitoring:
      - `docs/ROADMAP.md`
      - `docs/TYLER_V1_CURRENT_REPO_MAP.md`
    - Demote or archive materially stale historical Tyler summaries:
-     - `docs/TYLER_FINAL_COMPLIANCE_AUDIT.md`
-     - `docs/TYLER_V1_DELIVERY_SUMMARY.md`
-     - `docs/TYLER_LITERAL_PARITY_AUDIT.md`
-     - `docs/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
+     - `docs/archive/TYLER_FINAL_COMPLIANCE_AUDIT.md`
+     - `docs/archive/TYLER_V1_DELIVERY_SUMMARY.md`
+     - `docs/archive/TYLER_LITERAL_PARITY_AUDIT.md`
+     - `docs/archive/TYLER_LITERAL_PROMPT_FIDELITY_AUDIT.md`
 
 2. **Doc consolidation**
    - Keep the canonical Tyler current-state surface small:
@@ -103,7 +103,7 @@ operational monitoring:
 3. **Operational watch**
    - Monitor `STATUS-FRONTIER-RUNTIME-001`
    - Reopen only if the threshold in
-     `docs/plans/tyler_frontier_model_policy_wave1.md` is crossed.
+     `docs/plans/archive/tyler_frontier_model_policy_wave1.md` is crossed.
 
 #### Do not do
 

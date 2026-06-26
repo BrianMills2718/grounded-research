@@ -60,20 +60,12 @@ def _tyler_decomposition() -> DecompositionResult:
 async def test_generate_search_queries_tyler_v1_returns_routed_query_plans(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Tyler Stage 2 should emit typed query plans from the lightweight prompt."""
+    """Tyler Stage 2 should emit typed query plans from string templates."""
 
-    async def fake_acall_llm_structured(*args, **kwargs):
-        response_model = kwargs["response_model"]
-        return response_model(
-            keyword_rewrite="pilot A employment effect",
-            practitioner_rewrite="pilot A lessons learned",
-            contrarian_falsification="pilot A limitations contradiction",
-            semantic_description="A detailed evaluation of pilot A with direct labor-market outcomes.",
-            reasoning="Distinct keyword, practitioner, contrarian, and semantic retrieval vectors.",
-        ), {}
+    async def fail_acall_llm_structured(*args, **kwargs):
+        raise AssertionError("Tyler Stage 2 query generation must not call an LLM")
 
-    monkeypatch.setattr("llm_client.acall_llm_structured", fake_acall_llm_structured)
-    monkeypatch.setattr("llm_client.render_prompt", lambda *args, **kwargs: [{"role": "user", "content": "prompt"}])
+    monkeypatch.setattr("llm_client.acall_llm_structured", fail_acall_llm_structured)
 
     query_plans, query_counts = await generate_search_queries_tyler_v1(
         _tyler_decomposition(),
@@ -81,20 +73,24 @@ async def test_generate_search_queries_tyler_v1_returns_routed_query_plans(
     )
 
     assert query_counts["Q-1"] == 4
-    assert query_counts["Q-2"] == 3
+    assert query_counts["Q-2"] == 4
     assert [plan.provider for plan in query_plans if plan.sub_question_id == "Q-1"] == [
-        "tavily", "tavily", "tavily", "exa",
+        "tavily", "tavily", "exa", "tavily",
     ]
     assert [plan.query_role for plan in query_plans if plan.sub_question_id == "Q-1"] == [
-        "keyword_rewrite",
+        "formal_technical",
         "practitioner_rewrite",
+        "academic_research",
         "contrarian_falsification",
-        "semantic_description",
     ]
     assert all(plan.search_depth == "basic" for plan in query_plans if plan.provider == "tavily")
     assert all(plan.result_detail == "chunks" for plan in query_plans if plan.provider == "exa")
     exa_plan = next(plan for plan in query_plans if plan.provider == "exa")
+    assert exa_plan.query_text == "pilot A show empirical study benchmark comparison"
     assert exa_plan.retrieval_instruction == "Prioritize sources aligned with this guidance: official reports and evaluations."
+    q2_plans = [plan for plan in query_plans if plan.sub_question_id == "Q-2"]
+    assert all(plan.provider == "tavily" for plan in q2_plans)
+    assert all("best practices" not in plan.query_text.lower() for plan in query_plans)
 
 
 @pytest.mark.asyncio

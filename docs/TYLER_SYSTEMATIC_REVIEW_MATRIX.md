@@ -25,7 +25,7 @@ This matrix exists to make the review itself mechanical:
 | review_id | scope | review focus | evidence required | current source of truth | status | next artifact |
 |---|---|---|---|---|---|---|
 | R1 | Stage 1 | prompt, schema, no-validation runtime path | static review + stage runtime test | `S1-VALIDATION-001` | done | ledger only |
-| R2 | Stage 2 | query diversification mechanism and variant family | static review + stage runtime test | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`, `DOC-S2-QUERY-002` | done | ledger only |
+| R2 | Stage 2 | query diversification mechanism and variant family | static review + runtime test | `S2-QUERY-MODEL-001`, `S2-QUERY-VARIANTS-001`, `DOC-S2-QUERY-002` | done | ledger only |
 | R3 | Stage 2 | provider routing by query type | behavior check or runtime test | `S2-ROUTING-001` | done | ledger only |
 | R4 | Stage 2 | quality scoring pipeline | static review + deterministic test | `S2-QUALITY-001` | done | ledger only |
 | R5 | Stage 2 | Tavily depth behavior from consumer boundary | request-body or adapter verification | `S2-TAVILY-DEPTH-001` | done | ledger only |
@@ -41,17 +41,22 @@ This matrix exists to make the review itself mechanical:
 | R15 | Stage 6b | non-dominant synthesis model policy | static review + runtime test | `S6-MODEL-POLICY-001` | done | ledger only |
 | R16 | Shared runtime | frontier literal runtime reliability | fixture evidence + policy review | `STATUS-FRONTIER-RUNTIME-001` | done | ledger only |
 | R17 | Docs | active status surfaces do not outrun ledger | doc review | `docs/TYLER_EXECUTION_STATUS.md`, `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`, `docs/plans/CLAUDE.md`, `README.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md` | done | ledger only |
-| R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/tyler_audit_governance_wave1.md` | done | ledger only |
+| R18 | Governance | review process still follows ledger-first rule | doc/process review | `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`, `docs/plans/archive/tyler_audit_governance_wave1.md` | done | ledger only |
 | R19 | Stage 6 | grounding reject-and-retry plus remaining final-report validation rules | behavior check + runtime path review | `S6-GROUNDING-001`, `S6-VALIDATION-COVERAGE-001` | done | ledger only |
 | R20 | Schemas packet | pipeline-state trace parity plus remaining schema packet skip/trace semantics | static review + runtime trace + schema tests | `SC-PIPELINESTATE-001`, `AMB-S6A-STATUS-001`, `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | done | ledger + audit matrix |
 | R21 | Prompts packet | remaining prompt-template literalness and prompt-side design constraints | prompt render + static review | `S6-PROMPT-VARS-001`, `S5-S6-DATASTRUCT-001`, `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md` | done | ledger + audit matrix |
 
 ## Immediate Open Lanes
 
-The exhaustive Tyler packet audit currently has no active review lanes and no
-remaining active local implementation rows.
+The coverage-quality anchor pass reopened one active Stage 2 review lane. It
+was resolved by restoring Tyler-literal string/orchestrator templates and
+adding runtime coverage that fails if query generation calls an LLM.
 
-The only non-closure item left is:
+Active implementation lane:
+
+None currently recorded in this matrix.
+
+Operational watch item:
 
 1. `STATUS-FRONTIER-RUNTIME-001`
    - operational watch item under the documented policy threshold

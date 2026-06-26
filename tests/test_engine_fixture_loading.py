@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engine import _load_fixture_sidecars
+import pytest
+
+from engine import _load_fixture_sidecars, _prepare_fresh_output_dir, _slugify_question
 from grounded_research.tyler_v1_models import (
     DecompositionResult,
     EvidencePackage,
@@ -124,3 +126,24 @@ def test_fixture_sidecars_fail_loud_on_legacy_decomposition_input(tmp_path: Path
         assert "Legacy decomposition.json is no longer a live runtime input" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Expected legacy decomposition input to fail loudly")
+
+
+def test_question_slug_is_path_safe() -> None:
+    """Default output dirs should not preserve user-controlled path separators."""
+
+    slug = _slugify_question("../Temporal KG retrieval? / best practices")
+
+    assert slug == "temporal_kg_retrieval_best_practices"
+    assert "/" not in slug
+    assert ".." not in slug
+
+
+def test_prepare_fresh_output_dir_rejects_non_empty_directory(tmp_path: Path) -> None:
+    """Run outputs should fail loudly instead of overwriting previous artifacts."""
+
+    output_dir = tmp_path / "existing"
+    output_dir.mkdir()
+    (output_dir / "trace.json").write_text("{}")
+
+    with pytest.raises(FileExistsError, match="already contains files"):
+        _prepare_fresh_output_dir(output_dir)

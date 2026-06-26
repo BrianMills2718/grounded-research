@@ -7,7 +7,7 @@ remediation easier to implement, verify, and keep correct.
 **Status:** Planned
 **Type:** design
 **Priority:** Medium
-**Blocked By:** `docs/plans/tyler_gap_remediation_wave1.md`
+**Blocked By:** `docs/plans/archive/tyler_gap_remediation_wave1.md`
 **Blocks:** cleaner execution of later Tyler remediation child waves
 
 ---
@@ -43,7 +43,7 @@ Those are easiest to fix and keep fixed when:
 ## Canonical Inputs
 
 - `docs/TYLER_SPEC_GAP_LEDGER.md`
-- `docs/plans/tyler_gap_remediation_wave1.md`
+- `docs/plans/archive/tyler_gap_remediation_wave1.md`
 - `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
 - `src/grounded_research/verify.py`
 - `src/grounded_research/export.py`

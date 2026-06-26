@@ -1,65 +1,45 @@
 # Implementation Plans
 
-`docs/PLAN.md` is the canonical execution plan. This directory holds per-task plans.
+`docs/PLAN.md` is the canonical execution plan. This directory holds active,
+reference, and template plans only. Completed Tyler remediation waves are kept
+in `docs/plans/archive/` for auditability, not as the maintainer's working set.
 
-## Plan Index
+## Maintainer Rule
 
-| Plan | Status | Summary |
+Before opening a new implementation wave, read the authority documents in this
+order:
+
+1. `docs/TYLER_SPEC_GAP_LEDGER.md`
+2. `docs/TYLER_EXECUTION_STATUS.md`
+3. `docs/ROADMAP.md`
+4. `docs/CONCERNS.md`
+5. the relevant active/reference plan below
+
+Do not infer open Tyler work from archived plan titles. The ledger and execution
+status are the source of truth.
+
+## Active And Reference Plans
+
+| Plan | Status | Purpose |
 |------|--------|---------|
-| [v1_spec_alignment.md](v1_spec_alignment.md) | Reference analysis | Reconciliation memo: what differs between Tyler's V1 and the current repo, ordered by implementation value. |
-| [v1_reasoning_quality_execution.md](v1_reasoning_quality_execution.md) | Completed | Wave 1 reasoning-quality stabilization: prompt hardening, claim extraction, dedup safeguards, anti-conformity, and anonymization. |
-| [wave2_enumeration_grounding.md](wave2_enumeration_grounding.md) | Completed | Benchmark-driven follow-up for study/PDF retrieval, Claimify evidence anchoring, and dense-claim dedup on enumeration-heavy questions recovered the UBI benchmark. |
-| [post_wave2_cleanup_hardening.md](post_wave2_cleanup_hardening.md) | Completed | Remaining internal hardening finished: dense canonicalization, prompt/config hygiene, trace construction cleanup, and sub-question evidence tagging. |
-| [wave2_runtime_reliability.md](wave2_runtime_reliability.md) | Completed | Runtime reliability slice: run-local observability DBs, explicit request timeouts, and benchmark-safe completion policy. |
-| [wave2_coverage_breadth.md](wave2_coverage_breadth.md) | Completed | Analyst coverage-target wiring and one under-coverage retry broadened the UBI claim set on rich bundles. |
-| [wave2_report_synthesis_calibration.md](wave2_report_synthesis_calibration.md) | Completed | Export repair loops and stronger synthesis structure removed warnings/placeholders and recovered the UBI comparison. |
-| [docs_authority_reconciliation.md](docs_authority_reconciliation.md) | Completed | CLAUDE, PLAN, ROADMAP, and the plan index now reflect the same current frontier. |
-| [tyler_v1_followthrough.md](tyler_v1_followthrough.md) | Completed | Locks the Tyler V1 package as reference material, records intentional divergences, and closes the repo-local March 26 follow-through. |
-| [depth_modes.md](depth_modes.md) | Completed | Standard/deep/thorough profiles shipped with deeper extraction, multi-round arbitration, and sectioned synthesis for long thorough-mode reports. Future depth work now requires a new benchmark-triggered plan. |
-| [depth_modes_wave1_execution.md](depth_modes_wave1_execution.md) | Completed | Wave 1 depth continuation shipped: goal-driven evidence extraction in deep/thorough, multi-round arbitration, and a passing live deep collection smoke gate. |
-| [sectioned_synthesis_wave1.md](sectioned_synthesis_wave1.md) | Completed | Benchmark-triggered export wave closed: the single-call `thorough` rerender failed the gate, sectioned synthesis was implemented, and the saved rerender now clears 11k words. |
-| [thorough_benchmark_preservation_wave1.md](thorough_benchmark_preservation_wave1.md) | Completed | Fresh `thorough` UBI fixture benchmark completed; it regressed against both cached Perplexity and the prior dense-dedup anchor, but did not justify recent-first ranking, so the wave closed with recorded uncertainty and no new repo-local patch. |
-| [tyler_literal_parity_refactor.md](tyler_literal_parity_refactor.md) | Historical completed wave | Major contract migration landed, but the April 2026 clause-by-clause audit found additional remaining local and shared divergences. Trust the active gap ledger over this wave summary. |
-| [tyler_literal_parity_stage123_native.md](tyler_literal_parity_stage123_native.md) | Completed | Execution-ready remaining wave for literal Tyler parity completed: Tyler Stage 1-3 are now native runtime artifacts and Stage 4-6 prefer the persisted Tyler artifacts. |
-| [tyler_literal_parity_benchmark_reanchor.md](tyler_literal_parity_benchmark_reanchor.md) | Completed | Post-migration benchmark gate for the fully Tyler-native runtime is complete. The first tracked rerun regressed, the repo-local recovery waves then recovered the Tyler-native path to a Perplexity win on the tracked UBI case, and the remaining gap is now only a slight divergence from the dense-dedup anchor. |
-| [tyler_literal_prompt_quality_recovery.md](tyler_literal_prompt_quality_recovery.md) | Completed | Repo-local Tyler-native prompt-quality recovery closed: Stage 3 role recovery and Stage 6 decision-field repair now beat cached Perplexity on the tracked UBI case and leave only a small, explicit gap to the dense-dedup anchor. |
-| [tyler_stage3_model_role_recovery.md](tyler_stage3_model_role_recovery.md) | Completed | Gate-time execution slice under Tyler prompt-quality recovery: closest-available Stage 3 role parity removed DeepSeek from the primary path and recovered analyst density on the tracked UBI fixture. |
-| [tyler_stage6_decision_guidance_recovery.md](tyler_stage6_decision_guidance_recovery.md) | Completed | Follow-up Stage 6 slice: underfilled decision fields now trigger a repair loop; the tracked UBI rerun fills tradeoffs and alternatives and remains slightly behind only the dense-dedup anchor. |
-| [tyler_canonical_cutover.md](tyler_canonical_cutover.md) | Historical completed wave | Delete-first cutover landed and `main` keeps one Tyler-native runtime/export contract, but the April 2026 clause-by-clause audit found additional live divergences above that cutover layer. Trust the active gap ledger over this wave summary. |
-| [legacy_export_surface_deletion.md](legacy_export_surface_deletion.md) | Completed | Child wave under Tyler canonical cutover: compatibility-only export/report surfaces were deleted and `main` now has one Tyler-native output contract. |
-| [stage45_projection_deletion.md](stage45_projection_deletion.md) | Completed | Child wave under Tyler canonical cutover: the ignored Stage 4 compatibility ledger return and dead Stage 5 current-ledger adapter were deleted. |
-| [stage13_runtime_projection_cutover.md](stage13_runtime_projection_cutover.md) | Completed | Child wave under Tyler canonical cutover: the live runtime now consumes Tyler Stage 1/2/3 directly, stores `stage3_attempts` instead of `analyst_runs`, and no longer accepts legacy `decomposition.json` as a runtime contract. |
-| [isolated_compatibility_surface_deletion.md](isolated_compatibility_surface_deletion.md) | Completed | Child wave under Tyler canonical cutover: deleted non-live compatibility APIs in `decompose.py`, the legacy analyst execution path, and current-shape Stage 3/3a helpers so `main` keeps one Tyler-native runtime vocabulary. |
-| [current_shape_model_surface_deletion.md](current_shape_model_surface_deletion.md) | Completed | Child wave under Tyler canonical cutover: deleted the remaining current-shape model/helper surfaces (`QuestionDecomposition`, `AnalystRun`, `ClaimLedger`) and moved the Stage 3 quality floor onto canonical Tyler artifacts. |
-| [stage5_internal_protocol_literalization.md](stage5_internal_protocol_literalization.md) | Completed | Child wave under Tyler canonical cutover: removed the remaining current-shape internal Stage 5 protocol types from the live Tyler verification path. |
-| [stage34_compatibility_protocol_deletion.md](stage34_compatibility_protocol_deletion.md) | Completed | Child wave under Tyler canonical cutover: deleted the dead Stage 3/4 compatibility utility path so `main` keeps one Stage 4 vocabulary. |
-| [tyler_literal_default_eval_wave1.md](tyler_literal_default_eval_wave1.md) | Completed | Cross-repo evaluation wave complete: frozen Tyler-literal vs archived calibrated legacy artifacts were compared through `prompt_eval`, Tyler-literal won the first shared case, and the remaining limit is explicit one-case coverage rather than runtime ambiguity. |
-| [tyler_faithful_execution_remainder.md](tyler_faithful_execution_remainder.md) | Completed | Defines the audited closure state after repo-local runtime cutover: shared parity lanes landed, the frozen-eval gate is satisfied, local remediation rows are closed, and the remaining frontier item is only an operational watch on frontier-model variability. |
-| [tyler_shared_parity_closure_wave1.md](tyler_shared_parity_closure_wave1.md) | Completed | Shared-parity closure wave completed: the three-case eval gate is sufficient for the current lane, the `llm_client` Gemini strict-schema fix landed on `main`, and later exact-model follow-through also landed. |
-| [tyler_frontier_runtime_reliability_wave3.md](tyler_frontier_runtime_reliability_wave3.md) | Completed | Frontier-reliability investigation completed: the remaining row is now classified as model-output variability / model-policy limitation rather than a generic runtime defect. |
-| [tyler_frontier_model_policy_wave1.md](tyler_frontier_model_policy_wave1.md) | Completed | Frontier-model policy wave completed: the repo now has an explicit threshold for when a stochastic frontier-model miss justifies changing Tyler's intended primary stack, and the current decision is to keep the stack. |
-| [tyler_systematic_review_wave2.md](tyler_systematic_review_wave2.md) | Completed | Repeatable Tyler review program completed: every tracked lane was re-reviewed against the ledger, exact Gemini parity closed, and the frontier runtime row was downgraded to an operational watch item. |
-| [tyler_full_spec_exhaustive_audit_wave1.md](tyler_full_spec_exhaustive_audit_wave1.md) | Completed | Exhaustive Tyler packet audit plan executed: every source section in the four canonical Tyler files was inventoried, audited, and reflected in the canonical ledger/matrix. |
-| [tyler_shared_model_version_parity_wave1.md](tyler_shared_model_version_parity_wave1.md) | Completed | Shared exact-model lane completed: Gemini 3.1 Pro preview is in the `llm_client` registry and the follow-on app switch/validation path is now closed. |
-| [tyler_exact_model_version_switch_wave1.md](tyler_exact_model_version_switch_wave1.md) | Completed | Application follow-through completed: the Tyler-named Gemini roles now use `openrouter/google/gemini-3.1-pro-preview`, and a full raw-question run proved the live path. |
-| [tyler_spec_gap_audit_wave1.md](tyler_spec_gap_audit_wave1.md) | Completed | Clause-by-clause audit protocol executed: live code and docs were reviewed against Tyler's V1 packet and the resulting findings landed in the evidence-backed gap ledger. |
-| [tyler_audit_governance_wave1.md](tyler_audit_governance_wave1.md) | Completed | Governance layer completed: prior Tyler review failures, intake workflow, and overclaim-prevention controls are now installed and held through the later exact-model closure wave. |
-| [tyler_gap_remediation_wave1.md](tyler_gap_remediation_wave1.md) | Completed | Ordered remediation planner derived from the pre-exhaustive-audit Tyler gap ledger. Its child waves are landed, but the exhaustive packet audit later reopened a smaller post-audit frontier. |
-| [tyler_post_audit_remediation_wave2.md](tyler_post_audit_remediation_wave2.md) | Completed | Post-exhaustive-audit remediation planner completed: prompt-contract, Stage 6 validation, and Tyler `PipelineState` trace parity rows are all closed. |
-| [tyler_remediation_phase1_stage56_orchestration.md](tyler_remediation_phase1_stage56_orchestration.md) | Completed | First local Tyler remediation child wave completed: Stage 6a now runs after Stage 5 against the updated dispute queue, the hard 2-round Stage 5 cap is enforced, and Stage 5 arbitration input order is randomized per dispute. |
-| [tyler_remediation_phase2_stage4_randomization.md](tyler_remediation_phase2_stage4_randomization.md) | Completed | Second local Tyler remediation child wave completed: Stage 4 now randomizes analyst presentation order before every claim-extraction call, including retries. |
-| [tyler_remediation_phase3_stage6_synthesis.md](tyler_remediation_phase3_stage6_synthesis.md) | Completed | Third local Tyler remediation child wave completed: Stage 6 now includes Stage 5 dispute-resolving sources, applies Tyler-style compaction, and enforces a non-dominant synthesis-model policy. |
-| [tyler_remediation_phase4_stage3_model_assignment.md](tyler_remediation_phase4_stage3_model_assignment.md) | Completed | Fourth local Tyler remediation child wave completed: the shipped default Stage 3 B/C frame-model order now matches Tyler, while the cheap testing config remains explicitly non-literal. |
-| [tyler_remediation_phase5_stage12_retrieval.md](tyler_remediation_phase5_stage12_retrieval.md) | Completed | Fifth local Tyler remediation child wave completed: the live path now deletes Stage 1 validation, uses the Tyler Stage 2 query-diversification prompt, routes queries by role/provider, and computes deterministic Tyler-style Stage 2 quality scores. |
-| [tyler_remediation_phase6_stage5_query_execution.md](tyler_remediation_phase6_stage5_query_execution.md) | Completed | Sixth local Tyler remediation child wave completed: Stage 5 now emits Tyler query roles, uses structured Tavily search controls, and corrects the earlier false closure claim with real verification evidence. |
-| [tyler_remediation_phase7_stage2_exa_instruction.md](tyler_remediation_phase7_stage2_exa_instruction.md) | Completed | Seventh local Tyler remediation child wave completed: the Stage 2 Exa semantic path now consumes the shared retrieval-instruction field so Tyler-style source-preference guidance reaches shared infra. |
-| [tyler_frontier_runtime_validation_wave1.md](tyler_frontier_runtime_validation_wave1.md) | Completed | Validation wave completed: the first production-config frontier-model fixture run finished end to end and proved real model usage, but it narrowed the remaining open row to a specific Claude Opus Stage 3 citation-floor failure rather than closing it. |
-| [tyler_frontier_runtime_validation_wave2.md](tyler_frontier_runtime_validation_wave2.md) | Completed | Repeatability wave completed: the same fixture and a second saved fixture both passed cleanly on the intended primary-model stack, narrowing the remaining frontier-runtime row to a stochastic Claude Opus Stage 3 citation-floor miss rather than a generic runtime defect. |
-| [post_audit_maintainability_wave1.md](post_audit_maintainability_wave1.md) | Planned | Strictly limited maintainability wave that exists only to support Tyler remediation: stage-boundary assertions, smaller Stage 5/6 pure-function boundaries, and ledger ergonomics if later remediation actually needs them. |
-| [tavily_integration_wave1.md](tavily_integration_wave1.md) | Completed | Cut the application over from the Brave-specific search tool to the shared-provider search tool, with Tavily as the quality-first default. |
-| [tyler_prompt_literalness_wave1.md](tyler_prompt_literalness_wave1.md) | Historical completed wave | Prompt-literalness remediation wave landed, but the April 2026 clause-by-clause audit found remaining prompt/orchestrator deviations. Trust the active gap ledger over this wave summary. |
-| [tyler_literal_default_eval_wave2.md](tyler_literal_default_eval_wave2.md) | Completed | Frozen-eval expansion wave complete: a Tyler-literal PFAS counterpart was generated from the saved fixture, the PFAS pair was scored through `prompt_eval`, and the repo now records a two-case Tyler-vs-legacy conclusion. |
-| [tyler_literal_default_eval_wave3_llm_swe.md](tyler_literal_default_eval_wave3_llm_swe.md) | Completed | Technical-breadth frozen-eval wave complete: a Tyler-literal `llm_swe` counterpart was generated from the saved fixture, the pair was scored through `prompt_eval`, and the repo now records a three-case Tyler-vs-legacy conclusion. |
-| [phase_b_source_quality.md](phase_b_source_quality.md) | Completed | Source quality scoring, evidence sufficiency, compression. |
-| [phase_f_deferred_features.md](phase_f_deferred_features.md) | Completed | 6 deferred features promoted and implemented. |
-| [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new plans. |
+| [v1_spec_alignment.md](v1_spec_alignment.md) | Reference analysis | Reconciliation memo for Tyler V1 versus the repository. Use only with the current gap ledger. |
+| [tyler_requirements_traceability_program.md](tyler_requirements_traceability_program.md) | Active | Program to make Tyler requirements structured, evidence-kind checked, code/test/doc linked, and gap-visible before any PR-readiness claim. |
+| [post_audit_maintainability_wave1.md](post_audit_maintainability_wave1.md) | Planned | Strictly limited maintainability work that supports Tyler remediation without changing the runtime contract. |
+| [maintainer_onboarding_cleanup_wave1.md](maintainer_onboarding_cleanup_wave1.md) | In progress | Organization and onboarding work for plan hygiene, local gates, maintainer docs, and MCP extension guidance. |
+| [llm_call_observability.md](llm_call_observability.md) | Partial/reference | Observability plan for LLM/tool calls and shared infrastructure alignment. |
+| [TEMPLATE.md](TEMPLATE.md) | Template | Copy for new implementation plans. |
+
+## Historical Plans
+
+Completed plans live in [archive/](archive/). They are useful for provenance and
+regression archaeology, but they are not current requirements. When a historical
+plan conflicts with the Tyler gap ledger or execution status, trust the current
+ledger/status pair.
+
+## Adding A New Plan
+
+1. Start from [TEMPLATE.md](TEMPLATE.md).
+2. State the Tyler requirement or maintainer concern that justifies the work.
+3. Define acceptance criteria before implementation.
+4. Add the plan to the active table only while it is executable.
+5. Move it to `archive/` after completion and update this index.
