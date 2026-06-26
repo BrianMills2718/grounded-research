@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ui_protocol import SSEEmitter
-from .sse_runner import run_pipeline_with_sse
+from sse_runner import run_pipeline_with_sse  # absolute import; run via: uvicorn server:app from workbench/backend/
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
