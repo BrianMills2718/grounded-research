@@ -17,7 +17,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ui_protocol import SSEEmitter
 from sse_runner import run_pipeline_with_sse  # absolute import; run via: uvicorn server:app from workbench/backend/
@@ -40,6 +40,31 @@ _jobs: dict[str, SSEEmitter] = {}
 class RunRequest(BaseModel):
     question: str
     config: str = "standard"  # "testing" | "standard"
+
+
+class RunMeta(BaseModel):
+    id: str = Field(description="Hex job ID parsed from directory name")
+    dir: str = Field(description="Output directory name")
+    question: str = Field(description="Research question derived from directory slug")
+    has_report: bool = Field(description="Whether report.md exists")
+    has_summary: bool = Field(description="Whether summary.md exists")
+    mtime: float = Field(description="Directory modification time (Unix timestamp)")
+
+
+class ReportResponse(BaseModel):
+    run_id: str
+    content: str = Field(description="Markdown content of report.md")
+
+
+class SummaryResponse(BaseModel):
+    run_id: str
+    content: str = Field(description="Markdown content of summary.md")
+
+
+class TraceResponse(BaseModel):
+    run_id: str
+    file: str = Field(description="Filename: handoff.json or trace.json")
+    data: dict = Field(description="Parsed JSON content of the trace file")
 
 
 @app.post("/api/run")
@@ -76,7 +101,7 @@ async def health() -> dict:
 
 
 @app.get("/api/runs")
-async def list_runs() -> list[dict]:
+async def list_runs() -> list[RunMeta]:
     """List completed pipeline runs (have report.md)."""
     runs = []
     if not OUTPUT_DIR.exists():
@@ -92,19 +117,19 @@ async def list_runs() -> list[dict]:
             continue
         job_id, slug = m.group(1), m.group(2)
         question = slug.replace("_", " ").strip()
-        runs.append({
-            "id": job_id,
-            "dir": d.name,
-            "question": question,
-            "has_report": report.exists(),
-            "has_summary": summary.exists(),
-            "mtime": d.stat().st_mtime,
-        })
+        runs.append(RunMeta(
+            id=job_id,
+            dir=d.name,
+            question=question,
+            has_report=report.exists(),
+            has_summary=summary.exists(),
+            mtime=d.stat().st_mtime,
+        ))
     return runs
 
 
 @app.get("/api/runs/{run_id}/report")
-async def get_report(run_id: str) -> dict:
+async def get_report(run_id: str) -> ReportResponse:
     """Return report.md content for a completed run."""
     if not OUTPUT_DIR.exists():
         raise HTTPException(404, "No output directory")
@@ -112,13 +137,13 @@ async def get_report(run_id: str) -> dict:
         if d.is_dir() and d.name.startswith(f"workbench_{run_id}_"):
             report = d / "report.md"
             if report.exists():
-                return {"run_id": run_id, "content": report.read_text()}
+                return ReportResponse(run_id=run_id, content=report.read_text())
             raise HTTPException(404, f"No report.md in {d.name}")
     raise HTTPException(404, f"No run found with id: {run_id}")
 
 
 @app.get("/api/runs/{run_id}/trace")
-async def get_trace(run_id: str) -> dict:
+async def get_trace(run_id: str) -> TraceResponse:
     """Return trace.json or handoff.json for a completed run."""
     import json as _json
     if not OUTPUT_DIR.exists():
@@ -129,13 +154,13 @@ async def get_trace(run_id: str) -> dict:
             for fname in ("handoff.json", "trace.json"):
                 f = d / fname
                 if f.exists():
-                    return {"run_id": run_id, "file": fname, "data": _json.loads(f.read_text())}
+                    return TraceResponse(run_id=run_id, file=fname, data=_json.loads(f.read_text()))
             raise HTTPException(404, f"No trace data in {d.name}")
     raise HTTPException(404, f"No run found with id: {run_id}")
 
 
 @app.get("/api/runs/{run_id}/summary")
-async def get_summary(run_id: str) -> dict:
+async def get_summary(run_id: str) -> SummaryResponse:
     """Return summary.md content for a completed run."""
     if not OUTPUT_DIR.exists():
         raise HTTPException(404, "No output directory")
@@ -143,6 +168,6 @@ async def get_summary(run_id: str) -> dict:
         if d.is_dir() and d.name.startswith(f"workbench_{run_id}_"):
             summary = d / "summary.md"
             if summary.exists():
-                return {"run_id": run_id, "content": summary.read_text()}
+                return SummaryResponse(run_id=run_id, content=summary.read_text())
             raise HTTPException(404, f"No summary.md in {d.name}")
     raise HTTPException(404, f"No run found with id: {run_id}")
