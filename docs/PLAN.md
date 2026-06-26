@@ -147,106 +147,32 @@ Otherwise, mark it as hold or discard and keep the docs as source of truth.
 
 ## Active Plan Surfaces
 
-Current open work is intentionally narrow:
+The current maintainer-facing work is intentionally narrow. Do not infer open
+work from archived plan titles or old wave notebooks; the current source of
+truth is the ledger/status pair plus the active plan index.
 
-- completed cross-repo evaluation wave:
-  `docs/plans/tyler_literal_default_eval_wave1.md`
-- completed review notebook:
-  `docs/notebooks/29_tyler_literal_default_eval_wave1.ipynb`
+Primary authority surfaces:
 
-- repo-local Tyler canonical cutover reference:
-  `docs/plans/tyler_canonical_cutover.md`
-- completed child waves under that cutover:
-  `docs/plans/legacy_export_surface_deletion.md`,
-  `docs/plans/stage45_projection_deletion.md`,
-  `docs/plans/stage13_runtime_projection_cutover.md`,
-  `docs/plans/isolated_compatibility_surface_deletion.md`,
-  `docs/plans/current_shape_model_surface_deletion.md`,
-  `docs/plans/stage5_internal_protocol_literalization.md`,
-  `docs/plans/stage34_compatibility_protocol_deletion.md`
-- the post-audit repo-local implementation wave is completed:
-  `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
-- there are no active local audited rows; future repo-local work should reopen
-  only if the ledger records a new concrete divergence
-- the first frozen shared-eval comparison is complete:
-  `output/tyler_literal_default_eval_wave1/summary.md` favored Tyler-literal
-  over the archived calibrated legacy anchor on the tracked UBI case
-- the second frozen shared-eval comparison is complete:
-  `output/tyler_literal_default_eval_wave2_pfas/summary.md` again favored
-  Tyler-literal over the archived calibrated legacy anchor on PFAS
-- the third frozen shared-eval comparison is complete:
-  `output/tyler_literal_default_eval_wave3_llm_swe/summary.md` again favored
-  Tyler-literal over the archived calibrated legacy anchor on the technical
-  `llm_swe` case
-- the current frozen-eval gate is satisfied for the active implementation lane;
-  broader eval is now optional unless a later regression wave needs it
-- the exhaustive Tyler audit reopened implementation gaps in this repo, and the
-  post-audit remediation wave has now closed the prompt-contract, Stage 6
-  validation, and Tyler `PipelineState` trace rows
-- completed remainder plan:
-  `docs/plans/archive/tyler_faithful_execution_remainder.md`
-- completed audit wave:
-  `docs/plans/archive/tyler_spec_gap_audit_wave1.md`
-- completed audit-governance wave:
-  `docs/plans/archive/tyler_audit_governance_wave1.md`
-- historical remediation planner:
-  `docs/plans/archive/tyler_gap_remediation_wave1.md`
-- completed post-audit remediation planner:
-  `docs/plans/archive/tyler_post_audit_remediation_wave2.md`
-- planned remediation-support maintainability wave:
-  `docs/plans/post_audit_maintainability_wave1.md`
-- canonical gap ledger:
-  `docs/TYLER_SPEC_GAP_LEDGER.md`
-- completed systematic review program:
-  `docs/plans/archive/tyler_systematic_review_wave2.md`
-- compact review tracker:
-  `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md`
-- completed exhaustive Tyler packet audit wave:
-  `docs/plans/archive/tyler_full_spec_exhaustive_audit_wave1.md`
-- exhaustive source coverage tracker:
-  `docs/TYLER_FULL_SPEC_AUDIT_MATRIX.md`
-- the exhaustive Tyler packet matrix has full source coverage and the recorded
-  local ledger rows are closed
-- completed shared exact-model follow-through:
-  `docs/plans/archive/tyler_shared_model_version_parity_wave1.md`
-- completed app-local exact-model switch wave:
-  `docs/plans/archive/tyler_exact_model_version_switch_wave1.md`
-- canonical failure-analysis / prevention surface:
-  `docs/TYLER_AUDIT_FAILURE_ANALYSIS.md`
-- the active audit has already identified real local divergences in Stage 1,
-  Stage 2, Stage 3, Stage 4, Stage 5, and Stage 6, so the previous
-  "repo-local work complete" story is no longer accurate
-- the new governance layer exists because earlier Tyler parity waves completed
-  real migration and prompt work but still overclaimed clause-level closure
-  before the ledger existed
-- completed provider-cutover wave:
-  `docs/plans/tavily_integration_wave1.md`
-- completed eval-expansion wave:
-  `docs/plans/tyler_literal_default_eval_wave2.md`
-- completed technical-breadth eval wave:
-  `docs/plans/archive/tyler_literal_default_eval_wave3_llm_swe.md`
-- completed shared-parity closure wave:
-  `docs/plans/archive/tyler_shared_parity_closure_wave1.md`
-- supporting status notes:
-  `docs/TYLER_FROZEN_EVAL_STATUS.md`,
-  `docs/TYLER_SHARED_INFRA_OWNERSHIP.md`,
-  `docs/TYLER_EXECUTION_STATUS.md`
-- deferred depth continuation beyond Wave 1: `docs/plans/archive/depth_modes.md`
-- completed Wave 1 depth continuation reference:
-  `docs/plans/depth_modes_wave1_execution.md`
-- Tyler literal-parity completed repo-local recovery references:
-  `docs/plans/tyler_literal_parity_refactor.md`,
-  `docs/plans/tyler_literal_parity_benchmark_reanchor.md`,
-  `docs/plans/tyler_literal_prompt_quality_recovery.md`,
-  `docs/plans/tyler_stage3_model_role_recovery.md`,
-  `docs/plans/tyler_stage6_decision_guidance_recovery.md`
-- Tyler V1 reference map and follow-through:
-  `docs/TYLER_V1_CURRENT_REPO_MAP.md`,
-  `docs/plans/tyler_v1_followthrough.md`
-- historical Tyler-spec reconciliation reference:
-  `docs/plans/v1_spec_alignment.md`
-- completed post-Wave-2 hardening reference:
-  `docs/plans/post_wave2_cleanup_hardening.md`
+- `docs/TYLER_SPEC_GAP_LEDGER.md`
+- `docs/TYLER_EXECUTION_STATUS.md`
+- `docs/TYLER_REQUIREMENTS_COVERAGE_STATUS.md`
+- `docs/TYLER_TRACEABILITY.md`
+- `docs/plans/CLAUDE.md`
+
+Current active/reference plans:
+
+- `docs/plans/tyler_requirements_traceability_program.md`
+- `docs/plans/maintainer_onboarding_cleanup_wave1.md`
+- `docs/plans/post_audit_maintainability_wave1.md`
+- `docs/plans/llm_call_observability.md`
+- `docs/plans/v1_spec_alignment.md`
+
+Current stop line:
+
+1. Keep the structured Tyler requirement registry/YAML current.
+2. Keep evidence-grade and policy-finding gates green before claiming status.
+3. Treat archived plans as provenance, not as active requirements.
+4. Reopen implementation work only through a concrete ledger row or failing gate.
 
 Historical benchmark progression and comparative results live in:
 
@@ -739,7 +665,7 @@ Current stop line:
 
 Current reference surfaces:
 
-- `docs/plans/tyler_literal_parity_refactor.md`
-- `docs/plans/tyler_literal_parity_benchmark_reanchor.md`
-- `docs/plans/tyler_literal_prompt_quality_recovery.md`
-- `docs/plans/thorough_benchmark_preservation_wave1.md`
+- `docs/TYLER_SPEC_GAP_LEDGER.md`
+- `docs/TYLER_EXECUTION_STATUS.md`
+- `docs/TYLER_REQUIREMENTS_COVERAGE_STATUS.md`
+- `docs/plans/CLAUDE.md`
