@@ -40,6 +40,11 @@ async def run_pipeline_with_sse(
     else:
         os.environ.pop("GROUNDED_RESEARCH_CONFIG", None)
 
+    # grounded_research.config caches at module level — clear before each run
+    # so config profile switches take effect immediately without restarting uvicorn.
+    import grounded_research.config as _gr_config
+    _gr_config._cached_config = None
+
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"workbench/{run_id}"
     output_dir.mkdir(parents=True, exist_ok=True)

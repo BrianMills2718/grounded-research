@@ -3,48 +3,44 @@
 # synthesis length, and arbitration rounds. CLI: --depth deep
 depth: "standard"
 
-# Testing config: direct provider APIs (bypass OpenRouter for reliability).
-# OpenRouter structured output calls are unreliable — 300s+ timeouts common.
+# Testing config: OpenRouter gpt-5.4-mini (avoids Gemini free-tier 20 req/day quota).
+# Uses OPENROUTER_API_KEY via llm_client default routing.
 models:
-  decomposition: "gemini/gemini-2.5-flash"
-  analyst: "gemini/gemini-2.5-flash"
-  query_diversification: "gemini/gemini-2.5-flash"
-  evidence_extraction: "gemini/gemini-2.5-flash"
-  claim_extraction: "gemini/gemini-2.5-flash"
-  deduplication: "gemini/gemini-2.5-flash"
-  dispute_classification: "gemini/gemini-2.5-flash"
-  arbitration: "gemini/gemini-2.5-flash"
-  synthesis: "gemini/gemini-2.5-flash"
-  source_scoring: "gemini/gemini-2.5-flash"
+  decomposition: "openrouter/openai/gpt-5.4-mini"
+  analyst: "openrouter/openai/gpt-5.4-mini"
+  query_diversification: "openrouter/openai/gpt-5.4-mini"
+  evidence_extraction: "openrouter/openai/gpt-5.4-mini"
+  claim_extraction: "openrouter/openai/gpt-5.4-mini"
+  deduplication: "openrouter/openai/gpt-5.4-mini"
+  dispute_classification: "openrouter/openai/gpt-5.4-mini"
+  arbitration: "openrouter/openai/gpt-5.4-mini"
+  synthesis: "openrouter/openai/gpt-5.4-mini"
+  source_scoring: "openrouter/openai/gpt-5.4-mini"
 
 model_fallbacks:
-  decomposition: ["gemini/gemini-2.5-flash-lite"]
+  decomposition: ["openrouter/openai/gpt-5.4-nano"]
   analyst:
-    - "gemini/gemini-2.5-flash"
-    - "gemini/gemini-2.5-flash-lite"
-  query_diversification: ["gemini/gemini-2.5-flash-lite"]
-  evidence_extraction: ["gemini/gemini-2.5-flash-lite"]
-  claim_extraction: ["gemini/gemini-2.5-flash-lite"]
-  deduplication: ["gemini/gemini-2.5-flash-lite"]
-  dispute_classification: ["gemini/gemini-2.5-flash-lite"]
-  arbitration: ["gemini/gemini-2.5-flash-lite"]
-  synthesis: ["gemini/gemini-2.5-flash-lite"]
-  source_scoring: ["gemini/gemini-2.5-flash-lite"]
+    - "openrouter/openai/gpt-5.4-mini"
+    - "openrouter/openai/gpt-5.4-nano"
+  query_diversification: ["openrouter/openai/gpt-5.4-nano"]
+  evidence_extraction: ["openrouter/openai/gpt-5.4-nano"]
+  claim_extraction: ["openrouter/openai/gpt-5.4-nano"]
+  deduplication: ["openrouter/openai/gpt-5.4-nano"]
+  dispute_classification: ["openrouter/openai/gpt-5.4-nano"]
+  arbitration: ["openrouter/openai/gpt-5.4-nano"]
+  synthesis: ["openrouter/openai/gpt-5.4-nano"]
+  source_scoring: ["openrouter/openai/gpt-5.4-nano"]
 
 # Closest-available Tyler Stage 3 mapping.
 # Tyler specified:
 #   A = GPT-5.4 (step-back abstraction)
 #   B = Gemini 3.1 Pro (structured decomposition)
 #   C = Claude Opus 4.6 (verification-first)
-# The current shared registry does not expose Claude Opus 4.6, so the primary
-# trio uses the strongest locally available structured-output-safe substitutes.
-# DeepSeek is removed from the primary path because live Tyler-native runs
-# showed schema instability on `AnalysisObject`.
-# Testing: all Gemini (direct API, fast, cheap). No cross-family diversity.
+# Testing: all gpt-5.4-mini via OpenRouter. No cross-family diversity.
 analyst_models:
-  - "gemini/gemini-2.5-flash"            # Analyst A
-  - "gemini/gemini-2.5-flash"            # Analyst B
-  - "gemini/gemini-2.5-flash"            # Analyst C
+  - "openrouter/openai/gpt-5.4-mini"    # Analyst A
+  - "openrouter/openai/gpt-5.4-mini"    # Analyst B
+  - "openrouter/openai/gpt-5.4-mini"    # Analyst C
 
 budgets:
   analyst_max_calls: 3
@@ -177,9 +173,9 @@ analyst_success:
 
 tyler_literal_parity:
   stage4_retry_on_empty_claims: true
-  stage4_retry_model: "openrouter/google/gemini-2.5-flash"
+  stage4_retry_model: "openrouter/openai/gpt-5.4-mini"
   stage4_retry_fallback_models:
-    - "openrouter/openai/gpt-5-nano"
+    - "openrouter/openai/gpt-5.4-nano"
   stage6_repair_on_underfilled_fields: true
   stage6_repair_attempts: 1
   stage6_min_tradeoffs: 1
