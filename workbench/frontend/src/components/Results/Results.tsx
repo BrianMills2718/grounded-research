@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import MarkdownViewer from '../MarkdownViewer/MarkdownViewer'
 import JSONTreeViewer from '../JSONTreeViewer/JSONTreeViewer'
+import ClaimLedgerViewer from '../ClaimLedgerViewer/ClaimLedgerViewer'
 
 interface RunMeta {
   id: string
@@ -15,7 +16,7 @@ export default function Results() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [content, setContent] = useState<string | null>(null)
   const [traceData, setTraceData] = useState<unknown>(null)
-  const [view, setView] = useState<'report' | 'trace'>('report')
+  const [view, setView] = useState<'report' | 'trace' | 'claims'>('report')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -116,7 +117,7 @@ export default function Results() {
             flexShrink: 0,
             background: 'var(--surface)',
           }}>
-            {(['report', 'trace'] as const).map(v => (
+            {(['report', 'trace', 'claims'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -175,6 +176,36 @@ export default function Results() {
             }
           </div>
         )}
+
+        {/* Claims view */}
+        {!loading && view === 'claims' && (() => {
+          type TracePayload = {
+            stage_5_verification_result?: {
+              updated_claim_ledger?: unknown[]
+              updated_dispute_queue?: unknown[]
+            }
+            stage_6_synthesis_report?: {
+              disagreement_map?: unknown[]
+            }
+          }
+          const payload = traceData as TracePayload | null
+          const claims = (payload?.stage_5_verification_result?.updated_claim_ledger ?? []) as Parameters<typeof ClaimLedgerViewer>[0]['claims']
+          const disputes = (payload?.stage_5_verification_result?.updated_dispute_queue ?? []) as Parameters<typeof ClaimLedgerViewer>[0]['disputes']
+          const resolutions = (payload?.stage_6_synthesis_report?.disagreement_map ?? []) as Parameters<typeof ClaimLedgerViewer>[0]['resolutions']
+
+          if (claims.length === 0) {
+            return (
+              <div style={{ padding: 'var(--space-5)', color: 'var(--muted)', fontSize: 13 }}>
+                No claim data available — this run may not have completed Stage 5
+              </div>
+            )
+          }
+          return (
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <ClaimLedgerViewer claims={claims} disputes={disputes} resolutions={resolutions} />
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
