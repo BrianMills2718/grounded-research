@@ -110,7 +110,7 @@ closed by runtime proof. The source-anchor pass now leaves no pending rows:
 31 rows cite line-level Tyler packet anchors, and five local doc-governance rows
 carry explicit anchor exceptions rather than fake Tyler citations.
 
-Negative controls are now covered in `tests/test_tyler_coverage.py` for the
+Negative controls are now covered in `tests/meta/test_tyler_coverage.py` for the
 seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
 `make check` runs the calibrated `--fail-on-findings` gate.
 

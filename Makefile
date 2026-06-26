@@ -25,15 +25,18 @@ help: ## Show this help
 	@echo ""
 	@echo "Options: DAYS=7 QUERY='topic' INPUT=evidence.json LIMIT=20"
 
-test: ## Run full test suite
-	$(PYTHON) -m pytest tests/ -v
+test: ## Run product and governance meta-tests
+	$(PYTHON) -m pytest tests/ --ignore=tests/meta -v
+	$(PYTHON) -m pytest tests/meta/ -v
 
-test-quick: ## Run tests, minimal output
-	$(PYTHON) -m pytest tests/ -x -q
+test-quick: ## Run product and governance meta-tests, minimal output
+	$(PYTHON) -m pytest tests/ --ignore=tests/meta -x -q
+	$(PYTHON) -m pytest tests/meta/ -x -q
 
 check: ## Run tests + lint + Tyler status gates
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
-	$(PYTHON) -m pytest tests/ -x -q
+	$(PYTHON) -m pytest tests/ --ignore=tests/meta -x -q
+	$(PYTHON) -m pytest tests/meta/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
 	$(PYTHON) scripts/check_docstrings.py >/dev/null
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
@@ -47,7 +50,8 @@ check: ## Run tests + lint + Tyler status gates
 
 check-strict: ## Run tests + lint + docstring gate + strict mypy
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
-	$(PYTHON) -m pytest tests/ -x -q
+	$(PYTHON) -m pytest tests/ --ignore=tests/meta -x -q
+	$(PYTHON) -m pytest tests/meta/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
 	$(PYTHON) scripts/check_docstrings.py >/dev/null
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null

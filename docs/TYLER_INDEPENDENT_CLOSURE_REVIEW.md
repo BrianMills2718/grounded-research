@@ -67,6 +67,6 @@ Commands run for this closure-review checkpoint:
 python scripts/check_tyler_coverage.py --format json --fail-on-grade-f
 python scripts/check_tyler_doc_drift.py --format json --fail-on-findings
 python scripts/check_tyler_code_audit.py --format json --fail-on-findings
-pytest tests/test_tyler_code_audit.py tests/test_tyler_doc_drift.py tests/test_tyler_coverage.py -q
+pytest tests/meta/test_tyler_code_audit.py tests/meta/test_tyler_doc_drift.py tests/meta/test_tyler_coverage.py -q
 make check
 ```
