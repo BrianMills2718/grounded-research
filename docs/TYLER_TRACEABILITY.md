@@ -123,12 +123,14 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md` | Adversarial closure-review checkpoint and residual-risk disposition. |
 | `docs/TYLER_SOURCE_MANIFEST.md` | Raw Tyler packet line-count and hash manifest. |
+| `docs/tyler_requirements.yaml` | Structured YAML requirements snapshot with class evidence policy. |
 | `docs/tyler_requirements_registry.json` | Generated structured registry snapshot from the Markdown ledger. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
 | `scripts/check_tyler_coverage.py` | Coverage-quality report with evidence grades and strict finding failures. |
 | `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
 | `scripts/check_tyler_code_audit.py` | Current-code evidence audit for non-doc Tyler rows. |
 | `scripts/check_tyler_source_manifest.py` | Raw Tyler source packet reproducibility check. |
+| `scripts/sync_tyler_requirements_yaml.py` | Generate or check the structured YAML requirements snapshot. |
 | `scripts/sync_tyler_registry.py` | Generate or check the structured registry snapshot. |
 | `make tyler-traceability` | Human-readable report. |
 | `make tyler-traceability-json` | Agent/tool-readable report. |
@@ -143,18 +145,22 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
 | `make tyler-registry-check` | Verify the tracked structured registry snapshot is current. |
 | `make tyler-registry-json` | Emit the structured registry JSON to stdout. |
 | `make tyler-registry-sync` | Regenerate the tracked structured registry snapshot. |
+| `make tyler-requirements-yaml-check` | Verify the tracked YAML requirements snapshot is current and policy-clean. |
+| `make tyler-requirements-yaml` | Emit the structured Tyler requirements YAML to stdout. |
+| `make tyler-requirements-yaml-sync` | Regenerate the tracked structured Tyler requirements YAML. |
 
 ## Design Boundary
 
-This is intentionally a one-way generated registry from existing authority
-docs, not a second manually edited ledger. The next improvement should invert
-ownership so Markdown is generated from a schema-backed source, but only after
-the current parser/report proves which fields are worth governing.
+This is intentionally a one-way generated YAML/JSON structured surface from
+existing authority docs, not a second manually edited ledger. The next
+improvement should invert ownership so Markdown is generated from the YAML
+source, but only after the current parser/report proves which fields are worth
+governing.
 
 ## Next Improvements
 
-1. Promote the ledger rows into a YAML or JSON source file and generate the
-   Markdown ledger from it.
+1. Invert ownership so the Markdown ledger is generated from
+   `docs/tyler_requirements.yaml`.
 2. Add a `trace_eval`-style runtime evidence checker once that shared library
    exists.
 3. Package frozen output artifacts for machines that do not have a populated

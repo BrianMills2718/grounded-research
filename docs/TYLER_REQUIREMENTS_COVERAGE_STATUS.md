@@ -98,6 +98,8 @@ What is now enforced:
 
 - The structured registry is generated from the Markdown ledger and checked by
   `make check`.
+- `docs/tyler_requirements.yaml` contains all 36 current Tyler rows with
+  required evidence kinds by requirement class and is checked by `make check`.
 - Requirement-class evidence policy is implemented in
   `scripts/check_tyler_coverage.py` and enforced with
   `--fail-on-grade-f --fail-on-findings`.
@@ -112,8 +114,8 @@ What is now enforced:
 What is still missing:
 
 - A structured authoring source-of-truth for Tyler requirements. The current
-  structured registry is a generated JSON snapshot checked against the
-  Markdown ledger.
+  YAML and JSON files are generated snapshots checked against the Markdown
+  ledger.
 - A `trace_eval`-style runtime evidence checker once that shared library
   exists.
 - A packaged frozen-output artifact story for clean worktrees. `make
@@ -128,19 +130,21 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 31 | 7,747 |
-| `scripts/**/*.py` | 15 | 2,811 |
+| `tests/**/*.py` | 32 | 7,796 |
+| `scripts/**/*.py` | 16 | 3,047 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 113 | 16,566 |
+| `docs/**/*.md` | 113 | 16,579 |
 | `docs/tyler_requirements_registry.json` | 1 | 1,475 |
-| all tracked Markdown | 130 | 23,427 |
+| `docs/tyler_requirements.yaml` | 1 | 1,490 |
+| all tracked Markdown | 130 | 23,440 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
 
 ## Current Authority Chain
 
-Use this order until the traceability program replaces it with structured data:
+Use this order until the traceability program inverts ownership and generates
+the Markdown ledger from `docs/tyler_requirements.yaml`:
 
 1. Raw Tyler packet in `2026_0325_tyler_feedback/`.
 2. `docs/TYLER_SPEC_GAP_LEDGER.md`.
@@ -190,6 +194,9 @@ make tyler-source-check-json
 make tyler-registry-check
 make tyler-registry-json
 make tyler-registry-sync
+make tyler-requirements-yaml-check
+make tyler-requirements-yaml
+make tyler-requirements-yaml-sync
 make check
 ```
 
@@ -200,6 +207,8 @@ closed for the current ledger: rows have either line-level Tyler anchors or
 explicit doc-governance exceptions. The tracked raw Tyler source packet must
 also match its manifest hashes and line counts. The generated structured
 registry must also match the current ledger-derived read model.
+`docs/tyler_requirements.yaml` must also match the current ledger-derived model
+and satisfy its declared requirement-class evidence policy.
 
 Quality standard:
 
