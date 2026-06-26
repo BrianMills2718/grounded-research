@@ -133,6 +133,7 @@ Then give your overall verdict on which is more useful for a decision-maker.
 
 
 def main() -> None:
+    """Run the fair comparison CLI."""
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("report_a", type=Path)

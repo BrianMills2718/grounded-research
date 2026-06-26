@@ -54,6 +54,7 @@ async def run_gpt_researcher(question: str, output_dir: Path) -> None:
 
 
 def main() -> None:
+    """Run the GPT Researcher baseline CLI."""
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("question", type=str)

@@ -35,6 +35,7 @@ check: ## Run tests + lint + Tyler status gates
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
+	$(PYTHON) scripts/check_docstrings.py >/dev/null
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
@@ -44,10 +45,11 @@ check: ## Run tests + lint + Tyler status gates
 	$(PYTHON) scripts/sync_tyler_requirements_yaml.py --check --format json >/dev/null
 	$(PYTHON) scripts/generate_tyler_review_packets.py --format json >/dev/null
 
-check-strict: ## Run tests + lint + current known-debt mypy gate
+check-strict: ## Run tests + lint + docstring gate + strict mypy
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
+	$(PYTHON) scripts/check_docstrings.py >/dev/null
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
 	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
@@ -61,7 +63,7 @@ check-strict: ## Run tests + lint + current known-debt mypy gate
 lint: ## Run Ruff lint checks
 	$(PYTHON) -m ruff check engine.py src/ tests/ scripts/
 
-typecheck: ## Run mypy strict typecheck (currently tracks known debt)
+typecheck: ## Run strict mypy typecheck
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 status: ## Git status

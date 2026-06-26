@@ -87,6 +87,7 @@ def _url_hash(url: str) -> str:
 
 
 def _is_pdf_url(url: str) -> bool:
+    """Detect PDF URLs from their path suffix before deciding the fetch parser."""
     return urlparse(url).path.lower().endswith(".pdf")
 
 
@@ -140,6 +141,7 @@ def extract_key_section(text: str, question: str, max_chars: int = _KEY_SECTION_
     paragraphs = [p.strip() for p in re.split(r"\s{3,}|\n{2,}", text) if p.strip()]
 
     def score(para: str) -> int:
+        """Count question-keyword overlap for one candidate paragraph."""
         pl = para.lower()
         return sum(1 for k in keywords if k in pl)
 
@@ -243,7 +245,7 @@ def _extract_pdf_text_locally(pdf_bytes: bytes) -> tuple[str, str]:
     try:
         import pymupdf
 
-        with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:
+        with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:  # type: ignore[no-untyped-call]
             text = "\n\n".join(page.get_text("text").strip() for page in doc).strip()
         if text:
             return text, "pymupdf"

@@ -127,6 +127,7 @@ Explicitly flag any conflicts between sources.
 
 
 def main() -> None:
+    """Run the single-shot model baseline CLI."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Single-shot baseline comparison")

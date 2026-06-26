@@ -28,6 +28,7 @@ class NoAliasSafeDumper(yaml.SafeDumper):
     """YAML dumper that avoids anchors for repeated small policy lists."""
 
     def ignore_aliases(self, data: Any) -> bool:
+        """Disable YAML aliases so generated files remain readable and diffable."""
         return True
 
 

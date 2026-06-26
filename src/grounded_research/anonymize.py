@@ -64,6 +64,7 @@ def scrub_tyler_analysis_object(analysis: AnalysisObject) -> list[str]:
     redactions: list[str] = []
 
     def _scrub_field(obj: object, field_name: str, path: str) -> None:
+        """Scrub one string field in place and record the redaction path."""
         value = getattr(obj, field_name)
         if not isinstance(value, str) or not value:
             return

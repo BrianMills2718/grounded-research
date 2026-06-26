@@ -13,6 +13,7 @@ the live export path so the repo keeps one canonical output contract.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from collections import Counter
 import json
 import logging
@@ -20,6 +21,7 @@ from pathlib import Path
 import re
 import sqlite3
 import uuid
+from typing import cast
 
 from grounded_research.config import (
     get_fallback_models,
@@ -122,7 +124,7 @@ def _load_total_cost_usd(
     *,
     observability_db_path: Path | None,
     trace_id_root: str | None,
-    phase_traces: list,
+    phase_traces: Sequence[object],
 ) -> float | None:
     """Best-effort total-cost rollup for Tyler's trace contract."""
     fallback_total = sum(float(getattr(trace, "llm_cost_usd", 0.0)) for trace in phase_traces)
@@ -151,6 +153,13 @@ def _load_total_cost_usd(
             conn.close()
     except sqlite3.Error:
         return fallback_total or None
+
+
+def _string_list(value: object) -> list[str]:
+    """Normalize compacted prompt fields that should be rendered as string lists."""
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return []
 
 
 def build_tyler_pipeline_state(
@@ -289,24 +298,31 @@ def _build_stage6_top_sources(
         )
         seen_ids.add(source.id)
 
-    for source in verification_result.additional_sources:
-        if source.source_id in seen_ids:
+    for additional_source in verification_result.additional_sources:
+        if additional_source.source_id in seen_ids:
             continue
-        resolved_disputes = [source.retrieved_for_dispute] if source.retrieved_for_dispute in investigated_dispute_ids else []
-        contribution_summary = "; ".join(source.key_findings[:2]) or "Retrieved during Stage 5 targeted verification."
+        resolved_disputes = (
+            [additional_source.retrieved_for_dispute]
+            if additional_source.retrieved_for_dispute in investigated_dispute_ids
+            else []
+        )
+        contribution_summary = (
+            "; ".join(additional_source.key_findings[:2])
+            or "Retrieved during Stage 5 targeted verification."
+        )
         if not resolved_disputes:
             contribution_summary = _truncate_text(contribution_summary, non_dispute_summary_chars)
         top_sources.append(
             {
-                "id": source.source_id,
-                "title": source.title,
-                "quality_score": source.quality_score,
+                "id": additional_source.source_id,
+                "title": additional_source.title,
+                "quality_score": additional_source.quality_score,
                 "source_type": "verification_additional",
                 "contribution_summary": contribution_summary,
                 "conflicts_resolved": resolved_disputes,
             }
         )
-        seen_ids.add(source.source_id)
+        seen_ids.add(additional_source.source_id)
 
     return top_sources[:top_sources_cap]
 
@@ -384,8 +400,12 @@ def _compact_stage6_prompt_inputs(
         {
             "stage_name": summary["stage_name"],
             "goal": _truncate_text(str(summary["goal"]), 120),
-            "key_findings": [_truncate_text(str(item), 120) for item in list(summary["key_findings"])[:3]],
-            "decisions_made": [_truncate_text(str(item), 120) for item in list(summary["decisions_made"])[:2]],
+            "key_findings": [
+                _truncate_text(item, 120) for item in _string_list(summary["key_findings"])[:3]
+            ],
+            "decisions_made": [
+                _truncate_text(item, 120) for item in _string_list(summary["decisions_made"])[:2]
+            ],
             "outcome": _truncate_text(str(summary["outcome"]), 160),
             "reasoning": _truncate_text(str(summary["reasoning"]), 200),
         }
@@ -765,6 +785,7 @@ async def generate_tyler_synthesis_report(
     synthesis_model, synthesis_fallback_models = _select_stage6_synthesis_model(state)
 
     async def _generate_once(feedback: list[str], suffix: str) -> SynthesisReport:
+        """Call the Stage 6 synthesis model once, optionally with repair feedback."""
         prompt_messages = messages
         if feedback:
             prompt_messages = prompt_messages + [
@@ -782,7 +803,7 @@ async def generate_tyler_synthesis_report(
             max_budget=max_budget,
             fallback_models=synthesis_fallback_models,
         )
-        return report
+        return cast(SynthesisReport, report)
 
     report = await _generate_once(feedback=[], suffix="")
     repair_feedback = _validate_tyler_synthesis_report(

@@ -93,6 +93,7 @@ class SourceReputationDB:
     """
 
     def __init__(self, db_path: Path | str | None = None) -> None:
+        """Initialize the tracker with an explicit or default SQLite path."""
         self._db_path = Path(db_path) if db_path else _DEFAULT_DB_PATH
         self._conn: sqlite3.Connection | None = None
 
@@ -113,9 +114,11 @@ class SourceReputationDB:
             self._conn = None
 
     def __enter__(self) -> SourceReputationDB:
+        """Return this tracker so callers can use it as a context manager."""
         return self
 
     def __exit__(self, *exc: object) -> None:
+        """Close the underlying SQLite connection on context-manager exit."""
         self.close()
 
     # ------------------------------------------------------------------

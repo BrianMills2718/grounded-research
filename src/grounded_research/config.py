@@ -8,7 +8,7 @@ direct YAML parsing in pipeline code.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypedDict, cast
 
 import yaml
 
@@ -18,6 +18,13 @@ _DEFAULT_CONFIG_PATH = _CONFIG_DIR / "config.yaml"
 
 _cached_config: dict[str, Any] | None = None
 SearchProvider = Literal["tavily", "brave", "searxng", "exa"]
+
+
+class SearchProviderConfig(TypedDict):
+    """Validated shared web-search provider configuration."""
+
+    provider: SearchProvider
+    locale: str
 
 
 def _resolve_config_path() -> Path:
@@ -214,7 +221,7 @@ def get_collection_ranking_config() -> dict[str, Any]:
     return defaults
 
 
-def get_search_provider_config() -> dict[str, str]:
+def get_search_provider_config() -> SearchProviderConfig:
     """Get shared web-search provider policy with quality-first defaults.
 
     Search-provider choice belongs in config so the application can prefer the
@@ -223,11 +230,11 @@ def get_search_provider_config() -> dict[str, str]:
     """
     cfg = load_config()
     collection = cfg.get("collection", {})
-    provider = collection.get("search_provider", "tavily")
-    locale = collection.get("search_locale", "en")
+    provider = str(collection.get("search_provider", "tavily"))
+    locale = str(collection.get("search_locale", "en"))
     if provider not in {"tavily", "brave", "searxng", "exa"}:
         raise ValueError(f"Unsupported search provider in config: {provider}")
-    return {"provider": provider, "locale": locale}
+    return {"provider": cast(SearchProvider, provider), "locale": locale}
 
 
 def get_evidence_policy_config() -> dict[str, Any]:

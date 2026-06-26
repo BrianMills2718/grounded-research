@@ -41,6 +41,7 @@ def compress_evidence(
 
     # Score each evidence item for priority
     def _priority(e: EvidenceItem) -> tuple[int, bool, str]:
+        """Rank evidence so higher-quality and sub-question-linked items survive compression."""
         quality = source_quality.get(e.source_id, "unknown")
         tier = {"authoritative": 0, "reliable": 1, "unknown": 2, "unreliable": 3}.get(quality, 2)
         has_sq = bool(e.sub_question_ids)

@@ -186,6 +186,7 @@ def _build_evaluator(judge_model: str):
     )
 
     async def evaluate(output: Any, expected: Any = None):
+        """Evaluate one candidate output against the configured Tyler expectations."""
         question = str(expected or "").strip()
         wrapped_output = f"Question:\n{question}\n\nReport:\n{output}"
         return await base(wrapped_output, None)

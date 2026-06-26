@@ -15,9 +15,11 @@ from __future__ import annotations
 import json
 import random
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Literal, TypeVar, cast
 from urllib.parse import urlparse
 
 from grounded_research.config import get_budget, get_depth_config, get_fallback_models, get_model, load_config
@@ -43,18 +45,28 @@ from grounded_research.tyler_v1_models import (
     EvidencePackage,
     ResolutionOutcome,
     Source as TylerSource,
+    StageSummary,
     VerificationResult,
 )
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+Freshness = Literal["pd", "pw", "pm", "py", "none"]
+F = TypeVar("F", bound=Callable[..., object])
 
 try:
-    from data_contracts import boundary  # type: ignore[import-untyped]
+    from data_contracts import boundary as _boundary_untyped
 except ImportError:
-    def boundary(*args, **kwargs):  # type: ignore[misc]
-        def decorator(fn):  # type: ignore[misc]
+    def boundary(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+        """Return a no-op boundary decorator when shared contracts are unavailable."""
+        def decorator(fn: F) -> F:
+            """Return the wrapped function unchanged."""
             return fn
         return decorator
+else:
+    def boundary(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+        """Call the shared boundary decorator with a typed local surface."""
+        typed_boundary = cast(Callable[..., Callable[[F], F]], _boundary_untyped)
+        return typed_boundary(*args, **kwargs)
 
 
 @dataclass(frozen=True)
@@ -75,9 +87,17 @@ def _load_verification_config() -> dict[str, object]:
     return {}
 
 
-def _freshness_for_time_sensitivity(time_sensitivity: str) -> str:
+def _config_int(cfg: dict[str, object], key: str, default: int) -> int:
+    """Read an integer verification setting from loose YAML config."""
+    value = cfg.get(key, default)
+    if not isinstance(value, int):
+        raise TypeError(f"verification.{key} must be an integer, got {type(value).__name__}.")
+    return value
+
+
+def _freshness_for_time_sensitivity(time_sensitivity: str) -> Freshness:
     """Map project time-sensitivity into shared-provider freshness windows."""
-    return _FRESHNESS_MAP.get(time_sensitivity, "pm")
+    return cast(Freshness, _FRESHNESS_MAP.get(time_sensitivity, "pm"))
 
 async def _collect_fresh_evidence_for_dispute(
     dispute_id: str,
@@ -91,8 +111,8 @@ async def _collect_fresh_evidence_for_dispute(
     from grounded_research.tools.jina_reader import fetch_page_jina
 
     cfg = _load_verification_config()
-    max_results_per_query = int(cfg.get("results_per_query", 3))
-    max_sources_per_dispute = int(cfg.get("max_new_sources_per_dispute", 3))
+    max_results_per_query = _config_int(cfg, "results_per_query", 3)
+    max_sources_per_dispute = _config_int(cfg, "max_new_sources_per_dispute", 3)
     freshness = _freshness_for_time_sensitivity(
         getattr(bundle.question, "time_sensitivity", "mixed")
     )
@@ -469,8 +489,8 @@ async def arbitrate_dispute_tyler_v1(
     *,
     original_query: str,
     dispute: DisputeQueueEntry,
-    claim_ledger_entries: list[object],
-    relevant_original_sources: list[object],
+    claim_ledger_entries: list[ClaimLedgerEntry],
+    relevant_original_sources: list[TylerSource],
     new_evidence: list[AdditionalSource],
     trace_id: str,
     max_budget: float,
@@ -500,7 +520,7 @@ async def arbitrate_dispute_tyler_v1(
         max_budget=max_budget,
         fallback_models=get_fallback_models("arbitration"),
     )
-    return result
+    return cast(ArbitrationAssessment, result)
 
 
 def _normalize_tyler_claim_status_updates(
@@ -611,14 +631,17 @@ async def verify_disputes_tyler_v1(
             updated_dispute_queue=stage_4_result.dispute_queue,
             search_budget={},
             rounds_used=0,
-            stage_summary={
-                "stage_name": "Stage 5: Targeted Verification & Arbitration",
-                "goal": "Resolve decision-critical empirical and interpretive disputes.",
-                "key_findings": ["No decision-critical Stage 5 disputes required investigation."],
-                "decisions_made": ["Skipped Stage 5 because no actionable disputes remained."],
-                "outcome": "No verification work performed.",
-                "reasoning": "The Stage 4 dispute queue had no unresolved empirical or interpretive decision-critical disputes.",
-            },
+            stage_summary=StageSummary(
+                stage_name="Stage 5: Targeted Verification & Arbitration",
+                goal="Resolve decision-critical empirical and interpretive disputes.",
+                key_findings=["No decision-critical Stage 5 disputes required investigation."],
+                decisions_made=["Skipped Stage 5 because no actionable disputes remained."],
+                outcome="No verification work performed.",
+                reasoning=(
+                    "The Stage 4 dispute queue had no unresolved empirical or interpretive "
+                    "decision-critical disputes."
+                ),
+            ),
         )
         return empty, [], 0
 
@@ -753,20 +776,23 @@ async def verify_disputes_tyler_v1(
         updated_dispute_queue=list(dispute_lookup.values()),
         search_budget=search_budget,
         rounds_used=rounds_used,
-        stage_summary={
-            "stage_name": "Stage 5: Targeted Verification & Arbitration",
-            "goal": "Resolve decision-critical empirical and interpretive disputes with targeted fresh evidence.",
-            "key_findings": [
+        stage_summary=StageSummary(
+            stage_name="Stage 5: Targeted Verification & Arbitration",
+            goal="Resolve decision-critical empirical and interpretive disputes with targeted fresh evidence.",
+            key_findings=[
                 f"{len(investigated)} disputes investigated",
                 f"{len(all_additional_sources)} additional sources gathered",
                 f"{sum(1 for item in investigated if item.resolution is not ResolutionOutcome.EVIDENCE_INSUFFICIENT)} disputes resolved",
             ],
-            "decisions_made": [
+            decisions_made=[
                 "Used deterministic neutral verification queries per dispute",
                 "Updated only claims directly involved in investigated disputes",
             ],
-            "outcome": f"Stage 5 completed with {rounds_used} round(s) used.",
-            "reasoning": "Literal Tyler Stage 5 arbitration ran against targeted fresh evidence, then the result was normalized into strict post-verification claim statuses.",
-        },
+            outcome=f"Stage 5 completed with {rounds_used} round(s) used.",
+            reasoning=(
+                "Literal Tyler Stage 5 arbitration ran against targeted fresh evidence, then "
+                "the result was normalized into strict post-verification claim statuses."
+            ),
+        ),
     )
     return verification_result, warnings, llm_calls

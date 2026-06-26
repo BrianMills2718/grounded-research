@@ -8,6 +8,7 @@ are intentionally excluded from `main`.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 import random
 
 from grounded_research.config import (
@@ -133,6 +134,7 @@ async def canonicalize_tyler_v1(
     parity_policy = get_tyler_literal_parity_config()
 
     async def _run_stage4_retry(issue_summary: str) -> TylerClaimExtractionResult:
+        """Retry Tyler Stage 4 with explicit repair instructions after validation failure."""
         retry_messages, _randomized_retry_stage3 = _render_stage4_messages(
             original_query=original_query,
             tyler_stage1=tyler_stage1,
@@ -162,7 +164,7 @@ async def canonicalize_tyler_v1(
             max_budget=max_budget,
             fallback_models=retry_fallback_models if retry_fallback_models else get_fallback_models("claim_extraction"),
         )
-        return retry_result
+        return cast(TylerClaimExtractionResult, retry_result)
 
     messages, _randomized_stage3 = _render_stage4_messages(
         original_query=original_query,

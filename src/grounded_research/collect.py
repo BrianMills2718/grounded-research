@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import re
 import time
-from typing import Literal
+from typing import Literal, cast
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -40,6 +40,9 @@ from grounded_research.models import (
     ResearchQuestion,
     SourceRecord,
     Stage2QueryPlan,
+    Stage2QueryProvider,
+    TimeSensitivity,
+    QualityTier,
 )
 from grounded_research.evidence_utils import COLLECTION_FRESHNESS_MAP as _FRESHNESS_MAP, estimate_recency as _estimate_recency
 from grounded_research.tyler_v1_models import (
@@ -54,6 +57,70 @@ from grounded_research.tyler_v1_models import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MAX_QUERIES_PER_SUB_QUESTION = 4
+Freshness = Literal["pd", "pw", "pm", "py", "none"]
+SearchResultRow = dict[str, object]
+SubQuestionPayload = dict[str, object]
+
+
+def _as_object_list(value: object) -> list[object]:
+    """Return list config values while rejecting scalar YAML values."""
+    if isinstance(value, list):
+        return value
+    return []
+
+
+def _as_int(value: object, *, key: str) -> int:
+    """Read integer config and JSON values without silently accepting wrong shapes."""
+    if isinstance(value, int):
+        return value
+    raise TypeError(f"{key} must be an integer, got {type(value).__name__}.")
+
+
+def _as_float(value: object, *, default: float = 0.0) -> float:
+    """Read numeric JSON fields that may arrive as strings from providers."""
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return default
+    return default
+
+
+def _as_quality_tier(value: object) -> QualityTier:
+    """Validate source-quality strings before passing them to typed models."""
+    if value in {"authoritative", "reliable", "unknown", "unreliable"}:
+        return cast(QualityTier, value)
+    return "reliable"
+
+
+def _as_time_sensitivity(value: str) -> TimeSensitivity:
+    """Validate time-sensitivity strings before constructing typed question models."""
+    if value not in {"stable", "mixed", "time_sensitive"}:
+        raise ValueError(f"Unsupported time sensitivity: {value}")
+    return cast(TimeSensitivity, value)
+
+
+def _freshness_for_time_sensitivity(value: str) -> Freshness:
+    """Map collection time sensitivity into typed search freshness buckets."""
+    return cast(Freshness, _FRESHNESS_MAP.get(value, "py"))
+
+
+def _json_object(payload: str) -> dict[str, object]:
+    """Parse a JSON object response from a shared search or fetch tool."""
+    data = json.loads(payload)
+    if not isinstance(data, dict):
+        raise TypeError(f"Expected JSON object payload, got {type(data).__name__}.")
+    return cast(dict[str, object], data)
+
+
+def _search_rows(data: dict[str, object]) -> list[SearchResultRow]:
+    """Return normalized search-result rows from a decoded search response."""
+    rows = data.get("results", [])
+    if not isinstance(rows, list):
+        return []
+    return [cast(SearchResultRow, row) for row in rows if isinstance(row, dict)]
 
 
 def _tool_call_started(
@@ -178,7 +245,7 @@ def _anchor_queries(queries: list[str], topic_anchors: list[str]) -> list[str]:
     return anchored
 
 
-def _score_search_result(result: dict, ranking_cfg: dict[str, object]) -> tuple[int, str]:
+def _score_search_result(result: SearchResultRow, ranking_cfg: dict[str, object]) -> tuple[int, str]:
     """Score a raw search result before fetch.
 
     This is a mechanical budget-allocation policy, not a semantic source
@@ -197,41 +264,53 @@ def _score_search_result(result: dict, ranking_cfg: dict[str, object]) -> tuple[
 
     preferred_domains = [
         str(pattern).lower()
-        for pattern in ranking_cfg.get("preferred_domain_patterns", [])
+        for pattern in _as_object_list(ranking_cfg.get("preferred_domain_patterns", []))
     ]
     deprioritized_domains = [
         str(pattern).lower()
-        for pattern in ranking_cfg.get("deprioritized_domain_patterns", [])
+        for pattern in _as_object_list(ranking_cfg.get("deprioritized_domain_patterns", []))
     ]
     preferred_terms = [
         str(term).lower()
-        for term in ranking_cfg.get("preferred_title_terms", [])
+        for term in _as_object_list(ranking_cfg.get("preferred_title_terms", []))
     ]
     deprioritized_terms = [
         str(term).lower()
-        for term in ranking_cfg.get("deprioritized_title_terms", [])
+        for term in _as_object_list(ranking_cfg.get("deprioritized_title_terms", []))
     ]
 
     if url.lower().endswith(".pdf"):
-        score += int(ranking_cfg.get("pdf_bonus", 3))
+        score += _as_int(ranking_cfg.get("pdf_bonus", 3), key="collection_ranking.pdf_bonus")
         reasons.append("pdf")
 
     if any(pattern in host for pattern in preferred_domains):
-        score += int(ranking_cfg.get("preferred_domain_bonus", 5))
+        score += _as_int(
+            ranking_cfg.get("preferred_domain_bonus", 5),
+            key="collection_ranking.preferred_domain_bonus",
+        )
         reasons.append("preferred_domain")
 
     if any(pattern in host for pattern in deprioritized_domains):
-        score -= int(ranking_cfg.get("deprioritized_domain_penalty", 6))
+        score -= _as_int(
+            ranking_cfg.get("deprioritized_domain_penalty", 6),
+            key="collection_ranking.deprioritized_domain_penalty",
+        )
         reasons.append("deprioritized_domain")
 
     preferred_hits = sum(1 for term in preferred_terms if term and term in text)
     if preferred_hits:
-        score += preferred_hits * int(ranking_cfg.get("preferred_title_bonus", 2))
+        score += preferred_hits * _as_int(
+            ranking_cfg.get("preferred_title_bonus", 2),
+            key="collection_ranking.preferred_title_bonus",
+        )
         reasons.append(f"preferred_terms={preferred_hits}")
 
     deprioritized_hits = sum(1 for term in deprioritized_terms if term and term in text)
     if deprioritized_hits:
-        score -= deprioritized_hits * int(ranking_cfg.get("deprioritized_title_penalty", 3))
+        score -= deprioritized_hits * _as_int(
+            ranking_cfg.get("deprioritized_title_penalty", 3),
+            key="collection_ranking.deprioritized_title_penalty",
+        )
         reasons.append(f"deprioritized_terms={deprioritized_hits}")
 
     if description and len(description) >= 120:
@@ -358,7 +437,7 @@ def _fallback_page_evidence(
     when depth extraction fails or yields nothing useful.
     """
     evidence: list[EvidenceItem] = []
-    char_count = int(page_data.get("char_count", 0) or 0)
+    char_count = _as_int(page_data.get("char_count", 0) or 0, key="page_data.char_count")
     key_section = str(page_data.get("key_section", ""))
     if key_section and len(key_section) > 50:
         evidence.append(EvidenceItem(
@@ -389,7 +468,7 @@ async def generate_search_queries(
     max_budget: float = 0.5,
     num_queries: int = 10,
     time_sensitivity: str = "mixed",
-    sub_questions: list[dict] | None = None,
+    sub_questions: list[SubQuestionPayload] | None = None,
 ) -> tuple[list[str], dict[str, str]]:
     """Generate diverse search queries for a research question via LLM.
 
@@ -424,8 +503,9 @@ async def generate_search_queries(
         queries_per_sq = max(3, num_queries // len(sub_questions))
 
         # Generate queries for all sub-questions in parallel
-        async def _gen_sq_queries(sq):
-            sq_id = sq.get("id", "sq")
+        async def _gen_sq_queries(sq: SubQuestionPayload) -> tuple[str, list[str]]:
+            """Generate search queries for one decomposed sub-question."""
+            sq_id = str(sq.get("id", "sq"))
             messages = render_prompt(
                 str(_PROJECT_ROOT / "prompts" / "query_generation.yaml"),
                 mode="sub_question",
@@ -444,7 +524,7 @@ async def generate_search_queries(
                 max_budget=max_budget / len(sub_questions),
                 fallback_models=get_fallback_models("analyst"),
             )
-            return sq_id, sq_result.queries
+            return sq_id, list(sq_result.queries)
 
         sq_results = await asyncio.gather(*[_gen_sq_queries(sq) for sq in sub_questions])
         for sq_id, queries in sq_results:
@@ -492,11 +572,15 @@ async def generate_search_queries_tyler_v1(
     del trace_id, max_budget
     queries_per_sq: dict[str, int] = {}
     query_plans: list[Stage2QueryPlan] = []
-    tavily_corpus = "news" if time_sensitivity == "time_sensitive" else "general"
+    tavily_corpus: Literal["news", "general"] = (
+        "news" if time_sensitivity == "time_sensitive" else "general"
+    )
 
     for sub_question in stage_1_result.sub_questions:
         topic = _stage2_query_topic(sub_question.question)
-        academic_provider = "exa" if sub_question.research_priority == "high" else "tavily"
+        academic_provider: Stage2QueryProvider = (
+            "exa" if sub_question.research_priority == "high" else "tavily"
+        )
         per_sub_question_plans = [
             Stage2QueryPlan(
                 provider="tavily",
@@ -505,7 +589,7 @@ async def generate_search_queries_tyler_v1(
                 sub_question_id=sub_question.id,
                 search_depth="basic",
                 result_detail="summary",
-                corpus=tavily_corpus,  # type: ignore[arg-type]
+                corpus=tavily_corpus,
             ),
             Stage2QueryPlan(
                 provider="tavily",
@@ -514,7 +598,7 @@ async def generate_search_queries_tyler_v1(
                 sub_question_id=sub_question.id,
                 search_depth="basic",
                 result_detail="summary",
-                corpus=tavily_corpus,  # type: ignore[arg-type]
+                corpus=tavily_corpus,
             ),
             Stage2QueryPlan(
                 provider=academic_provider,
@@ -524,7 +608,7 @@ async def generate_search_queries_tyler_v1(
                 search_depth="advanced" if academic_provider == "exa" else "basic",
                 result_detail="chunks" if academic_provider == "exa" else "summary",
                 detail_budget=3 if academic_provider == "exa" else None,
-                corpus="academic" if academic_provider == "exa" else tavily_corpus,  # type: ignore[arg-type]
+                corpus="academic" if academic_provider == "exa" else tavily_corpus,
                 retrieval_instruction=(
                     _build_exa_retrieval_instruction(sub_question.search_guidance)
                     if academic_provider == "exa"
@@ -538,7 +622,7 @@ async def generate_search_queries_tyler_v1(
                 sub_question_id=sub_question.id,
                 search_depth="basic",
                 result_detail="summary",
-                corpus=tavily_corpus,  # type: ignore[arg-type]
+                corpus=tavily_corpus,
             ),
         ]
         capped_plans = [plan for plan in per_sub_question_plans if plan.query_text][:MAX_QUERIES_PER_SUB_QUESTION]
@@ -760,7 +844,7 @@ async def collect_evidence_tyler_v1(
     results_per_query: int = 10,
 ) -> tuple[TylerEvidencePackage, EvidenceBundle]:
     """Run the Stage 2 collection path and return Tyler + compatibility artifacts."""
-    bundle, query_counts = await collect_evidence(
+    collected = await collect_evidence(
         stage_1_result.core_question,
         trace_id,
         max_sources=max_sources,
@@ -773,6 +857,9 @@ async def collect_evidence_tyler_v1(
         tyler_stage_1_result=stage_1_result,
         return_query_counts=True,
     )
+    if not isinstance(collected, tuple):
+        raise TypeError("collect_evidence(return_query_counts=True) must return bundle and query counts.")
+    bundle, query_counts = collected
     stage_2_result = await build_tyler_evidence_package(
         bundle,
         stage_1_result,
@@ -792,7 +879,7 @@ async def collect_evidence(
     scope_notes: str = "",
     num_queries: int = 10,
     results_per_query: int = 10,
-    sub_questions: list[dict] | None = None,
+    sub_questions: list[SubQuestionPayload] | None = None,
     tyler_stage_1_result: TylerDecompositionResult | None = None,
     return_query_counts: bool = False,
 ) -> EvidenceBundle | tuple[EvidenceBundle, dict[str, int]]:
@@ -815,12 +902,18 @@ async def collect_evidence(
     depth_cfg = get_depth_config()
     phase_cfg = get_phase_concurrency_config()
     collection_cfg = config.get("collection", {})
+    if not isinstance(collection_cfg, dict):
+        raise TypeError("config.collection must be a mapping.")
+    collection_cfg = cast(dict[str, object], collection_cfg)
     # Only use collection config as defaults if caller didn't override
     if num_queries == 10:  # default parameter value
-        num_queries = collection_cfg.get("num_queries", num_queries)
-    results_per_query = collection_cfg.get("results_per_query", results_per_query)
+        num_queries = _as_int(collection_cfg.get("num_queries", num_queries), key="collection.num_queries")
+    results_per_query = _as_int(
+        collection_cfg.get("results_per_query", results_per_query),
+        key="collection.results_per_query",
+    )
     if max_sources == 20:  # default parameter value
-        max_sources = collection_cfg.get("max_sources", max_sources)
+        max_sources = _as_int(collection_cfg.get("max_sources", max_sources), key="collection.max_sources")
 
     # Set up pages directory for full-text caching
     pages_dir = _PROJECT_ROOT / "output" / "pages"
@@ -828,12 +921,12 @@ async def collect_evidence(
 
     research_q = ResearchQuestion(
         text=question,
-        time_sensitivity=time_sensitivity,
+        time_sensitivity=_as_time_sensitivity(time_sensitivity),
         scope_notes=scope_notes,
     )
 
     # Determine freshness filter based on time sensitivity
-    freshness = _FRESHNESS_MAP.get(time_sensitivity, "py")
+    freshness = _freshness_for_time_sensitivity(time_sensitivity)
 
     sq_label = f" across {len(sub_questions)} sub-questions" if sub_questions else ""
     print(f"  Generating search queries{sq_label}...")
@@ -861,9 +954,9 @@ async def collect_evidence(
     # Search all queries in parallel, then deduplicate by URL
     url_sq_ids: dict[str, set[str]] = {}  # url → all sub-question IDs that found it
 
-    async def _search_one(query_plan: Stage2QueryPlan | str) -> list[dict]:
+    async def _search_one(query_plan: Stage2QueryPlan | str) -> list[SearchResultRow]:
         """Search one routed query plan through the configured shared wrappers."""
-        results = []
+        results: list[SearchResultRow] = []
         try:
             if isinstance(query_plan, Stage2QueryPlan):
                 if query_plan.provider == "tavily":
@@ -878,9 +971,9 @@ async def collect_evidence(
                         trace_id=trace_id,
                         task="collection.search",
                     )
-                    data = json.loads(raw)
-                    for r in data.get("results", []):
-                        if float(r.get("score") or 0.0) <= 0.7:
+                    data = _json_object(raw)
+                    for r in _search_rows(data):
+                        if _as_float(r.get("score")) <= 0.7:
                             continue
                         r["search_query"] = query_plan.query_text
                         r["query_role"] = query_plan.query_role
@@ -899,9 +992,9 @@ async def collect_evidence(
                             trace_id=trace_id,
                             task="collection.search",
                         )
-                        data_unfiltered = json.loads(raw_unfiltered)
-                        for r in data_unfiltered.get("results", []):
-                            if float(r.get("score") or 0.0) <= 0.7:
+                        data_unfiltered = _json_object(raw_unfiltered)
+                        for r in _search_rows(data_unfiltered):
+                            if _as_float(r.get("score")) <= 0.7:
                                 continue
                             r["search_query"] = query_plan.query_text
                             r["query_role"] = query_plan.query_role
@@ -921,8 +1014,8 @@ async def collect_evidence(
                         trace_id=trace_id,
                         task="collection.search.exa",
                     )
-                    exa_data = json.loads(exa_raw)
-                    for r in exa_data.get("results", []):
+                    exa_data = _json_object(exa_raw)
+                    for r in _search_rows(exa_data):
                         r["search_query"] = query_plan.query_text
                         r["query_role"] = query_plan.query_role
                         r["sub_question_id"] = query_plan.sub_question_id
@@ -936,8 +1029,8 @@ async def collect_evidence(
                     trace_id=trace_id,
                     task="collection.search",
                 )
-                data = json.loads(raw)
-                for r in data.get("results", []):
+                data = _json_object(raw)
+                for r in _search_rows(data):
                     r["search_query"] = query_plan
                     results.append(r)
         except Exception as e:
@@ -952,18 +1045,18 @@ async def collect_evidence(
         all_raw_results = await asyncio.gather(*[_search_one(q) for q in queries])
 
     # Flatten and deduplicate
-    all_search_results: list[dict] = []
+    all_search_results: list[SearchResultRow] = []
     seen_urls: set[str] = set()
     for results in all_raw_results:
         for r in results:
-            url = r.get("url", "")
+            url = str(r.get("url", ""))
             if not url:
                 continue
             sq_id = r.get("sub_question_id")
             if sq_id is None:
-                sq_id = query_to_sq.get(r.get("search_query", ""))
+                sq_id = query_to_sq.get(str(r.get("search_query", "")))
             if sq_id:
-                url_sq_ids.setdefault(url, set()).add(sq_id)
+                url_sq_ids.setdefault(url, set()).add(str(sq_id))
             if url not in seen_urls:
                 seen_urls.add(url)
                 all_search_results.append(r)
@@ -978,16 +1071,16 @@ async def collect_evidence(
         for result in all_search_results:
             candidate_sources.append(
                 SourceRecord(
-                    url=result["url"],
-                    title=result.get("title", ""),
+                    url=str(result["url"]),
+                    title=str(result.get("title", "")),
                     source_type="web_search",
                     quality_tier="reliable",
                     published_at=_parse_search_result_published_at(result.get("published_at")),
                     retrieved_at=datetime.now(timezone.utc),
-                    recency_score=_estimate_recency(result.get("age", "")),
+                    recency_score=_estimate_recency(str(result.get("age", ""))),
                 )
             )
-            candidate_urls.append(result["url"])
+            candidate_urls.append(str(result["url"]))
 
         candidate_bundle = EvidenceBundle(
             question=research_q,
@@ -1005,7 +1098,7 @@ async def collect_evidence(
         }
         for result in all_search_results:
             result["prefetch_quality_tier"] = candidate_quality_by_url.get(
-                result["url"], "reliable"
+                str(result["url"]), "reliable"
             )
 
     # Select top results — prefer diversity across queries
@@ -1019,17 +1112,17 @@ async def collect_evidence(
     source_map: dict[str, SourceRecord] = {}
     source_sq_ids_map: dict[str, list[str]] = {}  # url → all matched sub-question IDs
     for result in selected:
-        url = result["url"]
-        title = result.get("title", "")
-        description = result.get("description", "")
-        age = result.get("age", "")
+        url = str(result["url"])
+        title = str(result.get("title", ""))
+        description = str(result.get("description", ""))
+        age = str(result.get("age", ""))
         recency_score = _estimate_recency(age)
 
         source = SourceRecord(
             url=url,
             title=title,
             source_type="web_search",
-            quality_tier=result.get("prefetch_quality_tier", "reliable"),
+            quality_tier=_as_quality_tier(result.get("prefetch_quality_tier", "reliable")),
             published_at=_parse_search_result_published_at(result.get("published_at")),
             retrieved_at=datetime.now(timezone.utc),
             recency_score=recency_score,
@@ -1053,7 +1146,7 @@ async def collect_evidence(
             ))
 
     # Fetch page content in parallel (with Jina Reader fallback for 403s)
-    async def _fetch_one(url: str, idx: int) -> tuple[str, dict | None]:
+    async def _fetch_one(url: str, idx: int) -> tuple[str, dict[str, object] | None]:
         """Fetch one page, return (url, page_data) or (url, None) on failure."""
         call_id, started_at, started_monotonic = _tool_call_started(
             tool_name="grounded_research",
@@ -1066,7 +1159,7 @@ async def collect_evidence(
         try:
             print(f"  Fetching [{idx+1}/{len(selected)}] {url[:60]}...")
             raw_page = await fetch_page(url, question=question)
-            page_data = json.loads(raw_page)
+            page_data = _json_object(raw_page)
 
             if page_data.get("error") and "403" in str(page_data.get("error", "")):
                 _tool_call_finished(
@@ -1095,7 +1188,7 @@ async def collect_evidence(
                 from grounded_research.tools.jina_reader import fetch_page_jina
                 print("    → 403 blocked, retrying via Jina Reader...")
                 raw_page = await fetch_page_jina(url, question=question)
-                page_data = json.loads(raw_page)
+                page_data = _json_object(raw_page)
                 if page_data.get("error"):
                     _tool_call_finished(
                         call_id=fallback_call_id,
@@ -1125,7 +1218,7 @@ async def collect_evidence(
                         status="succeeded",
                         metrics={
                             "content_type": str(page_data.get("content_type", "")),
-                            "char_count": int(page_data.get("char_count", 0) or 0),
+                            "char_count": _as_int(page_data.get("char_count", 0) or 0, key="page_data.char_count"),
                             "fetched_via": str(page_data.get("fetched_via", "jina_reader")),
                         },
                     )
@@ -1171,7 +1264,7 @@ async def collect_evidence(
                 status="succeeded",
                 metrics={
                     "content_type": str(page_data.get("content_type", "")),
-                    "char_count": int(page_data.get("char_count", 0) or 0),
+                    "char_count": _as_int(page_data.get("char_count", 0) or 0, key="page_data.char_count"),
                 },
             )
             return url, page_data
@@ -1195,14 +1288,26 @@ async def collect_evidence(
             return url, None
 
     # Run all fetches concurrently
-    fetch_tasks = [_fetch_one(r["url"], i) for i, r in enumerate(selected)]
+    fetch_tasks = [_fetch_one(str(r["url"]), i) for i, r in enumerate(selected)]
     fetch_results = await asyncio.gather(*fetch_tasks)
 
     depth_extraction_enabled = bool(depth_cfg.get("evidence_extraction_enabled", False))
-    extraction_max_sources = int(depth_cfg.get("evidence_extraction_max_sources", 0))
-    extraction_max_items = int(depth_cfg.get("evidence_extraction_items_per_source", 0))
-    extraction_max_chars = int(depth_cfg.get("evidence_extraction_max_chars", 0))
-    extraction_max_concurrency = int(phase_cfg.get("evidence_extraction_max_concurrency", 1))
+    extraction_max_sources = _as_int(
+        depth_cfg.get("evidence_extraction_max_sources", 0),
+        key="depth.evidence_extraction_max_sources",
+    )
+    extraction_max_items = _as_int(
+        depth_cfg.get("evidence_extraction_items_per_source", 0),
+        key="depth.evidence_extraction_items_per_source",
+    )
+    extraction_max_chars = _as_int(
+        depth_cfg.get("evidence_extraction_max_chars", 0),
+        key="depth.evidence_extraction_max_chars",
+    )
+    extraction_max_concurrency = _as_int(
+        phase_cfg.get("evidence_extraction_max_concurrency", 1),
+        key="phase_concurrency.evidence_extraction_max_concurrency",
+    )
     sub_question_list = sub_questions or []
 
     extraction_candidates: list[tuple[str, dict[str, object]]] = []
@@ -1223,6 +1328,7 @@ async def collect_evidence(
             semaphore = asyncio.Semaphore(max(1, extraction_max_concurrency))
 
             async def _extract_one(url: str, page_data: dict[str, object]) -> tuple[str, list[EvidenceItem], str | None]:
+                """Extract goal-driven evidence from one already-fetched source page."""
                 async with semaphore:
                     try:
                         return (
@@ -1299,7 +1405,7 @@ async def collect_evidence(
         source_text_by_id=source_text_by_id,
     )
 
-    tier_counts = {}
+    tier_counts: dict[str, int] = {}
     for s in bundle.sources:
         tier_counts[s.quality_tier] = tier_counts.get(s.quality_tier, 0) + 1
     print(f"  Source quality: {tier_counts}")
@@ -1319,7 +1425,7 @@ def _parse_search_result_published_at(value: object) -> datetime | None:
         return None
 
 
-def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
+def _select_diverse(results: list[SearchResultRow], max_items: int) -> list[SearchResultRow]:
     """Select results with diversity across search queries.
 
     Within each query bucket, results are mechanically ranked before the
@@ -1327,9 +1433,9 @@ def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
     fetch. Diversity across queries is still preserved.
     """
     ranking_cfg = get_collection_ranking_config()
-    by_query: dict[str, list[dict]] = {}
+    by_query: dict[str, list[SearchResultRow]] = {}
     for r in results:
-        q = r.get("search_query", "")
+        q = str(r.get("search_query", ""))
         by_query.setdefault(q, []).append(r)
 
     for q, items in by_query.items():
@@ -1338,7 +1444,7 @@ def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
             reverse=True,
         )
 
-    selected: list[dict] = []
+    selected: list[SearchResultRow] = []
     seen: set[str] = set()
     max_rounds = max_items
 
@@ -1346,7 +1452,7 @@ def _select_diverse(results: list[dict], max_items: int) -> list[dict]:
         added_this_round = False
         for q, items in by_query.items():
             if round_num < len(items):
-                url = items[round_num]["url"]
+                url = str(items[round_num]["url"])
                 if url not in seen:
                     seen.add(url)
                     selected.append(items[round_num])

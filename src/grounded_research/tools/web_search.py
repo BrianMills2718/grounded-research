@@ -12,12 +12,22 @@ from llm_client.observability import log_tool_call
 from open_web_retrieval import OpenWebRetrievalClient, SearchQuery
 from open_web_retrieval.exceptions import OpenWebRetrievalError
 
-from grounded_research.config import get_search_provider_config
+from grounded_research.config import SearchProvider, get_search_provider_config
 
 Freshness = Literal["pd", "pw", "pm", "py", "none"]
 SearchDepth = Literal["basic", "advanced"]
 ResultDetail = Literal["summary", "chunks"]
-SearchCorpus = Literal["general", "news", "academic", "company", "pdf", "github", "people", "personal_site", "financial_report"]
+SearchCorpus = Literal[
+    "general",
+    "news",
+    "academic",
+    "company",
+    "pdf",
+    "github",
+    "people",
+    "personal_site",
+    "financial_report",
+]
 
 
 def _freshness_days(freshness: Freshness) -> int | None:
@@ -32,7 +42,7 @@ def _freshness_days(freshness: Freshness) -> int | None:
     return mapping[freshness]
 
 
-def _provider_source_label(provider: str) -> str:
+def _provider_source_label(provider: SearchProvider) -> str:
     """Return the human-readable provider label stored in normalized payloads."""
     labels = {
         "tavily": "Tavily Search",
@@ -43,32 +53,28 @@ def _provider_source_label(provider: str) -> str:
     return labels[provider]
 
 
-def _build_client(provider: str) -> OpenWebRetrievalClient:
+def _build_client(provider: SearchProvider) -> OpenWebRetrievalClient:
     """Build the shared retrieval client for the configured provider."""
-    kwargs: dict[str, object] = {"tool_call_logger": log_tool_call}
     if provider == "tavily":
         api_key = os.environ.get("TAVILY_API_KEY")
         if not api_key:
             raise RuntimeError("TAVILY_API_KEY not set.")
-        kwargs["tavily_api_key"] = api_key
+        return OpenWebRetrievalClient(tavily_api_key=api_key, tool_call_logger=log_tool_call)
     elif provider == "brave":
         api_key = os.environ.get("BRAVE_SEARCH_API_KEY")
         if not api_key:
             raise RuntimeError("BRAVE_SEARCH_API_KEY not set.")
-        kwargs["brave_api_key"] = api_key
+        return OpenWebRetrievalClient(brave_api_key=api_key, tool_call_logger=log_tool_call)
     elif provider == "exa":
         api_key = os.environ.get("EXA_API_KEY")
         if not api_key:
             raise RuntimeError("EXA_API_KEY not set.")
-        kwargs["exa_api_key"] = api_key
+        return OpenWebRetrievalClient(exa_api_key=api_key, tool_call_logger=log_tool_call)
     elif provider == "searxng":
         base_url = os.environ.get("SEARXNG_BASE_URL")
         if not base_url:
             raise RuntimeError("SEARXNG_BASE_URL not set.")
-        kwargs["searxng_base_url"] = base_url
-    else:  # pragma: no cover - config validation should prevent this
-        raise ValueError(f"Unsupported search provider: {provider}")
-    return OpenWebRetrievalClient(**kwargs)
+        return OpenWebRetrievalClient(searxng_base_url=base_url, tool_call_logger=log_tool_call)
 
 
 async def search_web_exa(
@@ -114,7 +120,7 @@ async def search_web_exa(
     finally:
         client.close()
 
-    results: list[dict[str, str]] = []
+    results: list[dict[str, object]] = []
     for hit in hits[:count]:
         payload = hit.raw_payload if isinstance(hit.raw_payload, Mapping) else {}
         results.append({
@@ -137,7 +143,7 @@ async def search_web(
     count: int = 10,
     freshness: Freshness = "none",
     *,
-    provider_override: str | None = None,
+    provider_override: SearchProvider | None = None,
     search_depth: SearchDepth | None = None,
     result_detail: ResultDetail | None = None,
     detail_budget: int | None = None,
@@ -193,7 +199,7 @@ async def search_web(
     finally:
         client.close()
 
-    results: list[dict[str, str]] = []
+    results: list[dict[str, object]] = []
     for hit in hits[:effective_count]:
         payload = hit.raw_payload if isinstance(hit.raw_payload, Mapping) else {}
         published_at = getattr(hit, "published_at", None)

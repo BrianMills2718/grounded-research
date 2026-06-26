@@ -117,6 +117,7 @@ def normalize_tyler_analysis_object(
 
 
 def _ordered_unique(items: list[str]) -> list[str]:
+    """Preserve first-seen item order while removing empty strings and duplicates."""
     seen: set[str] = set()
     ordered: list[str] = []
     for item in items:

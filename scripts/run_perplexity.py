@@ -89,6 +89,7 @@ async def run_perplexity(question: str, output_dir: Path) -> None:
 
 
 def main() -> None:
+    """Run the Perplexity baseline CLI."""
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("question", type=str)

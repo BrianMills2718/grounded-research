@@ -116,6 +116,7 @@ def _extract_key_section(text: str, question: str, max_chars: int = 1500) -> str
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip() and len(p.strip()) > 20]
 
     def score(para: str) -> int:
+        """Count question-keyword overlap for one candidate paragraph."""
         pl = para.lower()
         return sum(1 for k in keywords if k in pl)
 

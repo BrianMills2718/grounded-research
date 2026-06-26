@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 
 from grounded_research.config import (
     get_analyst_success_config,
@@ -62,7 +63,7 @@ def _render_tyler_analyst_prompt(
     """Render Tyler's literal Stage 3 prompt."""
     from llm_client import render_prompt
 
-    return render_prompt(
+    return cast(list[dict[str, str]], render_prompt(
         str(_PROJECT_ROOT / "prompts" / "tyler_v1_analyst.yaml"),
         original_query=stage_1_result.core_question,
         stage_1=stage_1_result.model_dump(mode="json"),
@@ -70,7 +71,7 @@ def _render_tyler_analyst_prompt(
         model_alias=model_alias,
         reasoning_frame=reasoning_frame,
         response_schema_json=AnalysisObject.model_json_schema(),
-    )
+    ))
 
 
 async def _call_tyler_analyst_once(
@@ -146,6 +147,7 @@ async def run_analysts_tyler_v1(
     alias_mapping = {label: alias for label, alias in zip(labels, aliases)}
 
     async def _run_one(model: str, label: str, alias: str, frame: str) -> tuple[AnalysisObject | None, Stage3AttemptTrace]:
+        """Run one analyst and convert failures into an attempt trace."""
         try:
             analysis, attempt_trace = await _call_tyler_analyst_once(
                 model=model,

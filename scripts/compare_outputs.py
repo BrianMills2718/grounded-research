@@ -144,6 +144,7 @@ Score both reports on all 6 dimensions (1-5 each). Then give your overall verdic
 
 
 def main() -> None:
+    """Run the output-comparison CLI."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Compare two research reports via LLM judge")
