@@ -71,6 +71,25 @@ def test_tyler_coverage_report_keeps_known_shared_infra_rows_visible() -> None:
     assert rows["STATUS-FRONTIER-RUNTIME-001"]["requirement_class"] == "operational_watch"
 
 
+def test_tyler_coverage_report_has_no_policy_findings() -> None:
+    """Current closed rows should satisfy the enforced evidence-policy checks."""
+    report = build_coverage_report()
+
+    rows_with_findings = [
+        row["requirement_id"] for row in report["requirements"] if row["findings"]
+    ]
+
+    assert rows_with_findings == []
+
+
+def test_tyler_coverage_classifies_local_provider_consumption_as_runtime() -> None:
+    """Local provider-parameter consumption should not require shared-infra evidence twice."""
+    report = build_coverage_report()
+    rows = {row["requirement_id"]: row for row in report["requirements"]}
+
+    assert rows["S5-SEARCH-PARAMS-001"]["requirement_class"] == "runtime_behavior"
+
+
 def test_tyler_coverage_markdown_renders_review_sections() -> None:
     """Markdown output should be useful to maintainers."""
     markdown = render_markdown(build_coverage_report())

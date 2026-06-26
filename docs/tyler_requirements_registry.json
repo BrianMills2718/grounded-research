@@ -13,11 +13,12 @@
     "ambiguity": 3,
     "doc_status": 8,
     "extension": 1,
-    "model_config": 6,
+    "model_config": 5,
     "operational_watch": 1,
-    "prompt_template": 10,
-    "provider_behavior": 2,
-    "schema_contract": 5
+    "prompt_template": 2,
+    "provider_behavior": 3,
+    "runtime_behavior": 6,
+    "schema_contract": 7
   },
   "requirements": [
     {
@@ -418,11 +419,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "runtime_behavior",
       "requirement_id": "S1-VALIDATION-001",
       "severity": "high",
       "tyler_sources": [
@@ -433,7 +432,8 @@
     },
     {
       "adversarial_notes": [
-        "Verify the cited test or artifact asserts Tyler behavior, not only local shape."
+        "Verify the cited test or artifact asserts Tyler behavior, not only local shape.",
+        "Confirm shared-infra owner, command, and artifact before strict closure."
       ],
       "anchor_status": "line_level",
       "closure_status": "verified_fixed",
@@ -482,11 +482,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "open_web_retrieval + grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "provider_behavior",
       "requirement_id": "S2-EXA-CONTROLS-001",
       "severity": "medium",
       "tyler_sources": [
@@ -631,8 +629,7 @@
     },
     {
       "adversarial_notes": [
-        "Verify the cited test or artifact asserts Tyler behavior, not only local shape.",
-        "Confirm shared-infra owner, command, and artifact before strict closure."
+        "Verify the cited test or artifact asserts Tyler behavior, not only local shape."
       ],
       "anchor_status": "line_level",
       "closure_status": "verified_fixed",
@@ -657,11 +654,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "provider_row_without_shared_infra_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "provider_behavior",
+      "requirement_class": "runtime_behavior",
       "requirement_id": "S2-ROUTING-001",
       "severity": "high",
       "tyler_sources": [
@@ -786,7 +781,7 @@
       "evidence_grade": "B",
       "findings": [],
       "owner": "llm_client + grounded-research",
-      "requirement_class": "model_config",
+      "requirement_class": "provider_behavior",
       "requirement_id": "S3-MODEL-VERSION-001",
       "severity": "medium",
       "tyler_sources": [
@@ -828,11 +823,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "runtime_behavior",
       "requirement_id": "S4-ORDER-RANDOMIZATION-001",
       "severity": "high",
       "tyler_sources": [
@@ -903,11 +896,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "runtime_behavior",
       "requirement_id": "S5-QUERY-ROLES-001",
       "severity": "high",
       "tyler_sources": [
@@ -1040,11 +1031,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "runtime_behavior",
       "requirement_id": "S5-SEARCH-PARAMS-001",
       "severity": "high",
       "tyler_sources": [
@@ -1080,11 +1069,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "runtime_behavior",
       "requirement_id": "S6-COMPACTION-001",
       "severity": "medium",
       "tyler_sources": [
@@ -1113,11 +1100,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "schema_contract",
       "requirement_id": "S6-EVIDENCE-CONTEXT-001",
       "severity": "high",
       "tyler_sources": [
@@ -1171,11 +1156,9 @@
         }
       ],
       "evidence_grade": "A",
-      "findings": [
-        "prompt_row_without_prompt_template_ref"
-      ],
+      "findings": [],
       "owner": "grounded-research",
-      "requirement_class": "prompt_template",
+      "requirement_class": "schema_contract",
       "requirement_id": "S6-GROUNDING-001",
       "severity": "high",
       "tyler_sources": [
@@ -1467,10 +1450,8 @@
         }
       ],
       "evidence_grade": "B",
-      "findings": [
-        "shared_infra_owner_not_explicit"
-      ],
-      "owner": "shared model availability + config policy",
+      "findings": [],
+      "owner": "grounded-research config policy + llm_client model transport/observability",
       "requirement_class": "operational_watch",
       "requirement_id": "STATUS-FRONTIER-RUNTIME-001",
       "severity": "medium",

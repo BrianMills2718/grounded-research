@@ -91,6 +91,8 @@ def _classify_requirement(row: TableRow, evidence: list[CoverageEvidence]) -> st
 
     spec_id = row.key
     classification = row.fields.get("classification", "")
+    local_surface = row.fields.get("local_surface", "").lower()
+    evidence_text = row.fields.get("evidence", "").lower()
     text = " ".join(row.fields.values()).lower()
     evidence_kinds = {item.kind for item in evidence}
 
@@ -104,19 +106,18 @@ def _classify_requirement(row: TableRow, evidence: list[CoverageEvidence]) -> st
         return "operational_watch"
     if spec_id.startswith("SC-") or "tyler_v1_models.py" in text:
         return "schema_contract"
-    if "model" in text or "frontier" in text or "config" in evidence_kinds:
-        return "model_config"
-    if "prompt" in text or "prompt_template" in evidence_kinds:
+    if "prompt_template" in evidence_kinds or "prompts/" in local_surface:
         return "prompt_template"
-    if "schema" in text:
-        return "schema_contract"
-    if (
-        classification == "shared_infra_blocked"
-        or "open_web_retrieval" in text
-        or "tavily" in text
-        or "exa" in text
+    if classification == "shared_infra_blocked" and (
+        "open_web_retrieval" in text or re.search(r"\b(tavily|exa)\b", text)
     ):
         return "provider_behavior"
+    if "model" in text or "frontier" in text or "config" in evidence_kinds:
+        return "model_config"
+    if "schema" in text:
+        return "schema_contract"
+    if "prompt" in local_surface or "prompt_template" in evidence_text:
+        return "prompt_template"
     if "trace.json" in text or "report.md" in text or "handoff.json" in text:
         return "output_artifact"
     return "runtime_behavior"
@@ -396,6 +397,11 @@ def main() -> int:
         action="store_true",
         help="Exit non-zero if any row has grade F.",
     )
+    parser.add_argument(
+        "--fail-on-findings",
+        action="store_true",
+        help="Exit non-zero if any row has coverage-quality findings.",
+    )
     args = parser.parse_args()
 
     report = build_coverage_report()
@@ -405,6 +411,8 @@ def main() -> int:
         print(render_markdown(report))
 
     if args.fail_on_grade_f and report["summary"]["grade_f"]:
+        return 1
+    if args.fail_on_findings and any(item["findings"] for item in report["requirements"]):
         return 1
     return 0
 

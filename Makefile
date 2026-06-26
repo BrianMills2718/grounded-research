@@ -35,7 +35,7 @@ check: ## Run tests + type check + lint
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
-	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
+	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
@@ -45,7 +45,7 @@ check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
-	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f >/dev/null
+	$(PYTHON) scripts/check_tyler_coverage.py --format json --fail-on-grade-f --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_doc_drift.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_code_audit.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
