@@ -123,6 +123,7 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
 | `docs/TYLER_SYSTEMATIC_REVIEW_MATRIX.md` | Review-lane tracker. |
 | `docs/TYLER_INDEPENDENT_CLOSURE_REVIEW.md` | Adversarial closure-review checkpoint and residual-risk disposition. |
 | `docs/TYLER_SOURCE_MANIFEST.md` | Raw Tyler packet line-count and hash manifest. |
+| `docs/TYLER_REQUIREMENT_REVIEW_RUBRIC.md` | Success criteria and rubric for identify-only per-requirement review. |
 | `docs/tyler_requirements.yaml` | Structured YAML requirements snapshot with class evidence policy. |
 | `docs/tyler_requirements_registry.json` | Generated structured registry snapshot from the Markdown ledger. |
 | `scripts/check_tyler_traceability.py` | Machine check and Markdown/JSON report. |
@@ -130,6 +131,7 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
 | `scripts/check_tyler_doc_drift.py` | Active-doc drift report for known stale Tyler status claims. |
 | `scripts/check_tyler_code_audit.py` | Current-code evidence audit for non-doc Tyler rows. |
 | `scripts/check_tyler_source_manifest.py` | Raw Tyler source packet reproducibility check. |
+| `scripts/generate_tyler_review_packets.py` | Identify-only review packets and deterministic status report for every Tyler row. |
 | `scripts/sync_tyler_requirements_yaml.py` | Generate or check the structured YAML requirements snapshot. |
 | `scripts/sync_tyler_registry.py` | Generate or check the structured registry snapshot. |
 | `make tyler-traceability` | Human-readable report. |
@@ -148,6 +150,9 @@ seven failure families listed in `docs/TYLER_AUDIT_QUALITY_STANDARD.md`, and
 | `make tyler-requirements-yaml-check` | Verify the tracked YAML requirements snapshot is current and policy-clean. |
 | `make tyler-requirements-yaml` | Emit the structured Tyler requirements YAML to stdout. |
 | `make tyler-requirements-yaml-sync` | Regenerate the tracked structured Tyler requirements YAML. |
+| `make tyler-review` | Summarize identify-only review status for every Tyler requirement. |
+| `make tyler-review-json` | Emit identify-only Tyler review status as JSON. |
+| `make tyler-review-packets` | Generate per-requirement review packets under `output/`. |
 
 ## Design Boundary
 

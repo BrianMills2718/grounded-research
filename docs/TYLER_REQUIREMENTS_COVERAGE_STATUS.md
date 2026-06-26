@@ -100,6 +100,9 @@ What is now enforced:
   `make check`.
 - `docs/tyler_requirements.yaml` contains all 36 current Tyler rows with
   required evidence kinds by requirement class and is checked by `make check`.
+- `make tyler-review` classifies all 36 rows by deterministic status,
+  robustness status, and review mode; 15 grade-B/C/D rows are explicitly routed
+  to human/LLM judgment rather than overclaimed as locally tested closure.
 - Requirement-class evidence policy is implemented in
   `scripts/check_tyler_coverage.py` and enforced with
   `--fail-on-grade-f --fail-on-findings`.
@@ -130,13 +133,13 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 32 | 7,796 |
-| `scripts/**/*.py` | 16 | 3,047 |
+| `tests/**/*.py` | 33 | 7,851 |
+| `scripts/**/*.py` | 17 | 3,377 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 113 | 16,579 |
+| `docs/**/*.md` | 114 | 16,667 |
 | `docs/tyler_requirements_registry.json` | 1 | 1,475 |
 | `docs/tyler_requirements.yaml` | 1 | 1,490 |
-| all tracked Markdown | 130 | 23,440 |
+| all tracked Markdown | 131 | 23,528 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
@@ -197,6 +200,9 @@ make tyler-registry-sync
 make tyler-requirements-yaml-check
 make tyler-requirements-yaml
 make tyler-requirements-yaml-sync
+make tyler-review
+make tyler-review-json
+make tyler-review-packets
 make check
 ```
 
@@ -209,6 +215,9 @@ also match its manifest hashes and line counts. The generated structured
 registry must also match the current ledger-derived read model.
 `docs/tyler_requirements.yaml` must also match the current ledger-derived model
 and satisfy its declared requirement-class evidence policy.
+The identify-only Tyler review report must classify every requirement's proof
+mode without treating artifact, shared-infra, doc, ambiguity, extension, or
+watch evidence as local unit-test closure.
 
 Quality standard:
 

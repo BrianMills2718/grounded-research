@@ -42,6 +42,7 @@ check: ## Run tests + type check + lint
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
 	$(PYTHON) scripts/sync_tyler_requirements_yaml.py --check --format json >/dev/null
+	$(PYTHON) scripts/generate_tyler_review_packets.py --format json >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
@@ -54,6 +55,7 @@ check-strict: ## Run tests + lint + current strict typecheck gate
 	$(PYTHON) scripts/check_tyler_source_manifest.py --format json --fail-on-findings >/dev/null
 	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
 	$(PYTHON) scripts/sync_tyler_requirements_yaml.py --check --format json >/dev/null
+	$(PYTHON) scripts/generate_tyler_review_packets.py --format json >/dev/null
 	$(PYTHON) -m mypy src/ --ignore-missing-imports
 
 lint: ## Run Ruff lint checks
@@ -80,7 +82,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate check-env restore-frozen-outputs tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync tyler-requirements-yaml-check tyler-requirements-yaml tyler-requirements-yaml-sync
+.PHONY: adjudicate adjudicate-test bench evaluate check-env restore-frozen-outputs tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync tyler-requirements-yaml-check tyler-requirements-yaml tyler-requirements-yaml-sync tyler-review tyler-review-json tyler-review-packets
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -166,6 +168,15 @@ tyler-requirements-yaml: ## Emit structured Tyler requirements YAML
 
 tyler-requirements-yaml-sync: ## Regenerate structured Tyler requirements YAML
 	@$(PYTHON) scripts/sync_tyler_requirements_yaml.py --write
+
+tyler-review: ## Summarize identify-only Tyler requirement review status
+	@$(PYTHON) scripts/generate_tyler_review_packets.py --format markdown
+
+tyler-review-json: ## Emit identify-only Tyler requirement review status as JSON
+	@$(PYTHON) scripts/generate_tyler_review_packets.py --format json
+
+tyler-review-packets: ## Generate identify-only Tyler review packets under output/
+	@$(PYTHON) scripts/generate_tyler_review_packets.py --write --format markdown
 
 # >>> META-PROCESS WORKTREE TARGETS >>>
 WORKTREE_CREATE_SCRIPT := scripts/meta/worktree-coordination/create_worktree.py
