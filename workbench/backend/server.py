@@ -117,6 +117,23 @@ async def get_report(run_id: str) -> dict:
     raise HTTPException(404, f"No run found with id: {run_id}")
 
 
+@app.get("/api/runs/{run_id}/trace")
+async def get_trace(run_id: str) -> dict:
+    """Return trace.json or handoff.json for a completed run."""
+    import json as _json
+    if not OUTPUT_DIR.exists():
+        raise HTTPException(404, "No output directory")
+    for d in OUTPUT_DIR.iterdir():
+        if d.is_dir() and d.name.startswith(f"workbench_{run_id}_"):
+            # prefer handoff.json (richer), fall back to trace.json
+            for fname in ("handoff.json", "trace.json"):
+                f = d / fname
+                if f.exists():
+                    return {"run_id": run_id, "file": fname, "data": _json.loads(f.read_text())}
+            raise HTTPException(404, f"No trace data in {d.name}")
+    raise HTTPException(404, f"No run found with id: {run_id}")
+
+
 @app.get("/api/runs/{run_id}/summary")
 async def get_summary(run_id: str) -> dict:
     """Return summary.md content for a completed run."""

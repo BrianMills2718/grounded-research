@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import MarkdownViewer from '../MarkdownViewer/MarkdownViewer'
+import JSONTreeViewer from '../JSONTreeViewer/JSONTreeViewer'
 
 interface RunMeta {
   id: string
@@ -13,17 +14,32 @@ export default function Results() {
   const [runs, setRuns] = useState<RunMeta[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [content, setContent] = useState<string | null>(null)
+  const [traceData, setTraceData] = useState<unknown>(null)
+  const [view, setView] = useState<'report' | 'trace'>('report')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function loadReport(id: string) {
     setSelectedId(id)
     setContent(null)
+    setTraceData(null)
     setLoading(true)
     setError(null)
-    fetch(`/api/runs/${id}/report`)
+    setView('report')
+
+    const reportFetch = fetch(`/api/runs/${id}/report`)
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then((d: { content: string }) => setContent(d.content))
+
+    const traceFetch = fetch(`/api/runs/${id}/trace`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then((d: { data: unknown }) => setTraceData(d.data))
+      .catch(() => {
+        // Trace is optional — some runs may not have it yet
+        setTraceData(null)
+      })
+
+    Promise.all([reportFetch, traceFetch])
       .catch(() => setError('Failed to load report'))
       .finally(() => setLoading(false))
   }
@@ -89,11 +105,40 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Report viewer */}
+      {/* Right panel: toggle bar + content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* View toggle — only show when a run is selected */}
+        {selectedId !== null && !loading && (
+          <div style={{
+            display: 'flex', gap: 2,
+            padding: 'var(--space-2) var(--space-4)',
+            borderBottom: '1px solid var(--border)',
+            flexShrink: 0,
+            background: 'var(--surface)',
+          }}>
+            {(['report', 'trace'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                style={{
+                  padding: 'var(--space-1) var(--space-3)',
+                  fontSize: 11, fontWeight: 600,
+                  textTransform: 'uppercase', letterSpacing: '0.05em',
+                  background: view === v ? 'var(--accent)' : 'none',
+                  color: view === v ? '#fff' : 'var(--muted)',
+                  border: '1px solid ' + (view === v ? 'var(--accent)' : 'var(--border)'),
+                  borderRadius: 3, cursor: 'pointer',
+                }}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading && (
           <div style={{ padding: 'var(--space-5)', color: 'var(--muted)', fontSize: 13 }}>
-            Loading report…
+            Loading…
           </div>
         )}
         {error && (
@@ -101,7 +146,7 @@ export default function Results() {
             {error}
           </div>
         )}
-        {!loading && !error && content === null && (
+        {!loading && !error && selectedId === null && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             height: '100%', color: 'var(--muted)', fontSize: 13,
@@ -109,9 +154,25 @@ export default function Results() {
             Select a run to view its report
           </div>
         )}
-        {!loading && content !== null && (
+
+        {/* Report view */}
+        {!loading && view === 'report' && content !== null && (
           <div style={{ overflow: 'auto', flex: 1, padding: 'var(--space-5)' }}>
             <MarkdownViewer content={content} />
+          </div>
+        )}
+
+        {/* Trace view */}
+        {!loading && view === 'trace' && (
+          <div style={{ overflow: 'auto', flex: 1, padding: 'var(--space-4)' }}>
+            {traceData !== null
+              ? <JSONTreeViewer data={traceData} collapsed={2} />
+              : (
+                <div style={{ color: 'var(--muted)', fontSize: 13 }}>
+                  No trace data available for this run
+                </div>
+              )
+            }
           </div>
         )}
       </div>
