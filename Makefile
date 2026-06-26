@@ -276,3 +276,21 @@ endif
 	fi
 	@$(MAKE) session-close BRANCH="$(BRANCH)" $(if $(SESSION_NOTE),SESSION_NOTE="$(SESSION_NOTE)",)
 # <<< META-PROCESS WORKTREE TARGETS <<<
+
+# ─── Workbench ──────────────────────────────────────────────────────────────
+
+WORKBENCH_BACKEND := workbench/backend
+WORKBENCH_FRONTEND := workbench/frontend
+VENV_PYTHON := $(HOME)/projects/.venv/bin/python
+VENV_UVICORN := $(HOME)/projects/.venv/bin/uvicorn
+
+.PHONY: workbench-backend workbench-frontend workbench-install
+
+workbench-backend: ## Start workbench backend (FastAPI on :5201)
+	cd $(WORKBENCH_BACKEND) && $(VENV_UVICORN) server:app --host 0.0.0.0 --port 5201 --reload
+
+workbench-frontend: ## Start workbench frontend (Vite on :5202)
+	cd $(WORKBENCH_FRONTEND) && npm run dev
+
+workbench-install: ## Install workbench backend deps into project venv
+	$(VENV_PYTHON) -m pip install -e ~/projects/shared_ui/python fastapi uvicorn[standard] --quiet

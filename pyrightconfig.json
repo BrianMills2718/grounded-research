@@ -1,5 +1,4 @@
 {
-  "venvPath": "..",
-  "venv": ".venv",
-  "extraPaths": ["workbench/backend"]
+  "pythonPath": "../.venv/bin/python",
+  "extraPaths": [".", "src", "workbench/backend", "../shared_ui/python"]
 }

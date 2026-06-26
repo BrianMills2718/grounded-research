@@ -125,8 +125,6 @@ async def run_pipeline_with_sse(
             ))
 
         from engine import run_pipeline
-        from grounded_research.runtime_policy import configure_run_runtime
-        configure_run_runtime(run_id, output_dir)
 
         state = await run_pipeline(
             bundle_path,
