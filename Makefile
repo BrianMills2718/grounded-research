@@ -32,6 +32,7 @@ test-quick: ## Run tests, minimal output
 	$(PYTHON) -m pytest tests/ -x -q
 
 check: ## Run tests + type check + lint
+	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
@@ -42,6 +43,7 @@ check: ## Run tests + type check + lint
 	$(PYTHON) scripts/sync_tyler_registry.py --check --format json >/dev/null
 
 check-strict: ## Run tests + lint + current strict typecheck gate
+	$(PYTHON) scripts/check_local_test_env.py --format json >/dev/null
 	$(PYTHON) -m pytest tests/ -x -q
 	$(PYTHON) -m ruff check engine.py src/ tests/
 	$(PYTHON) scripts/check_tyler_traceability.py --format json --fail-on-issues >/dev/null
@@ -76,7 +78,7 @@ summary: ## Project summary: recent commits, test count
 
 # ─── Domain Targets ──────────────────────────────────────────────────────────
 
-.PHONY: adjudicate adjudicate-test bench evaluate tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync
+.PHONY: adjudicate adjudicate-test bench evaluate check-env tyler-traceability tyler-traceability-json tyler-coverage tyler-coverage-json tyler-doc-audit tyler-doc-audit-json tyler-code-audit tyler-code-audit-json tyler-source-check tyler-source-check-json tyler-registry-check tyler-registry-json tyler-registry-sync
 
 adjudicate: ## Run adjudication with Tyler-literal models (QUERY= or INPUT=)
 	@if [ -z "$(QUERY)" ] && [ -z "$(INPUT)" ]; then \
@@ -108,6 +110,9 @@ evaluate: ## Show latest adjudication outputs and dispute stats
 	@ls -dt output/*/ 2>/dev/null | head -5
 	@echo "---"
 	@echo "Run-specific evaluation: python -m grounded_research.cli evaluate <output_dir>"
+
+check-env: ## Explain local prerequisites required by make check
+	@$(PYTHON) scripts/check_local_test_env.py --format markdown
 
 tyler-traceability: ## Summarize Tyler requirements linked to code, tests, and docs
 	@$(PYTHON) scripts/check_tyler_traceability.py --format markdown

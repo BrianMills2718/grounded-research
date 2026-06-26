@@ -27,24 +27,35 @@ pip install -e .
 pip install -e ../llm_client
 pip install -e ../open_web_retrieval
 pip install -e ../data_contracts
+pip install -e ../epistemic-contracts
 ```
 
 The default search path currently uses Tavily through shared retrieval. Configure
 provider keys in your normal secret environment before running raw-question
 research flows.
 
-`llm_client` and `open_web_retrieval` are required shared local infrastructure.
-`data_contracts` is recommended for boundary registration; local tests can still
-run without it because the live verification boundary has a fail-loud import
-fallback for the decorator only.
+`llm_client`, `open_web_retrieval`, and `epistemic-contracts` are required
+shared local infrastructure for the maintainer gate. `data_contracts` is
+recommended for boundary registration; local tests can still run without it
+because the live verification boundary has a fail-loud import fallback for the
+decorator only.
+
+The full gate also verifies checked-in frozen-eval manifests against ignored
+runtime artifacts under `output/`. In a clean worktree, restore the manifest
+referenced output directories from a populated checkout before running the full
+gate.
 
 ## Verification Gates
 
 ```bash
+make check-env
 make check
 ```
 
-`make check` is the maintainer gate for this branch: tests plus Ruff lint.
+`make check-env` explains local-only prerequisites such as shared editable
+packages and frozen output artifacts. `make check` is the maintainer gate for
+this branch: environment preflight, tests, Ruff lint, and the Tyler traceability
+gates.
 
 ```bash
 make typecheck
