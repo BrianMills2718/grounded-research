@@ -1,0 +1,133 @@
+.md-viewer {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.md-viewer h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: var(--space-5) 0 var(--space-3);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-2);
+}
+
+.md-viewer h2 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: var(--space-4) 0 var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.md-viewer h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.md-viewer h4,
+.md-viewer h5,
+.md-viewer h6 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.md-viewer p {
+  margin: 0 0 var(--space-3);
+}
+
+.md-viewer ul,
+.md-viewer ol {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+}
+
+.md-viewer li {
+  margin-bottom: var(--space-1);
+}
+
+.md-viewer strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.md-viewer em {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.md-viewer code {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.md-viewer pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--space-3);
+  overflow-x: auto;
+  margin-bottom: var(--space-3);
+}
+
+.md-viewer pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+}
+
+.md-viewer blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: var(--space-3);
+  margin: var(--space-3) 0;
+  color: var(--muted);
+}
+
+.md-viewer hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-4) 0;
+}
+
+.md-viewer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-3);
+  font-size: 13px;
+}
+
+.md-viewer th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.md-viewer td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.md-viewer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.md-viewer a:hover {
+  text-decoration: underline;
+}

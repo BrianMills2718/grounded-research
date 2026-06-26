@@ -10,6 +10,7 @@ Frontend dev server (Vite) runs on :5202 and proxies /api → :5201.
 from __future__ import annotations
 
 import asyncio
+import re
 import uuid
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from ui_protocol import SSEEmitter
 from sse_runner import run_pipeline_with_sse  # absolute import; run via: uvicorn server:app from workbench/backend/
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+OUTPUT_DIR = PROJECT_ROOT / "output"
 
 app = FastAPI(title="Grounded Research Workbench")
 app.add_middleware(
@@ -71,3 +73,59 @@ async def stream_run(job_id: str) -> StreamingResponse:
 @app.get("/api/health")
 async def health() -> dict:
     return {"status": "ok", "active_jobs": len(_jobs)}
+
+
+@app.get("/api/runs")
+async def list_runs() -> list[dict]:
+    """List completed pipeline runs (have report.md)."""
+    runs = []
+    if not OUTPUT_DIR.exists():
+        return runs
+    for d in sorted(OUTPUT_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        if not d.is_dir():
+            continue
+        report = d / "report.md"
+        summary = d / "summary.md"
+        # Parse job_id and question from dirname: workbench_{job_id}_{slug}
+        m = re.match(r"workbench_([a-f0-9]+)_(.+)", d.name)
+        if not m:
+            continue
+        job_id, slug = m.group(1), m.group(2)
+        question = slug.replace("_", " ").strip()
+        runs.append({
+            "id": job_id,
+            "dir": d.name,
+            "question": question,
+            "has_report": report.exists(),
+            "has_summary": summary.exists(),
+            "mtime": d.stat().st_mtime,
+        })
+    return runs
+
+
+@app.get("/api/runs/{run_id}/report")
+async def get_report(run_id: str) -> dict:
+    """Return report.md content for a completed run."""
+    if not OUTPUT_DIR.exists():
+        raise HTTPException(404, "No output directory")
+    for d in OUTPUT_DIR.iterdir():
+        if d.is_dir() and d.name.startswith(f"workbench_{run_id}_"):
+            report = d / "report.md"
+            if report.exists():
+                return {"run_id": run_id, "content": report.read_text()}
+            raise HTTPException(404, f"No report.md in {d.name}")
+    raise HTTPException(404, f"No run found with id: {run_id}")
+
+
+@app.get("/api/runs/{run_id}/summary")
+async def get_summary(run_id: str) -> dict:
+    """Return summary.md content for a completed run."""
+    if not OUTPUT_DIR.exists():
+        raise HTTPException(404, "No output directory")
+    for d in OUTPUT_DIR.iterdir():
+        if d.is_dir() and d.name.startswith(f"workbench_{run_id}_"):
+            summary = d / "summary.md"
+            if summary.exists():
+                return {"run_id": run_id, "content": summary.read_text()}
+            raise HTTPException(404, f"No summary.md in {d.name}")
+    raise HTTPException(404, f"No run found with id: {run_id}")

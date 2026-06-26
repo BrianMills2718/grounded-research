@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AgentRunner from './components/AgentRunner/AgentRunner'
+import Results from './components/Results/Results'
 
 type Tab = 'runner' | 'config' | 'results'
 
@@ -59,7 +60,7 @@ export default function App() {
       <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {tab === 'runner'  && <AgentRunner />}
         {tab === 'config'  && <Placeholder label="Config — edit ~/projects/grounded-research/config/config.yaml directly" />}
-        {tab === 'results' && <Placeholder label="Results — check ~/projects/grounded-research/output/" />}
+        {tab === 'results' && <Results />}
       </main>
     </div>
   )
