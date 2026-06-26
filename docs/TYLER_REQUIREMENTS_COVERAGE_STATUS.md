@@ -128,12 +128,12 @@ Tracked repository counts from `git ls-files`:
 |---|---:|---:|
 | `src/**/*.py` | 23 | 7,684 |
 | `engine.py` | 1 | 617 |
-| `tests/**/*.py` | 30 | 7,690 |
-| `scripts/**/*.py` | 14 | 2,682 |
+| `tests/**/*.py` | 31 | 7,747 |
+| `scripts/**/*.py` | 15 | 2,815 |
 | `prompts/` | 8 | 846 |
-| `docs/**/*.md` | 113 | 16,553 |
+| `docs/**/*.md` | 113 | 16,566 |
 | `docs/tyler_requirements_registry.json` | 1 | 1,475 |
-| all tracked Markdown | 130 | 23,414 |
+| all tracked Markdown | 130 | 23,427 |
 
 The repo is documentation-heavy. That is useful for auditability, but only if
 the active authority chain is small and stale docs are clearly marked.
