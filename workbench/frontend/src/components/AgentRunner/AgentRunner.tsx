@@ -2,7 +2,7 @@ import { useState } from 'react'
 import AgentFeed from '../AgentFeed/AgentFeed'
 import { useAgentRun } from '../AgentFeed/useAgentRun'
 
-const CONFIGS = ['standard', 'testing'] as const
+const CONFIGS = ['', 'testing'] as const
 type Config = (typeof CONFIGS)[number]
 
 function phaseColor(tool: string): string {
@@ -17,7 +17,7 @@ function phaseColor(tool: string): string {
 
 export default function AgentRunner() {
   const [question, setQuestion] = useState('')
-  const [config, setConfig]     = useState<Config>('standard')
+  const [config, setConfig]     = useState<Config>('')
 
   const { feed, runState, elapsed, answer, errorMsg, isRunning, run, clear } = useAgentRun({
     startRun: async () => {
@@ -98,7 +98,7 @@ export default function AgentRunner() {
               fontSize: 12,
             }}
           >
-            <option value="standard">standard</option>
+            <option value="">standard (config.yaml)</option>
             <option value="testing">testing (cheap models)</option>
           </select>
         </div>

@@ -34,8 +34,11 @@ async def run_pipeline_with_sse(
     """Run the grounded-research pipeline and emit SSE events at each phase boundary."""
     import os
 
-    if config_profile:
-        os.environ["GROUNDED_RESEARCH_CONFIG"] = config_profile
+    # "testing" → config.testing.yaml; anything else → default config.yaml
+    if config_profile == "testing":
+        os.environ["GROUNDED_RESEARCH_CONFIG"] = "testing"
+    else:
+        os.environ.pop("GROUNDED_RESEARCH_CONFIG", None)
 
     run_id = uuid.uuid4().hex[:12]
     trace_id = f"workbench/{run_id}"
