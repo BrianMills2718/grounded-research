@@ -1,53 +1,40 @@
-updated: "2026-06-26T10:05:58"
+updated: "2026-06-26T11:47:48-07:00"
 project: grounded-research
 scope: repo
-status: active
-git_commit: "8453b92"
-git_branch: organize-tyler-maintainer-pr
-summary: "Built and verified an identify-only Tyler requirement status harness for the Inside-Success grounded-research PR branch."
-next_action: "Decide whether to add the optional LLM/human judgment result collector for the 15 B/C/D rows, or open the PR from BrianMills2718:organize-tyler-maintainer-pr into Inside-Success:main as-is."
+status: closed
+git_commit: "325285f"
+git_branch: typecheck-low-risk-cleanup
+summary: "Closed the Tyler maintainer cleanup stack: PR #3 adds the Tyler requirement harness, PR #4 cleans the maintainer surface, and PR #5 finishes strict typing, docstrings, meta-test organization, and Tyler doc provenance warnings."
+next_action: "Review the stacked PR order (#3 -> #4 -> #5) and decide whether to mark them ready for review or keep them draft until Milkias confirms the repo/branch target."
 completed:
-  - "Cloned accessible Inside-Success repos under ~/projects/inside-success/repos and corrected grounded-research upstream context to Inside-Success."
-  - "Merged inside-success/main into organize-tyler-maintainer-pr; branch is 0 behind and 40 commits ahead of Inside-Success main at 8453b92."
-  - "Added Tyler requirements YAML snapshot, evidence policy, and sync/check gate in docs/tyler_requirements.yaml and scripts/sync_tyler_requirements_yaml.py."
-  - "Added identify-only Tyler requirement review rubric, deterministic review report, and per-requirement packet generator in docs/TYLER_REQUIREMENT_REVIEW_RUBRIC.md and scripts/generate_tyler_review_packets.py."
-  - "Added focused tests for YAML sync and review packet status accounting."
-  - "Verified make check PYTHON=/home/brian/projects/.venv/bin/python: 230 passed, 6 skipped, Ruff clean, Tyler gates clean."
-uncertainties:
-  - id: U1
-    priority: medium
-    summary: "Whether Tyler/Brian wants an LLM/human judgment result collector before opening the PR."
-    context: "The deterministic harness identifies all 36 rows and routes 15 B/C/D rows to llm_or_human_judgment, but it does not yet collect reviewer verdict JSON or compute scored judgment outcomes. Add this only if the desired bar is review-result capture rather than status identification."
-    blocking: "Optional improvement before PR; not blocking deterministic status identification."
-  - id: U2
-    priority: low
-    summary: "Whether broad historical docs in the PR should be squashed, split, or trimmed before review."
-    context: "The PR diff is large: 138 files changed, about 10.9k insertions. Much of it is documentation, archive moves, and traceability scaffolding. Maintainer review may be easier if the PR body explains the commit sequence and generated/archived surfaces."
-    blocking: "Reviewer ergonomics, not test correctness."
+  - "Opened draft PR #3: https://github.com/Inside-Success/grounded-research/pull/3 for the Tyler requirement status harness."
+  - "Opened draft PR #4: https://github.com/Inside-Success/grounded-research/pull/4 for maintainer-surface cleanup."
+  - "Opened and updated draft PR #5: https://github.com/Inside-Success/grounded-research/pull/5 for strict typing, docstrings, meta-tests, and provenance cleanup."
+  - "Commit 57c0326 cleaned the maintainer Makefile/docs surface."
+  - "Commit f87b7f6 started low-risk mypy cleanup."
+  - "Commit 390bc7d made strict mypy pass and added the production/script docstring gate."
+  - "Commit c967c43 separated Tyler governance tests into tests/meta."
+  - "Commit 325285f added non-destructive Tyler doc provenance warnings and a provenance checker."
+  - "Verified make check-strict PYTHON=/home/brian/projects/.venv/bin/python: product tests 191 passed/6 skipped, meta-tests 42 passed, Ruff clean, docstring gate clean, Tyler gates clean, provenance gate clean, strict mypy clean."
 pending:
   - id: P1
-    priority: high
+    priority: medium
     effort: small
-    summary: "Prepare or open the Inside-Success PR."
-    details: "Target repo is git@github-insidesuccess:Inside-Success/grounded-research.git. Current branch tracks Brian's fork origin/organize-tyler-maintainer-pr. If opening via gh, use repo Inside-Success/grounded-research, base main, head BrianMills2718:organize-tyler-maintainer-pr, and include the Tyler review counts plus make check result."
+    summary: "Decide whether to mark the draft PRs ready for review."
+    details: "PR #3 targets main; PR #4 stacks on #3; PR #5 stacks on #4. Keep this order unless intentionally squashing or restacking."
   - id: P2
     priority: medium
-    effort: medium
-    summary: "Optional: add judgment-result collector for Tyler review packets."
-    details: "Implement a non-default advisory script that reads output/tyler_requirement_reviews/packets, accepts structured LLM/human verdict JSON matching docs/TYLER_REQUIREMENT_REVIEW_RUBRIC.md, writes ignored output/tyler_requirement_reviews/llm_results, and has fixture-only tests. Use llm_client if live LLM calls are added; default checks must not require live LLM access."
-  - id: P3
-    priority: medium
     effort: small
-    summary: "Write a PR description that avoids overstating test coverage."
-    details: "Say every Tyler row has structured YAML, deterministic policy checks, and a review mode. Do not claim every Tyler requirement has a robust local unit test: 15 B/C/D rows are intentionally routed to LLM/human judgment, accepted doc/ambiguity/extension review, artifact review, or shared-infra review."
+    summary: "Send the Slack note to Mikias/Milkias once the PR target is confirmed."
+    details: "Use the concise wording drafted in-session: ask whether Inside-Success/grounded-research is the up-to-date research-engine repo, then link PR #3 and summarize that the work creates a machine-readable Tyler requirement list linked to tests/status checks."
 warnings:
-  - "Do not edit ignored output/tyler_requirement_reviews artifacts directly; regenerate with make tyler-review-packets."
-  - "Do not treat make check-strict as the landing gate unless asked; strict mypy has known broader repo debt outside this slice."
-  - "The parent ~/projects/inside-success directory is itself a git repo with pre-existing local dirt in plan/dloa/actuals.js; ignore it for this grounded-research PR."
+  - "Do not archive or move Tyler-provenance docs; current policy is preserve in place with provenance warnings and registry cross-checks."
+  - "GitHub CLI account BrianMills2718 cannot administer the private Inside-Success repo; use brianmills-spec for PR edits if needed, then switch back."
+  - "PR #5 is substantial but coherent; avoid adding more cleanup unless the reviewer asks."
 sanity_checks:
   - cmd: "git status --short --branch"
-    expect: "clean worktree on organize-tyler-maintainer-pr after handoff commit"
-  - cmd: "make check PYTHON=/home/brian/projects/.venv/bin/python"
-    expect: "exits 0 with 230 passed, 6 skipped"
-  - cmd: "make tyler-review-json PYTHON=/home/brian/projects/.venv/bin/python"
-    expect: "36 requirements, deterministic_needs_review 0, policy_findings 0, 15 llm_or_human_judgment rows"
+    expect: "clean worktree on typecheck-low-risk-cleanup tracking inside-success/typecheck-low-risk-cleanup"
+  - cmd: "make check-strict PYTHON=/home/brian/projects/.venv/bin/python"
+    expect: "exits 0; product tests 191 passed/6 skipped; meta-tests 42 passed; strict mypy clean"
+  - cmd: "python scripts/check_tyler_doc_provenance.py --format markdown --fail-on-findings"
+    expect: "16 Tyler docs checked, 0 findings"
